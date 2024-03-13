@@ -2,3 +2,4 @@ model-lib==0.0.30
 pydantic-settings==2.2.1
 rich==13.7.1
 GitPython==3.1.42
+pytest==8.0.2
