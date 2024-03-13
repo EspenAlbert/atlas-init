@@ -1,0 +1,9 @@
+*.tfstate*
+*.code-workspace
+*.auto.tfvars
+dev.tfrc
+*.lock.hcl
+*.env-generated
+*.env
+*.env_manual
+profiles/default
