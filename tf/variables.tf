@@ -1,10 +1,3 @@
-variable "aws_profile" {
-  type = string
-}
-variable "your_name_lower" {
-  type = string
-}
-
 variable "atlas_public_key" {
   type = string
 }
@@ -13,33 +6,13 @@ variable "atlas_private_key" {
   type = string
 }
 
+variable "atlas_base_url" {
+  type = string
+  default = "https://cloud-dev.mongodb.com/"
+}
+
 variable "org_id" {
-  # https://cloud.mongodb.com/v2#/org/5e91e686a00db22839299d64/projects
   type = string
-}
-
-variable "project_name" {
-  # follow convention env+namespace whenever possible
-  type = string
-  validation {
-    condition     = length(var.project_name) < 24
-    error_message = "Mongo Project Name must be less than 24 characters."
-  }
-}
-
-variable "instance_size" {
-  # https://docs.atlas.mongodb.com/reference/amazon-aws/
-  default = "M0"
-}
-
-variable "db_in_url" {
-  default = "default"
-  type    = string
-}
-
-variable "use_private_link" {
-  type = bool
-  default = false
 }
 
 variable "aws_region" {
@@ -47,12 +20,50 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-variable "aws_region_cfn_secret" {
+variable "project_name" {
   type = string
-  default = "eu-south-2"
+  validation {
+    condition     = length(var.project_name) < 24
+    error_message = "Mongo Project Name must be less than 24 characters."
+  }
 }
 
-variable "use_cluster" {
-  default = false
+variable "out_dir" {
+  type = string
+}
+
+variable "cfn_config" {
+  type = object({
+    profile = string
+    region = string
+  })
+  default = {
+    profile = ""
+    region = "eu-west-1"
+  }
+}
+
+variable "cluster_config" {
+  type = object({
+    name = string
+    instance_size = string
+    database_in_url = string
+  })
+
+  default = {
+    name =  ""
+    instance_size = "M0"
+    database_in_url = "default"  
+  }
+}
+
+variable "use_private_link" {
   type = bool
+  default = false
+}
+
+variable "extra_env_vars" {
+  default = {}
+  type = map(string)
+  sensitive = true
 }

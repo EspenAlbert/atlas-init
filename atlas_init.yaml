@@ -1,0 +1,13 @@
+repo_aliases:
+    mongodb/terraform-provider-mongodbatlas: tf
+    mongodb/mongodbatlas-cloudformation-resources: cfn
+change_groups:
+- name: stream_connection
+  repo_go_packages: 
+    tf:
+    - 'internal/service/streamconnection'
+    cfn:
+    - 'cfn-resources/stream-connection'
+  vars:
+    cluster_info: true
+    stream_instance: true
