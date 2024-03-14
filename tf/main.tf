@@ -17,9 +17,6 @@ terraform {
       version = "3.4.2"
     }
   }
-  backend "local" {
-    
-  }
 }
 
 provider "mongodbatlas" {
