@@ -1,21 +1,55 @@
+import logging
+import os
+import subprocess
+import sys
 from typing import Any
 from atlas_init.config import ChangeGroup, TerraformVars
-from atlas_init.env_vars import AtlasInitSettings
+from atlas_init.env_vars import REPO_PATH, AtlasInitSettings
+
+logger = logging.getLogger(__name__)
 
 
-def get_tf_vars(settings: AtlasInitSettings, active_groups: list[ChangeGroup]) -> dict[str, Any]:
-    tf_vars = sum((group.vars for group in active_groups), start=TerraformVars()) if len(active_groups) > 1 else active_groups[0].vars
+def get_tf_vars(
+    settings: AtlasInitSettings, active_groups: list[ChangeGroup]
+) -> dict[str, Any]:
+    tf_vars = (
+        sum((group.vars for group in active_groups), start=TerraformVars())
+        if len(active_groups) > 1
+        else active_groups[0].vars
+    )
     external_settings = settings.external_settings
     return {
-        "aws_profile": external_settings.AWS_PROFILE,
         "atlas_public_key": external_settings.MONGODB_ATLAS_PUBLIC_KEY,
         "atlas_private_key": external_settings.MONGODB_ATLAS_PRIVATE_KEY,
         "org_id": external_settings.MONGODB_ATLAS_ORG_ID,
         "aws_region": external_settings.AWS_REGION,
-        "aws_region_cfn_secret": external_settings.AWS_REGION,
-        "project_name": settings.unique_name,
-        "your_name_lower": settings.unique_name,
-        "create_cfn_secret": settings.cfn_secret,
+        "project_name": settings.project_name,
+        "out_dir": settings.out_dir,
         "extra_env_vars": settings.manual_env_vars,
-        **tf_vars.model_dump(),
+        **settings.cfn_config(),
+        **tf_vars.as_configs(),
     }
+
+
+def run_command(settings: AtlasInitSettings):
+    command = ["terraform", settings.command, "-var-file", str(settings.tf_vars_path)]
+    result = subprocess.call(
+        command,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
+        stdout=sys.stdout,
+        cwd=REPO_PATH / "tf",
+        env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
+    )
+    if result == 0:
+        logger.info("success 🥳")
+    logger.info(f"result of command: {result} {' '.join(command)}")
+    if settings.skip_copy:
+        return
+    env_generated = settings.env_vars_generated
+    if env_generated.exists():
+        clipboard_content = "\n".join(
+            f"export {l}" for l in env_generated.read_text().splitlines()
+        )
+        subprocess.run("pbcopy", universal_newlines=True, input=clipboard_content, check=True)
+        logger.info("loaded env-vars to clipboard ✅")

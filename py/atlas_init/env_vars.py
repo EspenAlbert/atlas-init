@@ -2,7 +2,7 @@ import os
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import dotenv
 from model_lib import parse_payload
@@ -26,7 +26,7 @@ def env_file_manual_profile(name: str) -> Path:
 class ExternalSettings(BaseSettings):
     TF_CLI_CONFIG_FILE: str = ""
     AWS_PROFILE: str = "mms-scratch"
-    AWS_REGION: str = ""
+    AWS_REGION: str = "us-east-1"
     MONGODB_ATLAS_ORG_ID: str
     MONGODB_ATLAS_PRIVATE_KEY: str
     MONGODB_ATLAS_PUBLIC_KEY: str
@@ -35,14 +35,17 @@ class ExternalSettings(BaseSettings):
 class AtlasInitSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ATLAS_INIT_")
     external_settings: ExternalSettings = Field(default_factory=ExternalSettings)
-    
+
     profile: str = "default"
     command: Literal["init", "apply", "destroy"] = "init"
-    unique_name: str = ""
+    cfn_profile: str = ""
+    cfn_region: str = ""
+    project_name: str = ""
     config_path: str = ""
-    cfn_secret: bool = False
-    branch_name: str = ""
     out_dir: str = ""
+    skip_copy: bool = False
+
+    branch_name: str = ""
 
     @classmethod
     def safe_settings(cls, **kwargs):
@@ -56,11 +59,13 @@ class AtlasInitSettings(BaseSettings):
         return cls()
 
     @model_validator(mode="after")
-    def set_command_from_sys_args(self):
+    def post_init(self):
         *_, last_arg = sys.argv
         if last_arg in {"init", "apply", "destroy"}:
-            self.ATLAS_INIT_COMMAND = last_arg
+            self.command = last_arg # type: ignore
         assert self.repo_path_rel_path
+        self.out_dir = self.out_dir or str(self.profile_dir)
+        self.cfn_region = self.cfn_region or self.external_settings.AWS_REGION
         return self
 
     @cached_property
@@ -75,9 +80,7 @@ class AtlasInitSettings(BaseSettings):
 
     @cached_property
     def config(self) -> AtlasInitConfig:
-        config_path = (
-            Path(self.config_path) if self.config_path else CONFIG_PATH
-        )
+        config_path = Path(self.config_path) if self.config_path else CONFIG_PATH
         assert config_path.exists(), f"no config path found @ {config_path}"
         yaml_parsed = parse_payload(config_path)
         assert isinstance(
@@ -99,10 +102,27 @@ class AtlasInitSettings(BaseSettings):
         if env_manual_path.exists():
             return {k: v for k, v in dotenv.dotenv_values(env_manual_path).items() if v}
         return {}
+    
+    @property
+    def env_vars_generated(self) -> Path:
+        return self.profile_dir / ".env-generated"
 
+    
+    @property
+    def tf_data_dir(self) -> Path:
+        return self.profile_dir / ".terraform"
+    
     @property
     def tf_vars_path(self) -> Path:
-        return self.profile_dir / "terraform/vars.auto.tfvars.json"
+        return self.tf_data_dir / "vars.auto.tfvars.json"
+
+    def cfn_config(self) -> dict[str, Any]:
+        if self.cfn_profile:
+            return dict(
+                cfn_config={"profile": self.cfn_profile, "region": self.cfn_region}
+            )
+        return {}
+
 
 if __name__ == "__main__":
     print(f"repo_path={REPO_PATH}")

@@ -5,7 +5,7 @@ from rich.logging import RichHandler
 
 from atlas_init.env_vars import AtlasInitSettings
 from atlas_init.git_utils import owner_project_name
-from atlas_init.tf_vars import get_tf_vars
+from atlas_init.tf_vars import get_tf_vars, run_command
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,7 @@ def run():
     logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
 
     tf_vars_path.write_text(tf_vars_str)
+    run_command(settings)
 
 
 if __name__ == "__main__":

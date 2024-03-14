@@ -1,7 +1,7 @@
 from __future__ import annotations
 import fnmatch
 import logging
-from typing import Iterable
+from typing import Any, Iterable
 
 from model_lib import Entity
 from pydantic import Field, model_validator
@@ -13,7 +13,6 @@ class TerraformVars(Entity):
     cluster_info: bool = False
     stream_instance: bool = False
     use_private_link: bool = False
-    use_cluster: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
@@ -22,6 +21,23 @@ class TerraformVars(Entity):
             stream_instance=self.stream_instance or other.stream_instance,
             use_private_link=self.use_private_link or other.use_private_link,
         )
+
+    def as_configs(self) -> dict[str, Any]:
+        config = {}
+        if self.cluster_info:
+            config["cluster_config"] = {
+                "name": "atlas-init",
+                "instance_size": "M0",
+                "database_in_url": "default",
+            }
+        if self.use_private_link:
+            config["use_private_link"] = True
+        if self.stream_instance:
+            config["stream_instance_config"] = {
+                "name": "atlas-init"
+            }
+        return config
+
 
 class ChangeGroup(Entity):
     name: str
@@ -32,9 +48,11 @@ class ChangeGroup(Entity):
 
     def all_globs(self, repo_alias: str) -> list[str]:
         go_packages = self.repo_go_packages.get(repo_alias, [])
-        return self.repo_globs.get(repo_alias, []) + [
-            f"{pkg}/*.go" for pkg in go_packages
-        ] + go_packages
+        return (
+            self.repo_globs.get(repo_alias, [])
+            + [f"{pkg}/*.go" for pkg in go_packages]
+            + go_packages
+        )
 
     def is_active(self, repo_alias: str, change_paths: Iterable[str]) -> bool:
         """changes paths should be relative to the repo"""
@@ -54,7 +72,9 @@ class AtlasInitConfig(Entity):
     ) -> list[ChangeGroup]:
         alias = self.repo_aliases.get(repo_url_path)
         if alias is None:
-            raise ValueError(f"couldn't find {repo_url_path} in the config.repo_aliases")
+            raise ValueError(
+                f"couldn't find {repo_url_path} in the config.repo_aliases"
+            )
         return [
             group
             for group in self.change_groups
