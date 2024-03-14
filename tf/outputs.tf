@@ -3,10 +3,14 @@ locals {
     vpc_privatelink = try(module.vpc_privatelink[0].info, {})
     cluster = try(module.cluster[0].info, {})
     aws_vpc = try(module.aws_vpc[0].info, {})
+    stream_instance = try(module.stream_instance[0].info, {})
   }
 
   modules_env_vars = {
     vpc_privatelink = try(module.vpc_privatelink[0].env_vars, {})
+    cluster = try(module.cluster[0].env_vars, {})
+    aws_vpc = try(module.aws_vpc[0].env_vars, {})
+    stream_instance = try(module.stream_instance[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id
@@ -47,6 +51,7 @@ output "modules_info" {
 }
 output "modules_env_vars" {
   value = local.modules_env_vars
+  sensitive = true
 }
 
 output "env_vars" {
@@ -61,4 +66,11 @@ output "env_vars_dotfile" {
 resource "local_file" "foo" {
   content  = local.env_vars_str
   filename = "${trimsuffix(var.out_dir, "/")}/.env-generated"
+}
+
+output "aws_regions" {
+  value = {
+    default = var.aws_region
+    cfn = var.cfn_config.region
+  }
 }

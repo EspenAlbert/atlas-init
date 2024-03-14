@@ -57,6 +57,14 @@ variable "cluster_config" {
   }
 }
 
+variable "stream_instance_config" {
+  type = object({
+    name = string
+  })
+  default = {
+    name = ""
+  }
+}
 variable "use_private_link" {
   type = bool
   default = false

@@ -67,7 +67,7 @@ module "cluster" {
 
   mongo_user = random_password.username.result
   mongo_password = random_password.password.result
-  project_id = mongodbatlas_project.project.id
+  project_id = local.project_id
   cluster_name = var.cluster_config.name
   region = var.aws_region
   db_in_url = var.cluster_config.database_in_url
@@ -87,8 +87,18 @@ module "vpc_privatelink" {
 
   count = var.use_private_link ? 1 : 0
 
-  project_id = mongodbatlas_project.project.id
+  project_id = local.project_id
   subnet_ids = module.aws_vpc[0].info.subnet_ids
   security_group_ids = module.aws_vpc[0].info.security_group_ids
   vpc_id = module.aws_vpc[0].info.vpc_id
+}
+
+
+module "stream_instance" {
+  source = "./modules/stream_instance"
+
+  count = var.stream_instance_config.name != "" ? 1 : 0
+  
+  project_id = local.project_id
+  instance_name = var.stream_instance_config.name
 }

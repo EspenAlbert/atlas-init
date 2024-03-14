@@ -35,7 +35,6 @@ resource "mongodbatlas_cluster" "project_cluster" {
   project_id = var.project_id
   name       = var.cluster_name
 
-  # Provider Settings "block"
   provider_name               = "TENANT"
   backing_provider_name       = "AWS"
   provider_region_name        = replace(upper(var.region), "-", "_")
