@@ -3,7 +3,7 @@ import os
 import subprocess
 from typing import Any
 
-from atlas_init.config import ChangeGroup, TerraformVars
+from atlas_init.config import TerraformVars, TestSuit
 from atlas_init.env_vars import REPO_PATH, AtlasInitSettings
 from atlas_init.util import run_command_is_ok
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_tf_vars(
-    settings: AtlasInitSettings, active_groups: list[ChangeGroup]
+    settings: AtlasInitSettings, active_groups: list[TestSuit]
 ) -> dict[str, Any]:
     tf_vars = (
         sum((group.vars for group in active_groups), start=TerraformVars())

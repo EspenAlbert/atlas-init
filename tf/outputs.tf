@@ -20,6 +20,7 @@ locals {
     MONGODB_ATLAS_PRIVATE_KEY=var.atlas_private_key
     MONGODB_ATLAS_PROJECT_ID=local.project_id
     MONGODB_ATLAS_ORG_ID=var.org_id
+    MONGODB_ATLAS_LAST_VERSION=local.last_provider_version
     
     # atlas-cli
     MONGODB_ATLAS_OPS_MANAGER_URL=var.atlas_base_url
@@ -73,4 +74,8 @@ output "aws_regions" {
     default = var.aws_region
     cfn = var.cfn_config.region
   }
+}
+
+output "last_provider_version" {
+  value = local.last_provider_version
 }

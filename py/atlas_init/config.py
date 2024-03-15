@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import fnmatch
 import logging
 from typing import Any, Iterable
@@ -33,13 +34,11 @@ class TerraformVars(Entity):
         if self.use_private_link:
             config["use_private_link"] = True
         if self.stream_instance:
-            config["stream_instance_config"] = {
-                "name": "atlas-init"
-            }
+            config["stream_instance_config"] = {"name": "atlas-init"}
         return config
 
 
-class ChangeGroup(Entity):
+class TestSuit(Entity):
     name: str
     sequential_tests: bool = False
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)
@@ -61,10 +60,10 @@ class ChangeGroup(Entity):
             if any(fnmatch.fnmatch(path, glob) for glob in globs):
                 return True
         return False
-    
+
 
 class AtlasInitConfig(Entity):
-    change_groups: list[ChangeGroup] = Field(default_factory=list)
+    test_suites: list[TestSuit] = Field(default_factory=list)
     repo_aliases: dict[str, str] = Field(default_factory=dict)
 
     def repo_alias(self, repo_url_path: str) -> str:
@@ -81,20 +80,21 @@ class AtlasInitConfig(Entity):
                 return f"github.com/{url_path}"
         raise ValueError(f"alias not found: {alias}")
 
-    def active_change_groups(
-        self, alias: str, change_paths: Iterable[str]
-    ) -> list[ChangeGroup]:
+    def active_test_suites(
+        self, alias: str, change_paths: Iterable[str], forced_test_suites: list[str]
+    ) -> list[TestSuit]:
+        forced_suites = set(forced_test_suites)
         return [
-            group
-            for group in self.change_groups
-            if group.is_active(alias, change_paths)
+            suit
+            for suit in self.test_suites
+            if suit.is_active(alias, change_paths) or suit.name in forced_suites
         ]
 
     @model_validator(mode="after")
     def ensure_all_repo_aliases_are_found(self):
         missing_aliases = set()
         aliases = set(self.repo_aliases.keys())
-        for group in self.change_groups:
+        for group in self.test_suites:
             if more_missing := group.repo_globs.keys() - aliases:
                 logger.warning(
                     f"repo aliases not found for group={group.name}: {more_missing}"

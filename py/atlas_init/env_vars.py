@@ -5,11 +5,11 @@ import os
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import dotenv
-from model_lib import parse_payload
-from pydantic import Field, model_validator
+from model_lib import field_names, parse_payload
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from zero_3rdparty.enum_utils import StrEnum
 
@@ -77,8 +77,15 @@ class ExternalSettings(BaseSettings):
     MONGODB_ATLAS_PUBLIC_KEY: str
 
 
+def as_env_var_name(field_name: str) -> str:
+    names = set(field_names(AtlasInitSettings))
+    assert field_name in names, f"unknown field name for {AtlasInitSettings}: {field_name}"
+    return f"{AtlasInitSettings.ENV_PREFIX}{field_name}".upper()
+
 class AtlasInitSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="ATLAS_INIT_")
+    ENV_PREFIX: ClassVar[str] = "ATLAS_INIT_"
+    model_config = SettingsConfigDict(env_prefix=ENV_PREFIX)
+    
     external_settings: ExternalSettings = Field(default_factory=ExternalSettings)  # type: ignore
 
     profile: str = "default"
@@ -89,6 +96,7 @@ class AtlasInitSettings(BaseSettings):
     config_path: str = ""
     out_dir: str = ""
     skip_copy: bool = False
+    test_suites: str = ""
 
     branch_name: str = ""
     command_args: list[str] = Field(default_factory=list)
@@ -104,6 +112,10 @@ class AtlasInitSettings(BaseSettings):
             dotenv.load_dotenv(env_file_manual)
         return cls()
 
+    @field_validator("test_suites", mode="after")
+    def ensure_whitespace_replaced_with_commas(value: str) -> str:
+        return value.strip().replace(" ", ",")
+    
     @model_validator(mode="after")
     def post_init(self):
         self.command, self.command_args = validate_command_and_args(
@@ -168,6 +180,10 @@ class AtlasInitSettings(BaseSettings):
     @property
     def tf_vars_path(self) -> Path:
         return self.tf_data_dir / "vars.auto.tfvars.json"
+    
+    @property
+    def test_suites_parsed(self) -> list[str]:
+        return self.test_suites.split(",")
 
     def cfn_config(self) -> dict[str, Any]:
         if self.cfn_profile:

@@ -3,6 +3,7 @@ import pytest
 from atlas_init.env_vars import (
     AtlasInitCommand,
     AtlasInitSettings,
+    as_env_var_name,
     validate_command_and_args,
 )
 
@@ -26,7 +27,9 @@ def test_validate_command(command, extra_sys_args, expected_command, expected_ar
     assert actual_args == expected_args
 
 
-def test_default_settings():
+def test_default_settings(monkeypatch):
+    monkeypatch.setenv(as_env_var_name("test_suites"), "suite1,suite2 suite3")
     settings = AtlasInitSettings.safe_settings()
     print(settings)
     print(f"repo_path,rel_path={settings.repo_path_rel_path}")
+    assert settings.test_suites_parsed == ["suite1", "suite2", "suite3"]

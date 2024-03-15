@@ -1,7 +1,7 @@
 repo_aliases:
     mongodb/terraform-provider-mongodbatlas: tf
     mongodb/mongodbatlas-cloudformation-resources: cfn
-change_groups:
+test_suites:
 - name: network
   vars: 
     use_private_link: true

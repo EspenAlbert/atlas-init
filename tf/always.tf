@@ -12,6 +12,23 @@ data "http" "myip" {
   url = "https://ipv4.icanhazip.com"
 }
 
+data "http" "last_provider_version" {
+  url = "https://api.github.com/repos/mongodb/terraform-provider-mongodbatlas/releases/latest"
+
+lifecycle {
+  postcondition {
+    condition = contains([200], self.status_code)
+    error_message = "Failed to get last version"
+  }
+}
+
+}
+
+locals {
+  release_response = jsondecode(data.http.last_provider_version.response_body)
+  last_provider_version = trimprefix(local.release_response.tag_name, "v")
+}
+
 resource "mongodbatlas_project" "project" {
   name   = var.project_name
   org_id = var.org_id
