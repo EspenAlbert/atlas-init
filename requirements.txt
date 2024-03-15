@@ -3,3 +3,4 @@ pydantic-settings==2.2.1
 rich==13.7.1
 GitPython==3.1.42
 pytest==8.0.2
+orjson==3.9.15

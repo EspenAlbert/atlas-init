@@ -1,10 +1,11 @@
 import logging
 import os
 import subprocess
-import sys
 from typing import Any
+
 from atlas_init.config import ChangeGroup, TerraformVars
 from atlas_init.env_vars import REPO_PATH, AtlasInitSettings
+from atlas_init.util import run_command_is_ok
 
 logger = logging.getLogger(__name__)
 
@@ -31,19 +32,21 @@ def get_tf_vars(
     }
 
 
-def run_command(settings: AtlasInitSettings):
-    command = ["terraform", settings.command, "-var-file", str(settings.tf_vars_path)]
-    result = subprocess.call(
+def run_terraform(settings: AtlasInitSettings):
+    command = [
+        "terraform",
+        settings.command,
+        "-var-file",
+        str(settings.tf_vars_path),
+        *settings.command_args,
+    ]
+    is_ok = run_command_is_ok(
         command,
-        stdin=sys.stdin,
-        stderr=sys.stderr,
-        stdout=sys.stdout,
-        cwd=REPO_PATH / "tf",
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
+        cwd=REPO_PATH / "tf",
+        logger=logger,
     )
-    if result == 0:
-        logger.info("success 🥳")
-    logger.info(f"result of command: {result} {' '.join(command)}")
+    assert is_ok, "command failed"
     if settings.skip_copy:
         return
     env_generated = settings.env_vars_generated
@@ -51,5 +54,7 @@ def run_command(settings: AtlasInitSettings):
         clipboard_content = "\n".join(
             f"export {l}" for l in env_generated.read_text().splitlines()
         )
-        subprocess.run("pbcopy", universal_newlines=True, input=clipboard_content, check=True)
+        subprocess.run(
+            "pbcopy", universal_newlines=True, input=clipboard_content, check=True
+        )
         logger.info("loaded env-vars to clipboard ✅")

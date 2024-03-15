@@ -2,6 +2,12 @@ repo_aliases:
     mongodb/terraform-provider-mongodbatlas: tf
     mongodb/mongodbatlas-cloudformation-resources: cfn
 change_groups:
+- name: network
+  vars: 
+    use_private_link: true
+  repo_go_packages:
+    tf:
+    - 'internal/service/privatelinkendpointservicedatafederationonlinearchive'
 - name: stream_connection
   repo_go_packages: 
     tf:

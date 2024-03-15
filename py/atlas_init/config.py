@@ -61,20 +61,29 @@ class ChangeGroup(Entity):
             if any(fnmatch.fnmatch(path, glob) for glob in globs):
                 return True
         return False
-
+    
 
 class AtlasInitConfig(Entity):
     change_groups: list[ChangeGroup] = Field(default_factory=list)
     repo_aliases: dict[str, str] = Field(default_factory=dict)
 
-    def active_change_groups(
-        self, repo_url_path: str, change_paths: Iterable[str]
-    ) -> list[ChangeGroup]:
+    def repo_alias(self, repo_url_path: str) -> str:
         alias = self.repo_aliases.get(repo_url_path)
         if alias is None:
             raise ValueError(
                 f"couldn't find {repo_url_path} in the config.repo_aliases"
             )
+        return alias
+
+    def go_package_prefix(self, alias: str) -> str:
+        for url_path, i_alias in self.repo_aliases.items():
+            if alias == i_alias:
+                return f"github.com/{url_path}"
+        raise ValueError(f"alias not found: {alias}")
+
+    def active_change_groups(
+        self, alias: str, change_paths: Iterable[str]
+    ) -> list[ChangeGroup]:
         return [
             group
             for group in self.change_groups
