@@ -6,7 +6,6 @@ from atlas_init.env_vars import (
     as_env_var_name,
     validate_command_and_args,
 )
-
 C = AtlasInitCommand
 
 

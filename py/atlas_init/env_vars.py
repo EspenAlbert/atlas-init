@@ -11,6 +11,7 @@ import dotenv
 from model_lib import field_names, parse_payload
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from rich.prompt import Prompt
 from zero_3rdparty.enum_utils import StrEnum
 
 from atlas_init.config import AtlasInitConfig
@@ -33,6 +34,7 @@ class AtlasInitCommand(StrEnum):
     APPLY = "apply"
     DESTROY = "destroy"
     TEST_GO = "test_go"
+    CONFIG = "config"
 
     @classmethod
     def is_terraform_command(cls, value: AtlasInitCommand) -> bool:
@@ -79,13 +81,16 @@ class ExternalSettings(BaseSettings):
 
 def as_env_var_name(field_name: str) -> str:
     names = set(field_names(AtlasInitSettings))
-    assert field_name in names, f"unknown field name for {AtlasInitSettings}: {field_name}"
+    assert (
+        field_name in names
+    ), f"unknown field name for {AtlasInitSettings}: {field_name}"
     return f"{AtlasInitSettings.ENV_PREFIX}{field_name}".upper()
+
 
 class AtlasInitSettings(BaseSettings):
     ENV_PREFIX: ClassVar[str] = "ATLAS_INIT_"
     model_config = SettingsConfigDict(env_prefix=ENV_PREFIX)
-    
+
     external_settings: ExternalSettings = Field(default_factory=ExternalSettings)  # type: ignore
 
     profile: str = "default"
@@ -115,7 +120,7 @@ class AtlasInitSettings(BaseSettings):
     @field_validator("test_suites", mode="after")
     def ensure_whitespace_replaced_with_commas(value: str) -> str:
         return value.strip().replace(" ", ",")
-    
+
     @model_validator(mode="after")
     def post_init(self):
         self.command, self.command_args = validate_command_and_args(
@@ -180,10 +185,10 @@ class AtlasInitSettings(BaseSettings):
     @property
     def tf_vars_path(self) -> Path:
         return self.tf_data_dir / "vars.auto.tfvars.json"
-    
+
     @property
     def test_suites_parsed(self) -> list[str]:
-        return self.test_suites.split(",")
+        return [t for t in self.test_suites.split(",") if t]
 
     def cfn_config(self) -> dict[str, Any]:
         if self.cfn_profile:
@@ -191,3 +196,68 @@ class AtlasInitSettings(BaseSettings):
                 cfn_config={"profile": self.cfn_profile, "region": self.cfn_region}
             )
         return {}
+
+
+_defaults = dict(
+    TF_CLI_CONFIG_FILE = "",
+    AWS_PROFILE = "mms-scratch",
+    AWS_REGION = "us-east-1",
+    MONGODB_ATLAS_ORG_ID="",
+    MONGODB_ATLAS_PRIVATE_KEY="",
+    MONGODB_ATLAS_PUBLIC_KEY="",
+)
+_dev_tfrc = """\
+This points to your terraform `dev.tfrc` file,
+usually, it will look something like this
+
+provider_installation {
+ 
+  dev_overrides {
+ 
+    "mongodb/mongodbatlas" = "REPO_PATH_TF_PROVIDER/bin"
+ 
+  }
+ 
+  direct {}
+ 
+}
+"""
+def example_tf_cli_config_file(repo_path_tf_provider: Path) -> str:
+    return _dev_tfrc.replace("REPO_PATH_TF_PROVIDER", str(repo_path_tf_provider))
+
+
+_help_existing = dict(
+    TF_CLI_CONFIG_FILE="CLI_EXAMPLE",
+    AWS_PROFILE="",
+    AWS_REGION="",
+    MONGODB_ATLAS_ORG_ID="",
+    MONGODB_ATLAS_PRIVATE_KEY="",
+    MONGODB_ATLAS_PUBLIC_KEY="",
+)
+
+_all_keys = set(_help_existing.keys())
+
+
+def populate_help(repo_path_tf_provider: Path) -> dict[str, str]:
+    return {**_help_existing} | {"TF_CLI_CONFIG_FILE": example_tf_cli_config_file(repo_path_tf_provider)}
+
+def create_env_vars():
+    profile = Prompt.ask(
+        "What profile would you like to configure? (use empty for 'default')"
+    ) or "default"
+    logger.info(f"about to create a new profile={profile} ctrl+c to abort")
+    env_file_path = env_file_manual_profile(profile)
+    logger.info(f"will populate file: '{env_file_path}'")
+    existing_variables: dict[str, str] = {}
+    if env_file_path.exists():
+        existing_variables = {k:v for k,v in dotenv.dotenv_values(env_file_path).items() if v}
+    remaining_variables = _all_keys - existing_variables.keys()
+    while remaining_variables:
+        new_key, new_value = prompt_next_key_value(existing_variables)
+
+
+def prompt_next_key_value(existing_variables: dict[str, str]) -> tuple[str, str]:
+    # continue from here
+    raise NotImplementedError
+    
+
