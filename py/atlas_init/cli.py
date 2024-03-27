@@ -1,10 +1,11 @@
 import logging
 from shutil import copy
+import sys
 
 from model_lib import dump
 from rich.logging import RichHandler
 
-from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings
+from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings, create_env_vars, validate_command_and_args
 from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
 from atlas_init.tf_vars import get_tf_vars, run_terraform
@@ -19,6 +20,10 @@ def run():
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
+    command, _ = validate_command_and_args(None, sys.argv)
+    if command == AtlasInitCommand.CONFIG:
+        create_env_vars()
+        return
     settings = AtlasInitSettings.safe_settings()
     config = settings.config
     repo_path, rel_path = settings.repo_path_rel_path
@@ -33,7 +38,7 @@ def run():
     if not active_suites:
         logger.warning(f"no active groups for {rel_path}")
         return
-
+    logger.info(f"active_suites: {[s.name for s in active_suites]}")
     if settings.is_terraform_command:
         tf_vars = get_tf_vars(settings, active_suites)
 
@@ -44,8 +49,9 @@ def run():
 
         tf_vars_path.write_text(tf_vars_str)
         run_terraform(settings)
-        copy(settings.env_vars_generated, settings.env_vars_vs_code)
-        logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
+        if settings.env_vars_generated.exists():
+            copy(settings.env_vars_generated, settings.env_vars_vs_code)
+            logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
     elif settings.command == AtlasInitCommand.TEST_GO:
         sorted_suites = sorted(suite.name for suite in active_suites)
         logger.info(f"running go tests for {len(active_suites)} test-suites: {sorted_suites}")
