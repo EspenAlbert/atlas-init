@@ -2,6 +2,13 @@ repo_aliases:
     mongodb/terraform-provider-mongodbatlas: tf
     mongodb/mongodbatlas-cloudformation-resources: cfn
 test_suites:
+- name: network_peering
+  vars: 
+    cluster_info_m10: true
+    use_vpc_peering: true
+  repo_go_packages:
+    tf:
+    - 'internal/service/networkpeering'
 - name: network
   vars: 
     use_private_link: true
@@ -17,3 +24,9 @@ test_suites:
   vars:
     cluster_info: true
     stream_instance: true
+- name: search_index
+  repo_go_packages:
+    tf:
+    - 'internal/service/searchindex'
+  vars:
+    cluster_info: true

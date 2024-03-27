@@ -45,7 +45,7 @@ locals {
       Team = "api-x-integrations"
       Owner = "terraform-atlas-init"
     }
-  use_aws_vpc = var.use_private_link
+  use_aws_vpc = var.use_private_link || var.use_vpc_peering
 }
 
 module "cfn" {
@@ -79,7 +79,18 @@ module "aws_vpc" {
 
   count = local.use_aws_vpc ? 1 : 0
   aws_region = var.aws_region
+}
 
+module "vpc_peering" {
+  source = "./modules/vpc_peering"
+
+  count = var.use_vpc_peering ? 1 : 0
+  vpc_id = module.aws_vpc[0].info.vpc_id
+  vpc_cidr_block = module.aws_vpc[0].info.vpc_cidr_block
+  main_route_table_id = module.aws_vpc[0].info.main_route_table_id
+  aws_region = var.aws_region
+  project_id = local.project_id
+  cluster_container_id = module.cluster[0].info.cluster_container_id
 }
 
 module "vpc_privatelink" {

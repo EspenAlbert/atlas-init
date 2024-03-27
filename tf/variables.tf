@@ -70,6 +70,12 @@ variable "use_private_link" {
   default = false
 }
 
+variable "use_vpc_peering" {
+  type = bool
+  default = false
+  
+}
+
 variable "extra_env_vars" {
   default = {}
   type = map(string)

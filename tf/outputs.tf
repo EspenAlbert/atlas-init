@@ -33,8 +33,10 @@ locals {
 
     # used by cfn
     PROJECT_NAME=var.project_name
+    MONGODB_ATLAS_PROFILE=var.cfn_config.profile
     TF_ACC=1
   }
+  
 
   env_vars_merged = merge(local.env_vars, local.modules_env_vars_flat, var.extra_env_vars)
   env_vars_str = join("\n", [for key, value in local.env_vars_merged: "${key}=${value}"])

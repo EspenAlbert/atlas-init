@@ -12,27 +12,29 @@ logger = logging.getLogger(__name__)
 
 class TerraformVars(Entity):
     cluster_info: bool = False
+    cluster_info_m10: bool = False
     stream_instance: bool = False
     use_private_link: bool = False
+    use_vpc_peering: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
-        return type(self)(
-            cluster_info=self.cluster_info or other.cluster_info,
-            stream_instance=self.stream_instance or other.stream_instance,
-            use_private_link=self.use_private_link or other.use_private_link,
-        )
+        kwargs = {k: v or getattr(other, k) for k, v in self}
+        return type(self)(**kwargs)
 
     def as_configs(self) -> dict[str, Any]:
         config = {}
-        if self.cluster_info:
+        if self.cluster_info or self.cluster_info_m10:
+            instance_size = "M10" if self.cluster_info_m10 else "M0"
             config["cluster_config"] = {
                 "name": "atlas-init",
-                "instance_size": "M0",
+                "instance_size": instance_size,
                 "database_in_url": "default",
             }
         if self.use_private_link:
             config["use_private_link"] = True
+        if self.use_vpc_peering:
+            config["use_vpc_peering"] = True
         if self.stream_instance:
             config["stream_instance_config"] = {"name": "atlas-init"}
         return config
@@ -84,6 +86,8 @@ class AtlasInitConfig(Entity):
         self, alias: str, change_paths: Iterable[str], forced_test_suites: list[str]
     ) -> list[TestSuit]:
         forced_suites = set(forced_test_suites)
+        if forced_test_suites:
+            logger.warning(f"using forced test suites: {forced_test_suites}")
         return [
             suit
             for suit in self.test_suites

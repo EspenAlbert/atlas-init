@@ -1,8 +1,12 @@
 variable "aws_region" {
   type = string
 }
+
+locals {
+  cidr_block = "10.0.0.0/16"
+}
 resource "aws_vpc" "this" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = local.cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
 }
@@ -56,5 +60,15 @@ output "info" {
     subnet_ids = [aws_subnet.subnet_a.id, aws_subnet.subnet_b.id]
     security_group_ids = [aws_security_group.this.id]
     vpc_id = aws_vpc.this.id
+    main_route_table_id = aws_vpc.this.main_route_table_id
+    vpc_cidr_block = local.cidr_block
+  }
+}
+
+output "env_vars" {
+  value = {
+    AWS_VPC_ID = aws_vpc.this.id
+    AWS_VPC_CIDR_BLOCK = local.cidr_block
+
   }
 }

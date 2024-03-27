@@ -8,7 +8,7 @@ def test_TerraformVars_add():
     combined = sum([vars1, vars2, vars3], TerraformVars())
     assert combined.cluster_info
     assert combined.use_private_link
-    assert not combined.use_cluster
+    assert not combined.use_vpc_peering
 
 
 def test_ChangeGroup():
