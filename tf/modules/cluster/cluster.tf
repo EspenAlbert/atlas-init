@@ -44,7 +44,7 @@ resource "mongodbatlas_cluster" "project_cluster_free" {
 
   provider_name               = "TENANT"
   backing_provider_name       = "AWS"
-  provider_region_name        = replace(upper(var.region), "-", "_")
+  provider_region_name        = var.region
   provider_instance_size_name = var.instance_size
 }
 
@@ -56,7 +56,7 @@ resource "mongodbatlas_cluster" "project_cluster" {
   replication_specs {
     num_shards = 1
     regions_config {
-      region_name     = replace(upper(var.region), "-", "_")
+      region_name     = var.region
       electable_nodes = 3
       priority        = 7
       read_only_nodes = 0

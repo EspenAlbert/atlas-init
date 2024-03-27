@@ -46,6 +46,8 @@ locals {
       Owner = "terraform-atlas-init"
     }
   use_aws_vpc = var.use_private_link || var.use_vpc_peering
+  # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
+  atlas_region = replace(upper(var.aws_region), "-", "_")
 }
 
 module "cfn" {
@@ -69,7 +71,7 @@ module "cluster" {
   mongo_password = random_password.password.result
   project_id = local.project_id
   cluster_name = var.cluster_config.name
-  region = var.aws_region
+  region = local.atlas_region
   db_in_url = var.cluster_config.database_in_url
   instance_size = var.cluster_config.instance_size
 }
@@ -88,7 +90,7 @@ module "vpc_peering" {
   vpc_id = module.aws_vpc[0].info.vpc_id
   vpc_cidr_block = module.aws_vpc[0].info.vpc_cidr_block
   main_route_table_id = module.aws_vpc[0].info.main_route_table_id
-  aws_region = var.aws_region
+  atlas_region = local.atlas_region
   project_id = local.project_id
   cluster_container_id = module.cluster[0].info.cluster_container_id
 }

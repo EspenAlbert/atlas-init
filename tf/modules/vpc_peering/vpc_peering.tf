@@ -14,7 +14,7 @@ variable "atlas_vpc_cidr" {
   type        = string
 }
 
-variable "aws_region" {
+variable "atlas_region" {
   type = string
 }
 
@@ -37,6 +37,11 @@ variable "cluster_container_id" {
   type = string
 }
 
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+}
+
+
 data "aws_caller_identity" "current" {}
 
 resource "aws_route" "peeraccess" {
@@ -47,13 +52,13 @@ resource "aws_route" "peeraccess" {
 }
 
 resource "mongodbatlas_network_peering" "aws_atlas" {
-  accepter_region_name   = var.aws_region
+  accepter_region_name   = var.atlas_region
   project_id             = var.project_id
   container_id           = var.cluster_container_id
   provider_name          = "AWS"
   route_table_cidr_block = var.vpc_cidr_block
   vpc_id                 = var.vpc_id
-  aws_account_id         = data.aws_caller_identity.current.account_id
+  aws_account_id         = local.account_id
 }
 
 resource "aws_vpc_peering_connection_accepter" "peer" {
@@ -65,4 +70,13 @@ resource "mongodbatlas_project_ip_access_list" "test" {
   project_id = var.project_id
   cidr_block = var.vpc_cidr_block
   comment    = "cidr block for AWS VPC"
+}
+
+output "env_vars" {
+  value = {
+    AWS_ACCOUNT_ID = local.account_id
+    AWS_VPC_CIDR_BLOCK = var.vpc_cidr_block
+    AWS_VPC_ID = var.vpc_id
+    AWS_REGION = var.atlas_region
+  }
 }

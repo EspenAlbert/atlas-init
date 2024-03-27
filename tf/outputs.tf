@@ -4,6 +4,7 @@ locals {
     cluster = try(module.cluster[0].info, {})
     aws_vpc = try(module.aws_vpc[0].info, {})
     stream_instance = try(module.stream_instance[0].info, {})
+    vpc_peering = try(module.vpc_peering[0].info, {})
   }
 
   modules_env_vars = {
@@ -11,6 +12,7 @@ locals {
     cluster = try(module.cluster[0].env_vars, {})
     aws_vpc = try(module.aws_vpc[0].env_vars, {})
     stream_instance = try(module.stream_instance[0].env_vars, {})
+    vpc_peering = try(module.vpc_peering[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id
