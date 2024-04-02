@@ -5,10 +5,10 @@ import sys
 from model_lib import dump
 from rich.logging import RichHandler
 
-from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings, create_env_vars, validate_command_and_args
+from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings
 from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
-from atlas_init.tf_vars import get_tf_vars, run_terraform
+from atlas_init.tf_runner import get_tf_vars, run_terraform
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,7 @@ def run():
         datefmt="[%X]",
         handlers=[RichHandler(rich_tracebacks=True)],
     )
-    command, _ = validate_command_and_args(None, sys.argv)
-    if command == AtlasInitCommand.CONFIG:
-        create_env_vars()
-        return
+
     settings = AtlasInitSettings.safe_settings()
     config = settings.config
     repo_path, rel_path = settings.repo_path_rel_path

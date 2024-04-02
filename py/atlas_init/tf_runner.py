@@ -18,12 +18,11 @@ def get_tf_vars(
         if len(active_groups) > 1
         else active_groups[0].vars
     )
-    external_settings = settings.external_settings
     return {
-        "atlas_public_key": external_settings.MONGODB_ATLAS_PUBLIC_KEY,
-        "atlas_private_key": external_settings.MONGODB_ATLAS_PRIVATE_KEY,
-        "org_id": external_settings.MONGODB_ATLAS_ORG_ID,
-        "aws_region": external_settings.AWS_REGION,
+        "atlas_public_key": settings.MONGODB_ATLAS_PUBLIC_KEY,
+        "atlas_private_key": settings.MONGODB_ATLAS_PRIVATE_KEY,
+        "org_id": settings.MONGODB_ATLAS_ORG_ID,
+        "aws_region": settings.AWS_REGION,
         "project_name": settings.project_name,
         "out_dir": settings.out_dir,
         "extra_env_vars": settings.manual_env_vars,

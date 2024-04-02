@@ -9,9 +9,9 @@ from typing import Any, ClassVar, cast
 
 import dotenv
 from model_lib import field_names, parse_payload
-from pydantic import Field, field_validator, model_validator
+from model_lib.pydantic_utils import cls_defaults
+from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from rich.prompt import Prompt
 from zero_3rdparty.enum_utils import StrEnum
 
 from atlas_init.config import AtlasInitConfig
@@ -34,7 +34,6 @@ class AtlasInitCommand(StrEnum):
     APPLY = "apply"
     DESTROY = "destroy"
     TEST_GO = "test_go"
-    CONFIG = "config"
 
     @classmethod
     def is_terraform_command(cls, value: AtlasInitCommand) -> bool:
@@ -71,12 +70,15 @@ def validate_command_and_args(
 
 
 class ExternalSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="")
+
     TF_CLI_CONFIG_FILE: str = ""
-    AWS_PROFILE: str = "mms-scratch"
+    AWS_PROFILE: str
     AWS_REGION: str = "us-east-1"
     MONGODB_ATLAS_ORG_ID: str
     MONGODB_ATLAS_PRIVATE_KEY: str
     MONGODB_ATLAS_PUBLIC_KEY: str
+    MONGODB_ATLAS_BASE_URL: str = "https://cloud-dev.mongodb.com/"
 
 
 def as_env_var_name(field_name: str) -> str:
@@ -84,21 +86,23 @@ def as_env_var_name(field_name: str) -> str:
     assert (
         field_name in names
     ), f"unknown field name for {AtlasInitSettings}: {field_name}"
+    external_settings_names = set(field_names(ExternalSettings))
+    if field_name in external_settings_names:
+        return field_name.upper()
     return f"{AtlasInitSettings.ENV_PREFIX}{field_name}".upper()
 
 
-class AtlasInitSettings(BaseSettings):
+class AtlasInitSettings(ExternalSettings):
     ENV_PREFIX: ClassVar[str] = "ATLAS_INIT_"
     model_config = SettingsConfigDict(env_prefix=ENV_PREFIX)
-
-    external_settings: ExternalSettings = Field(default_factory=ExternalSettings)  # type: ignore
 
     profile: str = "default"
     command: AtlasInitCommand = AtlasInitCommand.INIT
     cfn_profile: str = ""
     cfn_region: str = ""
-    project_name: str = ""
+    project_name: str
     config_path: str = ""
+    # useful when pip-installing
     out_dir: str = ""
     skip_copy: bool = False
     test_suites: str = ""
@@ -115,10 +119,26 @@ class AtlasInitSettings(BaseSettings):
         env_file_manual = env_file_manual_profile(profile_name)
         if env_file_manual.exists():
             dotenv.load_dotenv(env_file_manual)
-        return cls()
+        else:
+            try:
+                ext_settings = ExternalSettings()
+                settings = cls(**ext_settings.model_dump())
+            except ValidationError as e:
+                logger.exception(e)
+                logger.critical(
+                    "missing env-vars for running atlas_init, see readme.md for help. Error Message above 👆 should also help"
+                )
+            else:
+                logger.warning(
+                    f"env_file @ {env_file_manual} did not exist, populating it"
+                )
+                dump_manual_dotenv_from_env(settings, env_file_manual)
+                return settings
+        ext_settings = ExternalSettings()
+        return cls(**ext_settings.model_dump())
 
     @field_validator("test_suites", mode="after")
-    def ensure_whitespace_replaced_with_commas(value: str) -> str:
+    def ensure_whitespace_replaced_with_commas(cls, value: str) -> str:
         return value.strip().replace(" ", ",")
 
     @model_validator(mode="after")
@@ -128,7 +148,7 @@ class AtlasInitSettings(BaseSettings):
         )
         assert self.repo_path_rel_path  # type: ignore
         self.out_dir = self.out_dir or str(self.profile_dir)
-        self.cfn_region = self.cfn_region or self.external_settings.AWS_REGION
+        self.cfn_region = self.cfn_region or self.AWS_REGION
         return self
 
     @property
@@ -198,66 +218,18 @@ class AtlasInitSettings(BaseSettings):
         return {}
 
 
-_defaults = dict(
-    TF_CLI_CONFIG_FILE = "",
-    AWS_PROFILE = "mms-scratch",
-    AWS_REGION = "us-east-1",
-    MONGODB_ATLAS_ORG_ID="",
-    MONGODB_ATLAS_PRIVATE_KEY="",
-    MONGODB_ATLAS_PUBLIC_KEY="",
-)
-_dev_tfrc = """\
-This points to your terraform `dev.tfrc` file,
-usually, it will look something like this
+def dump_manual_dotenv_from_env(path: Path) -> None:
+    env_vars: dict[str, str] = {}
+    names = field_names(AtlasInitSettings)
+    ext_settings_names = field_names(ExternalSettings)
+    names = set(names + ext_settings_names)
+    os_env = os.environ
+    for name in sorted(names):
+        env_name = as_env_var_name(name)
+        if env_name.lower() in os_env or env_name.upper() in os_env:
+            env_value = os_env.get(env_name.upper()) or os_env.get(env_name.lower())
+            if env_value:
+                env_vars[env_name] = env_value
 
-provider_installation {
- 
-  dev_overrides {
- 
-    "mongodb/mongodbatlas" = "REPO_PATH_TF_PROVIDER/bin"
- 
-  }
- 
-  direct {}
- 
-}
-"""
-def example_tf_cli_config_file(repo_path_tf_provider: Path) -> str:
-    return _dev_tfrc.replace("REPO_PATH_TF_PROVIDER", str(repo_path_tf_provider))
-
-
-_help_existing = dict(
-    TF_CLI_CONFIG_FILE="CLI_EXAMPLE",
-    AWS_PROFILE="",
-    AWS_REGION="",
-    MONGODB_ATLAS_ORG_ID="",
-    MONGODB_ATLAS_PRIVATE_KEY="",
-    MONGODB_ATLAS_PUBLIC_KEY="",
-)
-
-_all_keys = set(_help_existing.keys())
-
-
-def populate_help(repo_path_tf_provider: Path) -> dict[str, str]:
-    return {**_help_existing} | {"TF_CLI_CONFIG_FILE": example_tf_cli_config_file(repo_path_tf_provider)}
-
-def create_env_vars():
-    profile = Prompt.ask(
-        "What profile would you like to configure? (use empty for 'default')"
-    ) or "default"
-    logger.info(f"about to create a new profile={profile} ctrl+c to abort")
-    env_file_path = env_file_manual_profile(profile)
-    logger.info(f"will populate file: '{env_file_path}'")
-    existing_variables: dict[str, str] = {}
-    if env_file_path.exists():
-        existing_variables = {k:v for k,v in dotenv.dotenv_values(env_file_path).items() if v}
-    remaining_variables = _all_keys - existing_variables.keys()
-    while remaining_variables:
-        new_key, new_value = prompt_next_key_value(existing_variables)
-
-
-def prompt_next_key_value(existing_variables: dict[str, str]) -> tuple[str, str]:
-    # continue from here
-    raise NotImplementedError
-    
-
+    content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
+    path.write_text(content)
