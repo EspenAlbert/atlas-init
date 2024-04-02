@@ -33,28 +33,41 @@ variable "project_id" {
   type = string
 }
 
-variable "cluster_container_id" {
-  type = string
-}
 
 locals {
   account_id = data.aws_caller_identity.current.account_id
+}
+
+variable "skip_resources" {
+  type = bool
 }
 
 
 data "aws_caller_identity" "current" {}
 
 resource "aws_route" "peeraccess" {
+  count = var.skip_resources ? 0 : 1
+
   route_table_id            = var.main_route_table_id
   destination_cidr_block    = var.atlas_vpc_cidr
-  vpc_peering_connection_id = mongodbatlas_network_peering.aws_atlas.connection_id
-  depends_on                = [aws_vpc_peering_connection_accepter.peer]
+  vpc_peering_connection_id = mongodbatlas_network_peering.aws_atlas[0].connection_id
+  depends_on                = [aws_vpc_peering_connection_accepter.peer[0]]
 }
 
+resource "mongodbatlas_network_container" "this" {
+    count = var.skip_resources ? 0 : 1
+
+    project_id   		  = var.project_id
+    atlas_cidr_block  = var.atlas_vpc_cidr
+    provider_name		  = "AWS"
+    region_name			  = var.atlas_region
+}
 resource "mongodbatlas_network_peering" "aws_atlas" {
+  count = var.skip_resources ? 0 : 1
+
   accepter_region_name   = var.atlas_region
   project_id             = var.project_id
-  container_id           = var.cluster_container_id
+  container_id           = mongodbatlas_network_container.this[0].id
   provider_name          = "AWS"
   route_table_cidr_block = var.vpc_cidr_block
   vpc_id                 = var.vpc_id
@@ -62,14 +75,16 @@ resource "mongodbatlas_network_peering" "aws_atlas" {
 }
 
 resource "aws_vpc_peering_connection_accepter" "peer" {
-  vpc_peering_connection_id = mongodbatlas_network_peering.aws_atlas.connection_id
+  count = var.skip_resources ? 0 : 1
+
+  vpc_peering_connection_id = mongodbatlas_network_peering.aws_atlas[0].connection_id
   auto_accept               = true
 }
 
 resource "mongodbatlas_project_ip_access_list" "test" {
   project_id = var.project_id
   cidr_block = var.vpc_cidr_block
-  comment    = "cidr block for AWS VPC"
+  comment    = "cidr block for AWS VPC used by mongodbatlas_network_peering"
 }
 
 output "env_vars" {

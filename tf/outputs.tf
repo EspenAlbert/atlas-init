@@ -41,7 +41,7 @@ locals {
   
 
   env_vars_merged = merge(local.env_vars, local.modules_env_vars_flat, var.extra_env_vars)
-  env_vars_str = join("\n", [for key, value in local.env_vars_merged: "${key}=${value}"])
+  env_vars_str = join("\n", [for key, value in local.env_vars_merged: "${key}=${value}" if value != null])
 }
 
 output "links" {

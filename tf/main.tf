@@ -48,6 +48,7 @@ locals {
   use_aws_vpc = var.use_private_link || var.use_vpc_peering
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
+  use_cluster = var.cluster_config.name != ""
 }
 
 module "cfn" {
@@ -65,7 +66,7 @@ module "cfn" {
 
 module "cluster" {
   source = "./modules/cluster"
-  count = var.cluster_config.name != "" ? 1 : 0
+  count = local.use_cluster ? 1 : 0
 
   mongo_user = random_password.username.result
   mongo_password = random_password.password.result
@@ -83,6 +84,16 @@ module "aws_vpc" {
   aws_region = var.aws_region
 }
 
+resource "null_resource" "vpc_peering_precondition" {
+  count = var.use_vpc_peering ? 1 : 0
+  lifecycle {
+    precondition {
+      condition = local.use_cluster == false
+      error_message = "Cannot use a cluster when using vpc_peering since it will create the container_id for the project."
+    }
+  }
+}
+
 module "vpc_peering" {
   source = "./modules/vpc_peering"
 
@@ -92,7 +103,7 @@ module "vpc_peering" {
   main_route_table_id = module.aws_vpc[0].info.main_route_table_id
   atlas_region = local.atlas_region
   project_id = local.project_id
-  cluster_container_id = module.cluster[0].info.cluster_container_id
+  skip_resources = true
 }
 
 module "vpc_privatelink" {

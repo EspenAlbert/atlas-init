@@ -4,7 +4,6 @@ repo_aliases:
 test_suites:
 - name: network_peering
   vars: 
-    cluster_info_m10: true
     use_vpc_peering: true
   repo_go_packages:
     tf:
