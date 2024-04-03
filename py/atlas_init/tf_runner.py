@@ -13,11 +13,8 @@ logger = logging.getLogger(__name__)
 def get_tf_vars(
     settings: AtlasInitSettings, active_groups: list[TestSuit]
 ) -> dict[str, Any]:
-    tf_vars = (
-        sum((group.vars for group in active_groups), start=TerraformVars())
-        if len(active_groups) > 1
-        else active_groups[0].vars
-    )
+    tf_vars = TerraformVars()
+    tf_vars = sum((group.vars for group in active_groups), start=tf_vars)
     return {
         "atlas_public_key": settings.MONGODB_ATLAS_PUBLIC_KEY,
         "atlas_private_key": settings.MONGODB_ATLAS_PRIVATE_KEY,

@@ -92,6 +92,10 @@ def as_env_var_name(field_name: str) -> str:
     return f"{AtlasInitSettings.ENV_PREFIX}{field_name}".upper()
 
 
+class CwdIsNoRepoPathError(ValueError):
+    pass
+
+
 class AtlasInitSettings(ExternalSettings):
     ENV_PREFIX: ClassVar[str] = "ATLAS_INIT_"
     model_config = SettingsConfigDict(env_prefix=ENV_PREFIX)
@@ -121,7 +125,7 @@ class AtlasInitSettings(ExternalSettings):
             dotenv.load_dotenv(env_file_manual)
         else:
             try:
-                ext_settings = ExternalSettings()
+                ext_settings = ExternalSettings()  # type: ignore
                 settings = cls(**ext_settings.model_dump())
             except ValidationError as e:
                 logger.exception(e)
@@ -134,7 +138,7 @@ class AtlasInitSettings(ExternalSettings):
                 )
                 dump_manual_dotenv_from_env(env_file_manual)
                 return settings
-        ext_settings = ExternalSettings()
+        ext_settings = ExternalSettings()  # type: ignore
         return cls(**ext_settings.model_dump())
 
     @field_validator("test_suites", mode="after")
@@ -146,7 +150,6 @@ class AtlasInitSettings(ExternalSettings):
         self.command, self.command_args = validate_command_and_args(
             self.command, sys.argv
         )
-        assert self.repo_path_rel_path  # type: ignore
         self.out_dir = self.out_dir or str(self.profile_dir)
         self.cfn_region = self.cfn_region or self.AWS_REGION
         return self
@@ -163,7 +166,7 @@ class AtlasInitSettings(ExternalSettings):
             if (path / ".git").exists():
                 return path, "/".join(reversed(rel_path))
             rel_path.append(path.name)
-        raise ValueError("no repo path found from cwd")
+        raise CwdIsNoRepoPathError("no repo path found from cwd")
 
     @cached_property
     def config(self) -> AtlasInitConfig:

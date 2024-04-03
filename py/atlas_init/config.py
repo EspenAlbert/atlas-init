@@ -83,7 +83,10 @@ class AtlasInitConfig(Entity):
         raise ValueError(f"alias not found: {alias}")
 
     def active_test_suites(
-        self, alias: str, change_paths: Iterable[str], forced_test_suites: list[str]
+        self,
+        alias: str | None,
+        change_paths: Iterable[str],
+        forced_test_suites: list[str],
     ) -> list[TestSuit]:
         forced_suites = set(forced_test_suites)
         if forced_test_suites:
@@ -91,7 +94,8 @@ class AtlasInitConfig(Entity):
         return [
             suit
             for suit in self.test_suites
-            if suit.is_active(alias, change_paths) or suit.name in forced_suites
+            if suit.name in forced_suites
+            or (alias and suit.is_active(alias, change_paths))
         ]
 
     @model_validator(mode="after")

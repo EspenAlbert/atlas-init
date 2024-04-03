@@ -3,7 +3,7 @@ from shutil import copy
 
 from model_lib import dump
 
-from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings
+from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings, CwdIsNoRepoPathError
 from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
 from atlas_init.rich_log import configure_logging
@@ -16,18 +16,22 @@ def run():
     configure_logging()
     settings = AtlasInitSettings.safe_settings()
     config = settings.config
-    repo_path, rel_path = settings.repo_path_rel_path
-    repo_url_path = owner_project_name(repo_path)
-    repo_alias = config.repo_alias(repo_url_path)
-    logger.info(
-        f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}"
-    )
+    try:
+        repo_path, rel_path = settings.repo_path_rel_path
+    except CwdIsNoRepoPathError as e:
+        logger.warning(repr(e))
+        repo_path = repo_alias = rel_path = None
+        change_paths = []
+    else:
+        repo_url_path = owner_project_name(repo_path)
+        repo_alias = config.repo_alias(repo_url_path)
+        logger.info(
+            f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}"
+        )
+        change_paths = [rel_path]
     active_suites = config.active_test_suites(
-        repo_alias, [rel_path], settings.test_suites_parsed
+        repo_alias, change_paths, settings.test_suites_parsed
     )
-    if not active_suites:
-        logger.warning(f"no active groups for {rel_path}")
-        return
     logger.info(f"active_suites: {[s.name for s in active_suites]}")
     if settings.is_terraform_command:
         tf_vars = get_tf_vars(settings, active_suites)
@@ -43,6 +47,7 @@ def run():
             copy(settings.env_vars_generated, settings.env_vars_vs_code)
             logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
     elif settings.command == AtlasInitCommand.TEST_GO:
+        assert repo_alias and repo_path, "cwd must be a repo"
         sorted_suites = sorted(suite.name for suite in active_suites)
         logger.info(f"running go tests for {len(active_suites)} test-suites: {sorted_suites}")
         package_prefix = config.go_package_prefix(repo_alias)
