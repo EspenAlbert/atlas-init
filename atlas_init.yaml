@@ -1,0 +1,31 @@
+repo_aliases:
+    mongodb/terraform-provider-mongodbatlas: tf
+    mongodb/mongodbatlas-cloudformation-resources: cfn
+test_suites:
+- name: network_peering
+  vars: 
+    use_vpc_peering: true
+  repo_go_packages:
+    tf:
+    - 'internal/service/networkpeering'
+- name: network
+  vars: 
+    use_private_link: true
+  repo_go_packages:
+    tf:
+    - 'internal/service/privatelinkendpointservicedatafederationonlinearchive'
+- name: stream_connection
+  repo_go_packages: 
+    tf:
+    - 'internal/service/streamconnection'
+    cfn:
+    - 'cfn-resources/stream-connection'
+  vars:
+    cluster_info: true
+    stream_instance: true
+- name: search_index
+  repo_go_packages:
+    tf:
+    - 'internal/service/searchindex'
+  vars:
+    cluster_info: true
