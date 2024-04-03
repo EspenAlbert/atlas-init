@@ -1,26 +1,19 @@
 import logging
 from shutil import copy
-import sys
 
 from model_lib import dump
-from rich.logging import RichHandler
 
 from atlas_init.env_vars import AtlasInitCommand, AtlasInitSettings
 from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
+from atlas_init.rich_log import configure_logging
 from atlas_init.tf_runner import get_tf_vars, run_terraform
 
 logger = logging.getLogger(__name__)
 
 
 def run():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True)],
-    )
-
+    configure_logging()
     settings = AtlasInitSettings.safe_settings()
     config = settings.config
     repo_path, rel_path = settings.repo_path_rel_path

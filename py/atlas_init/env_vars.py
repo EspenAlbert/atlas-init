@@ -132,7 +132,7 @@ class AtlasInitSettings(ExternalSettings):
                 logger.warning(
                     f"env_file @ {env_file_manual} did not exist, populating it"
                 )
-                dump_manual_dotenv_from_env(settings, env_file_manual)
+                dump_manual_dotenv_from_env(env_file_manual)
                 return settings
         ext_settings = ExternalSettings()
         return cls(**ext_settings.model_dump())
