@@ -1,4 +1,4 @@
-# Atlas Init - A CLI tool for creating resources in MongoDB Atlas
+# Atlas Init - A CLI for developing with MongoDB Atlas
 
 Currently, used with
 - <https://github.com/mongodb/terraform-provider-mongodbatlas>
