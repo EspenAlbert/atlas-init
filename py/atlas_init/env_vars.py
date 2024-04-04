@@ -234,4 +234,5 @@ def dump_manual_dotenv_from_env(path: Path) -> None:
                 env_vars[env_name] = env_value
 
     content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
