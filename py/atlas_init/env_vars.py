@@ -9,7 +9,6 @@ from typing import Any, ClassVar, cast
 
 import dotenv
 from model_lib import field_names, parse_payload
-from model_lib.pydantic_utils import cls_defaults
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from zero_3rdparty.enum_utils import StrEnum
@@ -105,8 +104,8 @@ class AtlasInitSettings(ExternalSettings):
     cfn_profile: str = ""
     cfn_region: str = ""
     project_name: str
-    config_path: str = ""
     # useful when pip-installing
+    config_path: str = ""
     out_dir: str = ""
     skip_copy: bool = False
     test_suites: str = ""

@@ -5,6 +5,7 @@ from functools import lru_cache
 from boto3.session import Session
 import logging
 from mypy_boto3_cloudformation import CloudFormationClient
+from zero_3rdparty.iter_utils import flat_map, group_by_once
 
 from atlas_init.rich_log import configure_logging
 
@@ -13,6 +14,26 @@ REGIONS = "af-south-1,ap-east-1,ap-northeast-1,ap-northeast-2,ap-northeast-3,ap-
     ","
 )
 EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=timezone.utc)
+# based on: https://www.mongodb.com/docs/atlas/reference/amazon-aws/
+REGION_CONTINENT_PREFIXES = {
+    "Americas": ["us", "ca", "sa"],
+    "Asia Pacific": ["ap"],
+    "Europe": ["eu"],
+    "Middle East and Africa": ["me", "af", "il"],
+}
+REGION_PREFIX_CONTINENT = dict(
+    flat_map(
+        [
+            [(prefix, continent) for prefix in prefixes]
+            for continent, prefixes in REGION_CONTINENT_PREFIXES.items()
+        ]
+    )
+)
+
+
+def region_continent(region: str) -> str:
+    prefix = region.split("-", maxsplit=1)[0]
+    return REGION_PREFIX_CONTINENT.get(prefix, "UNKNOWN_CONTINENT")
 
 
 @lru_cache
@@ -84,8 +105,14 @@ def print_version_regions(type_name: str) -> None:
     if regions_with_no_version := version_regions.pop(None, []):
         logger.warning(f"no version for {type_name} found in {regions_with_no_version}")
     for version in sorted(version_regions.keys()):  # type: ignore
-        regions_comma_separated = ",".join(sorted(version_regions[version]))
-        logger.info(f"'{version}' is latest in {regions_comma_separated}")
+        regions = sorted(version_regions[version])
+        regions_comma_separated = ",".join(regions)
+        logger.info(f"'{version}' is latest in {regions_comma_separated}\ncontinents:")
+        for continent, cont_regions in group_by_once(
+            regions, key=region_continent
+        ).items():
+            continent_regions = ", ".join(sorted(cont_regions))
+            logger.info(f"continent={continent}: {continent_regions}")
 
 
 def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
@@ -104,9 +131,7 @@ def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
             version = f.result()
         except Exception as e:
             logger.exception(e)
-            logger.exception(
-                f"failed to find version in region = {region}, error 👆"
-            )
+            logger.exception(f"failed to find version in region = {region}, error 👆")
             continue
         version_regions[version].append(region)
     return version_regions
