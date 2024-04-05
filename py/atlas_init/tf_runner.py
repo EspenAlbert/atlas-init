@@ -28,16 +28,16 @@ def get_tf_vars(
     }
 
 
-def run_terraform(settings: AtlasInitSettings):
-    command = [
+def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
+    command_parts = [
         "terraform",
-        settings.command,
+        command,
         "-var-file",
         str(settings.tf_vars_path),
-        *settings.command_args,
+        *extra_args,
     ]
     is_ok = run_command_is_ok(
-        command,
+        command_parts,
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
         cwd=REPO_PATH / "tf",
         logger=logger,
