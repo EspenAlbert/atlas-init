@@ -7,3 +7,5 @@ dev.tfrc
 *.env
 *.env_manual
 profiles/default
+tf/modules/playground/
+tf/playground_caller.tf

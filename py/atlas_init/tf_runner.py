@@ -27,6 +27,9 @@ def get_tf_vars(
         **tf_vars.as_configs(),
     }
 
+class TerraformRunError(Exception):
+    pass
+
 
 def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
     command_parts = [
@@ -42,7 +45,8 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
         cwd=REPO_PATH / "tf",
         logger=logger,
     )
-    assert is_ok, "command failed"
+    if not is_ok:
+        raise TerraformRunError()
     if settings.skip_copy:
         return
     env_generated = settings.env_vars_generated

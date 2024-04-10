@@ -63,6 +63,10 @@ class TestSuit(Entity):
                 return True
         return False
 
+class RepoAliastNotFound(ValueError):
+    def __init__(self, name: str) -> None:
+        self.name = name
+        super().__init__(name)
 
 class AtlasInitConfig(Entity):
     test_suites: list[TestSuit] = Field(default_factory=list)
@@ -71,9 +75,7 @@ class AtlasInitConfig(Entity):
     def repo_alias(self, repo_url_path: str) -> str:
         alias = self.repo_aliases.get(repo_url_path)
         if alias is None:
-            raise ValueError(
-                f"couldn't find {repo_url_path} in the config.repo_aliases"
-            )
+            raise RepoAliastNotFound(repo_url_path)
         return alias
 
     def go_package_prefix(self, alias: str) -> str:

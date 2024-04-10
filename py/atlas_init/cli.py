@@ -4,7 +4,7 @@ import typer
 from shutil import copy
 from model_lib import dump
 
-from atlas_init.config import TestSuit
+from atlas_init.config import RepoAliastNotFound, TestSuit
 from atlas_init.env_vars import (
     AtlasInitSettings,
     CwdIsNoRepoPathError,
@@ -12,7 +12,7 @@ from atlas_init.env_vars import (
 from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
 from atlas_init.rich_log import configure_logging
-from atlas_init.tf_runner import get_tf_vars, run_terraform
+from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=False)
@@ -53,7 +53,7 @@ def apply():
     logger.info("in the apply command")
     try:
         suites = active_suites()
-    except CwdIsNoRepoPathError as e:
+    except (CwdIsNoRepoPathError, RepoAliastNotFound) as e:
         logger.warning(repr(e))
         suites = []
     
@@ -64,7 +64,11 @@ def apply():
     logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
     tf_vars_path.write_text(tf_vars_str)
 
-    run_terraform(settings, "apply", _extra_args)
+    try:
+        run_terraform(settings, "apply", _extra_args)
+    except TerraformRunError as e:
+        logger.error(repr(e))
+        return
   
     if settings.env_vars_generated.exists():
         copy(settings.env_vars_generated, settings.env_vars_vs_code)
