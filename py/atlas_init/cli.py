@@ -109,6 +109,7 @@ def test_go():
     logger.info(
         f"running go tests for {len(suites)} test-suites: {sorted_suites}"
     )
+    raise NotImplementedError("fix me later!")
     # package_prefix = settings.config.go_package_prefix(repo_alias)
     # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
 
