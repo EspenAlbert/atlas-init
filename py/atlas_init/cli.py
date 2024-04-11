@@ -16,6 +16,7 @@ from atlas_init.git_utils import owner_project_name
 from atlas_init.go import run_go_tests
 from atlas_init.rich_log import configure_logging
 from atlas_init.schema import (
+    download_admin_api,
     dump_generator_config,
     parse_py_terraform_schema,
     update_provider_code_spec,
@@ -142,7 +143,11 @@ def schema():
     generator_config_path = SCHEMA_DIR / "generator_config.yaml"
     generator_config_path.write_text(generator_config)
     provider_code_spec_path = SCHEMA_DIR / "provider-code-spec.json"
-    admin_api_path = SCHEMA_DIR / "admin_api.json"
+    admin_api_path = SCHEMA_DIR / "admin_api.yaml"
+    if admin_api_path.exists():
+        logger.warning(f"using existing admin api @ {admin_api_path}")
+    else:
+        download_admin_api(admin_api_path)
 
     spec_gen_bin = which("tfplugingen-openapi")
     if not spec_gen_bin:

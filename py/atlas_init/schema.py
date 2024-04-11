@@ -1,8 +1,12 @@
+import logging
 from pathlib import Path
 from typing import Literal
 
 import pydantic
 from model_lib import Entity, dump, field_names, parse_model
+import requests
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderSpecMapAttribute(Entity):
@@ -85,3 +89,14 @@ def update_provider_code_spec(
                 extra.dump_provider_code_spec() for extra in extra_spec_attributes
             )
     return dump(spec, "json")
+
+
+# reusing url from terraform-provider-mongodbatlas/scripts/schema-scaffold.sh
+ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/atlas-sdk-go/main/openapi/atlas-api-transformed.yaml"
+
+
+def download_admin_api(dest: Path) -> None:
+    logger.info(f"downloading admin api to {dest} from {ADMIN_API_URL}")
+    response = requests.get(ADMIN_API_URL)
+    response.raise_for_status()
+    dest.write_bytes(response.content)
