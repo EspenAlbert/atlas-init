@@ -1,4 +1,4 @@
-from atlas_init.cli import run
+from atlas_init.cli import typer_main
 
 
-run()
+typer_main()

@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 import dotenv
 from model_lib import field_names, parse_payload
-from pydantic import Field, ValidationError, field_validator, model_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from zero_3rdparty.enum_utils import StrEnum
 
 from atlas_init.config import AtlasInitConfig
 
@@ -26,46 +24,6 @@ def as_profile_dir(name: str) -> Path:
 
 def env_file_manual_profile(name: str) -> Path:
     return as_profile_dir(name) / ".env_manual"
-
-
-class AtlasInitCommand(StrEnum):
-    INIT = "init"
-    APPLY = "apply"
-    DESTROY = "destroy"
-    TEST_GO = "test_go"
-
-    @classmethod
-    def is_terraform_command(cls, value: AtlasInitCommand) -> bool:
-        return value in {cls.INIT, cls.APPLY, cls.DESTROY}
-
-
-SUPPORTED_CLI_COMMANDS = list(AtlasInitCommand)
-
-
-def validate_command_and_args(
-    command: AtlasInitCommand | None, sys_args: list[str]
-) -> tuple[AtlasInitCommand, list[str]]:
-    try:
-        module_index = next(i for i, arg in enumerate(sys_args) if "atlas_init" in arg)
-    except StopIteration:
-        if "pytest" in sys_args[0]:
-            module_index = len(sys_args)
-        else:
-            raise ValueError(f"unable to find atlas_init in the sys_args! {sys_args}")
-    command_index = module_index + 1
-    if command_index < len(sys_args):
-        command_cli, *command_args = sys_args[command_index:]
-        if command_cli not in SUPPORTED_CLI_COMMANDS:
-            raise ValueError(
-                f"unknown command: {command_cli}, expected on of {SUPPORTED_CLI_COMMANDS}"
-            )
-        command = cast(AtlasInitCommand, command_cli)
-    else:
-        command_args = []
-    if command is None:
-        command = AtlasInitCommand.INIT
-        logger.warning(f"using default command: {command}")
-    return command, command_args
 
 
 class ExternalSettings(BaseSettings):
@@ -100,7 +58,6 @@ class AtlasInitSettings(ExternalSettings):
     model_config = SettingsConfigDict(env_prefix=ENV_PREFIX)
 
     profile: str = "default"
-    command: AtlasInitCommand = AtlasInitCommand.INIT
     cfn_profile: str = ""
     cfn_region: str = ""
     project_name: str
@@ -111,7 +68,6 @@ class AtlasInitSettings(ExternalSettings):
     test_suites: str = ""
 
     branch_name: str = ""
-    command_args: list[str] = Field(default_factory=list)
 
     @classmethod
     def safe_settings(cls, **kwargs):
@@ -146,16 +102,9 @@ class AtlasInitSettings(ExternalSettings):
 
     @model_validator(mode="after")
     def post_init(self):
-        self.command, self.command_args = validate_command_and_args(
-            self.command, sys.argv
-        )
         self.out_dir = self.out_dir or str(self.profile_dir)
         self.cfn_region = self.cfn_region or self.AWS_REGION
         return self
-
-    @property
-    def is_terraform_command(self) -> bool:
-        return AtlasInitCommand.is_terraform_command(self.command)
 
     @cached_property
     def repo_path_rel_path(self) -> tuple[Path, str]:
