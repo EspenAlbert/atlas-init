@@ -18,6 +18,10 @@ REPO_PATH = Path(__file__).parent.parent.parent
 CONFIG_PATH = REPO_PATH / "atlas_init.yaml"
 
 
+def current_dir():
+    return Path(os.path.curdir).absolute()
+
+
 def as_profile_dir(name: str) -> Path:
     return REPO_PATH / f"profiles/{name}"
 
@@ -108,7 +112,7 @@ class AtlasInitSettings(ExternalSettings):
 
     @cached_property
     def repo_path_rel_path(self) -> tuple[Path, str]:
-        cwd = Path(os.path.curdir).absolute()
+        cwd = current_dir()
         rel_path = []
         for path in [cwd, *cwd.parents]:
             if (path / ".git").exists():

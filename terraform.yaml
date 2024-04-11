@@ -1,0 +1,30 @@
+resources:
+- name: project
+  provider_spec_attributes:
+    - name: tags
+      map:
+        computed_optional_required: computed_optional
+        element_type:
+          string: {}
+        description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project. Maximum 50 tags
+  schema:
+    ignores:
+      - pretty
+      - envelope
+      - links
+      - tags
+    attributes:
+      aliases:
+        groupId: id
+  create:
+    path: /api/atlas/v2/groups
+    method: POST
+  read:
+    path: /api/atlas/v2/groups/{groupId}
+    method: GET
+  update:
+    path: /api/atlas/v2/groups/{groupId}
+    method: PATCH
+  delete:
+    path: /api/atlas/v2/groups/{groupId}
+    method: DELETE
