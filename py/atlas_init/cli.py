@@ -176,8 +176,9 @@ def schema():
         logger.critical("please install 'tfplugingen-framework'")
         return
     go_code_output = SCHEMA_DIR / "internal"
-    logger.warning(f"cleaning go code dir: {go_code_output}")
-    clean_dir(go_code_output, recreate=True)
+    if go_code_output.exists():
+        logger.warning(f"cleaning go code dir: {go_code_output}")
+        clean_dir(go_code_output, recreate=True)
 
     plugin_gen_ok = run_command_is_ok(
         [

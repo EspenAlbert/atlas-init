@@ -17,10 +17,10 @@ def run_command_is_ok(
         cwd=cwd,
         env=env,
     )
-    logger.info(f"exit_code of command={exit_code}: '{command_str}'")
     is_ok = exit_code == 0
     if is_ok:
-        logger.info("success 🥳")
+        logger.info(f"success 🥳 '{command_str}'")
+        logger.info("")
     else:
-        logger.error("error 💥")
+        logger.error(f"error 💥, exit code={exit_code}, '{command_str}'")
     return is_ok
