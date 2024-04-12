@@ -5,7 +5,7 @@ from typing import Any
 
 from atlas_init.config import TerraformVars, TestSuit
 from atlas_init.env_vars import REPO_PATH, AtlasInitSettings
-from atlas_init.util import run_command_is_ok
+from atlas_init.run import run_command_is_ok
 
 logger = logging.getLogger(__name__)
 

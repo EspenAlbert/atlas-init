@@ -1,8 +1,8 @@
 import logging
-import os
+import sys
 from typing import TypeVar
 import typer
-from shutil import copy, which
+from shutil import copy
 from model_lib import dump
 from zero_3rdparty.file_utils import clean_dir
 
@@ -13,7 +13,6 @@ from atlas_init.env_vars import (
     CwdIsNoRepoPathError,
 )
 from atlas_init.git_utils import owner_project_name
-from atlas_init.go import run_go_tests
 from atlas_init.rich_log import configure_logging
 from atlas_init.schema import (
     download_admin_api,
@@ -22,7 +21,7 @@ from atlas_init.schema import (
     update_provider_code_spec,
 )
 from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
-from atlas_init.util import run_command_is_ok
+from atlas_init.run import run_binary_command_is_ok
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=False)
@@ -149,49 +148,34 @@ def schema():
     else:
         download_admin_api(admin_api_path)
 
-    spec_gen_bin = which("tfplugingen-openapi")
-    if not spec_gen_bin:
-        logger.critical("please install 'tfplugingen-openapi'")
-        return
-    spec_ok = run_command_is_ok(
-        [
-            spec_gen_bin,
-            *f"generate --config {generator_config_path.name} --output {provider_code_spec_path.name} {admin_api_path.name}".split(),
-        ],
-        env={**os.environ},
+    if not run_binary_command_is_ok(
         cwd=SCHEMA_DIR,
+        binary_name="tfplugingen-openapi",
+        command=f"generate --config {generator_config_path.name} --output {provider_code_spec_path.name} {admin_api_path.name}",
         logger=logger,
-    )
-    if not spec_ok:
+    ):
         logger.critical("failed to generate spec")
-        return
+        sys.exit(1)
     new_provider_spec = update_provider_code_spec(
         schema_parsed, provider_code_spec_path
     )
     provider_code_spec_path.write_text(new_provider_spec)
     logger.info(f"updated {provider_code_spec_path.name} ✅ ")
 
-    plugin_gen_bin = which("tfplugingen-framework")
-    if not plugin_gen_bin:
-        logger.critical("please install 'tfplugingen-framework'")
-        return
     go_code_output = SCHEMA_DIR / "internal"
     if go_code_output.exists():
         logger.warning(f"cleaning go code dir: {go_code_output}")
         clean_dir(go_code_output, recreate=True)
-
-    plugin_gen_ok = run_command_is_ok(
-        [
-            plugin_gen_bin,
-            *f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}".split(),
-        ],
-        env={**os.environ},
+    
+    if not run_binary_command_is_ok(
         cwd=SCHEMA_DIR,
+        binary_name="tfplugingen-framework",
+        command=f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
         logger=logger,
-    )
-    if not plugin_gen_ok:
+    ):
         logger.critical("failed to generate plugin schema")
-        return
+        sys.exit(1)
+    
     logger.info(f"new files generated to {go_code_output} ✅")
     for go_file in sorted(go_code_output.rglob("*.go")):
         logger.info(f"new file @ '{go_file}'")

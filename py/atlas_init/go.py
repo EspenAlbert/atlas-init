@@ -6,7 +6,7 @@ import dotenv
 
 from atlas_init.config import TestSuit
 from atlas_init.env_vars import AtlasInitSettings
-from atlas_init.util import run_command_is_ok
+from atlas_init.run import run_command_is_ok
 
 logger = logging.getLogger(__name__)
 
