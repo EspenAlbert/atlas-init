@@ -1,41 +1,58 @@
 import logging
+import sys
 from typing import TypeVar
 import typer
 from shutil import copy
 from model_lib import dump
+from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.config import RepoAliastNotFound, TestSuit
 from atlas_init.env_vars import (
+    REPO_PATH,
     AtlasInitSettings,
     CwdIsNoRepoPathError,
 )
 from atlas_init.git_utils import owner_project_name
-from atlas_init.go import run_go_tests
 from atlas_init.rich_log import configure_logging
+from atlas_init.schema import (
+    download_admin_api,
+    dump_generator_config,
+    parse_py_terraform_schema,
+    update_provider_code_spec,
+)
 from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
+from atlas_init.run import run_binary_command_is_ok
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=False)
 
 T = TypeVar("T")
 _extra_args: list[str] = []
-settings: AtlasInitSettings = None # type: ignore
+settings: AtlasInitSettings = None  # type: ignore
 
 
 def tf_command(f: T) -> T:
-    func_name: str = f.__name__ # type: ignore
-    @app.command(name=func_name, context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+    func_name: str = f.__name__  # type: ignore
+
+    @app.command(
+        name=func_name,
+        context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    )
     def inner(ctx: typer.Context):
         app.command
         global settings
         _extra_args.extend(ctx.args)
         settings = _settings()
-        return f() # type: ignore
+        return f()  # type: ignore
 
-    return inner # type: ignore
+    return inner  # type: ignore
+
 
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context, verbose: bool = typer.Option(False, help="use --verbose to get more output")):
+def main(
+    ctx: typer.Context,
+    verbose: bool = typer.Option(False, help="use --verbose to get more output"),
+):
     command = ctx.invoked_subcommand
     logger.info(f"in the app callback, verbose: {verbose}, command: {command}")
     if command is None:
@@ -47,6 +64,7 @@ def init():
     logger.info(f"in the init command: {_extra_args}")
     run_terraform(settings, "init", _extra_args)
 
+
 @tf_command
 def apply():
     logger.info(f"apply extra args: {_extra_args}")
@@ -56,7 +74,7 @@ def apply():
     except (CwdIsNoRepoPathError, RepoAliastNotFound) as e:
         logger.warning(repr(e))
         suites = []
-    
+
     tf_vars = get_tf_vars(settings, suites)
     tf_vars_path = settings.tf_vars_path
     tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
@@ -69,10 +87,11 @@ def apply():
     except TerraformRunError as e:
         logger.error(repr(e))
         return
-  
+
     if settings.env_vars_generated.exists():
         copy(settings.env_vars_generated, settings.env_vars_vs_code)
         logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
+
 
 @tf_command
 def destroy():
@@ -102,16 +121,64 @@ def active_suites() -> list[TestSuit]:
     logger.info(f"active_suites: {[s.name for s in active_suites]}")
     return active_suites
 
+
 @app.command()
 def test_go():
     suites = active_suites()
     sorted_suites = sorted(suite.name for suite in suites)
-    logger.info(
-        f"running go tests for {len(suites)} test-suites: {sorted_suites}"
-    )
+    logger.info(f"running go tests for {len(suites)} test-suites: {sorted_suites}")
     raise NotImplementedError("fix me later!")
     # package_prefix = settings.config.go_package_prefix(repo_alias)
     # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
+
+
+@app.command()
+def schema():
+    SCHEMA_DIR = REPO_PATH / "schema"
+    SCHEMA_DIR.mkdir(exist_ok=True)
+
+    schema_parsed = parse_py_terraform_schema(REPO_PATH / "terraform.yaml")
+    generator_config = dump_generator_config(schema_parsed)
+    generator_config_path = SCHEMA_DIR / "generator_config.yaml"
+    generator_config_path.write_text(generator_config)
+    provider_code_spec_path = SCHEMA_DIR / "provider-code-spec.json"
+    admin_api_path = SCHEMA_DIR / "admin_api.yaml"
+    if admin_api_path.exists():
+        logger.warning(f"using existing admin api @ {admin_api_path}")
+    else:
+        download_admin_api(admin_api_path)
+
+    if not run_binary_command_is_ok(
+        cwd=SCHEMA_DIR,
+        binary_name="tfplugingen-openapi",
+        command=f"generate --config {generator_config_path.name} --output {provider_code_spec_path.name} {admin_api_path.name}",
+        logger=logger,
+    ):
+        logger.critical("failed to generate spec")
+        sys.exit(1)
+    new_provider_spec = update_provider_code_spec(
+        schema_parsed, provider_code_spec_path
+    )
+    provider_code_spec_path.write_text(new_provider_spec)
+    logger.info(f"updated {provider_code_spec_path.name} ✅ ")
+
+    go_code_output = SCHEMA_DIR / "internal"
+    if go_code_output.exists():
+        logger.warning(f"cleaning go code dir: {go_code_output}")
+        clean_dir(go_code_output, recreate=True)
+    
+    if not run_binary_command_is_ok(
+        cwd=SCHEMA_DIR,
+        binary_name="tfplugingen-framework",
+        command=f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
+        logger=logger,
+    ):
+        logger.critical("failed to generate plugin schema")
+        sys.exit(1)
+    
+    logger.info(f"new files generated to {go_code_output} ✅")
+    for go_file in sorted(go_code_output.rglob("*.go")):
+        logger.info(f"new file @ '{go_file}'")
 
 
 def typer_main():

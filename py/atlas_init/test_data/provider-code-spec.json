@@ -1,0 +1,154 @@
+{
+	"provider": {
+		"name": "mongodbatlas"
+	},
+	"resources": [
+		{
+			"name": "project",
+			"schema": {
+				"attributes": [
+					{
+						"name": "cluster_count",
+						"int64": {
+							"computed_optional_required": "computed_optional",
+							"description": "Quantity of MongoDB Cloud clusters deployed in this project."
+						}
+					},
+					{
+						"name": "created",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Date and time when MongoDB Cloud created this project. This parameter expresses its value in the ISO 8601 timestamp format in UTC."
+						}
+					},
+					{
+						"name": "id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Unique 24-hexadecimal digit string that identifies the MongoDB Cloud project.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(24, 24)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^([a-f0-9]{24})$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "name",
+						"string": {
+							"computed_optional_required": "required",
+							"description": "Human-readable label that identifies the project included in the MongoDB Cloud organization.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(1, 64)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^[\\\\p{L}\\\\p{N}\\\\-_.(),:\u0026@+']{1,64}$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "org_id",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"description": "Unique 24-hexadecimal digit string that identifies the MongoDB Cloud organization to which the project belongs.",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.LengthBetween(24, 24)"
+									}
+								},
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "regexp"
+											},
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^([a-f0-9]{24})$\"), \"\")"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "region_usage_restrictions",
+						"string": {
+							"computed_optional_required": "computed_optional",
+							"default": {
+								"static": "COMMERCIAL_FEDRAMP_REGIONS_ONLY"
+							},
+							"description": "Applies to Atlas for Government only.\n\nIn Commercial Atlas, this field will be rejected in requests and missing in responses.\n\nThis field sets restrictions on available regions in the project.\n\n| Value                             | Available Regions |\n|-----------------------------------|------------|\n| `COMMERCIAL_FEDRAMP_REGIONS_ONLY` | Only allows deployments in FedRAMP Moderate regions.|\n| `GOV_REGIONS_ONLY`                | Only allows deployments in GovCloud regions.|",
+							"validators": [
+								{
+									"custom": {
+										"imports": [
+											{
+												"path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+											}
+										],
+										"schema_definition": "stringvalidator.OneOf(\n\"COMMERCIAL_FEDRAMP_REGIONS_ONLY\",\n\"GOV_REGIONS_ONLY\",\n)"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "with_default_alerts_settings",
+						"bool": {
+							"computed_optional_required": "computed_optional",
+							"description": "Flag that indicates whether to create the project with default alert settings."
+						}
+					}
+				]
+			}
+		}
+	],
+	"version": "0.1"
+}

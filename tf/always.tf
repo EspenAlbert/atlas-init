@@ -32,6 +32,11 @@ locals {
 resource "mongodbatlas_project" "project" {
   name   = var.project_name
   org_id = var.org_id
+  lifecycle {
+    ignore_changes = [ 
+      tags["name"]
+     ]
+  }
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
