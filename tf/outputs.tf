@@ -5,6 +5,7 @@ locals {
     aws_vpc = try(module.aws_vpc[0].info, {})
     stream_instance = try(module.stream_instance[0].info, {})
     vpc_peering = try(module.vpc_peering[0].info, {})
+    project_extra = try(module.project_extra[0].info, {})
   }
 
   modules_env_vars = {
@@ -13,6 +14,7 @@ locals {
     aws_vpc = try(module.aws_vpc[0].env_vars, {})
     stream_instance = try(module.stream_instance[0].env_vars, {})
     vpc_peering = try(module.vpc_peering[0].env_vars, {})
+    project_extra = try(module.project_extra[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id
@@ -36,6 +38,8 @@ locals {
     # used by cfn
     PROJECT_NAME=var.project_name
     MONGODB_ATLAS_PROFILE=var.cfn_config.profile
+    MONGODB_ATLAS_PUBLIC_API_KEY=var.atlas_public_key
+    MONGODB_ATLAS_PRIVATE_API_KEY=var.atlas_private_key
     TF_ACC=1
   }
   

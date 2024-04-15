@@ -68,7 +68,7 @@ module "cluster" {
   source = "./modules/cluster"
   count = local.use_cluster ? 1 : 0
 
-  mongo_user = random_password.username.result
+  mongo_user = local.mongodb_username
   mongo_password = random_password.password.result
   project_id = local.project_id
   cluster_name = var.cluster_config.name
@@ -125,4 +125,14 @@ module "stream_instance" {
   
   project_id = local.project_id
   instance_name = var.stream_instance_config.name
+}
+
+module "project_extra" {
+  source = "./modules/project_extra"
+
+  count = var.use_project_extra ? 1 : 0
+
+  org_id = var.org_id
+  id_suffix = local.mongodb_username
+  
 }

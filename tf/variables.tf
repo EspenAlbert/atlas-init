@@ -76,6 +76,12 @@ variable "use_vpc_peering" {
   
 }
 
+variable "use_project_extra" {
+  type = bool
+  default = false
+}
+
+
 variable "extra_env_vars" {
   default = {}
   type = map(string)

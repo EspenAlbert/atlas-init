@@ -16,6 +16,7 @@ class TerraformVars(Entity):
     stream_instance: bool = False
     use_private_link: bool = False
     use_vpc_peering: bool = False
+    use_project_extra: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
@@ -35,6 +36,8 @@ class TerraformVars(Entity):
             config["use_private_link"] = True
         if self.use_vpc_peering:
             config["use_vpc_peering"] = True
+        if self.use_project_extra:
+            config["use_project_extra"] = True
         if self.stream_instance:
             config["stream_instance_config"] = {"name": "atlas-init"}
         return config
