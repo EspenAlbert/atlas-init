@@ -9,7 +9,7 @@ from typing import Annotated, TypeAlias, TypeVar
 from pydantic import AfterValidator
 import typer
 from model_lib import dump, parse_payload
-from zero_3rdparty.file_utils import clean_dir
+from zero_3rdparty.file_utils import clean_dir, iter_paths
 
 from atlas_init.cli_args import SDK_VERSION_HELP, SdkVersion, SdkVersionUpgrade
 from atlas_init.config import RepoAliasNotFound
@@ -218,7 +218,7 @@ def sdk_upgrade(old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP), new: Sd
     replace_out = f"go.mongodb.org/atlas-sdk/{new}/admin"
 
     change_count = 0
-    for path in repo_path.rglob("*.go"):
+    for path in iter_paths(repo_path, "*.go", ".mockery.yaml"):
         text_old = path.read_text()
         if replace_in not in text_old:
             continue
