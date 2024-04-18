@@ -81,7 +81,10 @@ variable "use_project_extra" {
   default = false
 }
 
-
+variable "use_aws_vpc" {
+  type = bool
+  default = false
+}
 variable "extra_env_vars" {
   default = {}
   type = map(string)

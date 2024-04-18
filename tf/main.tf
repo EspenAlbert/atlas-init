@@ -45,7 +45,7 @@ locals {
       Team = "api-x-integrations"
       Owner = "terraform-atlas-init"
     }
-  use_aws_vpc = var.use_private_link || var.use_vpc_peering
+  use_aws_vpc = var.use_private_link || var.use_vpc_peering || var.use_aws_vpc
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
   use_cluster = var.cluster_config.name != ""
