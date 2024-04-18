@@ -11,7 +11,7 @@ import typer
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import clean_dir
 
-from atlas_init.cli_args import SDK_VERSION_HELP, SdkVersion
+from atlas_init.cli_args import SDK_VERSION_HELP, SdkVersion, SdkVersionUpgrade
 from atlas_init.config import RepoAliasNotFound
 from atlas_init.constants import GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
 from atlas_init.env_vars import (
@@ -210,6 +210,7 @@ def schema_optional_only():
 @app_command()
 def sdk_upgrade(old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP), new: SdkVersion = typer.Argument(help=SDK_VERSION_HELP)):
     settings = init_settings()
+    SdkVersionUpgrade(old=old, new=new)
     repo_path, _ = settings.repo_path_rel_path
     logger.info(f"bumping from {old} -> {new} @ {repo_path}")
 
