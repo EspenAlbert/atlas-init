@@ -38,6 +38,6 @@ resource "mongodbatlas_teams" "project_team" {
 output "env_vars" {
   value = {
     MONGODB_ATLAS_TEAM_ID = mongodbatlas_teams.project_team.team_id
-    MONGODB_ATLAS_ORG_API_KEY_ID = mongodbatlas_api_key.project_key.id
+    MONGODB_ATLAS_ORG_API_KEY_ID = mongodbatlas_api_key.project_key.api_key_id
   }
 }
