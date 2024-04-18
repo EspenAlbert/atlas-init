@@ -155,7 +155,7 @@ def schema():
 
 
 @app_command()
-def cfn_inputs(skip_samples: bool = typer.Option(default=False)):
+def cfn_inputs(skip_samples: bool = typer.Option(default=False), single_input: int = typer.Option(0, "--input", "-i", help="keep only input_X files")):
     settings = init_settings()
     suites = active_suites(settings)
     assert len(suites) == 1, "no test suit found"
@@ -176,7 +176,14 @@ def cfn_inputs(skip_samples: bool = typer.Option(default=False)):
     log_group_name = f"mongodb-atlas-{cwd.name}-logs"
     if not skip_samples:
         clean_dir(samples_dir)
+    expected_input = ""
+    if single_input:
+        logger.warning(f"will only use input_{single_input}")
+        expected_input = f"inputs_{single_input}"
     for file in sorted(inputs_dir.glob("*.json")):
+        if single_input and not file.name.startswith(expected_input):
+            file.unlink()
+            continue
         logger.info(f"input exist at inputs/{file.name} ✅")
         if skip_samples:
             continue
@@ -194,7 +201,12 @@ def cfn_inputs(skip_samples: bool = typer.Option(default=False)):
                 "json",
             )
             samples_file.write_text(new_json)
-
+    if single_input:
+        for file in sorted(inputs_dir.glob("*.json")):
+            new_name = file.name.replace(expected_input, "inputs_1")
+            new_filename = inputs_dir / new_name
+            file.rename(new_filename)
+            logger.info(f"renamed from {file} -> {new_filename}")
 
 @app_command()
 def schema_optional_only():
@@ -202,10 +214,6 @@ def schema_optional_only():
     repo_path, _ = settings.repo_path_rel_path
     assert owner_project_name(repo_path) == GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
     log_optional_only(repo_path)
-
-
-
-
 
 @app_command()
 def sdk_upgrade(old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP), new: SdkVersion = typer.Argument(help=SDK_VERSION_HELP)):
