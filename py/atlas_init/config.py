@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+from pathlib import Path
 from typing import Any, Iterable
 
 from model_lib import Entity
 from pydantic import Field, model_validator
+
+from atlas_init.git_utils import owner_project_name
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +46,7 @@ class TerraformVars(Entity):
         return config
 
 
-class TestSuit(Entity):
+class TestSuite(Entity):
     name: str
     sequential_tests: bool = False
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)
@@ -66,19 +69,29 @@ class TestSuit(Entity):
                 return True
         return False
 
-class RepoAliastNotFound(ValueError):
+    def cwd_is_repo_go_pkg(self, cwd: Path, repo_alias: str) -> bool:
+        alias_packages = self.repo_go_packages[repo_alias]
+        for pkg_path in alias_packages:
+            if str(cwd).endswith(pkg_path):
+                return True
+        logger.warning(f"no go package found for repo {repo_alias} in {cwd}")
+        return False
+
+
+class RepoAliasNotFound(ValueError):
     def __init__(self, name: str) -> None:
         self.name = name
         super().__init__(name)
 
+
 class AtlasInitConfig(Entity):
-    test_suites: list[TestSuit] = Field(default_factory=list)
+    test_suites: list[TestSuite] = Field(default_factory=list)
     repo_aliases: dict[str, str] = Field(default_factory=dict)
 
     def repo_alias(self, repo_url_path: str) -> str:
         alias = self.repo_aliases.get(repo_url_path)
         if alias is None:
-            raise RepoAliastNotFound(repo_url_path)
+            raise RepoAliasNotFound(repo_url_path)
         return alias
 
     def go_package_prefix(self, alias: str) -> str:
@@ -92,7 +105,7 @@ class AtlasInitConfig(Entity):
         alias: str | None,
         change_paths: Iterable[str],
         forced_test_suites: list[str],
-    ) -> list[TestSuit]:
+    ) -> list[TestSuite]:
         forced_suites = set(forced_test_suites)
         if forced_test_suites:
             logger.warning(f"using forced test suites: {forced_test_suites}")
@@ -116,3 +129,23 @@ class AtlasInitConfig(Entity):
         if missing_aliases:
             raise ValueError(f"repo aliases not found: {missing_aliases}")
         return self
+
+
+def active_suites(
+    config: AtlasInitConfig,
+    repo_path: Path,
+    cwd_rel_path: str,
+    forced_test_suites: list[str],
+) -> list[TestSuite]:
+    repo_url_path = owner_project_name(repo_path)
+    repo_alias = config.repo_alias(repo_url_path)
+    logger.info(
+        f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}"
+    )
+    change_paths = [cwd_rel_path]
+
+    active_suites = config.active_test_suites(
+        repo_alias, change_paths, forced_test_suites
+    )
+    logger.info(f"active_suites: {[s.name for s in active_suites]}")
+    return active_suites

@@ -11,7 +11,11 @@ from model_lib import field_names, parse_payload
 from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from atlas_init.config import AtlasInitConfig
+from atlas_init.config import (
+    AtlasInitConfig,
+    TestSuite,
+    active_suites as config_active_suites,
+)
 
 logger = logging.getLogger(__name__)
 REPO_PATH = Path(__file__).parent.parent.parent
@@ -142,12 +146,19 @@ class AtlasInitSettings(ExternalSettings):
     def manual_env_vars(self) -> dict[str, str]:
         env_manual_path = self.env_file_manual
         if env_manual_path.exists():
-            return {k: v for k, v in dotenv.dotenv_values(env_manual_path).items() if v}
+            return load_dotenv(env_manual_path)
         return {}
 
     @property
     def env_vars_generated(self) -> Path:
         return self.profile_dir / ".env-generated"
+
+    def load_env_vars_generated(self) -> dict[str, str]:
+        env_path = self.env_vars_generated
+        assert (
+            env_path.exists()
+        ), f"no env-vars exist {env_path} have you forgotten apply?"
+        return load_dotenv(env_path)
 
     @property
     def env_vars_vs_code(self) -> Path:
@@ -173,6 +184,10 @@ class AtlasInitSettings(ExternalSettings):
         return {}
 
 
+def load_dotenv(env_path: Path) -> dict[str, str]:
+    return {k: v for k, v in dotenv.dotenv_values(env_path).items() if v}
+
+
 def dump_manual_dotenv_from_env(path: Path) -> None:
     env_vars: dict[str, str] = {}
     names = field_names(AtlasInitSettings)
@@ -189,3 +204,10 @@ def dump_manual_dotenv_from_env(path: Path) -> None:
     content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
+
+
+def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
+    repo_path, cwd_rel_path = settings.repo_path_rel_path
+    return config_active_suites(
+        settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed
+    )

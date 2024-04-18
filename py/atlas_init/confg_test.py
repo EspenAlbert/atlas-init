@@ -1,4 +1,4 @@
-from atlas_init.config import TerraformVars, TestSuit
+from atlas_init.config import TerraformVars, TestSuite
 
 
 def test_TerraformVars_add():
@@ -12,7 +12,7 @@ def test_TerraformVars_add():
 
 
 def test_ChangeGroup():
-    group = TestSuit(
+    group = TestSuite(
         name="g1", repo_go_packages={"tf": ["internal/service/streamconnection"]}
     )
     assert group.is_active(

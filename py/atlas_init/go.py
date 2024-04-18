@@ -4,7 +4,7 @@ from pathlib import Path
 
 import dotenv
 
-from atlas_init.config import TestSuit
+from atlas_init.config import TestSuite
 from atlas_init.env_vars import AtlasInitSettings
 from atlas_init.run import run_command_is_ok
 
@@ -16,7 +16,7 @@ def run_go_tests(
     repo_alias: str,
     package_prefix: str,
     settings: AtlasInitSettings,
-    groups: list[TestSuit],
+    groups: list[TestSuite],
 ):
     test_env = os.environ | dotenv.dotenv_values(settings.env_vars_vs_code)
     for group in groups:

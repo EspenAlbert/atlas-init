@@ -10,3 +10,4 @@ profiles/default
 tf/modules/playground/
 tf/playground_caller.tf
 schema/
+tf2
