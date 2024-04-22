@@ -34,9 +34,6 @@ provider "aws" {
 provider "aws" {
   alias = "cfn"
   region = var.cfn_config.region
-  default_tags {
-    tags = local.tags
-  }
 }
 
 locals {
@@ -49,19 +46,21 @@ locals {
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
   use_cluster = var.cluster_config.name != ""
+  cfn_profile = var.cfn_config.profile
 }
 
 module "cfn" {
   source = "./modules/cfn"
 
-  count = var.cfn_config.profile != "" ? 1 : 0
+  count = local.cfn_profile != "" ? 1 : 0
   providers = {
     aws = aws.cfn
   }
   atlas_base_url = var.atlas_base_url
   atlas_public_key = var.atlas_public_key
   atlas_private_key = var.atlas_private_key
-  cfn_profile = var.cfn_config.profile
+  cfn_profile = local.cfn_profile
+  tags = local.tags
 }
 
 module "cluster" {
