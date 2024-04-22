@@ -41,8 +41,12 @@ def cloud_formation_client(region_name: str = "") -> CloudFormationClient:
     return Session(region_name=region_name).client("cloudformation")  # type: ignore
 
 
-def deregister_cfn_resource_type(type_name: str, deregister: bool):
+def deregister_cfn_resource_type(
+    type_name: str, deregister: bool, region_filter: str | None = None
+):
     for region in REGIONS:
+        if region_filter and region != region_filter:
+            continue
         try:
             default_version_arn = None
             client = cloud_formation_client(region)
@@ -66,6 +70,16 @@ def deregister_cfn_resource_type(type_name: str, deregister: bool):
                 logger.info(f"type={type_name} not found in {region}")
                 continue
             raise e
+
+
+def delete_role_stack(type_name: str, region_name: str) -> None:
+    client = cloud_formation_client(region_name)
+    stack_name = type_name.replace("::", "-").lower() + "-role-stack"
+    logger.warning(f"deleting stack {stack_name} in region={region_name}")
+    client.update_termination_protection(
+        EnableTerminationProtection=False, StackName=stack_name
+    )
+    client.delete_stack(StackName=stack_name)
 
 
 iam_policy = """\
@@ -190,6 +204,9 @@ def activate_resource_type(type_name: str, region: str):
 if __name__ == "__main__":
     # deregister_cfn_resource_type("MongoDB::Atlas::StreamConnection", deregister=True)
     configure_logging()
+    deregister_cfn_resource_type(
+        "MongoDB::Atlas::Project", deregister=True, region_filter="us-east-1"
+    )
     # activate_resource_type("MongoDB::Atlas::StreamConnection", "eu-south-2")
     # get_last_version("MongoDB::Atlas::Project", "eu-south-2")
-    print_version_regions("MongoDB::Atlas::Project")
+    # print_version_regions("MongoDB::Atlas::Project")

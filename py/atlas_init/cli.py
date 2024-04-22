@@ -11,7 +11,8 @@ import typer
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import clean_dir, iter_paths
 
-from atlas_init.cli_args import SDK_VERSION_HELP, SdkVersion, SdkVersionUpgrade
+from atlas_init.cfn import delete_role_stack, deregister_cfn_resource_type
+from atlas_init.cli_args import SDK_VERSION_HELP, CfnType, SdkVersion, SdkVersionUpgrade
 from atlas_init.config import RepoAliasNotFound
 from atlas_init.constants import GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
 from atlas_init.env_vars import (
@@ -19,7 +20,7 @@ from atlas_init.env_vars import (
     AtlasInitSettings,
     CwdIsNoRepoPathError,
     current_dir,
-    active_suites
+    active_suites,
 )
 from atlas_init.git_utils import owner_project_name
 from atlas_init.rich_log import configure_logging
@@ -36,7 +37,10 @@ from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
 
-app_command = partial(app.command, context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+app_command = partial(
+    app.command,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 
 
 def init_settings() -> AtlasInitSettings:
@@ -50,6 +54,7 @@ def main(
 ):
     command = ctx.invoked_subcommand
     logger.info(f"in the app callback, verbose: {verbose}, command: {command}")
+
 
 @app_command()
 def init(context: typer.Context):
@@ -155,7 +160,12 @@ def schema():
 
 
 @app_command()
-def cfn_inputs(skip_samples: bool = typer.Option(default=False), single_input: int = typer.Option(0, "--input", "-i", help="keep only input_X files")):
+def cfn_inputs(
+    skip_samples: bool = typer.Option(default=False),
+    single_input: int = typer.Option(
+        0, "--input", "-i", help="keep only input_X files"
+    ),
+):
     settings = init_settings()
     suites = active_suites(settings)
     assert len(suites) == 1, "no test suit found"
@@ -208,6 +218,7 @@ def cfn_inputs(skip_samples: bool = typer.Option(default=False), single_input: i
             file.rename(new_filename)
             logger.info(f"renamed from {file} -> {new_filename}")
 
+
 @app_command()
 def schema_optional_only():
     settings = init_settings()
@@ -215,8 +226,12 @@ def schema_optional_only():
     assert owner_project_name(repo_path) == GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
     log_optional_only(repo_path)
 
+
 @app_command()
-def sdk_upgrade(old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP), new: SdkVersion = typer.Argument(help=SDK_VERSION_HELP)):
+def sdk_upgrade(
+    old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP),
+    new: SdkVersion = typer.Argument(help=SDK_VERSION_HELP),
+):
     settings = init_settings()
     SdkVersionUpgrade(old=old, new=new)
     repo_path, _ = settings.repo_path_rel_path
@@ -249,11 +264,21 @@ def sdk_upgrade(old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP), new: Sd
     else:
         raise ValueError("go.mod not found or more than 1 level deep")
     assert go_mod_parent
-    if not run_binary_command_is_ok(
-        "go", "mod tidy", cwd=go_mod_parent, logger=logger
-    ):
+    if not run_binary_command_is_ok("go", "mod tidy", cwd=go_mod_parent, logger=logger):
         logger.critical(f"failed to run go mod tidy in {go_mod_parent}")
         raise typer.Exit(1)
+
+
+@app_command()
+def cfn_dereg(type_name: str, region_filter: str):
+    logger.info(f"about to deregister {type_name} in region {region_filter}")
+    cfn_type = CfnType(type_name=type_name, region_filter=region_filter)
+    type_name = cfn_type.type_name
+    region_filter = cfn_type.region_filter
+    deregister_cfn_resource_type(
+        type_name, deregister=True, region_filter=region_filter
+    )
+    delete_role_stack(type_name, region_filter)
 
 
 def typer_main():
