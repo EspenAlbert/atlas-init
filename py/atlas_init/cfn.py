@@ -1,39 +1,24 @@
+import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, timezone
-from functools import lru_cache
-from boto3.session import Session
-import logging
-from mypy_boto3_cloudformation import CloudFormationClient
-from zero_3rdparty.iter_utils import flat_map, group_by_once
+from functools import lru_cache, total_ordering
+from typing import Sequence
 
+from boto3.session import Session
+import botocore.exceptions
+from model_lib import Event
+from mypy_boto3_cloudformation import CloudFormationClient
+from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+from zero_3rdparty.iter_utils import group_by_once
+
+from atlas_init.cli_args import REGIONS, region_continent
+from atlas_init.constants import PascalAlias
 from atlas_init.rich_log import configure_logging
 
 logger = logging.getLogger(__name__)
-REGIONS = "af-south-1,ap-east-1,ap-northeast-1,ap-northeast-2,ap-northeast-3,ap-south-1,ap-southeast-1,ap-southeast-2,ap-southeast-3,ca-central-1,eu-central-1,eu-north-1,eu-south-1,eu-west-1,eu-west-2,eu-west-3,me-south-1,sa-east-1,us-east-1,us-east-2,us-west-1,us-west-2,ap-south-2,ap-southeast-4,eu-central-2,eu-south-2,me-central-1,il-central-1".split(
-    ","
-)
 EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=timezone.utc)
-# based on: https://www.mongodb.com/docs/atlas/reference/amazon-aws/
-REGION_CONTINENT_PREFIXES = {
-    "Americas": ["us", "ca", "sa"],
-    "Asia Pacific": ["ap"],
-    "Europe": ["eu"],
-    "Middle East and Africa": ["me", "af", "il"],
-}
-REGION_PREFIX_CONTINENT = dict(
-    flat_map(
-        [
-            [(prefix, continent) for prefix in prefixes]
-            for continent, prefixes in REGION_CONTINENT_PREFIXES.items()
-        ]
-    )
-)
-
-
-def region_continent(region: str) -> str:
-    prefix = region.split("-", maxsplit=1)[0]
-    return REGION_PREFIX_CONTINENT.get(prefix, "UNKNOWN_CONTINENT")
 
 
 @lru_cache
@@ -73,45 +58,148 @@ def deregister_cfn_resource_type(
 
 
 def delete_role_stack(type_name: str, region_name: str) -> None:
-    client = cloud_formation_client(region_name)
     stack_name = type_name.replace("::", "-").lower() + "-role-stack"
+    delete_stack(region_name, stack_name)
+
+
+def delete_stack(region_name: str, stack_name: str):
+    client = cloud_formation_client(region_name)
     logger.warning(f"deleting stack {stack_name} in region={region_name}")
-    client.update_termination_protection(
-        EnableTerminationProtection=False, StackName=stack_name
-    )
+    try:
+        client.update_termination_protection(
+            EnableTerminationProtection=False, StackName=stack_name
+        )
+    except Exception as e:
+        if "does not exist" in repr(e):
+            logger.warning(f"stack {stack_name} not found")
+            return
+        raise e
     client.delete_stack(StackName=stack_name)
+    wait_on_stack_ok(stack_name, region_name, expect_not_found=True)
+
+def create_stack(
+    stack_name: str,
+    template_str: str,
+    region_name: str,
+    role_arn: str,
+    parameters: Sequence[ParameterTypeDef],
+):
+    client = cloud_formation_client(region_name)
+    stack_id = client.create_stack(
+        StackName=stack_name,
+        TemplateBody=template_str,
+        Parameters=parameters,
+        RoleARN=role_arn,
+    )
+    logger.info(
+        f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}"
+    )
+    wait_on_stack_ok(stack_name, region_name)
 
 
-iam_policy = """\
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "secretsmanager:GetSecretValue"
-            ],
-            "Resource": "*",
-            "Effect": "Allow"
-        }
-    ]
-}"""
-iam_trust_policy = """\
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Service": [
-                    "cloudformation.amazonaws.com",
-                    "resources.cloudformation.amazonaws.com",
-                    "lambda.amazonaws.com"
-                ]
-            },
-            "Action": "sts:AssumeRole"
-        }
-    ]
-}"""
+def update_stack(
+    stack_name: str,
+    region_name: str,
+    role_arn: str,
+    parameters: Sequence[ParameterTypeDef],
+):
+    client = cloud_formation_client(region_name)
+    update = client.update_stack(
+        StackName=stack_name,
+        UsePreviousTemplate=True,
+        Parameters=parameters,
+        RoleARN=role_arn,
+    )
+    logger.info(
+        f"stack with name: {stack_name} updated {region_name} has id: {update['StackId']}"
+    )
+    wait_on_stack_ok(stack_name, region_name)
+
+
+class StackBaseError(Exception):
+    def __init__(self, status: str, timestamp: datetime, status_reason: str) -> None:
+        super().__init__(status, timestamp, status_reason)
+        self.status = status
+        self.timestamp = timestamp
+        self.status_reason = status_reason
+
+
+class StackInProgress(StackBaseError):
+    pass
+
+
+class StackError(StackBaseError):
+    pass
+
+
+@total_ordering
+class StackEvent(Event):
+    model_config = PascalAlias
+    logical_resource_id: str
+    timestamp: datetime
+    resource_status: str
+    resource_status_reason: str = ""
+
+    @property
+    def in_progress(self) -> bool:
+        return self.resource_status.endswith("IN_PROGRESS")
+
+    @property
+    def is_error(self) -> bool:
+        return self.resource_status.endswith("FAILED")
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, StackEvent):
+            raise TypeError
+        return self.timestamp < other.timestamp
+
+
+class StackEvents(Event):
+    model_config = PascalAlias
+    stack_events: list[StackEvent]
+
+    def current_stack_event(self, stack_name: str) -> StackEvent:
+        sorted_events = sorted(self.stack_events)
+        for event in reversed(sorted_events):
+            if event.logical_resource_id == stack_name:
+                return event
+        raise ValueError(f"no events found for {stack_name}")
+
+
+@retry(
+    stop=stop_after_attempt(20),
+    wait=wait_fixed(6),
+    retry=retry_if_exception_type(StackInProgress),
+    reraise=True,
+)
+def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False) -> None:
+    client = cloud_formation_client(region_name)
+    try:
+        response = client.describe_stack_events(StackName=stack_name)
+    except botocore.exceptions.ClientError as e:
+        if not expect_not_found:
+            raise e
+        error_message = e.response.get("Error", {}).get("Message", "")
+        if "does not exist" not in error_message:
+            raise e
+        return None
+    parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
+    current_event = parsed.current_stack_event(stack_name)
+    if current_event.in_progress:
+        logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
+        raise StackInProgress(
+            current_event.resource_status,
+            current_event.timestamp,
+            current_event.resource_status_reason,
+        )
+    elif current_event.is_error:
+        raise StackError(
+            current_event.resource_status,
+            current_event.timestamp,
+            current_event.resource_status_reason,
+        )
+    logger.info(f"stack is ready {stack_name} {current_event.resource_status} ✅")
+    return None
 
 
 def print_version_regions(type_name: str) -> None:
@@ -133,7 +221,7 @@ def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
     futures = {}
     with ThreadPoolExecutor(max_workers=10) as pool:
         for region in REGIONS:
-            future = pool.submit(get_last_version, type_name, region)
+            future = pool.submit(get_last_cfn_type, type_name, region)
             futures[future] = region
         done, not_done = wait(futures.keys(), timeout=300)
         for f in not_done:
@@ -151,43 +239,56 @@ def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
     return version_regions
 
 
-def get_last_version(type_name: str, region: str) -> str | None:
+@total_ordering
+class CfnTypeDetails(Event):
+    last_updated: datetime
+    version: str
+    type_name: str
+    type_arn: str
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, CfnTypeDetails):
+            raise TypeError
+        return self.last_updated < other.last_updated
+
+
+def get_last_cfn_type(
+    type_name: str, region: str, is_third_party: bool = False
+) -> None | CfnTypeDetails:
     client: CloudFormationClient = cloud_formation_client(region)
     prefix = type_name
     logger.info(f"finding public 3rd party for '{prefix}' in {region}")
-    # todo: Clean me up, and use this to find the arn
-    # can also use "IsActivated" to be idempotent, and double-check the "LatestPublicVersion" and "LastUpdated"
-
-    # todo: can use the static  arn:aws:iam::358363220050:role/mongodb-atlas-streamconnection-role-s-ExecutionRole-L8Pmt3uDFonT
-    # but most likely will prefer to create this manually too
-
-    public_types = client.list_types(
-        Visibility="PUBLIC",
-        Filters={"Category": "THIRD_PARTY", "TypeNamePrefix": prefix},
+    visibility = "PUBLIC" if is_third_party else "PRIVATE"
+    category = "THIRD_PARTY" if is_third_party else "REGISTERED"
+    type_details: list[CfnTypeDetails] = []
+    kwargs = dict(
+        Visibility=visibility,
+        Filters={"Category": category, "TypeNamePrefix": prefix},
         MaxResults=100,
     )
-    next_token = public_types["NextToken"]
-    for t in public_types["TypeSummaries"]:
-        logger.info(t)
-
-    updated_version: list[tuple[datetime, str]] = []
-    while next_token:
-        public_types2 = client.list_types(
-            Visibility="PUBLIC",
-            Filters={"Category": "THIRD_PARTY", "TypeNamePrefix": prefix},
-            MaxResults=100,
-            NextToken=next_token,
-        )
-        next_token = public_types2.get("NextToken", "")
-        for t in public_types2["TypeSummaries"]:
+    next_token = ""
+    for _ in range(100):
+        types_response = client.list_types(**kwargs)  # type: ignore
+        next_token = types_response.get("NextToken", "")
+        kwargs["NextToken"] = next_token
+        for t in types_response["TypeSummaries"]:
             last_updated = t.get("LastUpdated", EARLY_DATETIME)
             last_version = t.get("LatestPublicVersion", "unknown-version")
-            updated_version.append((last_updated, last_version))
+            arn = t.get("TypeArn", "unknown_arn")
+            detail = CfnTypeDetails(
+                last_updated=last_updated,
+                version=last_version,
+                type_name=t.get("TypeName", type_name),
+                type_arn=arn,
+            )
+            type_details.append(detail)
             logger.debug(f"{last_version} published @ {last_updated}")
-    if not updated_version:
+        if not next_token:
+            break
+    if not type_details:
         logger.warning(f"no version for {type_name} in region {region}")
         return None
-    return sorted(updated_version)[-1][1]
+    return sorted(type_details)[-1]
 
 
 def activate_resource_type(type_name: str, region: str):

@@ -1,26 +1,46 @@
 import logging
 import os
-import re
 import sys
 from functools import partial
 from shutil import copy
-from typing import Annotated, TypeAlias, TypeVar
 
-from pydantic import AfterValidator
 import typer
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import clean_dir, iter_paths
 
-from atlas_init.cfn import delete_role_stack, deregister_cfn_resource_type
-from atlas_init.cli_args import SDK_VERSION_HELP, CfnType, SdkVersion, SdkVersionUpgrade
+from atlas_init.cfn import (
+    create_stack,
+    delete_role_stack,
+    delete_stack,
+    deregister_cfn_resource_type,
+    get_last_cfn_type,
+    update_stack,
+)
+from atlas_init.cfn_parameter_finder import (
+    check_execution_role,
+    decode_parameters,
+    infer_template_path,
+)
+from atlas_init.cli_args import (
+    SDK_VERSION_HELP,
+    CfnOperation,
+    CfnType,
+    Operation,
+    SdkVersion,
+    SdkVersionUpgrade,
+    parse_key_values,
+)
 from atlas_init.config import RepoAliasNotFound
-from atlas_init.constants import GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
+from atlas_init.constants import (
+    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
+    GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
+)
 from atlas_init.env_vars import (
     REPO_PATH,
     AtlasInitSettings,
     CwdIsNoRepoPathError,
-    current_dir,
     active_suites,
+    current_dir,
 )
 from atlas_init.git_utils import owner_project_name
 from atlas_init.rich_log import configure_logging
@@ -272,13 +292,66 @@ def sdk_upgrade(
 @app_command()
 def cfn_dereg(type_name: str, region_filter: str):
     logger.info(f"about to deregister {type_name} in region {region_filter}")
-    cfn_type = CfnType(type_name=type_name, region_filter=region_filter)
-    type_name = cfn_type.type_name
-    region_filter = cfn_type.region_filter
+    type_name, region_filter = CfnType.validate_type_region(type_name, region_filter)
     deregister_cfn_resource_type(
         type_name, deregister=True, region_filter=region_filter
     )
     delete_role_stack(type_name, region_filter)
+
+
+@app_command()
+def cfn_example(type_name: str, region: str, stack_name: str, operation: str, params: list[str] = typer.Option(default_factory=list)):
+    """
+    2. check private registry (todo)
+        1. submits to the private registry if not existing or --re-submit flag
+    """
+    if params:
+        params_parsed = parse_key_values(params)
+    logger.info(
+        f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {params}"
+    )
+    settings = init_settings()
+    type_name, region = CfnType.validate_type_region(type_name, region)
+    CfnOperation(operaton=operation)  # type: ignore
+    repo_path, _ = settings.repo_path_rel_path
+    assert (
+        owner_project_name(repo_path) == GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES
+    )
+    env_vars_generated = settings.load_env_vars_generated()
+    cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
+
+    cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
+    assert cfn_type_details, f"no cfn_type_details found for {type_name}"
+
+    if operation == Operation.DELETE:
+        delete_stack(region, stack_name)
+        return
+    template_path = infer_template_path(repo_path, type_name)
+    parameters, not_found = decode_parameters(
+        env_vars_generated, template_path, stack_name, params_parsed
+    )
+    if not_found:
+        # todo: support specifying these extra
+        logger.critical(f"need to fill out parameters manually: {not_found}")
+        raise typer.Exit(1)
+    if operation == Operation.CREATE:
+        create_stack(
+            stack_name,
+            template_str=template_path.read_text(),
+            region_name=region,
+            role_arn=cfn_execution_role,
+            parameters=parameters,
+        )
+    elif operation == Operation.UPDATE:
+        update_stack(
+            stack_name,
+            region_name=region,
+            parameters=parameters,
+            role_arn=cfn_execution_role,
+        )
+    else:
+        raise NotImplementedError
 
 
 def typer_main():

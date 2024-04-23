@@ -19,6 +19,7 @@ from atlas_init.config import (
 
 logger = logging.getLogger(__name__)
 REPO_PATH = Path(__file__).parent.parent.parent
+TF_DIR = REPO_PATH / "tf"
 CONFIG_PATH = REPO_PATH / "atlas_init.yaml"
 
 
