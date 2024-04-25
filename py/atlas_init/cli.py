@@ -346,6 +346,7 @@ def cfn_example(type_name: str, region: str, stack_name: str, operation: str, pa
     elif operation == Operation.UPDATE:
         update_stack(
             stack_name,
+            template_str=template_path.read_text(),
             region_name=region,
             parameters=parameters,
             role_arn=cfn_execution_role,
