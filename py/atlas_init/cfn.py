@@ -99,6 +99,7 @@ def create_stack(
 
 def update_stack(
     stack_name: str,
+    template_str: str,
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
@@ -106,7 +107,7 @@ def update_stack(
     client = cloud_formation_client(region_name)
     update = client.update_stack(
         StackName=stack_name,
-        UsePreviousTemplate=True,
+        TemplateBody=template_str,
         Parameters=parameters,
         RoleARN=role_arn,
     )
