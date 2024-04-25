@@ -34,9 +34,6 @@ provider "aws" {
 provider "aws" {
   alias = "cfn"
   region = var.cfn_config.region
-  default_tags {
-    tags = local.tags
-  }
 }
 
 locals {
@@ -45,30 +42,32 @@ locals {
       Team = "api-x-integrations"
       Owner = "terraform-atlas-init"
     }
-  use_aws_vpc = var.use_private_link || var.use_vpc_peering
+  use_aws_vpc = var.use_private_link || var.use_vpc_peering || var.use_aws_vpc
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
   use_cluster = var.cluster_config.name != ""
+  cfn_profile = var.cfn_config.profile
 }
 
 module "cfn" {
   source = "./modules/cfn"
 
-  count = var.cfn_config.profile != "" ? 1 : 0
+  count = local.cfn_profile != "" ? 1 : 0
   providers = {
     aws = aws.cfn
   }
   atlas_base_url = var.atlas_base_url
   atlas_public_key = var.atlas_public_key
   atlas_private_key = var.atlas_private_key
-  cfn_profile = var.cfn_config.profile
+  cfn_profile = local.cfn_profile
+  tags = local.tags
 }
 
 module "cluster" {
   source = "./modules/cluster"
   count = local.use_cluster ? 1 : 0
 
-  mongo_user = random_password.username.result
+  mongo_user = local.mongodb_username
   mongo_password = random_password.password.result
   project_id = local.project_id
   cluster_name = var.cluster_config.name
@@ -125,4 +124,14 @@ module "stream_instance" {
   
   project_id = local.project_id
   instance_name = var.stream_instance_config.name
+}
+
+module "project_extra" {
+  source = "./modules/project_extra"
+
+  count = var.use_project_extra ? 1 : 0
+
+  org_id = var.org_id
+  id_suffix = local.mongodb_username
+  
 }

@@ -2,6 +2,12 @@ repo_aliases:
     mongodb/terraform-provider-mongodbatlas: tf
     mongodb/mongodbatlas-cloudformation-resources: cfn
 test_suites:
+- name: project
+  vars: 
+    use_project_extra: true
+  repo_go_packages:
+    cfn:
+    - 'cfn-resources/project'
 - name: network_peering
   vars: 
     use_vpc_peering: true

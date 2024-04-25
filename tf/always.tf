@@ -27,16 +27,14 @@ lifecycle {
 locals {
   release_response = jsondecode(data.http.last_provider_version.response_body)
   last_provider_version = trimprefix(local.release_response.tag_name, "v")
+  mongodb_username = random_password.username.result
 }
 
 resource "mongodbatlas_project" "project" {
   name   = var.project_name
   org_id = var.org_id
-  lifecycle {
-    ignore_changes = [ 
-      tags["name"]
-     ]
-  }
+
+  tags = {}
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
