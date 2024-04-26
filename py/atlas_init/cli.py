@@ -2,12 +2,15 @@ import logging
 import os
 import sys
 from functools import partial
+from pydoc import locate
 from shutil import copy
+from typing import Callable
 
 import typer
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import clean_dir, iter_paths
 
+from atlas_init import sdk_auto_changes
 from atlas_init.cfn import (
     create_stack,
     delete_role_stack,
@@ -28,12 +31,18 @@ from atlas_init.cli_args import (
     Operation,
     SdkVersion,
     SdkVersionUpgrade,
+    infer_cfn_type_name,
     parse_key_values,
 )
 from atlas_init.config import RepoAliasNotFound
 from atlas_init.constants import (
     GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
+    format_cmd,
+    format_dir,
+    go_sdk_breaking_changes,
+    resource_dir,
+    resource_name,
 )
 from atlas_init.env_vars import (
     REPO_PATH,
@@ -52,6 +61,13 @@ from atlas_init.schema import (
     update_provider_code_spec,
 )
 from atlas_init.schema_inspection import log_optional_only
+from atlas_init.sdk import (
+    find_breaking_changes,
+    find_latest_sdk_version,
+    format_breaking_changes,
+    is_removed,
+    parse_breaking_changes,
+)
 from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
 
 logger = logging.getLogger(__name__)
@@ -250,29 +266,66 @@ def schema_optional_only():
 @app_command()
 def sdk_upgrade(
     old: SdkVersion = typer.Argument(help=SDK_VERSION_HELP),
-    new: SdkVersion = typer.Argument(help=SDK_VERSION_HELP),
+    new: SdkVersion = typer.Argument(
+        default_factory=find_latest_sdk_version,
+        help=SDK_VERSION_HELP + "\nNo Value=Latest",
+    ),
+    resource: str = typer.Option("", help="for only upgrading a single resource"),
+    dry_run: bool = typer.Option(False, help="only log out the changes"),
+    auto_change_name: str = typer.Option(
+        "", help="any extra replacements done in the file"
+    ),
 ):
     settings = init_settings()
     SdkVersionUpgrade(old=old, new=new)
     repo_path, _ = settings.repo_path_rel_path
     logger.info(f"bumping from {old} -> {new} @ {repo_path}")
 
+    sdk_breaking_changes_path = go_sdk_breaking_changes(repo_path)
+    all_breaking_changes = parse_breaking_changes(sdk_breaking_changes_path, old, new)
     replace_in = f"go.mongodb.org/atlas-sdk/{old}/admin"
     replace_out = f"go.mongodb.org/atlas-sdk/{new}/admin"
+    auto_modifier: Callable[[str, str], str] | None = None
+    if auto_change_name:
+        func_path = f"{sdk_auto_changes.__name__}.{auto_change_name}"
+        auto_modifier = locate(func_path)  # type: ignore
 
     change_count = 0
+    resources: set[str] = set()
+    resources_breaking_changes: set[str] = set()
     for path in iter_paths(repo_path, "*.go", ".mockery.yaml"):
         text_old = path.read_text()
         if replace_in not in text_old:
             continue
+        r_name = resource_name(repo_path, path)
+        if resource and resource != r_name:
+            continue
+        resources.add(r_name)
         logger.info(f"updating sdk version in {path}")
+        if breaking_changes := find_breaking_changes(text_old, all_breaking_changes):
+            changes_formatted = format_breaking_changes(text_old, breaking_changes)
+            logger.warning(f"found breaking changes: {changes_formatted}")
+            if is_removed(breaking_changes):
+                resources_breaking_changes.add(r_name)
         text_new = text_old.replace(replace_in, replace_out)
-        path.write_text(text_new)
+        if not dry_run:
+            if auto_modifier:
+                text_new = auto_modifier(text_new, old)
+            path.write_text(text_new)
         change_count += 1
     if change_count == 0:
         logger.warning("no changes found")
         return
     logger.info(f"changed in total: {change_count} files")
+    resources_str = "\n".join(
+        f"- {r} 💥" if r in resources_breaking_changes else f"- {r}"
+        for r in sorted(resources)
+        if r
+    )
+    logger.info(f"resources changed: \n{resources_str}")
+    if dry_run:
+        logger.warning("dry-run, no changes to go.mod")
+        return
     go_mod_parent = None
     for go_mod in repo_path.rglob("go.mod"):
         if go_mod.parent == repo_path:
@@ -300,11 +353,18 @@ def cfn_dereg(type_name: str, region_filter: str):
 
 
 @app_command()
-def cfn_example(type_name: str, region: str, stack_name: str, operation: str, params: list[str] = typer.Option(default_factory=list)):
+def cfn_example(
+    type_name: str = typer.Argument(default_factory=infer_cfn_type_name),
+    region: str = typer.Argument(...),
+    stack_name: str = typer.Argument(...),
+    operation: str = typer.Argument(...),
+    params: list[str] = typer.Option(default_factory=list),
+):
     """
     2. check private registry (todo)
         1. submits to the private registry if not existing or --re-submit flag
     """
+    params_parsed: dict[str, str] = {}
     if params:
         params_parsed = parse_key_values(params)
     logger.info(
@@ -314,6 +374,7 @@ def cfn_example(type_name: str, region: str, stack_name: str, operation: str, pa
     type_name, region = CfnType.validate_type_region(type_name, region)
     CfnOperation(operaton=operation)  # type: ignore
     repo_path, _ = settings.repo_path_rel_path
+
     assert (
         owner_project_name(repo_path) == GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES
     )
@@ -353,6 +414,28 @@ def cfn_example(type_name: str, region: str, stack_name: str, operation: str, pa
         )
     else:
         raise NotImplementedError
+
+
+@app_command()
+def pre_commit(
+    skip_build: bool = typer.Option(default=False),
+    skip_lint: bool = typer.Option(default=False),
+):
+    cwd = current_dir()
+    settings = init_settings()
+    repo_path, _ = settings.repo_path_rel_path
+    resource_path = resource_dir(repo_path, cwd)
+    r_name = resource_name(repo_path, cwd)
+    if skip_build:
+        logger.warning("skipping build")
+    else:
+        assert run_command_is_ok(["make", "build"], env=None, cwd=resource_path, logger=logger)
+    if skip_lint:
+        logger.warning("skipping formatting")
+    else:
+        format_path = format_dir(repo_path)
+        fmt_cmd_str = format_cmd(repo_path, r_name)
+        assert run_command_is_ok(fmt_cmd_str.split(), env=None, cwd=format_path, logger=logger)
 
 
 def typer_main():

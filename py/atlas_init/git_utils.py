@@ -1,8 +1,9 @@
+from functools import lru_cache
 from pathlib import Path
 
 from git import Repo
 
-
+@lru_cache
 def owner_project_name(repo_path: Path) -> str:
     repo = Repo(repo_path)
     remote = repo.remotes[0]
