@@ -435,8 +435,7 @@ def pre_commit(
     else:
         format_path = format_dir(repo_path)
         fmt_cmd_str = format_cmd(repo_path, r_name)
-        # not sure why it doesn't work without the cd
-        assert run_command_is_ok(f"cd {format_path} && {fmt_cmd_str}".split(), env=None, cwd=format_path, logger=logger)
+        assert run_command_is_ok(fmt_cmd_str.split(), env=None, cwd=format_path, logger=logger)
 
 
 def typer_main():

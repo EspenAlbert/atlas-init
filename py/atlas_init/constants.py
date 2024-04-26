@@ -47,8 +47,9 @@ _format_dir = {
 
 _format_cmd = {
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: lambda p: "golangci-lint run",
-    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda r_name: f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}",
-    # GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda r_name: "golangci-lint --version",
+    # todo: understand why piping to grep doesn't work
+    # GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda r_name: f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}",
+    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda _: "golangci-lint run --path-prefix=./cfn-resources",
 }
 
 

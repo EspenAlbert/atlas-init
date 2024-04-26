@@ -6,7 +6,7 @@ dev.tfrc
 *.env-generated
 *.env
 *.env_manual
-profiles/default
+profiles/
 tf/modules/playground/
 tf/playground_caller.tf
 schema/
