@@ -2,10 +2,13 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, ClassVar, TypeAlias
 
-from model_lib import Entity, Event
+from model_lib import Entity, Event, parse_payload
 from pydantic import AfterValidator, constr, model_validator
+from zero_3rdparty.dict_nested import read_nested_or_none
 from zero_3rdparty.iter_utils import flat_map, key_equal_value_to_dict
 from zero_3rdparty.str_utils import ensure_prefix
+
+from atlas_init.env_vars import current_dir
 
 SdkVersion: TypeAlias = constr(pattern="v\d{11}")  # type: ignore
 SDK_VERSION_HELP = "e.g., v20231115008 in go.mongodb.org/atlas-sdk/XXXX/admin"
@@ -15,15 +18,19 @@ class SdkVersionUpgrade(Event):
     old: SdkVersion
     new: SdkVersion
 
+
 def check_region_found(region: str) -> str:
     if region not in REGIONS:
         raise ValueError(f"unknown region: {region}")
     return region
 
+
 Region: TypeAlias = Annotated[str, AfterValidator(check_region_found)]
+
 
 def parse_key_values(params: list[str]) -> dict[str, str]:
     return key_equal_value_to_dict(params)
+
 
 class CfnType(Entity):
     MONGODB_ATLAS_CFN_TYPE_PREFIX: ClassVar[str] = "MongoDB::Atlas::"
@@ -85,3 +92,13 @@ REGION_PREFIX_CONTINENT = dict(
 def region_continent(region: str) -> str:
     prefix = region.split("-", maxsplit=1)[0]
     return REGION_PREFIX_CONTINENT.get(prefix, "UNKNOWN_CONTINENT")
+
+
+def infer_cfn_type_name() -> str:
+    cwd = current_dir()
+    for json_path in cwd.glob("*.json"):
+        parsed = parse_payload(json_path)
+        if type_name := read_nested_or_none(parsed, "typeName"):
+            assert isinstance(type_name, str)
+            return type_name
+    raise ValueError(f"unable to infer cfn type name in {cwd}")

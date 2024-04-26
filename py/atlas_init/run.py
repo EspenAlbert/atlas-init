@@ -7,10 +7,11 @@ import sys
 
 
 def run_command_is_ok(
-    cmd: list[str], env: dict, cwd: Path | str, logger: Logger
+    cmd: list[str], env: dict | None, cwd: Path | str, logger: Logger
 ) -> bool:
+    env = env or {**os.environ}
     command_str = " ".join(cmd)
-    logger.info(f"running: {command_str}")
+    logger.info(f"running: '{command_str}' from '{cwd}'")
     exit_code = subprocess.call(
         cmd,
         stdin=sys.stdin,
