@@ -7,6 +7,7 @@ locals {
     vpc_peering = try(module.vpc_peering[0].info, {})
     project_extra = try(module.project_extra[0].info, {})
     cfn = try(module.cfn[0].info, {})
+    aws_vars = try(module.aws_vars[0].info, {})
   }
 
   modules_env_vars = {
@@ -17,6 +18,7 @@ locals {
     vpc_peering = try(module.vpc_peering[0].env_vars, {})
     project_extra = try(module.project_extra[0].env_vars, {})
     cfn = try(module.cfn[0].env_vars, {})
+    aws_vars = try(module.aws_vars[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id

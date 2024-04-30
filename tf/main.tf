@@ -135,3 +135,12 @@ module "project_extra" {
   id_suffix = local.mongodb_username
   
 }
+
+module aws_vars {
+  source = "./modules/aws_vars"
+  count = var.use_aws_vars ? 1 : 0
+
+  aws_access_key_id = var.aws_access_key_id
+  aws_secret_access_key = var.aws_secret_access_key
+  aws_region = var.aws_region
+}

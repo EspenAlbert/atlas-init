@@ -20,6 +20,8 @@ class TerraformVars(Entity):
     use_private_link: bool = False
     use_vpc_peering: bool = False
     use_project_extra: bool = False
+    use_aws_vars: bool = False
+    use_aws_vpc: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
@@ -39,6 +41,10 @@ class TerraformVars(Entity):
             config["use_private_link"] = True
         if self.use_vpc_peering:
             config["use_vpc_peering"] = True
+        if self.use_aws_vars:
+            config["use_aws_vars"] = True
+        if self.use_aws_vpc:
+            config["use_aws_vpc"] = True
         if self.use_project_extra:
             config["use_project_extra"] = True
         if self.stream_instance:

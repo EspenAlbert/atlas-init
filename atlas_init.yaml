@@ -2,6 +2,10 @@ repo_aliases:
     mongodb/terraform-provider-mongodbatlas: tf
     mongodb/mongodbatlas-cloudformation-resources: cfn
 test_suites:
+- name: cluster
+  repo_go_packages:
+    cfn:
+      - 'cfn-resources/cluster'
 - name: project
   vars: 
     use_project_extra: true
@@ -20,6 +24,13 @@ test_suites:
   repo_go_packages:
     tf:
     - 'internal/service/privatelinkendpointservicedatafederationonlinearchive'
+- name: privatelink
+  vars:
+    use_aws_vpc: true
+    use_aws_vars: true
+  repo_go_packages:
+    tf:
+    - 'internal/service/privatelinkendpointservice'
 - name: stream_connection
   repo_go_packages: 
     tf:

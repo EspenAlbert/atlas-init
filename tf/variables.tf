@@ -90,3 +90,17 @@ variable "extra_env_vars" {
   type = map(string)
   sensitive = true
 }
+
+variable "aws_access_key_id" {
+  type = string
+  default = ""
+}
+variable "aws_secret_access_key" {
+  type = string
+  default = ""
+}
+
+variable "use_aws_vars" {
+  type = bool
+  default = false
+}
