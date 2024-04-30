@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -56,6 +57,30 @@ def deregister_cfn_resource_type(
                 continue
             raise e
 
+
+def deregister_arn(arn: str, region: str):
+    client = cloud_formation_client(region)
+    logger.warning(f"deregistering type {arn} in {region}")
+    client.deregister_type(Arn=arn)
+
+
+def deactivate_third_party_type(type_name: str, region_name: str, dry_run: bool = False) -> None | CfnTypeDetails:
+    last_version = get_last_cfn_type(
+        type_name, region=region_name, is_third_party=True
+    )
+    if not last_version:
+        logger.info(f"no third party found in region {region_name}")
+        return
+    is_activated = last_version.is_activated
+    logger.info(f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}")
+    if is_activated and not dry_run:
+        deactivate_type(type_name=type_name, region=region_name)
+
+
+def deactivate_type(type_name: str, region: str):
+    client = cloud_formation_client(region)
+    logger.warning(f"deactivating type {type_name} in {region}")
+    client.deactivate_type(TypeName=type_name, Type="RESOURCE")
 
 def delete_role_stack(type_name: str, region_name: str) -> None:
     stack_name = type_name.replace("::", "-").lower() + "-role-stack"
@@ -199,7 +224,10 @@ def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool =
             current_event.timestamp,
             current_event.resource_status_reason,
         )
-    logger.info(f"stack is ready {stack_name} {current_event.resource_status} ✅")
+    status = current_event.resource_status
+    logger.info(f"stack is ready {stack_name} {status} ✅")
+    if "ROLLBACK" in status:
+        logger.warning(f"stack did rollback, got: {current_event!r}")
     return None
 
 
@@ -246,6 +274,7 @@ class CfnTypeDetails(Event):
     version: str
     type_name: str
     type_arn: str
+    is_activated: bool
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, CfnTypeDetails):
@@ -281,6 +310,7 @@ def get_last_cfn_type(
                 version=last_version,
                 type_name=t.get("TypeName", type_name),
                 type_arn=arn,
+                is_activated=t.get("IsActivated", False)
             )
             type_details.append(detail)
             logger.debug(f"{last_version} published @ {last_updated}")
@@ -292,23 +322,11 @@ def get_last_cfn_type(
     return sorted(type_details)[-1]
 
 
-def activate_resource_type(type_name: str, region: str):
+def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_arn: str):
     client = cloud_formation_client(region)
-    raise NotImplementedError
-    # response = client.activate_type(
-    #     Type="RESOURCE",
-    #     PublicTypeArn="arn:aws:cloudformation:eu-south-2::type/resource/bb989456c78c398a858fef18f2ca1bfc1fbba082/MongoDB-Atlas-StreamConnection",
-    #     ExecutionRoleArn="arn:aws:iam::358363220050:role/mongodb-atlas-streamconnection-role-s-ExecutionRole-L8Pmt3uDFonT"
-    # )
-    # logger.info(f"activate response: {response}")
-
-
-if __name__ == "__main__":
-    # deregister_cfn_resource_type("MongoDB::Atlas::StreamConnection", deregister=True)
-    configure_logging()
-    deregister_cfn_resource_type(
-        "MongoDB::Atlas::Project", deregister=True, region_filter="us-east-1"
+    response = client.activate_type(
+        Type="RESOURCE",
+        PublicTypeArn=details.type_arn,
+        ExecutionRoleArn=execution_role_arn
     )
-    # activate_resource_type("MongoDB::Atlas::StreamConnection", "eu-south-2")
-    # get_last_version("MongoDB::Atlas::Project", "eu-south-2")
-    # print_version_regions("MongoDB::Atlas::Project")
+    logger.info(f"activate response: {response}")

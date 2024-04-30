@@ -343,13 +343,59 @@ def sdk_upgrade(
 
 
 @app_command()
-def cfn_dereg(type_name: str, region_filter: str):
-    logger.info(f"about to deregister {type_name} in region {region_filter}")
-    type_name, region_filter = CfnType.validate_type_region(type_name, region_filter)
-    deregister_cfn_resource_type(
-        type_name, deregister=True, region_filter=region_filter
-    )
-    delete_role_stack(type_name, region_filter)
+def cfn_reg(
+    type_name: str,
+    region_filter: str = typer.Option(default=""),
+    dry_run: bool = typer.Option(False),
+):
+    if dry_run:
+        logger.info("dry-run is set")
+    type_name, regions = validate_type_name_regions(type_name, region_filter)
+    assert (
+        len(regions) == 1
+    ), f"are you sure you want to activate {type_name} in all regions?"
+    region = regions[0]
+    found_third_party = deactivate_third_party_type(type_name, region, dry_run=dry_run)
+    if not found_third_party:
+        local = get_last_cfn_type(type_name, region, is_third_party=False)
+        if local:
+            deregister_cfn_resource_type(
+                type_name, deregister=not dry_run, region_filter=region
+            )
+    logger.info(f"ready to activate {type_name}")
+    settings = init_settings()
+    cfn_execution_role = read_execution_role(settings.load_env_vars_generated())
+    last_third_party = get_last_cfn_type(type_name, region, is_third_party=True)
+    assert last_third_party, f"no 3rd party extension found for {type_name} in {region}"
+    if dry_run:
+        return
+    activate_resource_type(last_third_party, region, cfn_execution_role)
+    logger.info(f"{type_name} {last_third_party.version} is activated ✅")
+
+
+@app_command()
+def cfn_dereg(
+    type_name: str,
+    region_filter: str = typer.Option(default=""),
+    dry_run: bool = typer.Option(False),
+    is_local: bool = typer.Option(False),
+):
+    if dry_run:
+        logger.info("dry-run is set")
+    type_name, regions = validate_type_name_regions(type_name, region_filter)
+
+    def deactivate(region: str):
+        deactivate_third_party_type(type_name, region, dry_run=dry_run)
+
+    def deactivate_local(region: str):
+        deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
+
+    if is_local:
+        logger.info("deregistering local")
+        run_in_regions(deactivate_local, regions)
+    else:
+        logger.info("deregistering 3rd party")
+        run_in_regions(deactivate, regions)
 
 
 @app_command()
