@@ -443,10 +443,12 @@ def cfn_example(
     operation: str = typer.Argument(...),
     params: list[str] = typer.Option(..., "-p", default_factory=list),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
+    stack_timeout_s: int = typer.Option(300, "-t"),
 ):
     params_parsed: dict[str, str] = {}
     if params:
         params_parsed = parse_key_values(params)
+    resource_params_parsed = {}
     if resource_params:
         resource_params_parsed = parse_key_values_any(resource_params)
         if resource_params_parsed:
@@ -455,7 +457,7 @@ def cfn_example(
         f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {params}"
     )
     settings = init_settings()
-    type_name, region = CfnType.validate_type_region(type_name, region)
+    type_name, region = CfnType.validate_type_region(type_name, region)  # type: ignore
     CfnOperation(operaton=operation)  # type: ignore
     repo_path, resource_path, r_name = find_paths()
     assert (
@@ -468,7 +470,9 @@ def cfn_example(
     logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
     if cfn_type_details is None:
-        if rich.prompt.Confirm(f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?")():
+        if rich.prompt.Confirm(
+            f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?"
+        )():
             assert run_command_is_ok(
                 cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger
             )
@@ -480,14 +484,21 @@ def cfn_example(
     if operation == Operation.DELETE:
         delete_stack(region, stack_name)
         return
-    template_path = infer_template_path(repo_path, type_name)
+    template_path = infer_template_path(repo_path, type_name, stack_name)
     template_path, parameters, not_found = decode_parameters(
-        env_vars_generated, template_path, stack_name, params_parsed, resource_params_parsed
+        exported_env_vars=env_vars_generated,
+        template_path=template_path,
+        stack_name=stack_name,
+        force_params=params_parsed,
+        resource_params=resource_params_parsed,
+        type_name=type_name,
     )
     logger.info(f"parameters: {parameters}")
     if not_found:
         # todo: support specifying these extra
-        logger.critical(f"need to fill out parameters manually: {not_found}")
+        logger.critical(
+            f"need to fill out parameters manually: {not_found} for {type_name}"
+        )
         raise typer.Exit(1)
     if not rich.prompt.Confirm("parameters 👆looks good?")():
         raise typer.Exit(1)
@@ -498,6 +509,7 @@ def cfn_example(
             region_name=region,
             role_arn=cfn_execution_role,
             parameters=parameters,
+            timeout_seconds=stack_timeout_s,
         )
     elif operation == Operation.UPDATE:
         update_stack(
@@ -506,6 +518,7 @@ def cfn_example(
             region_name=region,
             parameters=parameters,
             role_arn=cfn_execution_role,
+            timeout_seconds=stack_timeout_s,
         )
     else:
         raise NotImplementedError

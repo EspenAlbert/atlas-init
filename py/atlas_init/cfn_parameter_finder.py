@@ -41,7 +41,7 @@ def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> st
     return read_execution_role(loaded_env_vars)
 
 
-def infer_template_path(repo_path: Path, type_name: str) -> Path:
+def infer_template_path(repo_path: Path, type_name: str, stack_name: str) -> Path:
     examples_dir = cfn_examples_dir(repo_path)
     template_paths: list[Path] = []
     type_setting = f'"Type": "{type_name}"'
@@ -59,8 +59,12 @@ def infer_template_path(repo_path: Path, type_name: str) -> Path:
             if len(expected_folders) == 1:
                 logger.info(f"using template: {expected_folders[0]}")
                 return expected_folders[0]
-        selected_path = prompt.Prompt("Choose example template: ", choices=[p.name for p in template_paths])()
-        return next(Path(p) for p in template_paths if p.name == selected_path)
+        choices = {p.stem: p for p in template_paths}
+        if stack_path := choices.get(stack_name):
+            logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
+            return stack_path
+        selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
+        return choices[selected_path]
     return template_paths[0]
 
 
@@ -81,6 +85,7 @@ type_names_defaults: dict[str, dict[str, str]] = {
     },
     "cluster": {
         STACK_NAME_PARAM: "ClusterName",
+        "ProjectName": "Cluster-CFN-Example",
     },
 }
 
@@ -105,15 +110,19 @@ class CfnTemplate(Entity):
     parameters: dict[str, CfnParameter]
     resources: dict[str, CfnResource]
 
-    def normalized_type_name(self) -> str:
-        key = list(self.resources)[0]
-        return cfn_type_normalized(self.resources[key].type)
-    
-    def add_resource_params(self, resources: dict[str, Any]):
-        if len(self.resources) != 1:
-            raise NotImplementedError
+    def find_resource(self, type_name: str) -> CfnResource:
         for r in self.resources.values():
-            r.properties.update(resources)
+            if r.type == type_name:
+                return r
+        raise ValueError(f"resource not found: {type_name}")
+    
+    def normalized_type_name(self, type_name: str) -> str:
+        assert self.find_resource(type_name)
+        return cfn_type_normalized(type_name)
+    
+    def add_resource_params(self, type_name: str, resources: dict[str, Any]):
+        resource = self.find_resource(type_name)
+        resource.properties.update(resources)
 
 
 def updated_template_path(path: Path) -> Path:
@@ -125,13 +134,14 @@ def updated_template_path(path: Path) -> Path:
 def decode_parameters(
     exported_env_vars: dict[str, str],
     template_path: Path,
+    type_name: str,
     stack_name: str,
     force_params: dict[str, Any] | None = None,
     resource_params: dict[str, Any] | None = None,
 ) -> tuple[Path, list[ParameterTypeDef], set[str]]:
     cfn_template = parse_model(template_path, t=CfnTemplate)
     if resource_params:
-        cfn_template.add_resource_params(resource_params)
+        cfn_template.add_resource_params(type_name, resource_params)
         template_path = updated_template_path(template_path)
         logger.info(f"updating template {template_path}")
         raw_dict = cfn_template.model_dump(by_alias=True, exclude_unset=True)
@@ -139,11 +149,15 @@ def decode_parameters(
         template_str = dump(raw_dict, format=format)
         template_path.write_text(template_str)
     parameters_dict: dict[str, Any] = {}
-    type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(), {})
+    type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
         type_defaults[stack_name_param] = stack_name
 
     for param_name, param in cfn_template.parameters.items():
+        if type_default := type_defaults.get(param_name):
+            logger.info(f"using type default for {param_name}={type_default}")
+            parameters_dict[param_name] = type_default
+            continue
         if env_key := parameters_exported_env_vars.get(param_name):
             if env_value := exported_env_vars.get(env_key):
                 logger.info(f"using {env_key} to fill parameter: {param_name}")
@@ -152,10 +166,6 @@ def decode_parameters(
         if set(param.allowed_values) == {"true", "false"}:
             logger.info(f"using default false for {param_name}")
             parameters_dict[param_name] = "false"
-            continue
-        if type_default := type_defaults.get(param_name):
-            logger.info(f"using type default for {param_name}={type_default}")
-            parameters_dict[param_name] = type_default
             continue
         if default := param.default:
             parameters_dict[param_name] = default

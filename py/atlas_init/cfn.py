@@ -108,6 +108,7 @@ def create_stack(
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
+    timeout_seconds: int = 300
 ):
     client = cloud_formation_client(region_name)
     stack_id = client.create_stack(
@@ -119,7 +120,7 @@ def create_stack(
     logger.info(
         f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}"
     )
-    wait_on_stack_ok(stack_name, region_name)
+    wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
 def update_stack(
@@ -128,6 +129,7 @@ def update_stack(
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
+    timeout_seconds: int = 300
 ):
     client = cloud_formation_client(region_name)
     update = client.update_stack(
@@ -139,7 +141,7 @@ def update_stack(
     logger.info(
         f"stack with name: {stack_name} updated {region_name} has id: {update['StackId']}"
     )
-    wait_on_stack_ok(stack_name, region_name)
+    wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
 class StackBaseError(Exception):
@@ -190,46 +192,57 @@ class StackEvents(Event):
             if event.logical_resource_id == stack_name:
                 return event
         raise ValueError(f"no events found for {stack_name}")
+    
+    def last_reason(self) -> str:
+        for event in sorted(self.stack_events, reverse=True):
+            if reason := event.resource_status_reason:
+                return reason
+        return ""
 
 
-@retry(
-    stop=stop_after_attempt(20),
-    wait=wait_fixed(6),
-    retry=retry_if_exception_type(StackInProgress),
-    reraise=True,
-)
-def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False) -> None:
-    client = cloud_formation_client(region_name)
-    try:
-        response = client.describe_stack_events(StackName=stack_name)
-    except botocore.exceptions.ClientError as e:
-        if not expect_not_found:
-            raise e
-        error_message = e.response.get("Error", {}).get("Message", "")
-        if "does not exist" not in error_message:
-            raise e
+def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False, timeout_seconds: int = 300) -> None:
+    attempts = timeout_seconds // 6
+    
+    @retry(
+        stop=stop_after_attempt(attempts+1),
+        wait=wait_fixed(6),
+        retry=retry_if_exception_type(StackInProgress),
+        reraise=True,
+    )
+    def _wait_on_stack_ok() -> None:
+        client = cloud_formation_client(region_name)
+        try:
+            response = client.describe_stack_events(StackName=stack_name)
+        except botocore.exceptions.ClientError as e:
+            if not expect_not_found:
+                raise e
+            error_message = e.response.get("Error", {}).get("Message", "")
+            if "does not exist" not in error_message:
+                raise e
+            return None
+        parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
+        current_event = parsed.current_stack_event(stack_name)
+        if current_event.in_progress:
+            logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
+            raise StackInProgress(
+                current_event.resource_status,
+                current_event.timestamp,
+                current_event.resource_status_reason,
+            )
+        elif current_event.is_error:
+            raise StackError(
+                current_event.resource_status,
+                current_event.timestamp,
+                current_event.resource_status_reason,
+            )
+        status = current_event.resource_status
+        logger.info(f"stack is ready {stack_name} {status} ✅")
+        if "ROLLBACK" in status:
+            last_reason = parsed.last_reason()
+            logger.warning(f"stack did rollback, got: {current_event!r}\n{last_reason}")
         return None
-    parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
-    current_event = parsed.current_stack_event(stack_name)
-    if current_event.in_progress:
-        logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
-        raise StackInProgress(
-            current_event.resource_status,
-            current_event.timestamp,
-            current_event.resource_status_reason,
-        )
-    elif current_event.is_error:
-        raise StackError(
-            current_event.resource_status,
-            current_event.timestamp,
-            current_event.resource_status_reason,
-        )
-    status = current_event.resource_status
-    logger.info(f"stack is ready {stack_name} {status} ✅")
-    if "ROLLBACK" in status:
-        logger.warning(f"stack did rollback, got: {current_event!r}")
-    return None
-
+    
+    return _wait_on_stack_ok()
 
 def print_version_regions(type_name: str) -> None:
     version_regions = get_last_version_all_regions(type_name)
