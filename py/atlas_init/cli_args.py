@@ -1,6 +1,7 @@
+import logging
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, ClassVar, TypeAlias
+from typing import Annotated, Any, ClassVar, TypeAlias
 
 from model_lib import Entity, Event, parse_payload
 from pydantic import AfterValidator, constr, model_validator
@@ -10,6 +11,7 @@ from zero_3rdparty.str_utils import ensure_prefix
 
 from atlas_init.env_vars import current_dir
 
+logger = logging.getLogger(__name__)
 SdkVersion: TypeAlias = constr(pattern="v\d{11}")  # type: ignore
 SDK_VERSION_HELP = "e.g., v20231115008 in go.mongodb.org/atlas-sdk/XXXX/admin"
 
@@ -32,15 +34,25 @@ def parse_key_values(params: list[str]) -> dict[str, str]:
     return key_equal_value_to_dict(params)
 
 
+def parse_key_values_any(params: list[str]) -> dict[str, Any]:
+    str_dict = parse_key_values(params)
+    return {
+        k: parse_payload(v) if v.startswith(("{", "[")) else v
+        for k, v in str_dict.items()
+    }
+
+
 class CfnType(Entity):
     MONGODB_ATLAS_CFN_TYPE_PREFIX: ClassVar[str] = "MongoDB::Atlas::"
 
     type_name: str
-    region_filter: Region
+    region_filter: Region | None = None
 
     @classmethod
-    def validate_type_region(cls, type_name: str, region: str) -> tuple[str, str]:
-        instance = CfnType(type_name=type_name, region_filter=region)
+    def validate_type_region(
+        cls, type_name: str, region: str
+    ) -> tuple[str, str | None]:
+        instance = CfnType(type_name=type_name, region_filter=region or None)
         return instance.type_name, instance.region_filter
 
     @model_validator(mode="after")
@@ -102,3 +114,17 @@ def infer_cfn_type_name() -> str:
             assert isinstance(type_name, str)
             return type_name
     raise ValueError(f"unable to infer cfn type name in {cwd}")
+
+
+def validate_type_name_regions(
+    type_name: str, region_filter: str
+) -> tuple[str, list[str]]:
+    type_name, region_filter = CfnType.validate_type_region(type_name, region_filter)
+    region_filter = region_filter or ""
+    if region_filter:
+        logger.info(f"{type_name} in region {region_filter}")
+        regions = [region_filter]
+    else:
+        regions = REGIONS
+        logger.info(f"{type_name} in ALL regions: {regions}")
+    return type_name, regions  # type: ignore

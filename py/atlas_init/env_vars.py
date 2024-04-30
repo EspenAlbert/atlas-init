@@ -14,6 +14,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from atlas_init.config import (
     AtlasInitConfig,
     TestSuite,
+)
+from atlas_init.config import (
     active_suites as config_active_suites,
 )
 
@@ -212,3 +214,7 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
     return config_active_suites(
         settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed
     )
+
+
+def init_settings() -> AtlasInitSettings:
+    return AtlasInitSettings.safe_settings()

@@ -4,10 +4,13 @@ from pathlib import Path
 from shutil import which
 import subprocess
 import sys
+from typing import TypeVar
 
+
+StrT = TypeVar("StrT", bound=str)
 
 def run_command_is_ok(
-    cmd: list[str], env: dict | None, cwd: Path | str, logger: Logger
+    cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger
 ) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
