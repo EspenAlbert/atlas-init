@@ -57,7 +57,11 @@ from atlas_init.env_vars import (
 from atlas_init.region import run_in_regions
 from atlas_init.repo_paths import Repo, current_repo, current_repo_path, find_paths
 from atlas_init.rich_log import configure_logging
-from atlas_init.run import run_binary_command_is_ok, run_command_is_ok
+from atlas_init.run import (
+    run_binary_command_is_ok,
+    run_command_exit_on_failure,
+    run_command_is_ok,
+)
 from atlas_init.schema import (
     download_admin_api,
     dump_generator_config,
@@ -534,15 +538,11 @@ def pre_commit(
     if skip_build:
         logger.warning("skipping build")
     else:
-        assert run_command_is_ok(
-            build_cmd.split(), env=None, cwd=repo_path, logger=logger
-        )
+        run_command_exit_on_failure(build_cmd, cwd=repo_path, logger=logger)
     if skip_lint:
         logger.warning("skipping formatting")
     else:
-        assert run_command_is_ok(
-            format_cmd_str.split(), env=None, cwd=repo_path, logger=logger
-        )
+        run_command_exit_on_failure(format_cmd_str, cwd=repo_path, logger=logger)
 
 
 def typer_main():
