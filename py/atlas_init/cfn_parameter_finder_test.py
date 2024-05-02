@@ -1,7 +1,13 @@
 import os
 from pathlib import Path
 
-from atlas_init.cfn_parameter_finder import check_execution_role, decode_parameters
+from model_lib import parse_payload
+
+from atlas_init.cfn_parameter_finder import (
+    check_execution_role,
+    decode_parameters,
+    updated_template_path,
+)
 
 TEST_DATA = Path(__file__).parent / "test_data"
 
@@ -29,3 +35,17 @@ def test_check_execution_role():
         check_execution_role(cfn_repo_path, {"CFN_EXAMPLE_EXECUTION_ROLE": some_arn})
         == some_arn
     )
+
+
+def test_updated_template_path():
+    assert (
+        str(updated_template_path(Path("free-tier-M0-cluster.json")))
+        == "free-tier-M0-cluster-updated.json"
+    )
+
+def test_updates():
+    src = Path(os.environ["SRC_TEMPLATE"])
+    dest = Path(os.environ["DEST_TEMPLATE"])
+    assert src.exists()
+    assert dest.exists()
+    assert parse_payload(src) == parse_payload(dest)

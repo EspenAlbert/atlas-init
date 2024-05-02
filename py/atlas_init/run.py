@@ -4,10 +4,15 @@ from pathlib import Path
 from shutil import which
 import subprocess
 import sys
+from typing import TypeVar
 
+import typer
+
+
+StrT = TypeVar("StrT", bound=str)
 
 def run_command_is_ok(
-    cmd: list[str], env: dict | None, cwd: Path | str, logger: Logger
+    cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger
 ) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
@@ -41,3 +46,17 @@ def run_binary_command_is_ok(binary_name: str, command: str, cwd: Path, logger: 
         cwd=cwd,
         logger=logger,
     )
+
+
+def run_command_exit_on_failure(
+    cmd: list[StrT] | str,
+    cwd: Path | str,
+    logger: Logger,
+    env: dict | None = None,
+) -> None:
+    if isinstance(cmd, str):
+        cmd = cmd.split() # type: ignore
+    assert isinstance(cmd, list)
+    if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger):
+        logger.critical("command failed, see output 👆")
+        raise typer.Exit(1)

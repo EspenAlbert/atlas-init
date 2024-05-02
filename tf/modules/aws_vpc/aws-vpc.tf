@@ -69,6 +69,7 @@ output "env_vars" {
   value = {
     AWS_VPC_ID = aws_vpc.this.id
     AWS_VPC_CIDR_BLOCK = local.cidr_block
-
+    AWS_SECURITY_GROUP_ID=aws_security_group.this.id
+    AWS_SUBNET_ID=aws_subnet.subnet_a.id
   }
 }

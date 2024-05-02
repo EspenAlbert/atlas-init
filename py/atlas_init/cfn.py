@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -57,6 +58,30 @@ def deregister_cfn_resource_type(
             raise e
 
 
+def deregister_arn(arn: str, region: str):
+    client = cloud_formation_client(region)
+    logger.warning(f"deregistering type {arn} in {region}")
+    client.deregister_type(Arn=arn)
+
+
+def deactivate_third_party_type(type_name: str, region_name: str, dry_run: bool = False) -> None | CfnTypeDetails:
+    last_version = get_last_cfn_type(
+        type_name, region=region_name, is_third_party=True
+    )
+    if not last_version:
+        logger.info(f"no third party found in region {region_name}")
+        return
+    is_activated = last_version.is_activated
+    logger.info(f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}")
+    if is_activated and not dry_run:
+        deactivate_type(type_name=type_name, region=region_name)
+
+
+def deactivate_type(type_name: str, region: str):
+    client = cloud_formation_client(region)
+    logger.warning(f"deactivating type {type_name} in {region}")
+    client.deactivate_type(TypeName=type_name, Type="RESOURCE")
+
 def delete_role_stack(type_name: str, region_name: str) -> None:
     stack_name = type_name.replace("::", "-").lower() + "-role-stack"
     delete_stack(region_name, stack_name)
@@ -83,6 +108,7 @@ def create_stack(
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
+    timeout_seconds: int = 300
 ):
     client = cloud_formation_client(region_name)
     stack_id = client.create_stack(
@@ -94,7 +120,7 @@ def create_stack(
     logger.info(
         f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}"
     )
-    wait_on_stack_ok(stack_name, region_name)
+    wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
 def update_stack(
@@ -103,6 +129,7 @@ def update_stack(
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
+    timeout_seconds: int = 300
 ):
     client = cloud_formation_client(region_name)
     update = client.update_stack(
@@ -114,7 +141,7 @@ def update_stack(
     logger.info(
         f"stack with name: {stack_name} updated {region_name} has id: {update['StackId']}"
     )
-    wait_on_stack_ok(stack_name, region_name)
+    wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
 class StackBaseError(Exception):
@@ -165,43 +192,57 @@ class StackEvents(Event):
             if event.logical_resource_id == stack_name:
                 return event
         raise ValueError(f"no events found for {stack_name}")
+    
+    def last_reason(self) -> str:
+        for event in sorted(self.stack_events, reverse=True):
+            if reason := event.resource_status_reason:
+                return reason
+        return ""
 
 
-@retry(
-    stop=stop_after_attempt(20),
-    wait=wait_fixed(6),
-    retry=retry_if_exception_type(StackInProgress),
-    reraise=True,
-)
-def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False) -> None:
-    client = cloud_formation_client(region_name)
-    try:
-        response = client.describe_stack_events(StackName=stack_name)
-    except botocore.exceptions.ClientError as e:
-        if not expect_not_found:
-            raise e
-        error_message = e.response.get("Error", {}).get("Message", "")
-        if "does not exist" not in error_message:
-            raise e
+def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False, timeout_seconds: int = 300) -> None:
+    attempts = timeout_seconds // 6
+    
+    @retry(
+        stop=stop_after_attempt(attempts+1),
+        wait=wait_fixed(6),
+        retry=retry_if_exception_type(StackInProgress),
+        reraise=True,
+    )
+    def _wait_on_stack_ok() -> None:
+        client = cloud_formation_client(region_name)
+        try:
+            response = client.describe_stack_events(StackName=stack_name)
+        except botocore.exceptions.ClientError as e:
+            if not expect_not_found:
+                raise e
+            error_message = e.response.get("Error", {}).get("Message", "")
+            if "does not exist" not in error_message:
+                raise e
+            return None
+        parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
+        current_event = parsed.current_stack_event(stack_name)
+        if current_event.in_progress:
+            logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
+            raise StackInProgress(
+                current_event.resource_status,
+                current_event.timestamp,
+                current_event.resource_status_reason,
+            )
+        elif current_event.is_error:
+            raise StackError(
+                current_event.resource_status,
+                current_event.timestamp,
+                current_event.resource_status_reason,
+            )
+        status = current_event.resource_status
+        logger.info(f"stack is ready {stack_name} {status} ✅")
+        if "ROLLBACK" in status:
+            last_reason = parsed.last_reason()
+            logger.warning(f"stack did rollback, got: {current_event!r}\n{last_reason}")
         return None
-    parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
-    current_event = parsed.current_stack_event(stack_name)
-    if current_event.in_progress:
-        logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
-        raise StackInProgress(
-            current_event.resource_status,
-            current_event.timestamp,
-            current_event.resource_status_reason,
-        )
-    elif current_event.is_error:
-        raise StackError(
-            current_event.resource_status,
-            current_event.timestamp,
-            current_event.resource_status_reason,
-        )
-    logger.info(f"stack is ready {stack_name} {current_event.resource_status} ✅")
-    return None
-
+    
+    return _wait_on_stack_ok()
 
 def print_version_regions(type_name: str) -> None:
     version_regions = get_last_version_all_regions(type_name)
@@ -246,6 +287,7 @@ class CfnTypeDetails(Event):
     version: str
     type_name: str
     type_arn: str
+    is_activated: bool
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, CfnTypeDetails):
@@ -281,6 +323,7 @@ def get_last_cfn_type(
                 version=last_version,
                 type_name=t.get("TypeName", type_name),
                 type_arn=arn,
+                is_activated=t.get("IsActivated", False)
             )
             type_details.append(detail)
             logger.debug(f"{last_version} published @ {last_updated}")
@@ -292,23 +335,11 @@ def get_last_cfn_type(
     return sorted(type_details)[-1]
 
 
-def activate_resource_type(type_name: str, region: str):
+def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_arn: str):
     client = cloud_formation_client(region)
-    raise NotImplementedError
-    # response = client.activate_type(
-    #     Type="RESOURCE",
-    #     PublicTypeArn="arn:aws:cloudformation:eu-south-2::type/resource/bb989456c78c398a858fef18f2ca1bfc1fbba082/MongoDB-Atlas-StreamConnection",
-    #     ExecutionRoleArn="arn:aws:iam::358363220050:role/mongodb-atlas-streamconnection-role-s-ExecutionRole-L8Pmt3uDFonT"
-    # )
-    # logger.info(f"activate response: {response}")
-
-
-if __name__ == "__main__":
-    # deregister_cfn_resource_type("MongoDB::Atlas::StreamConnection", deregister=True)
-    configure_logging()
-    deregister_cfn_resource_type(
-        "MongoDB::Atlas::Project", deregister=True, region_filter="us-east-1"
+    response = client.activate_type(
+        Type="RESOURCE",
+        PublicTypeArn=details.type_arn,
+        ExecutionRoleArn=execution_role_arn
     )
-    # activate_resource_type("MongoDB::Atlas::StreamConnection", "eu-south-2")
-    # get_last_version("MongoDB::Atlas::Project", "eu-south-2")
-    # print_version_regions("MongoDB::Atlas::Project")
+    logger.info(f"activate response: {response}")
