@@ -443,7 +443,7 @@ def cfn_example(
     operation: str = typer.Argument(...),
     params: list[str] = typer.Option(..., "-p", default_factory=list),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
-    stack_timeout_s: int = typer.Option(300, "-t"),
+    stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
 ):
     params_parsed: dict[str, str] = {}
     if params:
