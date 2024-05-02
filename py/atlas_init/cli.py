@@ -43,10 +43,7 @@ from atlas_init.cli_args import (
 )
 from atlas_init.config import RepoAliasNotFound
 from atlas_init.constants import (
-    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
-    GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
     format_cmd,
-    format_dir,
     go_sdk_breaking_changes,
     resource_name,
 )
@@ -57,9 +54,8 @@ from atlas_init.env_vars import (
     current_dir,
     init_settings,
 )
-from atlas_init.git_utils import owner_project_name
 from atlas_init.region import run_in_regions
-from atlas_init.repo_paths import find_paths
+from atlas_init.repo_paths import Repo, current_repo, current_repo_path, find_paths
 from atlas_init.rich_log import configure_logging
 from atlas_init.run import run_binary_command_is_ok, run_command_is_ok
 from atlas_init.schema import (
@@ -294,9 +290,7 @@ def _create_sample_file(
 
 @app_command()
 def schema_optional_only():
-    settings = init_settings()
-    repo_path, _ = settings.repo_path_rel_path
-    assert owner_project_name(repo_path) == GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS
+    repo_path = current_repo_path(Repo.TF)
     log_optional_only(repo_path)
 
 
@@ -459,10 +453,7 @@ def cfn_example(
     settings = init_settings()
     type_name, region = CfnType.validate_type_region(type_name, region)  # type: ignore
     CfnOperation(operaton=operation)  # type: ignore
-    repo_path, resource_path, r_name = find_paths()
-    assert (
-        owner_project_name(repo_path) == GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES
-    )
+    repo_path, resource_path, _ = find_paths(Repo.CFN)
     env_vars_generated = settings.load_env_vars_generated()
     cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
 
@@ -529,20 +520,28 @@ def pre_commit(
     skip_build: bool = typer.Option(default=False),
     skip_lint: bool = typer.Option(default=False),
 ):
-    repo_path, resource_path, r_name = find_paths()
+    match current_repo():
+        case Repo.CFN:
+            repo_path, resource_path, r_name = find_paths()
+            build_cmd = f"cd {resource_path} && make build"
+            format_cmd_str = f"cd cfn-resources && {format_cmd(repo_path, r_name)}"
+        case Repo.TF:
+            repo_path = current_repo_path()
+            build_cmd = "make build"
+            format_cmd_str = format_cmd(repo_path, "unused")
+        case _:
+            raise NotImplementedError
     if skip_build:
         logger.warning("skipping build")
     else:
         assert run_command_is_ok(
-            ["make", "build"], env=None, cwd=resource_path, logger=logger
+            build_cmd.split(), env=None, cwd=repo_path, logger=logger
         )
     if skip_lint:
         logger.warning("skipping formatting")
     else:
-        format_path = format_dir(repo_path)
-        fmt_cmd_str = format_cmd(repo_path, r_name)
         assert run_command_is_ok(
-            fmt_cmd_str.split(), env=None, cwd=format_path, logger=logger
+            format_cmd_str.split(), env=None, cwd=repo_path, logger=logger
         )
 
 

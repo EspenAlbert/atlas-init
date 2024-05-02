@@ -40,11 +40,6 @@ _resource_is_resource = {
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: _default_is_resource
 }
 
-_format_dir = {
-    GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: lambda p: p,
-    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda p: p / "cfn-resources",
-}
-
 _format_cmd = {
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: lambda p: "golangci-lint run",
     # todo: understand why piping to grep doesn't work
@@ -84,11 +79,6 @@ def resource_dir(repo_path: Path, full_path: Path) -> Path:
     if not dir_name:
         raise ValueError(f"no resource name for {full_path}")
     return resource_root(repo_path) / dir_name
-
-
-def format_dir(repo_path: Path) -> Path:
-    owner_project = owner_project_name(repo_path)
-    return _format_dir[owner_project](repo_path)
 
 
 def format_cmd(repo_path: Path, resource_name: str) -> str:
