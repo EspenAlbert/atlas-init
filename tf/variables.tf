@@ -106,3 +106,8 @@ variable "use_aws_vars" {
   type = bool
   default = false
 }
+
+variable "use_aws_s3" {
+  type = bool
+  default = false 
+}

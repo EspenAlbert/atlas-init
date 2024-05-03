@@ -46,3 +46,16 @@ test_suites:
     - 'internal/service/searchindex'
   vars:
     cluster_info: true
+- name: s3
+  repo_go_packages:
+    tf:
+    - 'internal/service/cloudbackupsnapshotexportbucket'
+  vars:
+    use_aws_s3: true
+- name: s3_with_cluster
+  repo_go_packages:
+    tf:
+    - 'internal/service/cloudbackupsnapshotexportjob'
+  vars:
+    use_aws_s3: true
+    cluster_info_m10: true
