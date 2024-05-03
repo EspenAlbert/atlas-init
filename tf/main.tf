@@ -74,6 +74,7 @@ module "cluster" {
   region = local.atlas_region
   db_in_url = var.cluster_config.database_in_url
   instance_size = var.cluster_config.instance_size
+  cloud_backup = var.cluster_config.cloud_backup
 }
 
 module "aws_vpc" {

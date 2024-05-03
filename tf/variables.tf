@@ -48,12 +48,14 @@ variable "cluster_config" {
     name = string
     instance_size = string
     database_in_url = string
+    cloud_backup = bool
   })
 
   default = {
     name =  ""
     instance_size = "M0"
     database_in_url = "default"  
+    cloud_backup = false
   }
 }
 
