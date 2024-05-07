@@ -1,4 +1,7 @@
+data "aws_caller_identity" "current" {}
+
 locals {
+  aws_account_id = data.aws_caller_identity.current.account_id
   modules_info = {
     vpc_privatelink = try(module.vpc_privatelink[0].info, {})
     cluster = try(module.cluster[0].info, {})
@@ -46,6 +49,7 @@ locals {
     PROJECT_NAME=var.project_name
     # tf
     TF_ACC=1
+    AWS_ACCOUNT_ID = local.aws_account_id
   }
   
 
@@ -91,4 +95,8 @@ output "aws_regions" {
 
 output "last_provider_version" {
   value = local.last_provider_version
+}
+
+output "aws_account_id" {
+  value = local.aws_account_id
 }

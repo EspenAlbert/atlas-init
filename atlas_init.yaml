@@ -14,6 +14,8 @@ test_suites:
     - 'cfn-resources/project'
 - name: network_peering
   vars: 
+    use_aws_vpc: true
+    use_aws_vars: true
     use_vpc_peering: true
   repo_go_packages:
     tf:

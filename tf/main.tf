@@ -67,6 +67,7 @@ module "vpc_peering" {
   atlas_region = local.atlas_region
   project_id = local.project_id
   skip_resources = true
+  aws_account_id = local.aws_account_id
 }
 
 module "vpc_privatelink" {

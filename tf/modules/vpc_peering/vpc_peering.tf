@@ -32,18 +32,14 @@ variable "vpc_id" {
 variable "project_id" {
   type = string
 }
-
-
-locals {
-  account_id = data.aws_caller_identity.current.account_id
+variable "aws_account_id" {
+  type = string
 }
 
 variable "skip_resources" {
   type = bool
 }
 
-
-data "aws_caller_identity" "current" {}
 
 resource "aws_route" "peeraccess" {
   count = var.skip_resources ? 0 : 1
@@ -71,7 +67,7 @@ resource "mongodbatlas_network_peering" "aws_atlas" {
   provider_name          = "AWS"
   route_table_cidr_block = var.vpc_cidr_block
   vpc_id                 = var.vpc_id
-  aws_account_id         = local.account_id
+  aws_account_id         = var.aws_account_id
 }
 
 resource "aws_vpc_peering_connection_accepter" "peer" {
@@ -89,7 +85,7 @@ resource "mongodbatlas_project_ip_access_list" "test" {
 
 output "env_vars" {
   value = {
-    AWS_ACCOUNT_ID = local.account_id
+    AWS_ACCOUNT_ID = var.aws_account_id
     AWS_VPC_CIDR_BLOCK = var.vpc_cidr_block
     AWS_VPC_ID = var.vpc_id
     AWS_REGION = var.atlas_region
