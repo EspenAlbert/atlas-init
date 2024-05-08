@@ -6,6 +6,12 @@ test_suites:
   repo_go_packages:
     cfn:
       - 'cfn-resources/cluster'
+- name: federated
+  repo_go_packages:
+    tf:
+      - 'internal/service/federatedsettingsorgrolemapping'
+  vars:
+    use_federated_vars: true
 - name: project
   vars: 
     use_project_extra: true

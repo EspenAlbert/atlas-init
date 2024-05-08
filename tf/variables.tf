@@ -11,6 +11,10 @@ variable "atlas_base_url" {
   default = "https://cloud-dev.mongodb.com/"
 }
 
+variable "federated_settings_id" {
+  type = string
+}
+
 variable "org_id" {
   type = string
 }
@@ -110,4 +114,9 @@ variable "use_aws_vars" {
 variable "use_aws_s3" {
   type = bool
   default = false 
+}
+
+variable "use_federated_vars" {
+  type = bool
+  default = false
 }

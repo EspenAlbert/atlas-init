@@ -129,3 +129,13 @@ module "aws_s3" {
   bucket_name = "atlas-init-${replace(var.project_name, "_", "-")}"
   iam_role_name = module.cloud_provider[0].iam_role_name
 }
+
+module "federated_vars" {
+  source = "./modules/federated_vars"
+  count = var.use_federated_vars ? 1 : 0
+
+  federated_settings_id = var.federated_settings_id
+  org_id = var.org_id
+  project_id = local.project_id
+  base_url = var.atlas_base_url
+}

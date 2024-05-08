@@ -13,6 +13,7 @@ locals {
     aws_vars = try(module.aws_vars[0].info, {})
     cloud_provider = try(module.cloud_provider[0].info, {})
     aws_s3 = try(module.aws_s3[0].info, {})
+    federated_vars = try(module.federated_vars[0].info, {})
   }
 
   modules_env_vars = {
@@ -26,6 +27,7 @@ locals {
     aws_vars = try(module.aws_vars[0].env_vars, {})
     cloud_provider = try(module.cloud_provider[0].env_vars, {})
     aws_s3 = try(module.aws_s3[0].env_vars, {})
+    federated_vars = try(module.federated_vars[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id
@@ -65,7 +67,7 @@ output "links" {
 
 output "modules_info" {
   value = local.modules_info
-  sensitive = true
+  sensitive = false
 }
 output "modules_env_vars" {
   value = local.modules_env_vars

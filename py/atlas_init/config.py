@@ -23,6 +23,7 @@ class TerraformVars(Entity):
     use_aws_vars: bool = False
     use_aws_vpc: bool = False
     use_aws_s3: bool = False
+    use_federated_vars: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
@@ -52,6 +53,8 @@ class TerraformVars(Entity):
             config["use_aws_s3"] = True
         if self.use_project_extra:
             config["use_project_extra"] = True
+        if self.use_federated_vars:
+            config["use_federated_vars"] = True
         if self.stream_instance:
             config["stream_instance_config"] = {"name": "atlas-init"}
         return config
