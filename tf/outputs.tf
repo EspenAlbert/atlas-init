@@ -67,7 +67,7 @@ output "links" {
 
 output "modules_info" {
   value = local.modules_info
-  sensitive = false
+  sensitive = true
 }
 output "modules_env_vars" {
   value = local.modules_env_vars

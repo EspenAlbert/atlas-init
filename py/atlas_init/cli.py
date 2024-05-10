@@ -52,6 +52,7 @@ from atlas_init.env_vars import (
     CwdIsNoRepoPathError,
     active_suites,
     current_dir,
+    dump_vscode_dotenv,
     init_settings,
 )
 from atlas_init.region import run_in_regions
@@ -130,7 +131,7 @@ def apply(context: typer.Context):
         return
 
     if settings.env_vars_generated.exists():
-        copy(settings.env_vars_generated, settings.env_vars_vs_code)
+        dump_vscode_dotenv(settings.env_vars_generated, settings.env_vars_vs_code)
         logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
 
 
