@@ -325,6 +325,8 @@ def get_last_cfn_type(
                 type_arn=arn,
                 is_activated=t.get("IsActivated", False)
             )
+            if detail.type_name != type_name:
+                continue
             type_details.append(detail)
             logger.debug(f"{last_version} published @ {last_updated}")
         if not next_token:

@@ -1,13 +1,3 @@
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "1.4.3"
-    }
-  }
-  required_version = ">= 1.0"
-}
-
 variable "cluster_name" {
   type = string
 }
@@ -32,6 +22,10 @@ variable "db_in_url" {
   type = string
 }
 
+variable "cloud_backup" {
+  type = bool
+}
+
 locals {
   use_free_cluster = var.instance_size == "M0"
   cluster = try(mongodbatlas_cluster.project_cluster_free[0], mongodbatlas_cluster.project_cluster[0])
@@ -52,6 +46,7 @@ resource "mongodbatlas_cluster" "project_cluster" {
   count = local.use_free_cluster ? 0 : 1
   project_id   = var.project_id
   name         = var.cluster_name
+  cloud_backup = var.cloud_backup
   cluster_type = "REPLICASET"
   replication_specs {
     num_shards = 1
@@ -62,7 +57,6 @@ resource "mongodbatlas_cluster" "project_cluster" {
       read_only_nodes = 0
     }
   }
-  cloud_backup                 = false
   auto_scaling_disk_gb_enabled = false
   mongo_db_major_version       = "5.0"
 

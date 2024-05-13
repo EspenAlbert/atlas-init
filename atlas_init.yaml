@@ -6,6 +6,12 @@ test_suites:
   repo_go_packages:
     cfn:
       - 'cfn-resources/cluster'
+- name: federated
+  repo_go_packages:
+    tf:
+      - 'internal/service/federatedsettingsorgrolemapping'
+  vars:
+    use_federated_vars: true
 - name: project
   vars: 
     use_project_extra: true
@@ -14,6 +20,8 @@ test_suites:
     - 'cfn-resources/project'
 - name: network_peering
   vars: 
+    use_aws_vpc: true
+    use_aws_vars: true
     use_vpc_peering: true
   repo_go_packages:
     tf:
@@ -46,3 +54,16 @@ test_suites:
     - 'internal/service/searchindex'
   vars:
     cluster_info: true
+- name: s3
+  repo_go_packages:
+    tf:
+    - 'internal/service/cloudbackupsnapshotexportbucket'
+  vars:
+    use_aws_s3: true
+- name: s3_with_cluster
+  repo_go_packages:
+    tf:
+    - 'internal/service/cloudbackupsnapshotexportjob'
+  vars:
+    use_aws_s3: true
+    cluster_info_m10: true

@@ -29,7 +29,7 @@ data "mongodbatlas_atlas_users" "this" {
 locals {
   project_user_username = data.mongodbatlas_atlas_users.this.results[0].username
 }
-resource "mongodbatlas_teams" "project_team" {
+resource "mongodbatlas_team" "project_team" {
     org_id = var.org_id
     name = "cfn-contract-test-${var.id_suffix}"
     usernames = [local.project_user_username]
@@ -37,7 +37,7 @@ resource "mongodbatlas_teams" "project_team" {
 
 output "env_vars" {
   value = {
-    MONGODB_ATLAS_TEAM_ID = mongodbatlas_teams.project_team.team_id
+    MONGODB_ATLAS_TEAM_ID = mongodbatlas_team.project_team.team_id
     MONGODB_ATLAS_ORG_API_KEY_ID = mongodbatlas_api_key.project_key.api_key_id
   }
 }

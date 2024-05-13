@@ -209,6 +209,13 @@ def dump_manual_dotenv_from_env(path: Path) -> None:
     path.write_text(content)
 
 
+def dump_vscode_dotenv(generated_path: Path, vscode_env_path: Path) -> None:
+    vscode_env_vars = load_dotenv(generated_path)
+    vscode_env_vars.pop("TF_CLI_CONFIG_FILE", None) # migration tests will use local provider instead of online
+    vscode_env_path.write_text("")
+    for k, v in vscode_env_vars.items():
+        dotenv.set_key(vscode_env_path, k, v)
+
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
     repo_path, cwd_rel_path = settings.repo_path_rel_path
     return config_active_suites(

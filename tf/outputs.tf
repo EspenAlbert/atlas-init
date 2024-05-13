@@ -1,4 +1,7 @@
+data "aws_caller_identity" "current" {}
+
 locals {
+  aws_account_id = data.aws_caller_identity.current.account_id
   modules_info = {
     vpc_privatelink = try(module.vpc_privatelink[0].info, {})
     cluster = try(module.cluster[0].info, {})
@@ -8,6 +11,9 @@ locals {
     project_extra = try(module.project_extra[0].info, {})
     cfn = try(module.cfn[0].info, {})
     aws_vars = try(module.aws_vars[0].info, {})
+    cloud_provider = try(module.cloud_provider[0].info, {})
+    aws_s3 = try(module.aws_s3[0].info, {})
+    federated_vars = try(module.federated_vars[0].info, {})
   }
 
   modules_env_vars = {
@@ -19,6 +25,9 @@ locals {
     project_extra = try(module.project_extra[0].env_vars, {})
     cfn = try(module.cfn[0].env_vars, {})
     aws_vars = try(module.aws_vars[0].env_vars, {})
+    cloud_provider = try(module.cloud_provider[0].env_vars, {})
+    aws_s3 = try(module.aws_s3[0].env_vars, {})
+    federated_vars = try(module.federated_vars[0].env_vars, {})
   }
   modules_env_vars_flat = merge([for name, env_vars in local.modules_env_vars: env_vars]...)
   project_id = mongodbatlas_project.project.id
@@ -42,6 +51,7 @@ locals {
     PROJECT_NAME=var.project_name
     # tf
     TF_ACC=1
+    AWS_ACCOUNT_ID = local.aws_account_id
   }
   
 
@@ -87,4 +97,8 @@ output "aws_regions" {
 
 output "last_provider_version" {
   value = local.last_provider_version
+}
+
+output "aws_account_id" {
+  value = local.aws_account_id
 }

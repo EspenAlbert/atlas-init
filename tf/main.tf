@@ -1,41 +1,3 @@
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "1.4.3"
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    local = {
-      source = "hashicorp/local"
-      version = "2.4.1"
-    }
-    http = {
-      source = "hashicorp/http"
-      version = "3.4.2"
-    }
-  }
-}
-
-provider "mongodbatlas" {
-  public_key = var.atlas_public_key
-  private_key  = var.atlas_private_key
-  base_url = var.atlas_base_url
-}
-provider "aws" {
-  region     = var.aws_region
-  default_tags {
-    tags = local.tags
-  }
-}
-
-provider "aws" {
-  alias = "cfn"
-  region = var.cfn_config.region
-}
-
 locals {
   tags = {
       Name = var.project_name
@@ -43,6 +5,7 @@ locals {
       Owner = "terraform-atlas-init"
     }
   use_aws_vpc = var.use_private_link || var.use_vpc_peering || var.use_aws_vpc
+  use_cloud_provider = var.use_aws_s3
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
   use_cluster = var.cluster_config.name != ""
@@ -74,6 +37,7 @@ module "cluster" {
   region = local.atlas_region
   db_in_url = var.cluster_config.database_in_url
   instance_size = var.cluster_config.instance_size
+  cloud_backup = var.cluster_config.cloud_backup
 }
 
 module "aws_vpc" {
@@ -103,6 +67,7 @@ module "vpc_peering" {
   atlas_region = local.atlas_region
   project_id = local.project_id
   skip_resources = true
+  aws_account_id = local.aws_account_id
 }
 
 module "vpc_privatelink" {
@@ -143,4 +108,34 @@ module aws_vars {
   aws_access_key_id = var.aws_access_key_id
   aws_secret_access_key = var.aws_secret_access_key
   aws_region = var.aws_region
+}
+
+module "cloud_provider" {
+  source = "./modules/cloud_provider"
+  count = local.use_cloud_provider ? 1 : 0
+
+  providers = {
+    aws = aws.no_tags
+  }
+  name_suffix = var.project_name
+  project_id = local.project_id
+}
+
+module "aws_s3" {
+  source = "./modules/aws_s3"
+  count = var.use_aws_s3 ? 1 : 0
+
+  name_suffix = var.project_name
+  bucket_name = "atlas-init-${replace(var.project_name, "_", "-")}"
+  iam_role_name = module.cloud_provider[0].iam_role_name
+}
+
+module "federated_vars" {
+  source = "./modules/federated_vars"
+  count = var.use_federated_vars ? 1 : 0
+
+  federated_settings_id = var.federated_settings_id
+  org_id = var.org_id
+  project_id = local.project_id
+  base_url = var.atlas_base_url
 }

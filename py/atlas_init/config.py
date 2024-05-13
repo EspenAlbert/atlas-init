@@ -22,6 +22,8 @@ class TerraformVars(Entity):
     use_project_extra: bool = False
     use_aws_vars: bool = False
     use_aws_vpc: bool = False
+    use_aws_s3: bool = False
+    use_federated_vars: bool = False
 
     def __add__(self, other: TerraformVars):
         assert isinstance(other, TerraformVars)
@@ -32,10 +34,12 @@ class TerraformVars(Entity):
         config = {}
         if self.cluster_info or self.cluster_info_m10:
             instance_size = "M10" if self.cluster_info_m10 else "M0"
+            cloud_backup = self.cluster_info_m10
             config["cluster_config"] = {
                 "name": "atlas-init",
                 "instance_size": instance_size,
                 "database_in_url": "default",
+                "cloud_backup": cloud_backup
             }
         if self.use_private_link:
             config["use_private_link"] = True
@@ -45,8 +49,12 @@ class TerraformVars(Entity):
             config["use_aws_vars"] = True
         if self.use_aws_vpc:
             config["use_aws_vpc"] = True
+        if self.use_aws_s3:
+            config["use_aws_s3"] = True
         if self.use_project_extra:
             config["use_project_extra"] = True
+        if self.use_federated_vars:
+            config["use_federated_vars"] = True
         if self.stream_instance:
             config["stream_instance_config"] = {"name": "atlas-init"}
         return config

@@ -11,6 +11,10 @@ variable "atlas_base_url" {
   default = "https://cloud-dev.mongodb.com/"
 }
 
+variable "federated_settings_id" {
+  type = string
+}
+
 variable "org_id" {
   type = string
 }
@@ -48,12 +52,14 @@ variable "cluster_config" {
     name = string
     instance_size = string
     database_in_url = string
+    cloud_backup = bool
   })
 
   default = {
     name =  ""
     instance_size = "M0"
     database_in_url = "default"  
+    cloud_backup = false
   }
 }
 
@@ -101,6 +107,16 @@ variable "aws_secret_access_key" {
 }
 
 variable "use_aws_vars" {
+  type = bool
+  default = false
+}
+
+variable "use_aws_s3" {
+  type = bool
+  default = false 
+}
+
+variable "use_federated_vars" {
   type = bool
   default = false
 }
