@@ -3,9 +3,10 @@ import os
 import subprocess
 from typing import Any
 
-from atlas_init.config import TerraformVars, TestSuite
-from atlas_init.env_vars import TF_DIR, AtlasInitSettings
+from atlas_init.settings.config import TerraformVars, TestSuite
+from atlas_init.settings.env_vars import AtlasInitSettings
 from atlas_init.run import run_command_is_ok
+from atlas_init.settings.path import TF_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
     env_generated = settings.env_vars_generated
     if env_generated.exists():
         clipboard_content = "\n".join(
-            f"export {l}" for l in env_generated.read_text().splitlines()
+            f"export {line}" for line in env_generated.read_text().splitlines()
         )
         subprocess.run(
             "pbcopy", universal_newlines=True, input=clipboard_content, check=True

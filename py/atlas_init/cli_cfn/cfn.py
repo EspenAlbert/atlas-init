@@ -6,17 +6,15 @@ from datetime import datetime, timezone
 from functools import lru_cache, total_ordering
 from typing import Sequence
 
-from boto3.session import Session
 import botocore.exceptions
+from boto3.session import Session
 from model_lib import Event
 from mypy_boto3_cloudformation import CloudFormationClient
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from zero_3rdparty.iter_utils import group_by_once
 
-from atlas_init.cli_args import REGIONS, region_continent
-from atlas_init.constants import PascalAlias
-from atlas_init.rich_log import configure_logging
+from atlas_init.cloud.aws import REGIONS, PascalAlias, region_continent
 
 logger = logging.getLogger(__name__)
 EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=timezone.utc)
@@ -42,8 +40,8 @@ def deregister_cfn_resource_type(
                 logger.info(f"found version: {version} for {type_name} in {region}")
                 if not deregister:
                     continue
-                arn = version["Arn"]
-                if version["IsDefaultVersion"]:
+                arn = version["Arn"] # type: ignore
+                if version["IsDefaultVersion"]: # type: ignore
                     default_version_arn = arn.rsplit("/", maxsplit=1)[0]
                 else:
                     logger.info(f"deregistering: {arn}")
@@ -64,15 +62,17 @@ def deregister_arn(arn: str, region: str):
     client.deregister_type(Arn=arn)
 
 
-def deactivate_third_party_type(type_name: str, region_name: str, dry_run: bool = False) -> None | CfnTypeDetails:
-    last_version = get_last_cfn_type(
-        type_name, region=region_name, is_third_party=True
-    )
+def deactivate_third_party_type(
+    type_name: str, region_name: str, dry_run: bool = False
+) -> None | CfnTypeDetails:
+    last_version = get_last_cfn_type(type_name, region=region_name, is_third_party=True)
     if not last_version:
         logger.info(f"no third party found in region {region_name}")
         return
     is_activated = last_version.is_activated
-    logger.info(f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}")
+    logger.info(
+        f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}"
+    )
     if is_activated and not dry_run:
         deactivate_type(type_name=type_name, region=region_name)
 
@@ -81,6 +81,7 @@ def deactivate_type(type_name: str, region: str):
     client = cloud_formation_client(region)
     logger.warning(f"deactivating type {type_name} in {region}")
     client.deactivate_type(TypeName=type_name, Type="RESOURCE")
+
 
 def delete_role_stack(type_name: str, region_name: str) -> None:
     stack_name = type_name.replace("::", "-").lower() + "-role-stack"
@@ -102,13 +103,14 @@ def delete_stack(region_name: str, stack_name: str):
     client.delete_stack(StackName=stack_name)
     wait_on_stack_ok(stack_name, region_name, expect_not_found=True)
 
+
 def create_stack(
     stack_name: str,
     template_str: str,
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
-    timeout_seconds: int = 300
+    timeout_seconds: int = 300,
 ):
     client = cloud_formation_client(region_name)
     stack_id = client.create_stack(
@@ -129,7 +131,7 @@ def update_stack(
     region_name: str,
     role_arn: str,
     parameters: Sequence[ParameterTypeDef],
-    timeout_seconds: int = 300
+    timeout_seconds: int = 300,
 ):
     client = cloud_formation_client(region_name)
     update = client.update_stack(
@@ -192,7 +194,7 @@ class StackEvents(Event):
             if event.logical_resource_id == stack_name:
                 return event
         raise ValueError(f"no events found for {stack_name}")
-    
+
     def last_reason(self) -> str:
         for event in sorted(self.stack_events, reverse=True):
             if reason := event.resource_status_reason:
@@ -200,11 +202,16 @@ class StackEvents(Event):
         return ""
 
 
-def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool = False, timeout_seconds: int = 300) -> None:
+def wait_on_stack_ok(
+    stack_name: str,
+    region_name: str,
+    expect_not_found: bool = False,
+    timeout_seconds: int = 300,
+) -> None:
     attempts = timeout_seconds // 6
-    
+
     @retry(
-        stop=stop_after_attempt(attempts+1),
+        stop=stop_after_attempt(attempts + 1),
         wait=wait_fixed(6),
         retry=retry_if_exception_type(StackInProgress),
         reraise=True,
@@ -223,7 +230,9 @@ def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool =
         parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
         current_event = parsed.current_stack_event(stack_name)
         if current_event.in_progress:
-            logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
+            logger.info(
+                f"stack in progress {stack_name} {current_event.resource_status}"
+            )
             raise StackInProgress(
                 current_event.resource_status,
                 current_event.timestamp,
@@ -241,8 +250,9 @@ def wait_on_stack_ok(stack_name: str, region_name: str, expect_not_found: bool =
             last_reason = parsed.last_reason()
             logger.warning(f"stack did rollback, got: {current_event!r}\n{last_reason}")
         return None
-    
+
     return _wait_on_stack_ok()
+
 
 def print_version_regions(type_name: str) -> None:
     version_regions = get_last_version_all_regions(type_name)
@@ -323,7 +333,7 @@ def get_last_cfn_type(
                 version=last_version,
                 type_name=t.get("TypeName", type_name),
                 type_arn=arn,
-                is_activated=t.get("IsActivated", False)
+                is_activated=t.get("IsActivated", False),
             )
             if detail.type_name != type_name:
                 continue
@@ -337,11 +347,13 @@ def get_last_cfn_type(
     return sorted(type_details)[-1]
 
 
-def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_arn: str):
+def activate_resource_type(
+    details: CfnTypeDetails, region: str, execution_role_arn: str
+):
     client = cloud_formation_client(region)
     response = client.activate_type(
         Type="RESOURCE",
         PublicTypeArn=details.type_arn,
-        ExecutionRoleArn=execution_role_arn
+        ExecutionRoleArn=execution_role_arn,
     )
     logger.info(f"activate response: {response}")

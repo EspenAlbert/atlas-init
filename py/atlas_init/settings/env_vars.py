@@ -11,30 +11,22 @@ from model_lib import field_names, parse_payload
 from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from atlas_init.config import (
+from atlas_init.settings.config import (
     AtlasInitConfig,
     TestSuite,
 )
-from atlas_init.config import (
+from atlas_init.settings.config import (
     active_suites as config_active_suites,
+)
+from atlas_init.settings.path import (
+    CONFIG_PATH,
+    as_profile_dir,
+    env_file_manual_profile,
+    load_dotenv,
+    repo_path_rel_path,
 )
 
 logger = logging.getLogger(__name__)
-REPO_PATH = Path(__file__).parent.parent.parent
-TF_DIR = REPO_PATH / "tf"
-CONFIG_PATH = REPO_PATH / "atlas_init.yaml"
-
-
-def current_dir():
-    return Path(os.path.curdir).absolute()
-
-
-def as_profile_dir(name: str) -> Path:
-    return REPO_PATH / f"profiles/{name}"
-
-
-def env_file_manual_profile(name: str) -> Path:
-    return as_profile_dir(name) / ".env_manual"
 
 
 class ExternalSettings(BaseSettings):
@@ -60,8 +52,22 @@ def as_env_var_name(field_name: str) -> str:
     return f"{AtlasInitSettings.ENV_PREFIX}{field_name}".upper()
 
 
-class CwdIsNoRepoPathError(ValueError):
-    pass
+def dump_manual_dotenv_from_env(path: Path) -> None:
+    env_vars: dict[str, str] = {}
+    names = field_names(AtlasInitSettings)
+    ext_settings_names = field_names(ExternalSettings)
+    names = set(names + ext_settings_names)
+    os_env = os.environ
+    for name in sorted(names):
+        env_name = as_env_var_name(name)
+        if env_name.lower() in os_env or env_name.upper() in os_env:
+            env_value = os_env.get(env_name.upper()) or os_env.get(env_name.lower())
+            if env_value:
+                env_vars[env_name] = env_value
+
+    content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
 
 
 class AtlasInitSettings(ExternalSettings):
@@ -116,16 +122,6 @@ class AtlasInitSettings(ExternalSettings):
         self.out_dir = self.out_dir or str(self.profile_dir)
         self.cfn_region = self.cfn_region or self.AWS_REGION
         return self
-
-    @cached_property
-    def repo_path_rel_path(self) -> tuple[Path, str]:
-        cwd = current_dir()
-        rel_path = []
-        for path in [cwd, *cwd.parents]:
-            if (path / ".git").exists():
-                return path, "/".join(reversed(rel_path))
-            rel_path.append(path.name)
-        raise CwdIsNoRepoPathError("no repo path found from cwd")
 
     @cached_property
     def config(self) -> AtlasInitConfig:
@@ -187,37 +183,8 @@ class AtlasInitSettings(ExternalSettings):
         return {}
 
 
-def load_dotenv(env_path: Path) -> dict[str, str]:
-    return {k: v for k, v in dotenv.dotenv_values(env_path).items() if v}
-
-
-def dump_manual_dotenv_from_env(path: Path) -> None:
-    env_vars: dict[str, str] = {}
-    names = field_names(AtlasInitSettings)
-    ext_settings_names = field_names(ExternalSettings)
-    names = set(names + ext_settings_names)
-    os_env = os.environ
-    for name in sorted(names):
-        env_name = as_env_var_name(name)
-        if env_name.lower() in os_env or env_name.upper() in os_env:
-            env_value = os_env.get(env_name.upper()) or os_env.get(env_name.lower())
-            if env_value:
-                env_vars[env_name] = env_value
-
-    content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-
-
-def dump_vscode_dotenv(generated_path: Path, vscode_env_path: Path) -> None:
-    vscode_env_vars = load_dotenv(generated_path)
-    vscode_env_vars.pop("TF_CLI_CONFIG_FILE", None) # migration tests will use local provider instead of online
-    vscode_env_path.write_text("")
-    for k, v in vscode_env_vars.items():
-        dotenv.set_key(vscode_env_path, k, v)
-
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
-    repo_path, cwd_rel_path = settings.repo_path_rel_path
+    repo_path, cwd_rel_path = repo_path_rel_path()
     return config_active_suites(
         settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed
     )

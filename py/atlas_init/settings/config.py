@@ -8,7 +8,7 @@ from typing import Any, Iterable
 from model_lib import Entity
 from pydantic import Field, model_validator
 
-from atlas_init.git_utils import owner_project_name
+from atlas_init.repos.path import owner_project_name
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class TerraformVars(Entity):
                 "name": "atlas-init",
                 "instance_size": instance_size,
                 "database_in_url": "default",
-                "cloud_backup": cloud_backup
+                "cloud_backup": cloud_backup,
             }
         if self.use_private_link:
             config["use_private_link"] = True

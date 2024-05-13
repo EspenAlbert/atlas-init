@@ -1,6 +1,6 @@
 import os
 
-from atlas_init.cfn import get_last_cfn_type
+from atlas_init.cli_cfn.cfn import get_last_cfn_type
 
 
 def test_get_last_cfn_type():

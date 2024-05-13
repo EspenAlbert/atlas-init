@@ -1,17 +1,18 @@
 import dotenv
 
-from atlas_init.env_vars import (
+from atlas_init.settings.env_vars import (
     AtlasInitSettings,
     as_env_var_name,
     dump_manual_dotenv_from_env,
 )
+from atlas_init.settings.path import repo_path_rel_path
 
 
 def test_default_settings(monkeypatch):
     monkeypatch.setenv(as_env_var_name("test_suites"), "suite1,suite2 suite3")
     settings = AtlasInitSettings.safe_settings()
     print(settings)
-    print(f"repo_path,rel_path={settings.repo_path_rel_path}")
+    print(f"repo_path,rel_path={repo_path_rel_path()}")
     assert settings.test_suites_parsed == ["suite1", "suite2", "suite3"]
 
 

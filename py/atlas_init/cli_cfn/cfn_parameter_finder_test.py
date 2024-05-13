@@ -3,7 +3,7 @@ from pathlib import Path
 
 from model_lib import parse_payload
 
-from atlas_init.cfn_parameter_finder import (
+from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
     decode_parameters,
     updated_template_path,

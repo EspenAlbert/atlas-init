@@ -4,7 +4,7 @@ from typing import Callable, TypeVar
 
 from zero_3rdparty.object_name import as_name
 
-from atlas_init.cli_args import REGIONS
+from atlas_init.cloud.aws import REGIONS
 
 logger = logging.getLogger(__name__)
 

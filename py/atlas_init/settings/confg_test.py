@@ -1,4 +1,4 @@
-from atlas_init.config import TerraformVars, TestSuite
+from atlas_init.settings.config import TerraformVars, TestSuite
 
 
 def test_TerraformVars_add():

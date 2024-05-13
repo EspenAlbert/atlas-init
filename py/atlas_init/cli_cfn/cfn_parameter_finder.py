@@ -3,22 +3,21 @@ from pathlib import Path
 from typing import Any
 
 from model_lib import Entity, dump, parse_model, parse_payload
-from model_lib.serialize.yaml_serialize import edit_yaml
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
 from zero_3rdparty.dict_nested import read_nested
-from zero_3rdparty.file_utils import copy as copy_file
 
-from atlas_init.cli_args import cfn_type_normalized
-from atlas_init.constants import PascalAlias, cfn_examples_dir
-from atlas_init.env_vars import TF_DIR
+from atlas_init.cloud.aws import PascalAlias
+from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
+from atlas_init.settings.path import TF_DIR
 
 logger = logging.getLogger(__name__)
 
 
 def read_execution_role(loaded_env_vars: dict[str, str]) -> str:
     return loaded_env_vars["CFN_EXAMPLE_EXECUTION_ROLE"]
+
 
 def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> str:
     execution_role = cfn_examples_dir(repo_path) / "execution-role.yaml"
@@ -61,9 +60,13 @@ def infer_template_path(repo_path: Path, type_name: str, stack_name: str) -> Pat
                 return expected_folders[0]
         choices = {p.stem: p for p in template_paths}
         if stack_path := choices.get(stack_name):
-            logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
+            logger.info(
+                f"using template @ {stack_path} based on stack name: {stack_name}"
+            )
             return stack_path
-        selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
+        selected_path = prompt.Prompt(
+            "Choose example template: ", choices=list(choices)
+        )()
         return choices[selected_path]
     return template_paths[0]
 
@@ -115,11 +118,11 @@ class CfnTemplate(Entity):
             if r.type == type_name:
                 return r
         raise ValueError(f"resource not found: {type_name}")
-    
+
     def normalized_type_name(self, type_name: str) -> str:
         assert self.find_resource(type_name)
         return cfn_type_normalized(type_name)
-    
+
     def add_resource_params(self, type_name: str, resources: dict[str, Any]):
         resource = self.find_resource(type_name)
         resource.properties.update(resources)
@@ -149,7 +152,9 @@ def decode_parameters(
         template_str = dump(raw_dict, format=format)
         template_path.write_text(template_str)
     parameters_dict: dict[str, Any] = {}
-    type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
+    type_defaults = type_names_defaults.get(
+        cfn_template.normalized_type_name(type_name), {}
+    )
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
         type_defaults[stack_name_param] = stack_name
 

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from atlas_init.constants import go_sdk_breaking_changes
+from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 from atlas_init.sdk import (
     BreakingChange,
     Change,
