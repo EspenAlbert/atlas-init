@@ -39,7 +39,11 @@ from atlas_init.repos.path import (
 )
 from atlas_init.settings.config import RepoAliasNotFound
 from atlas_init.settings.env_vars import (
+    DEFAULT_PROFILE,
+    AtlasInitSettings,
     active_suites,
+    as_env_var_name,
+    env_var_names,
     init_settings,
 )
 from atlas_init.settings.path import (
@@ -66,9 +70,38 @@ def main(
     log_level: str = typer.Option(
         "INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"
     ),
+    profile: str = typer.Option(
+        DEFAULT_PROFILE,
+        "-p",
+        "--profile",
+        envvar=env_var_names("profile"),
+        help="used to load .env_manual, store terraform state and variables, and dump .env files.",
+    ),
+    project_name: str = typer.Option(
+        "",
+        "--project",
+        envvar=env_var_names("project_name"),
+        help="atlas project name to create",
+    ),
 ):
-    command = ctx.invoked_subcommand
+    explicit_env_vars: dict[str, str] = {}
+    if project_name != "":
+        explicit_env_vars[as_env_var_name("project_name")] = project_name
     configure_logging(log_level)
+    missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
+        profile,
+        required_extra_fields=["project_name"],
+        explicit_env_vars=explicit_env_vars,
+    )
+    if missing_env_vars:
+        typer.echo(f"missing env_vars: {missing_env_vars}")
+    if ambiguous_env_vars:
+        typer.echo(
+            f"amiguous env_vars: {missing_env_vars} (specified both in cli & in .env-manual file with different values)"
+        )
+    if missing_env_vars or ambiguous_env_vars:
+        raise typer.Exit(1)
+    command = ctx.invoked_subcommand
     logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
 
 

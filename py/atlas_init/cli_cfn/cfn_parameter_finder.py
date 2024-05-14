@@ -2,15 +2,14 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from atlas_init.cloud.aws import PascalAlias
+from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
+from atlas_init.settings.path import DEFAULT_TF_PATH
 from model_lib import Entity, dump, parse_model, parse_payload
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
 from zero_3rdparty.dict_nested import read_nested
-
-from atlas_init.cloud.aws import PascalAlias
-from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
-from atlas_init.settings.path import TF_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +25,12 @@ def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> st
         execution_raw,
         "Resources.ExecutionRole.Properties.Policies.[0].PolicyDocument.Statement.[0].Action",
     )
-    actions_found = parse_payload(TF_DIR / "modules/cfn/resource_actions.yaml")
+    actions_found = parse_payload(DEFAULT_TF_PATH / "modules/cfn/resource_actions.yaml")
     if diff := set(actions_expected) ^ set(actions_found):
         raise ValueError(f"non-matching execution role actions: {sorted(diff)}")
-    services_found = parse_payload(TF_DIR / "modules/cfn/assume_role_services.yaml")
+    services_found = parse_payload(
+        DEFAULT_TF_PATH / "modules/cfn/assume_role_services.yaml"
+    )
     services_expected = read_nested(
         execution_raw,
         "Resources.ExecutionRole.Properties.AssumeRolePolicyDocument.Statement.[0].Principal.Service",

@@ -2,7 +2,6 @@ import logging
 import sys
 
 import typer
-from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.cli_helper.run import run_binary_command_is_ok
 from atlas_init.cli_tf.schema import (
     download_admin_api,
@@ -11,7 +10,8 @@ from atlas_init.cli_tf.schema import (
     update_provider_code_spec,
 )
 from atlas_init.cli_tf.schema_inspection import log_optional_only
-from atlas_init.settings.path import REPO_PATH
+from atlas_init.repos.path import Repo, current_repo_path
+from atlas_init.settings.path import ROOT_PATH
 from zero_3rdparty.file_utils import clean_dir
 
 app = typer.Typer(no_args_is_help=True)
@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 @app.command()
 def schema():
-    SCHEMA_DIR = REPO_PATH / "schema"
+    SCHEMA_DIR = ROOT_PATH / "schema"
     SCHEMA_DIR.mkdir(exist_ok=True)
 
-    schema_parsed = parse_py_terraform_schema(REPO_PATH / "terraform.yaml")
+    schema_parsed = parse_py_terraform_schema(ROOT_PATH / "terraform.yaml")
     generator_config = dump_generator_config(schema_parsed)
     generator_config_path = SCHEMA_DIR / "generator_config.yaml"
     generator_config_path.write_text(generator_config)

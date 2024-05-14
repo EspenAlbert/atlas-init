@@ -3,10 +3,10 @@ import os
 import subprocess
 from typing import Any
 
+from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
-from atlas_init.cli_helper.run import run_command_is_ok
-from atlas_init.settings.path import TF_DIR
+from atlas_init.settings.path import DEFAULT_TF_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def get_tf_vars(
         "org_id": settings.MONGODB_ATLAS_ORG_ID,
         "aws_region": settings.AWS_REGION,
         "project_name": settings.project_name,
-        "out_dir": settings.out_dir,
+        "out_dir": settings.profile_dir,
         "extra_env_vars": settings.manual_env_vars,
         **settings.cfn_config(),
         **tf_vars.as_configs(),
@@ -44,7 +44,7 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
     is_ok = run_command_is_ok(
         command_parts,
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
-        cwd=TF_DIR,
+        cwd=DEFAULT_TF_PATH,
         logger=logger,
     )
     if not is_ok:

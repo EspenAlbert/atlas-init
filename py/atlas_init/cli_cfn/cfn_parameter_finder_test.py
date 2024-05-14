@@ -14,11 +14,11 @@ TEST_DATA = Path(__file__).parent / "test_data"
 
 
 def test_decode_parameters_project():
-    params, missing_params = decode_parameters(
+    params, missing_params = decode_parameters( # type: ignore
         {},
         TEST_DATA / "cfn_project_template.json",
         "test-stack",
-        {"TeamRoles": "FORCED"},
+        {"TeamRoles": "FORCED"}, # type: ignore
     )
     print(params)
     assert missing_params
@@ -26,7 +26,7 @@ def test_decode_parameters_project():
         (p["ParameterValue"] for p in params if p["ParameterKey"] == "TeamRoles"), ""  # type: ignore
     )
     assert team_roles_value == "FORCED"
-    assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]
+    assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"] # type: ignore
 
 
 @pytest.mark.skipif(
