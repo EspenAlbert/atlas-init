@@ -1,4 +1,5 @@
 import dotenv
+import pytest
 
 from atlas_init.settings.env_vars import (
     AtlasInitSettings,
@@ -7,7 +8,7 @@ from atlas_init.settings.env_vars import (
 )
 from atlas_init.settings.path import repo_path_rel_path
 
-
+@pytest.mark.skip("needs a profile to exist")
 def test_default_settings(monkeypatch):
     monkeypatch.setenv(as_env_var_name("test_suites"), "suite1,suite2 suite3")
     settings = AtlasInitSettings.safe_settings()
@@ -16,6 +17,7 @@ def test_default_settings(monkeypatch):
     assert settings.test_suites_parsed == ["suite1", "suite2", "suite3"]
 
 
+@pytest.mark.skip("needs a profile to exist")
 def test_dumping_default_settings(monkeypatch, tmp_path):
     out_file = tmp_path / ".env"
     AtlasInitSettings.safe_settings()

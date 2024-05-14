@@ -29,7 +29,9 @@ def test_decode_parameters_project():
     assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]
 
 
-@pytest.skip("manual test")
+@pytest.mark.skipif(
+    os.environ.get("CFN_REPO_PATH", "") == "", reason="needs os.environ[CFN_REPO_PATH]"
+)
 def test_check_execution_role():
     cfn_repo_path = Path(os.environ["CFN_REPO_PATH"])
     some_arn = "arn:aws:iam::XXXX:role/cfn-execution-role"
@@ -45,7 +47,11 @@ def test_updated_template_path():
         == "free-tier-M0-cluster-updated.json"
     )
 
-@pytest.skip("manual test")
+
+@pytest.mark.skipif(
+    any(os.environ.get(name, "") == "" for name in ["SRC_TEMPLATE", "DEST_TEMPLATE"]),
+    reason='needs env vars: ["SRC_TEMPLATE", "DEST_TEMPLATE"])',
+)
 def test_updates():
     src = Path(os.environ["SRC_TEMPLATE"])
     dest = Path(os.environ["DEST_TEMPLATE"])

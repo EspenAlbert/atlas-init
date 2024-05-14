@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 
 import pytest
-
-from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 from atlas_init.cli_helper.sdk import (
     BreakingChange,
     Change,
@@ -13,6 +11,7 @@ from atlas_init.cli_helper.sdk import (
     parse_breaking_changes,
     parse_line,
 )
+from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 
 example_lines = [
     (
@@ -61,6 +60,7 @@ def sdk_path() -> Path:
     return sdk_path
 
 
+@pytest.mark.skip("manual test, needs go sdk directory")
 def test_parse_breaking_changes(sdk_path):
     changes_dir = go_sdk_breaking_changes(sdk_path)
     changes1 = parse_breaking_changes(changes_dir)
@@ -101,8 +101,12 @@ L010: 'AudienceClaim' \t\t\t\t\tAudienceClaim:     &audienceClaim,
 """
 
 
+@pytest.mark.skipif(
+    os.environ.get("GO_SDK_REL_PATH", "") == "",
+    reason="needs os.environ[GO_SDK_REL_PATH]",
+)
 def test_find_breaking_changes(sdk_path):
-    changes_dir = go_sdk_breaking_changes(sdk_path)
+    changes_dir = go_sdk_breaking_changes(sdk_path, os.environ["GO_SDK_REL_PATH"])
     changes1 = parse_breaking_changes(changes_dir)
     assert changes1
 
