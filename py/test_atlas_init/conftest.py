@@ -11,12 +11,12 @@ from atlas_init.settings.path import dump_dotenv
 
 
 @pytest.fixture()
-def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths: # type: ignore
+def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths:  # type: ignore
     profiles_path = as_env_var_name("profiles_path")
     env_before = {**os.environ}
     assert profiles_path == "ATLAS_INIT_PROFILES_PATH"
     monkeypatch.setenv(profiles_path, str(tmp_path))
-    yield AtlasInitPaths() # type: ignore
+    yield AtlasInitPaths()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
 
