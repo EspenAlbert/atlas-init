@@ -47,9 +47,7 @@ installer = "uv"
 [tool.hatch.envs.hatch-test]
 installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
-extra-dependencies = [
-  "hatchling==1.24.2"
-]
+extra-dependencies = ["hatchling==1.24.2"]
 
 
 [tool.coverage.run]
@@ -70,12 +68,8 @@ extend-exclude = ["test_atlas_init"]
 [tool.ruff.lint]
 extend-ignore = ["TCH003", "G004", "TRY003", "S101", "EM102", "FBT001"]
 
-
 [tool.hatch.build.targets.wheel]
-only-include= [
-  "atlas_init"
-]
+only-include = ["atlas_init"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = "file_copy.py"
-
