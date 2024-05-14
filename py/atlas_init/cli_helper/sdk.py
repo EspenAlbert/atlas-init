@@ -1,8 +1,10 @@
 import re
 from pathlib import Path
-from typing import Iterable, Literal, NamedTuple
+from typing import Iterable, Literal, NamedTuple, TypeAlias
 
+from pydantic import constr
 import requests
+from model_lib import Event
 
 
 class Change(NamedTuple):
@@ -29,7 +31,9 @@ class BreakingChange(NamedTuple):
 
 
 def parse_breaking_changes(
-    breaking_change_dir: Path, start_sdk_version: str = "v20231115000", end_sdk_version: str = "v20991115000"
+    breaking_change_dir: Path,
+    start_sdk_version: str = "v20231115000",
+    end_sdk_version: str = "v20991115000",
 ) -> dict[Change, BreakingChange]:
     changes: dict[Change, BreakingChange] = {}
     for file in breaking_change_dir.glob("*.md"):
@@ -69,9 +73,23 @@ def format_breaking_changes(text: str, changes: dict[Change, BreakingChange]):
 def is_removed(changes: Iterable[Change]) -> bool:
     return any(change.change_type == "removed" for change in changes)
 
+
 def find_latest_sdk_version() -> str:
-    response = requests.get("https://api.github.com/repos/mongodb/atlas-sdk-go/releases/latest")
+    response = requests.get(
+        "https://api.github.com/repos/mongodb/atlas-sdk-go/releases/latest"
+    )
     response.raise_for_status()
     name = response.json()["name"]
     assert isinstance(name, str)
     return name.removesuffix(".0.0")
+
+
+SdkVersion: TypeAlias = constr(pattern=r"v\d{11}") # type: ignore
+
+
+class SdkVersionUpgrade(Event):
+    old: SdkVersion
+    new: SdkVersion
+
+
+SDK_VERSION_HELP = "e.g., v20231115008 in go.mongodb.org/atlas-sdk/XXXX/admin"

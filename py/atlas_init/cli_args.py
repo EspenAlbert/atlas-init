@@ -1,19 +1,7 @@
-import logging
-from typing import Any, TypeAlias
+from typing import Any
 
-from model_lib import Event, parse_payload
-from pydantic import constr
+from model_lib import parse_payload
 from zero_3rdparty.iter_utils import key_equal_value_to_dict
-
-logger = logging.getLogger(__name__)
-SdkVersion: TypeAlias = constr(pattern="v\d{11}")  # type: ignore
-SDK_VERSION_HELP = "e.g., v20231115008 in go.mongodb.org/atlas-sdk/XXXX/admin"
-
-
-class SdkVersionUpgrade(Event):
-    old: SdkVersion
-    new: SdkVersion
-
 
 
 def parse_key_values(params: list[str]) -> dict[str, str]:

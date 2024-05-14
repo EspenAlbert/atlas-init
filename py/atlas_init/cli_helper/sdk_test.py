@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from atlas_init.repos.go_sdk import go_sdk_breaking_changes
-from atlas_init.sdk import (
+from atlas_init.cli_helper.sdk import (
     BreakingChange,
     Change,
     find_breaking_changes,
@@ -16,13 +16,13 @@ from atlas_init.sdk import (
 
 example_lines = [
     (
-        "- (*PushBasedLogExportApiService).CreatePushBasedLogConfiguration: changed from func(context.Context, string,*PushBasedLogExportProject) CreatePushBasedLogConfigurationApiRequest to func(context.Context, string, \*CreatePushBasedLogExportProjectRequest) CreatePushBasedLogConfigurationApiRequest",
+        "- (*PushBasedLogExportApiService).CreatePushBasedLogConfiguration: changed from func(context.Context, string,*PushBasedLogExportProject) CreatePushBasedLogConfigurationApiRequest to func(context.Context, string, \\*CreatePushBasedLogExportProjectRequest) CreatePushBasedLogConfigurationApiRequest",
         "changed from",
         "PushBasedLogExportApiService",
         "CreatePushBasedLogConfiguration",
     ),
     (
-        "- (\*FederationIdentityProvider).GetAudienceClaimOk: removed",
+        "- (\\*FederationIdentityProvider).GetAudienceClaimOk: removed",
         "removed",
         "FederationIdentityProvider",
         "GetAudienceClaimOk",
@@ -40,7 +40,7 @@ example_lines = [
 @pytest.mark.parametrize(
     "line,change,class_name,func_name",
     example_lines,
-    ids=[l[-1] for l in example_lines],
+    ids=[line[-1] for line in example_lines],
 )
 def test_parse_changelog_lines(line, change, class_name, func_name):
     change_type_func_name = parse_line(line)

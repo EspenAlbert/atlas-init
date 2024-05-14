@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from model_lib import parse_payload
+import pytest
 
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
@@ -28,6 +29,7 @@ def test_decode_parameters_project():
     assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]
 
 
+@pytest.skip("manual test")
 def test_check_execution_role():
     cfn_repo_path = Path(os.environ["CFN_REPO_PATH"])
     some_arn = "arn:aws:iam::XXXX:role/cfn-execution-role"
@@ -43,6 +45,7 @@ def test_updated_template_path():
         == "free-tier-M0-cluster-updated.json"
     )
 
+@pytest.skip("manual test")
 def test_updates():
     src = Path(os.environ["SRC_TEMPLATE"])
     dest = Path(os.environ["DEST_TEMPLATE"])

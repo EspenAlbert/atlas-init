@@ -1,25 +1,34 @@
 import logging
-import sys
 from functools import partial
 from pydoc import locate
-from typing import Callable, Literal
+from typing import Callable
 
 import typer
 from model_lib import dump
-from zero_3rdparty.file_utils import clean_dir, iter_paths
+from zero_3rdparty.file_utils import iter_paths
 
-from atlas_init import sdk_auto_changes
-from atlas_init.cli_args import (
+from atlas_init.cli_cfn.app import app as app_cfn
+from atlas_init.cli_helper import sdk_auto_changes
+from atlas_init.cli_helper.run import (
+    run_binary_command_is_ok,
+    run_command_exit_on_failure,
+)
+from atlas_init.cli_helper.sdk import (
     SDK_VERSION_HELP,
     SdkVersion,
     SdkVersionUpgrade,
+    find_breaking_changes,
+    find_latest_sdk_version,
+    format_breaking_changes,
+    is_removed,
+    parse_breaking_changes,
 )
-from atlas_init.cli_cfn.app import app as app_cfn
-from atlas_init.settings.config import RepoAliasNotFound
-from atlas_init.settings.env_vars import (
-    active_suites,
-    init_settings,
+from atlas_init.cli_helper.tf_runner import (
+    TerraformRunError,
+    get_tf_vars,
+    run_terraform,
 )
+from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 from atlas_init.repos.path import (
     Repo,
@@ -28,31 +37,22 @@ from atlas_init.repos.path import (
     find_paths,
     resource_name,
 )
+from atlas_init.settings.config import RepoAliasNotFound
+from atlas_init.settings.env_vars import (
+    active_suites,
+    init_settings,
+)
+from atlas_init.settings.path import (
+    CwdIsNoRepoPathError,
+    dump_vscode_dotenv,
+    repo_path_rel_path,
+)
 from atlas_init.settings.rich_log import configure_logging
-from atlas_init.run import (
-    run_binary_command_is_ok,
-    run_command_exit_on_failure,
-)
-from atlas_init.schema import (
-    download_admin_api,
-    dump_generator_config,
-    parse_py_terraform_schema,
-    update_provider_code_spec,
-)
-from atlas_init.schema_inspection import log_optional_only
-from atlas_init.sdk import (
-    find_breaking_changes,
-    find_latest_sdk_version,
-    format_breaking_changes,
-    is_removed,
-    parse_breaking_changes,
-)
-from atlas_init.settings.path import REPO_PATH, CwdIsNoRepoPathError, dump_vscode_dotenv, repo_path_rel_path
-from atlas_init.tf_runner import TerraformRunError, get_tf_vars, run_terraform
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
 app.add_typer(app_cfn, name="cfn")
+app.add_typer(app_tf, name="tf")
 
 app_command = partial(
     app.command,
@@ -63,7 +63,9 @@ app_command = partial(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    log_level: str = typer.Option("INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"),
+    log_level: str = typer.Option(
+        "INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"
+    ),
 ):
     command = ctx.invoked_subcommand
     configure_logging(log_level)
@@ -122,61 +124,6 @@ def test_go():
     raise NotImplementedError("fix me later!")
     # package_prefix = settings.config.go_package_prefix(repo_alias)
     # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
-
-
-@app_command()
-def schema():
-    SCHEMA_DIR = REPO_PATH / "schema"
-    SCHEMA_DIR.mkdir(exist_ok=True)
-
-    schema_parsed = parse_py_terraform_schema(REPO_PATH / "terraform.yaml")
-    generator_config = dump_generator_config(schema_parsed)
-    generator_config_path = SCHEMA_DIR / "generator_config.yaml"
-    generator_config_path.write_text(generator_config)
-    provider_code_spec_path = SCHEMA_DIR / "provider-code-spec.json"
-    admin_api_path = SCHEMA_DIR / "admin_api.yaml"
-    if admin_api_path.exists():
-        logger.warning(f"using existing admin api @ {admin_api_path}")
-    else:
-        download_admin_api(admin_api_path)
-
-    if not run_binary_command_is_ok(
-        cwd=SCHEMA_DIR,
-        binary_name="tfplugingen-openapi",
-        command=f"generate --config {generator_config_path.name} --output {provider_code_spec_path.name} {admin_api_path.name}",
-        logger=logger,
-    ):
-        logger.critical("failed to generate spec")
-        sys.exit(1)
-    new_provider_spec = update_provider_code_spec(
-        schema_parsed, provider_code_spec_path
-    )
-    provider_code_spec_path.write_text(new_provider_spec)
-    logger.info(f"updated {provider_code_spec_path.name} ✅ ")
-
-    go_code_output = SCHEMA_DIR / "internal"
-    if go_code_output.exists():
-        logger.warning(f"cleaning go code dir: {go_code_output}")
-        clean_dir(go_code_output, recreate=True)
-
-    if not run_binary_command_is_ok(
-        cwd=SCHEMA_DIR,
-        binary_name="tfplugingen-framework",
-        command=f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
-        logger=logger,
-    ):
-        logger.critical("failed to generate plugin schema")
-        sys.exit(1)
-
-    logger.info(f"new files generated to {go_code_output} ✅")
-    for go_file in sorted(go_code_output.rglob("*.go")):
-        logger.info(f"new file @ '{go_file}'")
-
-
-@app_command()
-def schema_optional_only():
-    repo_path = current_repo_path(Repo.TF)
-    log_optional_only(repo_path)
 
 
 @app_command()

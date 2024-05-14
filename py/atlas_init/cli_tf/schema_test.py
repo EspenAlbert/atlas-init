@@ -2,7 +2,7 @@ from pathlib import Path
 
 from model_lib import parse_model
 
-from atlas_init.schema import (
+from atlas_init.cli_tf.schema import (
     ProviderCodeSpec,
     PyTerraformSchema,
     dump_generator_config,

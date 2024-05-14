@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import typer
+from atlas_init.cli_args import parse_key_values, parse_key_values_any
 from atlas_init.cli_cfn.cfn import (
     activate_resource_type,
     create_stack,
@@ -18,9 +19,7 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
     infer_template_path,
     read_execution_role,
 )
-from atlas_init.cli_args import parse_key_values, parse_key_values_any
-from atlas_init.settings.env_vars import active_suites, init_settings
-from atlas_init.region import run_in_regions
+from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
     CfnOperation,
     CfnType,
@@ -29,7 +28,8 @@ from atlas_init.repos.cfn import (
     validate_type_name_regions,
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths
-from atlas_init.run import run_command_is_ok
+from atlas_init.cli_helper.run import run_command_is_ok
+from atlas_init.settings.env_vars import active_suites, init_settings
 from model_lib import dump, parse_payload
 from rich import prompt
 from zero_3rdparty.file_utils import clean_dir

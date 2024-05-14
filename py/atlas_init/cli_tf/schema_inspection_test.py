@@ -1,4 +1,4 @@
-from atlas_init.schema_inspection import (
+from atlas_init.cli_tf.schema_inspection import (
     iterate_schema_attributes,
     log_optional_only,
     schema_attributes_plugin_framework,
