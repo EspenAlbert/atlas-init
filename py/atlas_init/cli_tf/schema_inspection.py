@@ -1,7 +1,8 @@
 import logging
-from pathlib import Path
 import re
-from typing import Iterable
+from collections.abc import Iterable
+from pathlib import Path
+
 from model_lib import Event
 
 logger = logging.getLogger(__name__)

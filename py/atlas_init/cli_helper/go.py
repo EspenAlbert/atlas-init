@@ -4,9 +4,9 @@ from pathlib import Path
 
 import dotenv
 
+from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.settings.config import TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
-from atlas_init.cli_helper.run import run_command_is_ok
 
 logger = logging.getLogger(__name__)
 

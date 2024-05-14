@@ -2,6 +2,8 @@ import logging
 import sys
 
 import typer
+from zero_3rdparty.file_utils import clean_dir
+
 from atlas_init.cli_helper.run import run_binary_command_is_ok
 from atlas_init.cli_tf.schema import (
     download_admin_api,
@@ -12,7 +14,6 @@ from atlas_init.cli_tf.schema import (
 from atlas_init.cli_tf.schema_inspection import log_optional_only
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.path import ROOT_PATH
-from zero_3rdparty.file_utils import clean_dir
 
 app = typer.Typer(no_args_is_help=True)
 logger = logging.getLogger(__name__)

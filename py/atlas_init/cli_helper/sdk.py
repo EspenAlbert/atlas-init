@@ -1,10 +1,11 @@
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Literal, NamedTuple, TypeAlias
+from typing import Literal, NamedTuple, TypeAlias
 
-from pydantic import constr
 import requests
 from model_lib import Event
+from pydantic import constr
 
 
 class Change(NamedTuple):

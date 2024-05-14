@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import NamedTuple
 
 from git import Repo as _GitRepo
 

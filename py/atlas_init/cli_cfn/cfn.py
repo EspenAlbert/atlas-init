@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, wait
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import lru_cache, total_ordering
-from typing import Sequence
 
 import botocore.exceptions
 from boto3.session import Session
@@ -17,7 +18,7 @@ from zero_3rdparty.iter_utils import group_by_once
 from atlas_init.cloud.aws import REGIONS, PascalAlias, region_continent
 
 logger = logging.getLogger(__name__)
-EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=timezone.utc)
+EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=UTC)
 
 
 @lru_cache

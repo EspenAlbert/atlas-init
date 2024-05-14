@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, wait
-from typing import Annotated, Callable, TypeAlias, TypeVar
+from typing import Annotated, TypeAlias, TypeVar
 
 import stringcase
 from pydantic import AfterValidator, ConfigDict

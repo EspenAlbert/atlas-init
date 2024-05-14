@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 import dotenv
 import pytest
+
 from atlas_init.settings.env_vars import (
     REQUIRED_FIELDS,
     AtlasInitSettings,
@@ -10,7 +11,6 @@ from atlas_init.settings.env_vars import (
     dump_manual_dotenv_from_env,
 )
 from atlas_init.settings.path import repo_path_rel_path
-
 from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required_vars
 
 

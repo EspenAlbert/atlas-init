@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-from model_lib import parse_payload
 import pytest
+from model_lib import parse_payload
 
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
@@ -14,11 +14,12 @@ TEST_DATA = Path(__file__).parent / "test_data"
 
 
 def test_decode_parameters_project():
-    params, missing_params = decode_parameters( # type: ignore
+    template_path, params, missing_params = decode_parameters(  # type: ignore
         {},
         TEST_DATA / "cfn_project_template.json",
+        "MongoDB::Atlas::Project",
         "test-stack",
-        {"TeamRoles": "FORCED"}, # type: ignore
+        {"TeamRoles": "FORCED"},  # type: ignore
     )
     print(params)
     assert missing_params
@@ -26,7 +27,7 @@ def test_decode_parameters_project():
         (p["ParameterValue"] for p in params if p["ParameterKey"] == "TeamRoles"), ""  # type: ignore
     )
     assert team_roles_value == "FORCED"
-    assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"] # type: ignore
+    assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]  # type: ignore
 
 
 @pytest.mark.skipif(

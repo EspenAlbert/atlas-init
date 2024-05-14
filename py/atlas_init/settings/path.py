@@ -3,8 +3,8 @@ from pathlib import Path
 
 import dotenv
 from zero_3rdparty.file_utils import ensure_parents_write_text
-from atlas_init import running_in_repo
 
+from atlas_init import running_in_repo
 
 """WARNING these variables should only be used through the AtlasInitSettings, not directly"""
 if running_in_repo():

@@ -1,7 +1,7 @@
 import logging
+from collections.abc import Callable
 from functools import partial
 from pydoc import locate
-from typing import Callable
 
 import typer
 from model_lib import dump
@@ -223,10 +223,7 @@ def sdk_upgrade(
         return
     go_mod_parent = None
     for go_mod in repo_path.rglob("go.mod"):
-        if go_mod.parent == repo_path:
-            go_mod_parent = go_mod.parent
-            break
-        elif go_mod.parent.parent == repo_path:
+        if go_mod.parent == repo_path or go_mod.parent.parent == repo_path:
             go_mod_parent = go_mod.parent
             break
     else:
@@ -246,7 +243,7 @@ def pre_commit(
         case Repo.CFN:
             repo_path, resource_path, r_name = find_paths()
             build_cmd = f"cd {resource_path} && make build"
-            # todo: understand why piping to grep doesn't work
+            # TODO: understand why piping to grep doesn't work
             # f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}"
             format_cmd_str = (
                 "cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources"

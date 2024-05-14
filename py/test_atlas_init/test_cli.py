@@ -1,9 +1,10 @@
 import logging
-from model_lib import copy_and_validate
-from atlas_init.cli import app
+
 from click.testing import Result
+from model_lib import copy_and_validate
 from typer.testing import CliRunner
 
+from atlas_init.cli import app
 from atlas_init.settings.env_vars import (
     as_env_var_name,
     init_settings,

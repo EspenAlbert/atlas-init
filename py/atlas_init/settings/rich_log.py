@@ -1,7 +1,9 @@
 import logging
 from typing import Literal
+
 from pydantic import BaseModel
 from rich.logging import RichHandler
+
 
 class _LogLevel(BaseModel):
     log_level: Literal["INFO", "WARNING", "ERROR", "CRITICAL"]

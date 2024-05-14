@@ -2,14 +2,15 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from atlas_init.cloud.aws import PascalAlias
-from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
-from atlas_init.settings.path import DEFAULT_TF_PATH
 from model_lib import Entity, dump, parse_model, parse_payload
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
 from zero_3rdparty.dict_nested import read_nested
+
+from atlas_init.cloud.aws import PascalAlias
+from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
+from atlas_init.settings.path import DEFAULT_TF_PATH
 
 logger = logging.getLogger(__name__)
 

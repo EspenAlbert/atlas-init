@@ -3,12 +3,13 @@ from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar
 
-from atlas_init.cloud.aws import REGIONS, AwsRegion
-from atlas_init.repos.path import current_dir
 from model_lib import Entity, parse_payload
 from pydantic import model_validator
 from zero_3rdparty.dict_nested import read_nested_or_none
 from zero_3rdparty.str_utils import ensure_prefix
+
+from atlas_init.cloud.aws import REGIONS, AwsRegion
+from atlas_init.repos.path import current_dir
 
 logger = logging.getLogger(__name__)
 

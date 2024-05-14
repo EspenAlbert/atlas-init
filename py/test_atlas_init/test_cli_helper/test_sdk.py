@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from atlas_init.cli_helper.sdk import (
     BreakingChange,
     Change,
@@ -53,7 +54,7 @@ def test_parse_changelog_lines(line, change, class_name, func_name):
     assert class_name == actual_class_name
 
 
-@pytest.fixture()
+@pytest.fixture
 def sdk_path() -> Path:
     sdk_path = Path(os.environ["SDK_REPO_PATH"])
     assert sdk_path.exists(), f"not found {sdk_path}"
@@ -130,4 +131,4 @@ def test_find_breaking_changes(sdk_path):
 
 
 def test_find_latest_sdk_version():
-    assert find_latest_sdk_version() == "v20231115012"
+    assert find_latest_sdk_version() == "v20231115014"

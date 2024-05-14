@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from model_lib import Entity
 from pydantic import Field, model_validator
@@ -61,6 +62,8 @@ class TerraformVars(Entity):
 
 
 class TestSuite(Entity):
+    __test__ = False
+
     name: str
     sequential_tests: bool = False
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)

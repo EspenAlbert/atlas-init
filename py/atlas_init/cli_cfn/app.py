@@ -3,6 +3,10 @@ import os
 from pathlib import Path
 
 import typer
+from model_lib import dump, parse_payload
+from rich import prompt
+from zero_3rdparty.file_utils import clean_dir
+
 from atlas_init.cli_args import parse_key_values, parse_key_values_any
 from atlas_init.cli_cfn.cfn import (
     activate_resource_type,
@@ -19,6 +23,7 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
     infer_template_path,
     read_execution_role,
 )
+from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
     CfnOperation,
@@ -28,11 +33,7 @@ from atlas_init.repos.cfn import (
     validate_type_name_regions,
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths
-from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.settings.env_vars import active_suites, init_settings
-from model_lib import dump, parse_payload
-from rich import prompt
-from zero_3rdparty.file_utils import clean_dir
 
 app = typer.Typer(no_args_is_help=True)
 logger = logging.getLogger(__name__)
@@ -151,7 +152,7 @@ def example(
     )
     logger.info(f"parameters: {parameters}")
     if not_found:
-        # todo: support specifying these extra
+        # TODO: support specifying these extra
         logger.critical(
             f"need to fill out parameters manually: {not_found} for {type_name}"
         )

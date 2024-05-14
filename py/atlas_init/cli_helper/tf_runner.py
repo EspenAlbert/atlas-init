@@ -48,7 +48,7 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
         logger=logger,
     )
     if not is_ok:
-        raise TerraformRunError()
+        raise TerraformRunError
     if settings.skip_copy:
         return
     env_generated = settings.env_vars_generated
@@ -57,6 +57,6 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
             f"export {line}" for line in env_generated.read_text().splitlines()
         )
         subprocess.run(
-            "pbcopy", universal_newlines=True, input=clipboard_content, check=True
+            "pbcopy", text=True, input=clipboard_content, check=True
         )
         logger.info("loaded env-vars to clipboard ✅")

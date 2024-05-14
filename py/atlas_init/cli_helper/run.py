@@ -1,13 +1,12 @@
-from logging import Logger
 import os
-from pathlib import Path
-from shutil import which
 import subprocess
 import sys
+from logging import Logger
+from pathlib import Path
+from shutil import which
 from typing import TypeVar
 
 import typer
-
 
 StrT = TypeVar("StrT", bound=str)
 
@@ -35,7 +34,7 @@ def run_command_is_ok(
 
 def run_binary_command_is_ok(binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None) -> bool:
     env = env or {**os.environ}
-    
+
     bin = which(binary_name)
     if not bin:
         logger.critical(f"please install '{binary_name}'")

@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Literal
 
 import pydantic
-from model_lib import Entity, dump, field_names, parse_model
 import requests
+from model_lib import Entity, dump, field_names, parse_model
 
 logger = logging.getLogger(__name__)
 

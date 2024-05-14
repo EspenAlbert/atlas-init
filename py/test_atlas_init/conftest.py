@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from atlas_init.settings.env_vars import (
     REQUIRED_FIELDS,
     AtlasInitPaths,
@@ -10,7 +11,7 @@ from atlas_init.settings.env_vars import (
 from atlas_init.settings.path import dump_dotenv
 
 
-@pytest.fixture()
+@pytest.fixture
 def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths:  # type: ignore
     profiles_path = as_env_var_name("profiles_path")
     env_before = {**os.environ}

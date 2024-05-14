@@ -6,6 +6,10 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple
 
+from model_lib import field_names, parse_payload
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from atlas_init.cloud.aws import AwsRegion
 from atlas_init.settings.config import (
     AtlasInitConfig,
@@ -22,9 +26,6 @@ from atlas_init.settings.path import (
     load_dotenv,
     repo_path_rel_path,
 )
-from model_lib import field_names, parse_payload
-from pydantic import field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 ENV_PREFIX = "ATLAS_INIT_"
@@ -84,10 +85,10 @@ def dump_manual_dotenv_from_env(path: Path) -> None:
 
 
 def env_var_names(field_name: str) -> list[str]:
-    return list(
+    return [
         f"{ENV_PREFIX}{name}"
         for name in set([field_name, field_name.lower(), field_name.upper()])
-    )
+    ]
 
 
 def read_from_env(field_name: str, default: str = "") -> str:
