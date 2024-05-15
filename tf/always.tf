@@ -34,7 +34,7 @@ resource "mongodbatlas_project" "project" {
   name   = var.project_name
   org_id = var.org_id
 
-  tags = {}
+  tags = local.tags
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
