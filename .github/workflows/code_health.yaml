@@ -22,7 +22,7 @@ jobs:
       - name: build
         run: cd py && hatch build -t wheel --clean-hooks-after
       - name: test
-        run: cd py && hatch test
+        run: cd py && hatch test --cover
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
