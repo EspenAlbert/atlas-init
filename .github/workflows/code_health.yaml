@@ -22,10 +22,9 @@ jobs:
       - name: build
         run: cd py && hatch build -t wheel --clean-hooks-after
       - name: test
-        run: cd py && hatch test --cover
+        run: cd py && hatch test -- --cov --cov-report xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: py/.coverage
-
+          files: py/coverage.xml

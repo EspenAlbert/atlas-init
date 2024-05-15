@@ -49,8 +49,8 @@ installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
 extra-dependencies = [
   "hatchling==1.24.2",
+  "pytest-cov==5.0.0"
 ] # used to make it simpler to sync venv with IDE
-
 
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
@@ -59,7 +59,6 @@ parallel = true
 
 [tool.coverage.paths]
 atlas_init = ["atlas_init"]
-test_atlas_init = ["test_atlas_init"]
 
 [tool.coverage.report]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]

@@ -14,3 +14,4 @@ tf2
 dist
 .ruff_cache
 py/.coverage
+py/coverage.xml
