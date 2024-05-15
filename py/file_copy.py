@@ -8,6 +8,8 @@ from zero_3rdparty.file_utils import clean_dir, copy, iter_paths_and_relative
 REL_PATH_FILES = [
     "atlas_init.yaml",
     "terraform.yaml",
+    "tf/modules/cfn/assume_role_services.yaml",
+    "tf/modules/cfn/resource_actions.yaml",
 ]
 
 PY_PATH = Path(__file__).parent
@@ -27,7 +29,6 @@ class CustomBuildHook(BuildHookInterface):
 
     def clean(self, versions: list[str]) -> None:
         for rel_path in REL_PATH_FILES:
-            logger.warning(f"will remove again: {rel_path}")
             dest_path = ATLAS_INIT_PATH / rel_path
             if dest_path.exists():
                 dest_path.unlink()
