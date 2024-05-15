@@ -38,7 +38,7 @@ def check_region_found(region: str) -> str:
     return region
 
 
-type AwsRegion = Annotated[str, AfterValidator(check_region_found)]
+AwsRegion = Annotated[str, AfterValidator(check_region_found)]
 T = TypeVar("T")
 
 

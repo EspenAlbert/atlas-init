@@ -4,12 +4,13 @@ import logging
 import os
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import Any, NamedTuple
 
 from model_lib import field_names, parse_payload
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from atlas_init.cloud.aws import AwsRegion
 from atlas_init.settings.config import (
     AtlasInitConfig,
     TestSuite,
@@ -25,9 +26,6 @@ from atlas_init.settings.path import (
     load_dotenv,
     repo_path_rel_path,
 )
-
-if TYPE_CHECKING:
-    from atlas_init.cloud.aws import AwsRegion
 
 logger = logging.getLogger(__name__)
 ENV_PREFIX = "ATLAS_INIT_"
@@ -212,7 +210,8 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return cls(**path_settings.model_dump(), **ext_settings.model_dump())
 
     @field_validator("test_suites", mode="after")
-    def ensure_whitespace_replaced_with_commas(self, value: str) -> str:
+    @classmethod
+    def ensure_whitespace_replaced_with_commas(cls, value: str) -> str:
         return value.strip().replace(" ", ",")
 
     @model_validator(mode="after")

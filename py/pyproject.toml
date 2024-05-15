@@ -75,6 +75,7 @@ extend-ignore = [
   "FBT001",
   "B008",   # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
   "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
+  "TCH001", # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
 ]
 
 [tool.hatch.build.targets.wheel]

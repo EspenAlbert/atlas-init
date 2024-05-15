@@ -1,11 +1,11 @@
 import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Annotated, Literal, NamedTuple
 
 import requests
 from model_lib import Event
-from pydantic import constr
+from pydantic import StringConstraints
 
 
 class Change(NamedTuple):
@@ -80,7 +80,7 @@ def find_latest_sdk_version() -> str:
     return name.removesuffix(".0.0")
 
 
-type SdkVersion = constr(pattern="v\\d{11}")  # type: ignore
+SdkVersion = Annotated[str, StringConstraints(pattern="v\\d{11}")]
 
 
 class SdkVersionUpgrade(Event):
