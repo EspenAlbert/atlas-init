@@ -7,6 +7,7 @@ import typer
 from model_lib import dump
 from zero_3rdparty.file_utils import iter_paths
 
+from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_helper import sdk_auto_changes
 from atlas_init.cli_helper.run import (
@@ -87,6 +88,7 @@ def main(
     if project_name != "":
         explicit_env_vars[as_env_var_name("project_name")] = project_name
     configure_logging(log_level)
+    logger.info(f"running in repo: {running_in_repo()}")
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
         required_extra_fields=["project_name"],
