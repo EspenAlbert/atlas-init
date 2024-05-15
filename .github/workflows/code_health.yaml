@@ -1,0 +1,19 @@
+name: 'Code Health'
+
+on:
+  push:
+    branches: "*"
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - uses: yezz123/setup-uv@v4
+        with:
+            uv-version: "0.1.12"
+      - run: uv --version
+      - run: uv pip install -U hatch==1.11.0
+      - run: ./py/pre-commit.sh
