@@ -11,14 +11,14 @@ variable "name_suffix" {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket = var.bucket_name
+  bucket        = var.bucket_name
   force_destroy = true
 }
 
 
 resource "aws_iam_role_policy" "s3_access" {
-  name = "atlas_init_s3_${var.name_suffix}"
-  role = var.iam_role_name
+  name   = "atlas_init_s3_${var.name_suffix}"
+  role   = var.iam_role_name
   policy = <<EOF
 {
   "Version": "2012-10-17",

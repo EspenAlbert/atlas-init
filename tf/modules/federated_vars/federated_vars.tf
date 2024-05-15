@@ -1,5 +1,9 @@
 variable "federated_settings_id" {
-    type = string
+  type = string
+  validation {
+    condition     = length(var.federated_settings_id) > 0
+    error_message = "missing federate_settings_id"
+  }
 }
 
 variable "org_id" {
@@ -15,8 +19,8 @@ variable "base_url" {
 }
 
 data "mongodbatlas_federated_settings_org_config" "current" {
-    federation_settings_id = var.federated_settings_id
-    org_id = var.org_id
+  federation_settings_id = var.federated_settings_id
+  org_id                 = var.org_id
 }
 
 output "info" {
@@ -27,10 +31,10 @@ output "info" {
 
 
 output "env_vars" {
-    value = {
-        MONGODB_ATLAS_FEDERATION_SETTINGS_ID=var.federated_settings_id
-        MONGODB_ATLAS_FEDERATED_ORG_ID=var.org_id
-        MONGODB_ATLAS_FEDERATED_GROUP_ID=var.project_id
-    }
-  
+  value = {
+    MONGODB_ATLAS_FEDERATION_SETTINGS_ID = var.federated_settings_id
+    MONGODB_ATLAS_FEDERATED_ORG_ID       = var.org_id
+    MONGODB_ATLAS_FEDERATED_GROUP_ID     = var.project_id
+  }
+
 }

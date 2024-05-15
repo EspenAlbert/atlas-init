@@ -1,5 +1,5 @@
 variable "aws_region" {
-  type = string
+  type    = string
   default = "us-east-1"
 }
 
@@ -8,7 +8,7 @@ variable "project_id" {
 }
 
 variable "vpc_id" {
-  type = string 
+  type = string
 }
 
 variable "subnet_ids" {

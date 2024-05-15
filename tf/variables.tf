@@ -7,12 +7,13 @@ variable "atlas_private_key" {
 }
 
 variable "atlas_base_url" {
-  type = string
+  type    = string
   default = "https://cloud-dev.mongodb.com/"
 }
 
 variable "federated_settings_id" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "org_id" {
@@ -20,7 +21,7 @@ variable "org_id" {
 }
 
 variable "aws_region" {
-  type = string
+  type    = string
   default = "us-east-1"
 }
 
@@ -39,27 +40,27 @@ variable "out_dir" {
 variable "cfn_config" {
   type = object({
     profile = string
-    region = string
+    region  = string
   })
   default = {
     profile = ""
-    region = "eu-west-1"
+    region  = "eu-west-1"
   }
 }
 
 variable "cluster_config" {
   type = object({
-    name = string
-    instance_size = string
+    name            = string
+    instance_size   = string
     database_in_url = string
-    cloud_backup = bool
+    cloud_backup    = bool
   })
 
   default = {
-    name =  ""
-    instance_size = "M0"
-    database_in_url = "default"  
-    cloud_backup = false
+    name            = ""
+    instance_size   = "M0"
+    database_in_url = "default"
+    cloud_backup    = false
   }
 }
 
@@ -72,51 +73,51 @@ variable "stream_instance_config" {
   }
 }
 variable "use_private_link" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "use_vpc_peering" {
-  type = bool
+  type    = bool
   default = false
-  
+
 }
 
 variable "use_project_extra" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "use_aws_vpc" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "extra_env_vars" {
-  default = {}
-  type = map(string)
+  default   = {}
+  type      = map(string)
   sensitive = true
 }
 
 variable "aws_access_key_id" {
-  type = string
+  type    = string
   default = ""
 }
 variable "aws_secret_access_key" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "use_aws_vars" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "use_aws_s3" {
-  type = bool
-  default = false 
+  type    = bool
+  default = false
 }
 
 variable "use_federated_vars" {
-  type = bool
+  type    = bool
   default = false
 }

@@ -15,19 +15,19 @@ data "http" "myip" {
 data "http" "last_provider_version" {
   url = "https://api.github.com/repos/mongodb/terraform-provider-mongodbatlas/releases/latest"
 
-lifecycle {
-  postcondition {
-    condition = contains([200], self.status_code)
-    error_message = "Failed to get last version"
+  lifecycle {
+    postcondition {
+      condition     = contains([200], self.status_code)
+      error_message = "Failed to get last version"
+    }
   }
-}
 
 }
 
 locals {
-  release_response = jsondecode(data.http.last_provider_version.response_body)
+  release_response      = jsondecode(data.http.last_provider_version.response_body)
   last_provider_version = trimprefix(local.release_response.tag_name, "v")
-  mongodb_username = random_password.username.result
+  mongodb_username      = random_password.username.result
 }
 
 resource "mongodbatlas_project" "project" {

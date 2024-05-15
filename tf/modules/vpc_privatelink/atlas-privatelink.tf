@@ -26,7 +26,7 @@ output "info" {
 
 output "env_vars" {
   value = {
-    MONGODB_ATLAS_PRIVATE_ENDPOINT_ID=aws_vpc_endpoint.this.id
-    MONGODB_ATLAS_PRIVATE_ENDPOINT_DNS_NAME=aws_vpc_endpoint.this.dns_entry[0].dns_name
+    MONGODB_ATLAS_PRIVATE_ENDPOINT_ID       = aws_vpc_endpoint.this.id
+    MONGODB_ATLAS_PRIVATE_ENDPOINT_DNS_NAME = aws_vpc_endpoint.this.dns_entry[0].dns_name
   }
 }
