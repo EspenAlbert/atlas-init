@@ -28,11 +28,11 @@ variable "cloud_backup" {
 
 locals {
   use_free_cluster = var.instance_size == "M0"
-  cluster = try(mongodbatlas_cluster.project_cluster_free[0], mongodbatlas_cluster.project_cluster[0])
-  container_id = local.cluster.container_id
+  cluster          = try(mongodbatlas_cluster.project_cluster_free[0], mongodbatlas_cluster.project_cluster[0])
+  container_id     = local.cluster.container_id
 }
 resource "mongodbatlas_cluster" "project_cluster_free" {
-  count = local.use_free_cluster ? 1 : 0
+  count      = local.use_free_cluster ? 1 : 0
   project_id = var.project_id
   name       = var.cluster_name
 
@@ -43,7 +43,7 @@ resource "mongodbatlas_cluster" "project_cluster_free" {
 }
 
 resource "mongodbatlas_cluster" "project_cluster" {
-  count = local.use_free_cluster ? 0 : 1
+  count        = local.use_free_cluster ? 0 : 1
   project_id   = var.project_id
   name         = var.cluster_name
   cloud_backup = var.cloud_backup
@@ -76,10 +76,10 @@ resource "mongodbatlas_database_user" "mongo-user" {
     database_name = "admin" # The database name and collection name need not exist in the cluster before creating the user.
   }
   roles {
-    role_name = "atlasAdmin"
+    role_name     = "atlasAdmin"
     database_name = "admin"
   }
-  
+
   labels {
     key   = "name"
     value = var.cluster_name
@@ -89,11 +89,11 @@ resource "mongodbatlas_database_user" "mongo-user" {
 output "info" {
   sensitive = true
   value = {
-    standard_srv = local.cluster.connection_strings[0].standard_srv
-    mongo_url = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/?retryWrites=true"
-    mongo_username = var.mongo_user
-    mongo_password = var.mongo_password
-    mongo_url_with_db = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/${var.db_in_url}?retryWrites=true"
+    standard_srv         = local.cluster.connection_strings[0].standard_srv
+    mongo_url            = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/?retryWrites=true"
+    mongo_username       = var.mongo_user
+    mongo_password       = var.mongo_password
+    mongo_url_with_db    = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/${var.db_in_url}?retryWrites=true"
     cluster_container_id = local.cluster.container_id
   }
 }

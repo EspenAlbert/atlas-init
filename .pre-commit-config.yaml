@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: py-pre-commit
+        name: py-pre-commit
+        language: system
+        entry: ./py/pre-commit.sh
+        pass_filenames: false
+        verbose: true

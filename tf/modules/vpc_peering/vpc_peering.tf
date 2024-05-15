@@ -2,7 +2,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "1.4.3"
+      version = ">=1.4.3"
     }
   }
   required_version = ">= 1.0"
@@ -51,12 +51,12 @@ resource "aws_route" "peeraccess" {
 }
 
 resource "mongodbatlas_network_container" "this" {
-    count = var.skip_resources ? 0 : 1
+  count = var.skip_resources ? 0 : 1
 
-    project_id   		  = var.project_id
-    atlas_cidr_block  = var.atlas_vpc_cidr
-    provider_name		  = "AWS"
-    region_name			  = var.atlas_region
+  project_id       = var.project_id
+  atlas_cidr_block = var.atlas_vpc_cidr
+  provider_name    = "AWS"
+  region_name      = var.atlas_region
 }
 resource "mongodbatlas_network_peering" "aws_atlas" {
   count = var.skip_resources ? 0 : 1
@@ -85,9 +85,9 @@ resource "mongodbatlas_project_ip_access_list" "test" {
 
 output "env_vars" {
   value = {
-    AWS_ACCOUNT_ID = var.aws_account_id
+    AWS_ACCOUNT_ID     = var.aws_account_id
     AWS_VPC_CIDR_BLOCK = var.vpc_cidr_block
-    AWS_VPC_ID = var.vpc_id
-    AWS_REGION = var.atlas_region
+    AWS_VPC_ID         = var.vpc_id
+    AWS_REGION         = var.atlas_region
   }
 }
