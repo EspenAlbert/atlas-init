@@ -47,8 +47,12 @@ installer = "uv"
 [tool.hatch.envs.hatch-test]
 installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
-extra-dependencies = ["hatchling==1.24.2"]
+extra-dependencies = [
+  "hatchling==1.24.2",
+] # used to make it simpler to sync venv with IDE
 
+[tool.hatch.envs.hatch-build]
+extra-dependencies = ["hatchling==1.24.2", "zero-3rdparty==0.0.30"]
 
 [tool.coverage.run]
 source_pkgs = ["atlas_init", "test_atlas_init"]
@@ -61,6 +65,12 @@ test_atlas_init = ["test_atlas_init"]
 
 [tool.coverage.report]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["atlas_init"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "file_copy.py"
 
 [tool.ruff]
 extend-exclude = ["test_atlas_init"]
@@ -77,9 +87,3 @@ extend-ignore = [
   "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
   "TCH001", # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
 ]
-
-[tool.hatch.build.targets.wheel]
-only-include = ["atlas_init"]
-
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "file_copy.py"
