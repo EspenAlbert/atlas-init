@@ -1,4 +1,5 @@
 import logging
+import sys
 from collections.abc import Callable
 from functools import partial
 from pydoc import locate
@@ -88,7 +89,7 @@ def main(
     if project_name != "":
         explicit_env_vars[as_env_var_name("project_name")] = project_name
     configure_logging(log_level)
-    logger.info(f"running in repo: {running_in_repo()}")
+    logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
         required_extra_fields=["project_name"],
