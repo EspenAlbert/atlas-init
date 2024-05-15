@@ -5,9 +5,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from model_lib import dump
 from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
-from atlas_init.cli_helper.run import find_binary_on_path, run_command_is_ok
+from atlas_init.cli_helper.run import (
+    find_binary_on_path,
+    run_command_is_ok,
+    run_command_receive_result,
+)
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
 
@@ -83,3 +88,23 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
             return
         subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)
         logger.info("loaded env-vars to clipboard ✅")
+
+
+def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
+    tf_vars_path = settings.tf_vars_path
+    tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
+    tf_vars_str = dump(tf_vars, "pretty_json")
+    logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
+    tf_vars_path.write_text(tf_vars_str)
+
+
+def export_outputs(settings: AtlasInitSettings) -> None:
+    output_path = settings.profile_dir / "tf_outputs.json"
+    with state_copier(settings.profile_dir, settings.tf_path):
+        result = run_command_receive_result(
+            "terraform output -json",
+            settings.tf_path,
+            logger,
+            env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
+        )
+    output_path.write_text(result)

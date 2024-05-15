@@ -5,7 +5,6 @@ from functools import partial
 from pydoc import locate
 
 import typer
-from model_lib import dump
 from zero_3rdparty.file_utils import iter_paths
 
 from atlas_init import running_in_repo
@@ -27,6 +26,8 @@ from atlas_init.cli_helper.sdk import (
 )
 from atlas_init.cli_helper.tf_runner import (
     TerraformRunError,
+    dump_tf_vars,
+    export_outputs,
     get_tf_vars,
     run_terraform,
 )
@@ -116,7 +117,7 @@ def init(context: typer.Context):
 
 
 @app_command()
-def apply(context: typer.Context):
+def apply(context: typer.Context, *, skip_outputs: bool = False):
     settings = init_settings()
     extra_args = context.args
     logger.info(f"apply extra args: {extra_args}")
@@ -128,11 +129,7 @@ def apply(context: typer.Context):
         suites = []
 
     tf_vars = get_tf_vars(settings, suites)
-    tf_vars_path = settings.tf_vars_path
-    tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
-    tf_vars_str = dump(tf_vars, "pretty_json")
-    logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
-    tf_vars_path.write_text(tf_vars_str)
+    dump_tf_vars(settings, tf_vars)
 
     try:
         run_terraform(settings, "apply", extra_args)
@@ -140,14 +137,25 @@ def apply(context: typer.Context):
         logger.error(repr(e))  # noqa: TRY400
         return
 
+    if not skip_outputs:
+        export_outputs(settings)
+
     if settings.env_vars_generated.exists():
         dump_vscode_dotenv(settings.env_vars_generated, settings.env_vars_vs_code)
         logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
 
 
 @app_command()
-def destroy():
-    raise NotImplementedError
+def destroy(context: typer.Context):
+    extra_args = context.args
+    settings = init_settings()
+    tf_vars = get_tf_vars(settings, [])
+    dump_tf_vars(settings, tf_vars)
+    try:
+        run_terraform(settings, "destroy", extra_args)
+    except TerraformRunError as e:
+        logger.error(repr(e))  # noqa: TRY400
+        return
 
 
 @app_command()

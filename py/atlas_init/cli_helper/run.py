@@ -4,22 +4,26 @@ import sys
 from logging import Logger
 from pathlib import Path
 from shutil import which
-from typing import TypeVar
+from tempfile import TemporaryDirectory
+from typing import IO, TypeVar
 
 import typer
 
 StrT = TypeVar("StrT", bound=str)
 
 
-def run_command_is_ok(cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger) -> bool:
+def run_command_is_ok(
+    cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger, output: None | IO = None
+) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
     logger.info(f"running: '{command_str}' from '{cwd}'")
+    output = output or sys.stdout  # type: ignore
     exit_code = subprocess.call(
         cmd,
         stdin=sys.stdin,
         stderr=sys.stderr,
-        stdout=sys.stdout,
+        stdout=output,
         cwd=cwd,
         env=env,
     )
@@ -67,3 +71,15 @@ def run_command_exit_on_failure(
     if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger):
         logger.critical("command failed, see output 👆")
         raise typer.Exit(1)
+
+
+def run_command_receive_result(command: str, cwd: Path, logger: Logger, env: dict | None = None) -> str:
+    with TemporaryDirectory() as temp_dir:
+        result_file = Path(temp_dir) / "file"
+        with open(result_file, "w") as file:
+            is_ok = run_command_is_ok(command.split(), env=env, cwd=cwd, logger=logger, output=file)
+        output_text = result_file.read_text().strip()
+    if not is_ok:
+        logger.critical(f"command failed {command}, {output_text}")
+        raise typer.Exit(1)
+    return output_text
