@@ -9,7 +9,7 @@ Currently, used with
 1. [Create an organization](https://cloud-dev.mongodb.com/v2#/preferences/organizations)
 2. Go to `access_manager` and click `Create Api Key`: <https://cloud-dev.mongodb.com/v2#/org/{ORG_ID_IN_URL_FROM_1}/access/apiKeys>
    - Tick all permissions
-3. create directories and store a file in `profiles/default/.env-manual`
+3. create directories and store a file in `profiles/default/.env-manual` (`ATLAS_INIT_PROFILES_PATH/{profile_name}/.env-manual`)
 
 ```env
 export AWS_PROFILE=REPLACE_ME # your AWS profile used to create resources or other env-vars supported by AWS TF provider
@@ -37,6 +37,7 @@ export ATLAS_INIT_CFN_REGION=eu-south-2 # find a region with few other profiles
 ```shell
 source .venv/bin/activate # ensure you are in your preferred python env
 (uv) pip install atlas-init
+# use export ATLAS_INIT_PROFILES_PATH=/somewhere/to/store/your/env-vars/and/tf/state
 ```
 
 ### 2. Local development, run from github repo
@@ -69,11 +70,13 @@ echo "alias atlas_init='export PYTHONPATH=$pypath && \"$pyexe\" -m atlas_init'" 
 - will be used by the CI in other repos
 - [atlasci_local_install](atlasci_local_install.sh)
   - creates a local `.venv` builds the wheel from this repo and installs it
+- use `export ATLAS_INIT_PROFILES_PATH=/somewhere/to/store/your/env-vars/and/tf/state`
 
 ## Commands
 
 ```shell
 cd terraform/cfn/{YOUR_RESOURCE_PATH}
+# if you used `pip install` replace `atlas_init` with `atlasci`
 atlas_init # help info
 atlas_init # initialize the terraform providers
 atlas_init tf # help for tf specific commands
