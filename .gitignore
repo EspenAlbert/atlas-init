@@ -12,3 +12,4 @@ tf/playground_caller.tf
 schema/
 tf2
 dist
+.ruff_cache
