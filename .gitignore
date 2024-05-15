@@ -16,3 +16,4 @@ dist
 py/.coverage
 py/coverage.xml
 profiles_ci/
+.venv
