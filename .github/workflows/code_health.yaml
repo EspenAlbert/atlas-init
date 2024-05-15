@@ -23,6 +23,8 @@ jobs:
         run: cd py && hatch build -t wheel --clean-hooks-after
       - name: test
         run: cd py && hatch test -- --cov --cov-report xml
+      - name: test_with_coverage
+        run: cd py && hatch test
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
