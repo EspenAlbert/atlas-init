@@ -1,5 +1,7 @@
 # Atlas Init - A CLI for developing with MongoDB Atlas
 
+[![codecov](https://codecov.io/github/EspenAlbert/atlas-init/graph/badge.svg?token=DR7FDJXNZY)](https://codecov.io/github/EspenAlbert/atlas-init)
+
 Currently, used with
 - <https://github.com/mongodb/terraform-provider-mongodbatlas>
 - <https://github.com/mongodb/mongodb/mongodbatlas-cloudformation-resources>
