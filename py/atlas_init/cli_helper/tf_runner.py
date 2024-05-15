@@ -1,12 +1,15 @@
 import logging
 import os
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
+
+from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
 from atlas_init.cli_helper.run import find_binary_on_path, run_command_is_ok
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
-from atlas_init.settings.path import DEFAULT_TF_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +34,30 @@ class TerraformRunError(Exception):
     pass
 
 
+@dataclass
+class state_copier:  # noqa: N801
+    profile_path: Path
+    tf_path: Path
+
+    @property
+    def state_path(self) -> Path:
+        return self.profile_path / "tf_state"
+
+    def __enter__(self):
+        for state_path, rel_path in iter_paths_and_relative(self.state_path, "terraform.tfstate*", rglob=False):
+            copy(state_path, self.tf_path / rel_path)
+
+    def __exit__(self, *_):
+        for state_path, rel_path in iter_paths_and_relative(self.tf_path, "terraform.tfstate*", rglob=False):
+            state_path.rename(self.state_path / rel_path)
+
+
 def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
+    with state_copier(settings.profile_dir, settings.tf_path):
+        _run_terraform(settings, command, extra_args)
+
+
+def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
     command_parts = [
         "terraform",
         command,
@@ -42,7 +68,7 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
     is_ok = run_command_is_ok(
         command_parts,
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
-        cwd=DEFAULT_TF_PATH,
+        cwd=settings.tf_path,
         logger=logger,
     )
     if not is_ok:
