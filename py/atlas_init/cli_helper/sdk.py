@@ -1,7 +1,7 @@
 import re
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Literal, NamedTuple, TypeAlias
+from typing import Literal, NamedTuple
 
 import requests
 from model_lib import Event
@@ -14,9 +14,7 @@ class Change(NamedTuple):
     func_name: str
 
 
-regex = re.compile(
-    r"\-\s\(?\\?\*?(?P<class_name>\w+)\)?\.(?P<func_name>\w+):\s(?P<change_type>(removed|changed from))"
-)
+regex = re.compile(r"\-\s\(?\\?\*?(?P<class_name>\w+)\)?\.(?P<func_name>\w+):\s(?P<change_type>(removed|changed from))")
 
 
 def parse_line(line: str) -> Change | None:
@@ -24,6 +22,7 @@ def parse_line(line: str) -> Change | None:
         # change = match.groupdict()["change"]
         # func_name = match.groupdict()["func_name"]
         return Change(**match.groupdict())  # type: ignore
+    return None
 
 
 class BreakingChange(NamedTuple):
@@ -48,9 +47,7 @@ def parse_breaking_changes(
     return changes
 
 
-def find_breaking_changes(
-    text: str, changes: dict[Change, BreakingChange]
-) -> dict[Change, BreakingChange]:
+def find_breaking_changes(text: str, changes: dict[Change, BreakingChange]) -> dict[Change, BreakingChange]:
     found_changes: dict[Change, BreakingChange] = {}
     for change, change_value in changes.items():
         if change.class_name in text and change.func_name in text:
@@ -60,8 +57,8 @@ def find_breaking_changes(
 
 def format_breaking_changes(text: str, changes: dict[Change, BreakingChange]):
     warning: list[str] = []
-    for (_, cls_name, func_name), bChange in changes.items():
-        warning.append(f"## {bChange.version}: {bChange.line}")
+    for (_, cls_name, func_name), breaking_change in changes.items():
+        warning.append(f"## {breaking_change.version}: {breaking_change.line}")
         for line_nr, line in enumerate(text.splitlines(), 1):
             if cls_name in line:
                 warning.append(f"L{line_nr:03}: '{cls_name}' {line}")
@@ -76,16 +73,14 @@ def is_removed(changes: Iterable[Change]) -> bool:
 
 
 def find_latest_sdk_version() -> str:
-    response = requests.get(
-        "https://api.github.com/repos/mongodb/atlas-sdk-go/releases/latest"
-    )
+    response = requests.get("https://api.github.com/repos/mongodb/atlas-sdk-go/releases/latest", timeout=10)
     response.raise_for_status()
     name = response.json()["name"]
     assert isinstance(name, str)
     return name.removesuffix(".0.0")
 
 
-SdkVersion: TypeAlias = constr(pattern=r"v\d{11}") # type: ignore
+type SdkVersion = constr(pattern="v\\d{11}")  # type: ignore
 
 
 class SdkVersionUpgrade(Event):

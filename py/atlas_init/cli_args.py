@@ -10,7 +10,4 @@ def parse_key_values(params: list[str]) -> dict[str, str]:
 
 def parse_key_values_any(params: list[str]) -> dict[str, Any]:
     str_dict = parse_key_values(params)
-    return {
-        k: parse_payload(v) if v.startswith(("{", "[")) else v
-        for k, v in str_dict.items()
-    }
+    return {k: parse_payload(v) if v.startswith(("{", "[")) else v for k, v in str_dict.items()}

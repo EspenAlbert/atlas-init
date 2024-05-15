@@ -26,23 +26,19 @@ def cloud_formation_client(region_name: str = "") -> CloudFormationClient:
     return Session(region_name=region_name).client("cloudformation")  # type: ignore
 
 
-def deregister_cfn_resource_type(
-    type_name: str, deregister: bool, region_filter: str | None = None
-):
+def deregister_cfn_resource_type(type_name: str, deregister: bool, region_filter: str | None = None):
     for region in REGIONS:
         if region_filter and region != region_filter:
             continue
         try:
             default_version_arn = None
             client = cloud_formation_client(region)
-            for version in client.list_type_versions(
-                Type="RESOURCE", TypeName=type_name
-            )["TypeVersionSummaries"]:
+            for version in client.list_type_versions(Type="RESOURCE", TypeName=type_name)["TypeVersionSummaries"]:
                 logger.info(f"found version: {version} for {type_name} in {region}")
                 if not deregister:
                     continue
-                arn = version["Arn"] # type: ignore
-                if version["IsDefaultVersion"]: # type: ignore
+                arn = version["Arn"]  # type: ignore
+                if version["IsDefaultVersion"]:  # type: ignore
                     default_version_arn = arn.rsplit("/", maxsplit=1)[0]
                 else:
                     logger.info(f"deregistering: {arn}")
@@ -54,7 +50,7 @@ def deregister_cfn_resource_type(
             if "The type does not exist" in repr(e):
                 logger.info(f"type={type_name} not found in {region}")
                 continue
-            raise e
+            raise
 
 
 def deregister_arn(arn: str, region: str):
@@ -63,17 +59,13 @@ def deregister_arn(arn: str, region: str):
     client.deregister_type(Arn=arn)
 
 
-def deactivate_third_party_type(
-    type_name: str, region_name: str, dry_run: bool = False
-) -> None | CfnTypeDetails:
+def deactivate_third_party_type(type_name: str, region_name: str, *, dry_run: bool = False) -> None | CfnTypeDetails:
     last_version = get_last_cfn_type(type_name, region=region_name, is_third_party=True)
     if not last_version:
         logger.info(f"no third party found in region {region_name}")
         return
     is_activated = last_version.is_activated
-    logger.info(
-        f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}"
-    )
+    logger.info(f"found {last_version.type_name} {last_version.version} in {region_name}, is_activated={is_activated}")
     if is_activated and not dry_run:
         deactivate_type(type_name=type_name, region=region_name)
 
@@ -93,14 +85,12 @@ def delete_stack(region_name: str, stack_name: str):
     client = cloud_formation_client(region_name)
     logger.warning(f"deleting stack {stack_name} in region={region_name}")
     try:
-        client.update_termination_protection(
-            EnableTerminationProtection=False, StackName=stack_name
-        )
+        client.update_termination_protection(EnableTerminationProtection=False, StackName=stack_name)
     except Exception as e:
         if "does not exist" in repr(e):
             logger.warning(f"stack {stack_name} not found")
             return
-        raise e
+        raise
     client.delete_stack(StackName=stack_name)
     wait_on_stack_ok(stack_name, region_name, expect_not_found=True)
 
@@ -120,9 +110,7 @@ def create_stack(
         Parameters=parameters,
         RoleARN=role_arn,
     )
-    logger.info(
-        f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}"
-    )
+    logger.info(f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}")
     wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
@@ -141,9 +129,7 @@ def update_stack(
         Parameters=parameters,
         RoleARN=role_arn,
     )
-    logger.info(
-        f"stack with name: {stack_name} updated {region_name} has id: {update['StackId']}"
-    )
+    logger.info(f"stack with name: {stack_name} updated {region_name} has id: {update['StackId']}")
     wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
@@ -155,7 +141,7 @@ class StackBaseError(Exception):
         self.status_reason = status_reason
 
 
-class StackInProgress(StackBaseError):
+class StackInProgressError(StackBaseError):
     pass
 
 
@@ -206,6 +192,7 @@ class StackEvents(Event):
 def wait_on_stack_ok(
     stack_name: str,
     region_name: str,
+    *,
     expect_not_found: bool = False,
     timeout_seconds: int = 300,
 ) -> None:
@@ -214,7 +201,7 @@ def wait_on_stack_ok(
     @retry(
         stop=stop_after_attempt(attempts + 1),
         wait=wait_fixed(6),
-        retry=retry_if_exception_type(StackInProgress),
+        retry=retry_if_exception_type(StackInProgressError),
         reraise=True,
     )
     def _wait_on_stack_ok() -> None:
@@ -223,23 +210,21 @@ def wait_on_stack_ok(
             response = client.describe_stack_events(StackName=stack_name)
         except botocore.exceptions.ClientError as e:
             if not expect_not_found:
-                raise e
+                raise
             error_message = e.response.get("Error", {}).get("Message", "")
             if "does not exist" not in error_message:
-                raise e
+                raise
             return None
         parsed = StackEvents(stack_events=response.get("StackEvents", []))  # type: ignore
         current_event = parsed.current_stack_event(stack_name)
         if current_event.in_progress:
-            logger.info(
-                f"stack in progress {stack_name} {current_event.resource_status}"
-            )
-            raise StackInProgress(
+            logger.info(f"stack in progress {stack_name} {current_event.resource_status}")
+            raise StackInProgressError(
                 current_event.resource_status,
                 current_event.timestamp,
                 current_event.resource_status_reason,
             )
-        elif current_event.is_error:
+        if current_event.is_error:
             raise StackError(
                 current_event.resource_status,
                 current_event.timestamp,
@@ -263,9 +248,7 @@ def print_version_regions(type_name: str) -> None:
         regions = sorted(version_regions[version])
         regions_comma_separated = ",".join(regions)
         logger.info(f"'{version}' is latest in {regions_comma_separated}\ncontinents:")
-        for continent, cont_regions in group_by_once(
-            regions, key=region_continent
-        ).items():
+        for continent, cont_regions in group_by_once(regions, key=region_continent).items():
             continent_regions = ", ".join(sorted(cont_regions))
             logger.info(f"continent={continent}: {continent_regions}")
 
@@ -284,8 +267,7 @@ def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
         region: str = futures[f]
         try:
             version = f.result()
-        except Exception as e:
-            logger.exception(e)
+        except Exception:
             logger.exception(f"failed to find version in region = {region}, error 👆")
             continue
         version_regions[version].append(region)
@@ -306,20 +288,18 @@ class CfnTypeDetails(Event):
         return self.last_updated < other.last_updated
 
 
-def get_last_cfn_type(
-    type_name: str, region: str, is_third_party: bool = False
-) -> None | CfnTypeDetails:
+def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = False) -> None | CfnTypeDetails:
     client: CloudFormationClient = cloud_formation_client(region)
     prefix = type_name
     logger.info(f"finding public 3rd party for '{prefix}' in {region}")
     visibility = "PUBLIC" if is_third_party else "PRIVATE"
     category = "THIRD_PARTY" if is_third_party else "REGISTERED"
     type_details: list[CfnTypeDetails] = []
-    kwargs = dict(
-        Visibility=visibility,
-        Filters={"Category": category, "TypeNamePrefix": prefix},
-        MaxResults=100,
-    )
+    kwargs = {
+        "Visibility": visibility,
+        "Filters": {"Category": category, "TypeNamePrefix": prefix},
+        "MaxResults": 100,
+    }
     next_token = ""
     for _ in range(100):
         types_response = client.list_types(**kwargs)  # type: ignore
@@ -348,9 +328,7 @@ def get_last_cfn_type(
     return sorted(type_details)[-1]
 
 
-def activate_resource_type(
-    details: CfnTypeDetails, region: str, execution_role_arn: str
-):
+def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_arn: str):
     client = cloud_formation_client(region)
     response = client.activate_type(
         Type="RESOURCE",

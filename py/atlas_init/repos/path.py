@@ -9,9 +9,7 @@ from git import Repo as _GitRepo
 from atlas_init.settings.path import current_dir, repo_path_rel_path
 
 GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS = "mongodb/terraform-provider-mongodbatlas"
-GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES = (
-    "mongodb/mongodbatlas-cloudformation-resources"
-)
+GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES = "mongodb/mongodbatlas-cloudformation-resources"
 _KNOWN_OWNER_PROJECTS = {
     GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
@@ -31,14 +29,12 @@ _resource_roots = {
 }
 
 
-def _default_is_resource(p: Path) -> Callable[[Path], bool]:
+def _default_is_resource(_: Path) -> Callable[[Path], bool]:
     raise NotImplementedError
 
 
 _resource_is_resource = {
-    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda p: (
-        p / "cmd/main.go"
-    ).exists(),
+    GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda p: (p / "cmd/main.go").exists(),
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: _default_is_resource,
 }
 
@@ -81,7 +77,7 @@ def _owner_lookup(owner: str) -> Repo:
 def owner_project_name(repo_path: Path) -> str:
     repo = _GitRepo(repo_path)
     remote = repo.remotes[0]
-    repo_url = list(remote.urls)[0]
+    repo_url = next(iter(remote.urls))
     repo_url = repo_url.removesuffix(".git")
     *_, owner, project_name = repo_url.split("/")
     if ":" in owner:
@@ -107,9 +103,8 @@ def resource_name(repo_path: Path, full_path: Path) -> str:
     if not root.exists():
         raise ValueError(f"no resource root found for {repo_path}")
     for parent in [full_path, *full_path.parents]:
-        if parent.parent == root:
-            if is_resource(parent):
-                return parent.name
+        if parent.parent == root and is_resource(parent):
+            return parent.name
     return ""
 
 
@@ -128,10 +123,19 @@ def _assert_repo(expected: Repo | None = None):
 
 def current_repo_path(assert_repo: Repo | None = None) -> Path:
     _assert_repo(assert_repo)
-    repo_path = _repo_path()
-    return repo_path
+    return _repo_path()
 
 
 def _repo_path() -> Path:
     repo_path, _ = repo_path_rel_path()
     return repo_path
+
+
+def find_go_mod_dir(repo_path: Path):
+    for go_mod in repo_path.rglob("go.mod"):
+        # tf is at root level
+        # cfn is at {root}/cfn-resources
+        if repo_path in {go_mod.parent, go_mod.parent.parent}:
+            return go_mod.parent
+    msg = "go.mod not found or more than 1 level deep"
+    raise ValueError(msg)

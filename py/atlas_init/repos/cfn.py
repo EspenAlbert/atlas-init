@@ -35,17 +35,13 @@ class CfnType(Entity):
     region_filter: AwsRegion | None = None
 
     @classmethod
-    def validate_type_region(
-        cls, type_name: str, region: str
-    ) -> tuple[str, str | None]:
+    def validate_type_region(cls, type_name: str, region: str) -> tuple[str, str | None]:
         instance = CfnType(type_name=type_name, region_filter=region or None)
         return instance.type_name, instance.region_filter
 
     @model_validator(mode="after")
     def ensure_type_name_prefix(self):
-        self.type_name = ensure_prefix(
-            self.type_name.capitalize(), self.MONGODB_ATLAS_CFN_TYPE_PREFIX
-        )
+        self.type_name = ensure_prefix(self.type_name.capitalize(), self.MONGODB_ATLAS_CFN_TYPE_PREFIX)
         return self
 
 
@@ -67,9 +63,7 @@ class CfnTemplateParser(Entity):
     path: Path
 
 
-def validate_type_name_regions(
-    type_name: str, region_filter: str
-) -> tuple[str, list[str]]:
+def validate_type_name_regions(type_name: str, region_filter: str) -> tuple[str, list[str]]:
     type_name, region_filter = CfnType.validate_type_region(type_name, region_filter)  # type: ignore
     region_filter = region_filter or ""
     if region_filter:

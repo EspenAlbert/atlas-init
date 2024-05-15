@@ -3,7 +3,7 @@ import os
 import subprocess
 from typing import Any
 
-from atlas_init.cli_helper.run import run_command_is_ok
+from atlas_init.cli_helper.run import find_binary_on_path, run_command_is_ok
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
 from atlas_init.settings.path import DEFAULT_TF_PATH
@@ -11,9 +11,7 @@ from atlas_init.settings.path import DEFAULT_TF_PATH
 logger = logging.getLogger(__name__)
 
 
-def get_tf_vars(
-    settings: AtlasInitSettings, active_groups: list[TestSuite]
-) -> dict[str, Any]:
+def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> dict[str, Any]:
     tf_vars = TerraformVars()
     tf_vars = sum((group.vars for group in active_groups), start=tf_vars)
     return {
@@ -53,10 +51,9 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
         return
     env_generated = settings.env_vars_generated
     if env_generated.exists():
-        clipboard_content = "\n".join(
-            f"export {line}" for line in env_generated.read_text().splitlines()
-        )
-        subprocess.run(
-            "pbcopy", text=True, input=clipboard_content, check=True
-        )
+        clipboard_content = "\n".join(f"export {line}" for line in env_generated.read_text().splitlines())
+        pb_binary = find_binary_on_path("pbcopy", logger, allow_missing=True)
+        if not pb_binary:
+            return
+        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)
         logger.info("loaded env-vars to clipboard ✅")

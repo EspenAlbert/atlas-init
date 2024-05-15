@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, wait
-from typing import Annotated, TypeAlias, TypeVar
+from typing import Annotated, TypeVar
 
 import stringcase
 from pydantic import AfterValidator, ConfigDict
@@ -21,10 +21,7 @@ REGION_CONTINENT_PREFIXES = {
 }
 REGION_PREFIX_CONTINENT = dict(
     flat_map(
-        [
-            [(prefix, continent) for prefix in prefixes]
-            for continent, prefixes in REGION_CONTINENT_PREFIXES.items()
-        ]
+        [[(prefix, continent) for prefix in prefixes] for continent, prefixes in REGION_CONTINENT_PREFIXES.items()]
     )
 )
 
@@ -41,8 +38,9 @@ def check_region_found(region: str) -> str:
     return region
 
 
-AwsRegion: TypeAlias = Annotated[str, AfterValidator(check_region_found)]
+type AwsRegion = Annotated[str, AfterValidator(check_region_found)]
 T = TypeVar("T")
+
 
 def run_in_regions(call: Callable[[str], T], regions: list[str] | None = None) -> dict[str, T]:  # type: ignore
     futures = {}
@@ -61,7 +59,6 @@ def run_in_regions(call: Callable[[str], T], regions: list[str] | None = None) -
         try:
             response = f.result()
             region_responses[region] = response
-        except Exception as e:
-            logger.exception(e)
+        except Exception:
             logger.exception(f"failed to call {name} in region = {region}, error 👆")
     return region_responses

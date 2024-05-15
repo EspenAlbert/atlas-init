@@ -20,7 +20,7 @@ else:
 DEFAULT_PROFILES_PATH.mkdir(exist_ok=True, parents=True)
 DEFAULT_TF_PATH = ROOT_PATH / "tf"
 DEFAULT_CONFIG_PATH = ROOT_PATH / "atlas_init.yaml"
-DEFAULT_SCHEMA_GEN_PATH = ROOT_PATH / "terraform.yaml"
+DEFAULT_SCHEMA_CONFIG_PATH = ROOT_PATH / "terraform.yaml"
 
 
 def load_dotenv(env_path: Path) -> dict[str, str]:
@@ -29,10 +29,9 @@ def load_dotenv(env_path: Path) -> dict[str, str]:
 
 def dump_vscode_dotenv(generated_path: Path, vscode_env_path: Path) -> None:
     vscode_env_vars = load_dotenv(generated_path)
-    vscode_env_vars.pop(
-        "TF_CLI_CONFIG_FILE", None
-    )  # migration tests will use local provider instead of online
+    vscode_env_vars.pop("TF_CLI_CONFIG_FILE", None)  # migration tests will use local provider instead of online
     dump_dotenv(vscode_env_path, vscode_env_vars)
+
 
 def dump_dotenv(path: Path, env_vars: dict[str, str]):
     ensure_parents_write_text(path, "")
@@ -51,7 +50,8 @@ def repo_path_rel_path() -> tuple[Path, str]:
         if (path / ".git").exists():
             return path, "/".join(reversed(rel_path))
         rel_path.append(path.name)
-    raise CwdIsNoRepoPathError("no repo path found from cwd")
+    msg = "no repo path found from cwd"
+    raise CwdIsNoRepoPathError(msg)
 
 
 class CwdIsNoRepoPathError(ValueError):

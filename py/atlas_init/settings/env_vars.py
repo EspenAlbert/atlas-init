@@ -4,13 +4,12 @@ import logging
 import os
 from functools import cached_property
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from model_lib import field_names, parse_payload
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from atlas_init.cloud.aws import AwsRegion
 from atlas_init.settings.config import (
     AtlasInitConfig,
     TestSuite,
@@ -21,11 +20,14 @@ from atlas_init.settings.config import (
 from atlas_init.settings.path import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_PROFILES_PATH,
-    DEFAULT_SCHEMA_GEN_PATH,
+    DEFAULT_SCHEMA_CONFIG_PATH,
     DEFAULT_TF_PATH,
     load_dotenv,
     repo_path_rel_path,
 )
+
+if TYPE_CHECKING:
+    from atlas_init.cloud.aws import AwsRegion
 
 logger = logging.getLogger(__name__)
 ENV_PREFIX = "ATLAS_INIT_"
@@ -85,10 +87,7 @@ def dump_manual_dotenv_from_env(path: Path) -> None:
 
 
 def env_var_names(field_name: str) -> list[str]:
-    return [
-        f"{ENV_PREFIX}{name}"
-        for name in set([field_name, field_name.lower(), field_name.upper()])
-    ]
+    return [f"{ENV_PREFIX}{name}" for name in (field_name, field_name.lower(), field_name.upper())]
 
 
 def read_from_env(field_name: str, default: str = "") -> str:
@@ -110,7 +109,12 @@ class AtlasInitPaths(BaseSettings):
     config_path: Path = DEFAULT_CONFIG_PATH
     tf_path: Path = DEFAULT_TF_PATH
     profiles_path: Path = DEFAULT_PROFILES_PATH
-    schema_gen_path: Path = DEFAULT_SCHEMA_GEN_PATH
+    tf_schema_config_path: Path = DEFAULT_SCHEMA_CONFIG_PATH
+    schema_out_path: Path | None = None
+
+    @property
+    def schema_out_path_computed(self) -> Path:
+        return self.schema_out_path or self.profile_dir / "schema"
 
     @property
     def profile_dir(self) -> Path:
@@ -145,9 +149,7 @@ class AtlasInitPaths(BaseSettings):
 
     def load_env_vars_generated(self) -> dict[str, str]:
         env_path = self.env_vars_generated
-        assert (
-            env_path.exists()
-        ), f"no env-vars exist {env_path} have you forgotten apply?"
+        assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
         return load_dotenv(env_path)
 
     def load_profile_manual_env_vars(self) -> dict[str, str]:
@@ -201,7 +203,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return EnvVarsCheck(missing=missing_env_vars, ambiguous=sorted(ambiguous))
 
     @classmethod
-    def safe_settings(cls, **kwargs) -> AtlasInitSettings:
+    def safe_settings(cls) -> AtlasInitSettings:
         """loads .env_manual before creating the settings"""
         path_settings = AtlasInitPaths()
         path_settings.load_profile_manual_env_vars()
@@ -210,7 +212,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return cls(**path_settings.model_dump(), **ext_settings.model_dump())
 
     @field_validator("test_suites", mode="after")
-    def ensure_whitespace_replaced_with_commas(cls, value: str) -> str:
+    def ensure_whitespace_replaced_with_commas(self, value: str) -> str:
         return value.strip().replace(" ", ",")
 
     @model_validator(mode="after")
@@ -220,14 +222,10 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
 
     @cached_property
     def config(self) -> AtlasInitConfig:
-        config_path = (
-            Path(self.config_path) if self.config_path else DEFAULT_CONFIG_PATH
-        )
+        config_path = Path(self.config_path) if self.config_path else DEFAULT_CONFIG_PATH
         assert config_path.exists(), f"no config path found @ {config_path}"
         yaml_parsed = parse_payload(config_path)
-        assert isinstance(
-            yaml_parsed, dict
-        ), f"config must be a dictionary, got {yaml_parsed}"
+        assert isinstance(yaml_parsed, dict), f"config must be a dictionary, got {yaml_parsed}"
         return AtlasInitConfig(**yaml_parsed)
 
     @property
@@ -236,17 +234,13 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
 
     def cfn_config(self) -> dict[str, Any]:
         if self.cfn_profile:
-            return dict(
-                cfn_config={"profile": self.cfn_profile, "region": self.cfn_region}
-            )
+            return {"cfn_config": {"profile": self.cfn_profile, "region": self.cfn_region}}
         return {}
 
 
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
     repo_path, cwd_rel_path = repo_path_rel_path()
-    return config_active_suites(
-        settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed
-    )
+    return config_active_suites(settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed)
 
 
 def init_settings() -> AtlasInitSettings:

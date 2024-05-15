@@ -10,9 +10,8 @@ import typer
 
 StrT = TypeVar("StrT", bound=str)
 
-def run_command_is_ok(
-    cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger
-) -> bool:
+
+def run_command_is_ok(cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
     logger.info(f"running: '{command_str}' from '{cwd}'")
@@ -26,25 +25,34 @@ def run_command_is_ok(
     )
     is_ok = exit_code == 0
     if is_ok:
-        logger.info(f"success 🥳 '{command_str}'\n") # adds extra space to separate runs
+        logger.info(f"success 🥳 '{command_str}'\n")  # adds extra space to separate runs
     else:
         logger.error(f"error 💥, exit code={exit_code}, '{command_str}'")
     return is_ok
 
 
-def run_binary_command_is_ok(binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None) -> bool:
+def run_binary_command_is_ok(
+    binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None
+) -> bool:
     env = env or {**os.environ}
 
-    bin = which(binary_name)
-    if not bin:
-        logger.critical(f"please install '{binary_name}'")
-        return False
+    bin_path = find_binary_on_path(binary_name, logger)
     return run_command_is_ok(
-        [bin, *command.split()],
+        [bin_path, *command.split()],
         env=env,
         cwd=cwd,
         logger=logger,
     )
+
+
+def find_binary_on_path(binary_name: str, logger: Logger, *, allow_missing: bool = False) -> str:
+    bin_path = which(binary_name)
+    if bin_path:
+        return bin_path
+    if allow_missing:
+        return ""
+    logger.critical(f"please install '{binary_name}'")
+    raise typer.Exit(1)
 
 
 def run_command_exit_on_failure(
@@ -54,7 +62,7 @@ def run_command_exit_on_failure(
     env: dict | None = None,
 ) -> None:
     if isinstance(cmd, str):
-        cmd = cmd.split() # type: ignore
+        cmd = cmd.split()  # type: ignore
     assert isinstance(cmd, list)
     if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger):
         logger.critical("command failed, see output 👆")

@@ -66,7 +66,16 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 extend-exclude = ["test_atlas_init"]
 
 [tool.ruff.lint]
-extend-ignore = ["TCH003", "G004", "TRY003", "S101", "EM102", "FBT001"]
+extend-ignore = [
+  "TCH003",
+  "G004",
+  "TRY003",
+  "S101",
+  "EM102",
+  "FBT001",
+  "B008",   # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
+  "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
+]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["atlas_init"]

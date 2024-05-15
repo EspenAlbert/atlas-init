@@ -49,7 +49,7 @@ def dump_generator_config(schema: PyTerraformSchema) -> str:
     for resource in schema.resources:
         resources[resource.name] = resource.dump_generator_config()
     generator_config = {
-        "provider": dict(name="mongodbatlas"),
+        "provider": {"name": "mongodbatlas"},
         "resources": resources,
     }
     return dump(generator_config, "yaml")
@@ -71,9 +71,7 @@ class ProviderCodeSpec(Entity):
         return [a["name"] for a in self.resource_attributes(name)]
 
 
-def update_provider_code_spec(
-    schema: PyTerraformSchema, provider_code_spec_path: Path
-) -> str:
+def update_provider_code_spec(schema: PyTerraformSchema, provider_code_spec_path: Path) -> str:
     spec = parse_model(provider_code_spec_path, t=ProviderCodeSpec)
     for resource in schema.resources:
         resource_name = resource.name
@@ -82,12 +80,8 @@ def update_provider_code_spec(
             existing_names = spec.resource_attribute_names(resource_name)
             new_names = [extra.name for extra in extra_spec_attributes]
             if both := set(existing_names) & set(new_names):
-                raise ValueError(
-                    f"resource: {resource_name}, has already: {both} attributes"
-                )
-            resource_attributes.extend(
-                extra.dump_provider_code_spec() for extra in extra_spec_attributes
-            )
+                raise ValueError(f"resource: {resource_name}, has already: {both} attributes")
+            resource_attributes.extend(extra.dump_provider_code_spec() for extra in extra_spec_attributes)
     return dump(spec, "json")
 
 
@@ -97,6 +91,6 @@ ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/atlas-sdk-go/main/ope
 
 def download_admin_api(dest: Path) -> None:
     logger.info(f"downloading admin api to {dest} from {ADMIN_API_URL}")
-    response = requests.get(ADMIN_API_URL)
+    response = requests.get(ADMIN_API_URL, timeout=10)
     response.raise_for_status()
     dest.write_bytes(response.content)

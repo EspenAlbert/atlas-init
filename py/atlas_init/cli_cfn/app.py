@@ -34,6 +34,7 @@ from atlas_init.repos.cfn import (
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths
 from atlas_init.settings.env_vars import active_suites, init_settings
+from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 logger = logging.getLogger(__name__)
@@ -48,17 +49,13 @@ def reg(
     if dry_run:
         logger.info("dry-run is set")
     type_name, regions = validate_type_name_regions(type_name, region_filter)
-    assert (
-        len(regions) == 1
-    ), f"are you sure you want to activate {type_name} in all regions?"
+    assert len(regions) == 1, f"are you sure you want to activate {type_name} in all regions?"
     region = regions[0]
     found_third_party = deactivate_third_party_type(type_name, region, dry_run=dry_run)
     if not found_third_party:
         local = get_last_cfn_type(type_name, region, is_third_party=False)
         if local:
-            deregister_cfn_resource_type(
-                type_name, deregister=not dry_run, region_filter=region
-            )
+            deregister_cfn_resource_type(type_name, deregister=not dry_run, region_filter=region)
     logger.info(f"ready to activate {type_name}")
     settings = init_settings()
     cfn_execution_role = read_execution_role(settings.load_env_vars_generated())
@@ -113,9 +110,7 @@ def example(
         resource_params_parsed = parse_key_values_any(resource_params)
         if resource_params_parsed:
             logger.info(f"using resource params: {resource_params_parsed}")
-    logger.info(
-        f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {params}"
-    )
+    logger.info(f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {params}")
     settings = init_settings()
     type_name, region = CfnType.validate_type_region(type_name, region)  # type: ignore
     CfnOperation(operaton=operation)  # type: ignore
@@ -126,16 +121,13 @@ def example(
     cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
-    if cfn_type_details is None:
-        if prompt.Confirm(
-            f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?"
-        )():
-            assert run_command_is_ok(
-                cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger
-            )
-            cfn_type_details = get_last_cfn_type(
-                type_name, region, is_third_party=False
-            )
+    if cfn_type_details is None and confirm(
+        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
+        is_interactive=settings.is_interactive,
+        default=True,
+    ):
+        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
+        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     assert cfn_type_details, f"no cfn_type_details found for {type_name}"
 
     if operation == Operation.DELETE:
@@ -153,9 +145,7 @@ def example(
     logger.info(f"parameters: {parameters}")
     if not_found:
         # TODO: support specifying these extra
-        logger.critical(
-            f"need to fill out parameters manually: {not_found} for {type_name}"
-        )
+        logger.critical(f"need to fill out parameters manually: {not_found} for {type_name}")
         raise typer.Exit(1)
     if not prompt.Confirm("parameters 👆looks good?")():
         raise typer.Exit(1)
@@ -204,9 +194,7 @@ def _create_sample_file(
 def inputs(
     context: typer.Context,
     skip_samples: bool = typer.Option(default=False),
-    single_input: int = typer.Option(
-        0, "--input", "-i", help="keep only input_X files"
-    ),
+    single_input: int = typer.Option(0, "--input", "-i", help="keep only input_X files"),
 ):
     settings = init_settings()
     suites = active_suites(settings)
@@ -215,7 +203,7 @@ def inputs(
     suite = suites[0]
     assert suite.cwd_is_repo_go_pkg(cwd, repo_alias="cfn")
     env_extra = settings.load_env_vars_generated()
-    CREATE_FILENAME = "cfn-test-create-inputs.sh"
+    CREATE_FILENAME = "cfn-test-create-inputs.sh"  # noqa: N806
     create_dirs = ["test/contract-testing", "test"]
     parent_dir = None
     for parent in create_dirs:
@@ -249,16 +237,12 @@ def inputs(
         if skip_samples:
             continue
         resource_state = parse_payload(file)
-        assert isinstance(
-            resource_state, dict
-        ), f"input file with not a dict {resource_state}"
+        assert isinstance(resource_state, dict), f"input file with not a dict {resource_state}"
         samples_file = samples_dir / file.name
         if file.name.endswith("_create.json"):
             _create_sample_file(samples_file, log_group_name, resource_state)
         if file.name.endswith("_update.json"):
-            prev_state_path = file.parent / file.name.replace(
-                "_update.json", "_create.json"
-            )
+            prev_state_path = file.parent / file.name.replace("_update.json", "_create.json")
             prev_state: dict = parse_payload(prev_state_path)  # type: ignore
             _create_sample_file(
                 samples_file,

@@ -72,19 +72,12 @@ class TestSuite(Entity):
 
     def all_globs(self, repo_alias: str) -> list[str]:
         go_packages = self.repo_go_packages.get(repo_alias, [])
-        return (
-            self.repo_globs.get(repo_alias, [])
-            + [f"{pkg}/*.go" for pkg in go_packages]
-            + go_packages
-        )
+        return self.repo_globs.get(repo_alias, []) + [f"{pkg}/*.go" for pkg in go_packages] + go_packages
 
     def is_active(self, repo_alias: str, change_paths: Iterable[str]) -> bool:
         """changes paths should be relative to the repo"""
         globs = self.all_globs(repo_alias)
-        for path in change_paths:
-            if any(fnmatch.fnmatch(path, glob) for glob in globs):
-                return True
-        return False
+        return any(any(fnmatch.fnmatch(path, glob) for glob in globs) for path in change_paths)
 
     def cwd_is_repo_go_pkg(self, cwd: Path, repo_alias: str) -> bool:
         alias_packages = self.repo_go_packages[repo_alias]
@@ -95,7 +88,7 @@ class TestSuite(Entity):
         return False
 
 
-class RepoAliasNotFound(ValueError):
+class RepoAliasNotFoundError(ValueError):
     def __init__(self, name: str) -> None:
         self.name = name
         super().__init__(name)
@@ -108,7 +101,7 @@ class AtlasInitConfig(Entity):
     def repo_alias(self, repo_url_path: str) -> str:
         alias = self.repo_aliases.get(repo_url_path)
         if alias is None:
-            raise RepoAliasNotFound(repo_url_path)
+            raise RepoAliasNotFoundError(repo_url_path)
         return alias
 
     def go_package_prefix(self, alias: str) -> str:
@@ -129,8 +122,7 @@ class AtlasInitConfig(Entity):
         return [
             suit
             for suit in self.test_suites
-            if suit.name in forced_suites
-            or (alias and suit.is_active(alias, change_paths))
+            if suit.name in forced_suites or (alias and suit.is_active(alias, change_paths))
         ]
 
     @model_validator(mode="after")
@@ -139,9 +131,7 @@ class AtlasInitConfig(Entity):
         aliases = set(self.repo_aliases.keys())
         for group in self.test_suites:
             if more_missing := group.repo_globs.keys() - aliases:
-                logger.warning(
-                    f"repo aliases not found for group={group.name}: {more_missing}"
-                )
+                logger.warning(f"repo aliases not found for group={group.name}: {more_missing}")
                 missing_aliases |= more_missing
         if missing_aliases:
             raise ValueError(f"repo aliases not found: {missing_aliases}")
@@ -156,13 +146,9 @@ def active_suites(
 ) -> list[TestSuite]:
     repo_url_path = owner_project_name(repo_path)
     repo_alias = config.repo_alias(repo_url_path)
-    logger.info(
-        f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}"
-    )
+    logger.info(f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}")
     change_paths = [cwd_rel_path]
 
-    active_suites = config.active_test_suites(
-        repo_alias, change_paths, forced_test_suites
-    )
+    active_suites = config.active_test_suites(repo_alias, change_paths, forced_test_suites)
     logger.info(f"active_suites: {[s.name for s in active_suites]}")
     return active_suites

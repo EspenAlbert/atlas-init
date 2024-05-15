@@ -29,9 +29,7 @@ def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> st
     actions_found = parse_payload(DEFAULT_TF_PATH / "modules/cfn/resource_actions.yaml")
     if diff := set(actions_expected) ^ set(actions_found):
         raise ValueError(f"non-matching execution role actions: {sorted(diff)}")
-    services_found = parse_payload(
-        DEFAULT_TF_PATH / "modules/cfn/assume_role_services.yaml"
-    )
+    services_found = parse_payload(DEFAULT_TF_PATH / "modules/cfn/assume_role_services.yaml")
     services_expected = read_nested(
         execution_raw,
         "Resources.ExecutionRole.Properties.AssumeRolePolicyDocument.Statement.[0].Principal.Service",
@@ -40,6 +38,12 @@ def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> st
         raise ValueError(f"non-matching execution role services: {sorted(diff)}")
     logger.info(f"execution role is up to date with {execution_role}")
     return read_execution_role(loaded_env_vars)
+
+
+class TemplatePathNotFoundError(Exception):
+    def __init__(self, type_name: str, examples_dir: Path) -> None:
+        self.type_name = type_name
+        self.examples_dir = examples_dir
 
 
 def infer_template_path(repo_path: Path, type_name: str, stack_name: str) -> Path:
@@ -51,24 +55,19 @@ def infer_template_path(repo_path: Path, type_name: str, stack_name: str) -> Pat
             logger.info(f"found template @ {p}")
             template_paths.append(p)
     if not template_paths:
-        raise Exception(f"failed to find template for {type_name} in {examples_dir}")
+        raise TemplatePathNotFoundError(type_name, examples_dir)
     if len(template_paths) > 1:
         expected_folder = cfn_type_normalized(type_name)
-        if expected_folders := [
-            p for p in template_paths if p.parent.name == expected_folder
-        ]:
-            if len(expected_folders) == 1:
-                logger.info(f"using template: {expected_folders[0]}")
-                return expected_folders[0]
+        if (expected_folders := [p for p in template_paths if p.parent.name == expected_folder]) and len(
+            expected_folders
+        ) == 1:
+            logger.info(f"using template: {expected_folders[0]}")
+            return expected_folders[0]
         choices = {p.stem: p for p in template_paths}
         if stack_path := choices.get(stack_name):
-            logger.info(
-                f"using template @ {stack_path} based on stack name: {stack_name}"
-            )
+            logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
             return stack_path
-        selected_path = prompt.Prompt(
-            "Choose example template: ", choices=list(choices)
-        )()
+        selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
         return choices[selected_path]
     return template_paths[0]
 
@@ -150,13 +149,10 @@ def decode_parameters(
         template_path = updated_template_path(template_path)
         logger.info(f"updating template {template_path}")
         raw_dict = cfn_template.model_dump(by_alias=True, exclude_unset=True)
-        format = template_path.suffix.lstrip(".") + "_pretty"
-        template_str = dump(raw_dict, format=format)
+        template_str = dump(raw_dict, format=template_path.suffix.lstrip(".") + "_pretty")
         template_path.write_text(template_str)
     parameters_dict: dict[str, Any] = {}
-    type_defaults = type_names_defaults.get(
-        cfn_template.normalized_type_name(type_name), {}
-    )
+    type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
         type_defaults[stack_name_param] = stack_name
 
@@ -165,7 +161,7 @@ def decode_parameters(
             logger.info(f"using type default for {param_name}={type_default}")
             parameters_dict[param_name] = type_default
             continue
-        if env_key := parameters_exported_env_vars.get(param_name):
+        if env_key := parameters_exported_env_vars.get(param_name):  # noqa: SIM102
             if env_value := exported_env_vars.get(env_key):
                 logger.info(f"using {env_key} to fill parameter: {param_name}")
                 parameters_dict[param_name] = env_value
@@ -183,11 +179,8 @@ def decode_parameters(
     if force_params:
         logger.warning(f"overiding params: {force_params} for {stack_name}")
         parameters_dict.update(force_params)
-    unknown_params = {
-        key for key, value in parameters_dict.items() if value == "UNKNOWN"
-    }
+    unknown_params = {key for key, value in parameters_dict.items() if value == "UNKNOWN"}
     parameters: list[ParameterTypeDef] = [
-        {"ParameterKey": key, "ParameterValue": value}
-        for key, value in parameters_dict.items()
+        {"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()
     ]
     return template_path, parameters, unknown_params

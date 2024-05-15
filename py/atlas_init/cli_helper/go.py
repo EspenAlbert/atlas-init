@@ -20,10 +20,7 @@ def run_go_tests(
 ):
     test_env = os.environ | dotenv.dotenv_values(settings.env_vars_vs_code)
     for group in groups:
-        packages = ",".join(
-            f"{package_prefix}/{pkg}"
-            for pkg in group.repo_go_packages.get(repo_alias, [])
-        )
+        packages = ",".join(f"{package_prefix}/{pkg}" for pkg in group.repo_go_packages.get(repo_alias, []))
         if not packages:
             logger.warning(f"no go packages for suite: {group}")
             continue

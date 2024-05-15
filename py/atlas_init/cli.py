@@ -34,10 +34,11 @@ from atlas_init.repos.path import (
     Repo,
     current_repo,
     current_repo_path,
+    find_go_mod_dir,
     find_paths,
     resource_name,
 )
-from atlas_init.settings.config import RepoAliasNotFound
+from atlas_init.settings.config import RepoAliasNotFoundError
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
     AtlasInitSettings,
@@ -51,7 +52,7 @@ from atlas_init.settings.path import (
     dump_vscode_dotenv,
     repo_path_rel_path,
 )
-from atlas_init.settings.rich_log import configure_logging
+from atlas_init.settings.rich_utils import configure_logging
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
@@ -67,9 +68,7 @@ app_command = partial(
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    log_level: str = typer.Option(
-        "INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"
-    ),
+    log_level: str = typer.Option("INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"),
     profile: str = typer.Option(
         DEFAULT_PROFILE,
         "-p",
@@ -121,7 +120,7 @@ def apply(context: typer.Context):
     logger.info("in the apply command")
     try:
         suites = active_suites(settings)
-    except (CwdIsNoRepoPathError, RepoAliasNotFound) as e:
+    except (CwdIsNoRepoPathError, RepoAliasNotFoundError) as e:
         logger.warning(repr(e))
         suites = []
 
@@ -135,7 +134,7 @@ def apply(context: typer.Context):
     try:
         run_terraform(settings, "apply", extra_args)
     except TerraformRunError as e:
-        logger.error(repr(e))
+        logger.error(repr(e))  # noqa: TRY400
         return
 
     if settings.env_vars_generated.exists():
@@ -154,7 +153,7 @@ def test_go():
     suites = active_suites(settings)
     sorted_suites = sorted(suite.name for suite in suites)
     logger.info(f"running go tests for {len(suites)} test-suites: {sorted_suites}")
-    raise NotImplementedError("fix me later!")
+    raise NotImplementedError("fix me later!")  # noqa
     # package_prefix = settings.config.go_package_prefix(repo_alias)
     # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
 
@@ -168,9 +167,7 @@ def sdk_upgrade(
     ),
     resource: str = typer.Option("", help="for only upgrading a single resource"),
     dry_run: bool = typer.Option(False, help="only log out the changes"),
-    auto_change_name: str = typer.Option(
-        "", help="any extra replacements done in the file"
-    ),
+    auto_change_name: str = typer.Option("", help="any extra replacements done in the file"),
 ):
     SdkVersionUpgrade(old=old, new=new)
     repo_path, _ = repo_path_rel_path()
@@ -213,22 +210,13 @@ def sdk_upgrade(
         return
     logger.info(f"changed in total: {change_count} files")
     resources_str = "\n".join(
-        f"- {r} 💥" if r in resources_breaking_changes else f"- {r}"
-        for r in sorted(resources)
-        if r
+        f"- {r} 💥" if r in resources_breaking_changes else f"- {r}" for r in sorted(resources) if r
     )
     logger.info(f"resources changed: \n{resources_str}")
     if dry_run:
         logger.warning("dry-run, no changes to go.mod")
         return
-    go_mod_parent = None
-    for go_mod in repo_path.rglob("go.mod"):
-        if go_mod.parent == repo_path or go_mod.parent.parent == repo_path:
-            go_mod_parent = go_mod.parent
-            break
-    else:
-        raise ValueError("go.mod not found or more than 1 level deep")
-    assert go_mod_parent
+    go_mod_parent = find_go_mod_dir(repo_path)
     if not run_binary_command_is_ok("go", "mod tidy", cwd=go_mod_parent, logger=logger):
         logger.critical(f"failed to run go mod tidy in {go_mod_parent}")
         raise typer.Exit(1)
@@ -245,9 +233,7 @@ def pre_commit(
             build_cmd = f"cd {resource_path} && make build"
             # TODO: understand why piping to grep doesn't work
             # f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}"
-            format_cmd_str = (
-                "cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources"
-            )
+            format_cmd_str = "cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources"
         case Repo.TF:
             repo_path = current_repo_path()
             build_cmd = "make build"
