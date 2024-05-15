@@ -51,8 +51,6 @@ extra-dependencies = [
   "hatchling==1.24.2",
 ] # used to make it simpler to sync venv with IDE
 
-[tool.hatch.envs.hatch-build]
-extra-dependencies = ["hatchling==1.24.2", "zero-3rdparty==0.0.30"]
 
 [tool.coverage.run]
 source_pkgs = ["atlas_init", "test_atlas_init"]
@@ -71,6 +69,7 @@ only-include = ["atlas_init"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = "file_copy.py"
+require-runtime-dependencies=true
 
 [tool.ruff]
 extend-exclude = ["test_atlas_init"]
