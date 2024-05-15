@@ -14,9 +14,12 @@ jobs:
       - uses: yezz123/setup-uv@v4
         with:
             uv-version: "0.1.12"
-      - run: uv pip install -U hatch==1.11.0 --system
+      - run: uv pip install -U hatch==1.11.0 --systemw
         name: hatch-install
       - run: ./py/pre-commit.sh
         name: lint
       - name: test
-        run: cd py && hatch test
+        run: |
+          cd py
+          hatch build -t wheel --clean-hooks-after
+          hatch test
