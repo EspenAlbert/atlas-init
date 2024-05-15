@@ -8,6 +8,9 @@ Currently, used with
 ## Installation for development
 
 ```shell
+brew install pre-commit
+pre-commit install
+
 # install asdf https://asdf-vm.com/guide/getting-started.html
 asdf install # will ensure you have the right versions of python and terraform installed
 # install python 3.11.8

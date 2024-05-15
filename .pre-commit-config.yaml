@@ -1,8 +1,9 @@
 repos:
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.4.2
-  hooks:
-    - id: ruff
-      args: 
-      - py/atlas_init
-      - --fix
+  - repo: local
+    hooks:
+      - id: py-pre-commit
+        name: py-pre-commit
+        language: system
+        entry: ./py/pre-commit.sh
+        pass_filenames: false
+        verbose: true
