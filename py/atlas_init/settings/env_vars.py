@@ -120,7 +120,7 @@ class AtlasInitPaths(BaseSettings):
 
     @property
     def env_file_manual(self) -> Path:
-        return self.profile_dir / (self.profile)
+        return self.profile_dir / ".env-manual"
 
     @property
     def manual_env_vars(self) -> dict[str, str]:
@@ -155,6 +155,8 @@ class AtlasInitPaths(BaseSettings):
         if manual_env_vars:
             logger.warning(f"loading manual env-vars from {self.env_file_manual}")
             os.environ.update(manual_env_vars)
+        else:
+            logger.warning(f"no {self.env_file_manual}")
         return manual_env_vars
 
 
