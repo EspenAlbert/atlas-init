@@ -49,10 +49,14 @@ class state_copier:  # noqa: N801
         return self.profile_path / "tf_state"
 
     def __enter__(self):
+        if not self.state_path.exists():
+            return
         for state_path, rel_path in iter_paths_and_relative(self.state_path, "terraform.tfstate*", rglob=False):
             copy(state_path, self.tf_path / rel_path)
 
     def __exit__(self, *_):
+        if not self.tf_path.exists():
+            return
         for state_path, rel_path in iter_paths_and_relative(self.tf_path, "terraform.tfstate*", rglob=False):
             state_path.rename(self.state_path / rel_path)
 
