@@ -48,7 +48,7 @@ jobs:
         run: |
           cd atlas-init
           mkdir -p profiles/default
-          echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles/default" >> $GITHUB_ENV
+          echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
           ./atlasci_local_install.sh
       - name: check_profiles_path
         run: echo $ATLAS_INIT_PROFILES_PATH
