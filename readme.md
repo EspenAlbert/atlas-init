@@ -1,4 +1,4 @@
-# Atlas Init - A CLI for developing with MongoDB Atlas
+# Atlas Init - A CLI for developing integrations with MongoDB Atlas
 
 [![codecov](https://codecov.io/github/EspenAlbert/atlas-init/graph/badge.svg?token=DR7FDJXNZY)](https://codecov.io/github/EspenAlbert/atlas-init)
 
@@ -45,6 +45,8 @@ source .venv/bin/activate # ensure you are in your preferred python env
 ### 2. Local development, run from github repo
 
 ```shell
+git clone https://github.com/EspenAlbert/atlas-init
+cd atlas-init
 brew install pre-commit uv hatch
 # https://github.com/astral-sh/uv <-- python packaging lightning fast
 # https://hatch.pypa.io/latest/ <-- uv compatible build system for python
@@ -53,19 +55,25 @@ pre-commit install
 
 # check that everything works
 pre-commit run --all-files
+
+# configure your virtualenv
 cd py
 hatch test
-VENV_PATH=$(hatch env find hatch-test) # your venv path
-cd ..
+export VENV_DIR=$(hatch env find hatch-test | grep py3.12) # hatch venv path for env=hatch-test
+export VENV_PYTHON=$VENV_DIR/bin/python
+$VENV_PYTHON # ensure you are in shell with python3.12 (cmd+d to exit)
+cd .. # back to repo root
 
-# open in your IDE
+# open in your IDE with virtualenv enabled
 code .
-# select venv path from $VENV_PATH output
+# select venv path from $VENV_PYTHON output as python interpreter
 
 # to make it easy to invoke from any terminal
-export pyexe=$(which python) # VENV_PATH above
-export pypath=$(pwd)/py
-echo "alias atlas_init='export PYTHONPATH=$pypath && \"$pyexe\" -m atlas_init'" >> ~/.zprofile # replace with your shell profile
+export pypath=$(pwd)/py # pwd=repo root(atlas-init)
+echo "alias atlas_init='export PYTHONPATH=$pypath && \"$VENV_PYTHON\" -m atlas_init'" >> ~/.zprofile # replace with your shell profile
+
+# test that it works
+atlas_init # should show how to use the cli
 ```
 
 ### 3. `pip install` local wheel
