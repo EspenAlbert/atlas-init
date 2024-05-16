@@ -10,6 +10,7 @@ from zero_3rdparty.file_utils import iter_paths
 from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_helper import sdk_auto_changes
+from atlas_init.cli_helper.go import run_go_tests
 from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
@@ -167,9 +168,15 @@ def test_go():
     suites = active_suites(settings)
     sorted_suites = sorted(suite.name for suite in suites)
     logger.info(f"running go tests for {len(suites)} test-suites: {sorted_suites}")
-    raise NotImplementedError("fix me later!")  # noqa
-    # package_prefix = settings.config.go_package_prefix(repo_alias)
-    # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
+    match repo_alias := current_repo():
+        case Repo.CFN:
+            raise NotImplementedError
+        case Repo.TF:
+            repo_path = current_repo_path()
+            package_prefix = settings.config.go_package_prefix(repo_alias)
+            run_go_tests(repo_path, repo_alias, package_prefix, settings, suites)
+        case _:
+            raise NotImplementedError
 
 
 @app_command()
