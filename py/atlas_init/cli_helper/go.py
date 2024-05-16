@@ -22,6 +22,8 @@ def run_go_tests(
     if not env_vars_vs_code.exists():
         logger.warning(f"no env vars found @ {env_vars_vs_code}")
     test_env = os.environ | dotenv.dotenv_values(env_vars_vs_code)
+    env_keys_set = sorted(test_env)
+    logger.info(f"go test keys: {env_keys_set}")
     for group in groups:
         packages = ",".join(f"{package_prefix}/{pkg}" for pkg in group.repo_go_packages.get(repo_alias, []))
         if not packages:
