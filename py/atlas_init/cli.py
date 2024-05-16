@@ -135,7 +135,7 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
         run_terraform(settings, "apply", extra_args)
     except TerraformRunError as e:
         logger.error(repr(e))  # noqa: TRY400
-        return
+        raise typer.Exit(1) from e
 
     if not skip_outputs:
         export_outputs(settings)
