@@ -12,7 +12,7 @@ REL_PATH_FILES = [
     "tf/modules/cfn/resource_actions.yaml",
 ]
 
-PY_PATH = Path(__file__).parent
+PY_PATH = Path(__file__).parent.parent
 ATLAS_INIT_PATH = PY_PATH / "atlas_init"
 REPO_PATH = PY_PATH.parent
 logger = logging.getLogger(__name__)
