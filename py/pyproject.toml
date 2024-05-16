@@ -44,6 +44,9 @@ path = "atlas_init/__init__.py"
 [tool.hatch.envs.default]
 installer = "uv"
 
+[tool.hatch.envs.default.scripts]
+fmt_config = ["python scripts/atlas_init_sort.py"]
+
 [tool.hatch.envs.hatch-test]
 installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
