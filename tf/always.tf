@@ -9,6 +9,7 @@ resource "random_password" "username" {
 }
 
 data "http" "myip" {
+  count = var.use_project_myip ? 1 : 0
   url = "https://ipv4.icanhazip.com"
 }
 
@@ -38,6 +39,7 @@ resource "mongodbatlas_project" "project" {
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
+  count = var.use_project_myip ? 1 : 0
   project_id = mongodbatlas_project.project.id
-  cidr_block = "${chomp(data.http.myip.response_body)}/32"
+  cidr_block = "${chomp(data.http.myip[0].response_body)}/32"
 }
