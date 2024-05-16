@@ -1,6 +1,18 @@
 # Atlas Init - A CLI for developing integrations with MongoDB Atlas
-
-[![codecov](https://codecov.io/github/EspenAlbert/atlas-init/graph/badge.svg?token=DR7FDJXNZY)](https://codecov.io/github/EspenAlbert/atlas-init)
+<p align="center">
+    <a href="https://pypi.org/project/atlas-init/" target="_blank">
+        <img src="https://img.shields.io/pypi/v/atlas-init.svg">
+    </a>
+    <a href="https://pypi.org/project/atlas-init/" target="_blank">
+        <img src="https://img.shields.io/pypi/pyversions/atlas-init.svg">
+    </a>
+    <a href="https://github.com/EspenAlbert/py-libs/blob/main/LICENSE" target="_blank">
+            <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+    </a>
+    <a href="https://codecov.io/github/EspenAlbert/atlas-init" target="_blank">
+            <img src="https://codecov.io/github/EspenAlbert/atlas-init/graph/badge.svg?token=DR7FDJXNZY" alt="Coverage">
+    </a>
+</p>
 
 Currently, used with
 - <https://github.com/mongodb/terraform-provider-mongodbatlas>
