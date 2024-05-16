@@ -10,6 +10,7 @@ REL_PATH_FILES = [
     "terraform.yaml",
     "tf/modules/cfn/assume_role_services.yaml",
     "tf/modules/cfn/resource_actions.yaml",
+    "tf/.terraform.lock.hcl",
 ]
 
 PY_PATH = Path(__file__).parent.parent
