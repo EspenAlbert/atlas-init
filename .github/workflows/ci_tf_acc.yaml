@@ -21,7 +21,7 @@ env:
   TF_INPUT: "false"
   ATLAS_INIT_TEST_SUITES: federated
   TF_VAR_federated_settings_id: ${{ secrets.TF_VAR_federated_settings_id }}
-
+  CI: "true"
   
 jobs:
   cli_check:
@@ -34,6 +34,7 @@ jobs:
         with:
           repository: mongodb/terraform-provider-mongodbatlas
           path: tf
+          ref: df44242152a96883f0535d2dc6b62ecae76d9e4e
       - uses: actions/setup-python@v4
         with:
           python-version: "3.12"
@@ -59,8 +60,11 @@ jobs:
         run: source atlas-init/.venv/bin/activate && cd tf && atlasci init
       - name: cli_apply
         run: source atlas-init/.venv/bin/activate && cd tf && atlasci apply -auto-approve
-      # - name: go_test
-      #   run: cd py && hatch run default:atlasci -- test-go
+      - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7
+        with:
+          go-version-file: 'tf/go.mod'
+      - name: go_test
+        run: source atlas-init/.venv/bin/activate && cd tf && atlasci test-go
       - name: cli_destroy
         run: source atlas-init/.venv/bin/activate && cd tf && atlasci destroy -auto-approve
         if: always()
