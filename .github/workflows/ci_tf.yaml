@@ -39,6 +39,10 @@ jobs:
           mkdir -p profiles/default
           cd py
           hatch run default:atlasci
+      - uses: hashicorp/setup-terraform@v3
+        name: configure terraform
+        with:
+            terraform_version: "1.7.4"
       - name: cli_init
         run: cd py && hatch run default:atlasci -- init
       - name: cli_apply
