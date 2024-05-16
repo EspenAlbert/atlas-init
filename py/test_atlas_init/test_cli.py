@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 
 from atlas_init.cli import app
 from atlas_init.settings.env_vars import (
+    AtlasInitPaths,
     as_env_var_name,
     init_settings,
 )
@@ -77,3 +78,12 @@ def test_override_profile_with_cli(tmp_paths):
     settings = init_settings()
     assert settings.profile == different_profile
     assert settings.project_name == project_name
+
+
+def test_destroy_no_state_dir(tmp_paths: AtlasInitPaths, caplog):
+    assert not tmp_paths.tf_state_path.exists()
+    caplog.set_level(logging.INFO)
+    write_required_vars(tmp_paths, project_name=test_destroy_no_state_dir.__name__)
+    run("destroy")
+    messages = caplog.messages
+    assert any("no terraform state found" in message for message in messages)
