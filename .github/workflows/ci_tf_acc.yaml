@@ -13,7 +13,7 @@ env:
   MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
   MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
   MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
-  ATLAS_INIT_PROJECT_NAME: github-ci-tf-test-federated
+  ATLAS_INIT_PROJECT_NAME: github-ci-tf-federated
   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
