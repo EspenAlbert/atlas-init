@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from collections.abc import Callable
 from functools import partial
@@ -10,6 +11,7 @@ from zero_3rdparty.file_utils import iter_paths
 from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_helper import sdk_auto_changes
+from atlas_init.cli_helper.go import run_go_tests
 from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
@@ -55,7 +57,7 @@ from atlas_init.settings.path import (
     dump_vscode_dotenv,
     repo_path_rel_path,
 )
-from atlas_init.settings.rich_utils import configure_logging
+from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
@@ -89,7 +91,7 @@ def main(
     explicit_env_vars: dict[str, str] = {}
     if project_name != "":
         explicit_env_vars[as_env_var_name("project_name")] = project_name
-    configure_logging(log_level)
+    log_handler = configure_logging(log_level)
     logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
@@ -104,6 +106,7 @@ def main(
         )
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
+    hide_secrets(log_handler, {**os.environ})
     command = ctx.invoked_subcommand
     logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
 
@@ -135,7 +138,7 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
         run_terraform(settings, "apply", extra_args)
     except TerraformRunError as e:
         logger.error(repr(e))  # noqa: TRY400
-        return
+        raise typer.Exit(1) from e
 
     if not skip_outputs:
         export_outputs(settings)
@@ -167,9 +170,15 @@ def test_go():
     suites = active_suites(settings)
     sorted_suites = sorted(suite.name for suite in suites)
     logger.info(f"running go tests for {len(suites)} test-suites: {sorted_suites}")
-    raise NotImplementedError("fix me later!")  # noqa
-    # package_prefix = settings.config.go_package_prefix(repo_alias)
-    # run_go_tests(repo_path, repo_alias, package_prefix, settings, active_suites)
+    match repo_alias := current_repo():
+        case Repo.CFN:
+            raise NotImplementedError
+        case Repo.TF:
+            repo_path = current_repo_path()
+            package_prefix = settings.config.go_package_prefix(repo_alias)
+            run_go_tests(repo_path, repo_alias, package_prefix, settings, suites)
+        case _:
+            raise NotImplementedError
 
 
 @app_command()

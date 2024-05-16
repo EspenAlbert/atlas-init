@@ -2,8 +2,6 @@ import logging
 import os
 from pathlib import Path
 
-import dotenv
-
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.settings.config import TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
@@ -18,7 +16,12 @@ def run_go_tests(
     settings: AtlasInitSettings,
     groups: list[TestSuite],
 ):
-    test_env = os.environ | dotenv.dotenv_values(settings.env_vars_vs_code)
+    extra_vars = settings.load_env_vars(settings.env_vars_vs_code)
+    logger.info(f"go test env-vars-extra: {sorted(extra_vars)}")
+    test_env = os.environ | extra_vars
+    ci_value = test_env.pop("CI", None)
+    if ci_value:
+        logger.warning(f"pooped CI={ci_value}")
     for group in groups:
         packages = ",".join(f"{package_prefix}/{pkg}" for pkg in group.repo_go_packages.get(repo_alias, []))
         if not packages:
