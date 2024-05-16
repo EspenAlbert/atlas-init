@@ -47,11 +47,11 @@ class ExternalSettings(BaseSettings):
     MONGODB_ATLAS_PRIVATE_KEY: str
     MONGODB_ATLAS_PUBLIC_KEY: str
     MONGODB_ATLAS_BASE_URL: str = "https://cloud-dev.mongodb.com/"
-    ci: bool = False
+    non_interactive: bool = False
 
     @property
     def is_interactive(self) -> bool:
-        return not self.ci
+        return not self.non_interactive
 
 
 def as_env_var_name(field_name: str) -> str:

@@ -21,7 +21,7 @@ env:
   TF_INPUT: "false"
   ATLAS_INIT_TEST_SUITES: federated
   TF_VAR_federated_settings_id: ${{ secrets.TF_VAR_federated_settings_id }}
-  CI: "true"
+  NON_INTERACTIVE: "true"
   
 jobs:
   cli_check:
