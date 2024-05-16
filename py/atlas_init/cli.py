@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 from collections.abc import Callable
 from functools import partial
@@ -56,7 +57,7 @@ from atlas_init.settings.path import (
     dump_vscode_dotenv,
     repo_path_rel_path,
 )
-from atlas_init.settings.rich_utils import configure_logging
+from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 
 logger = logging.getLogger(__name__)
 app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
@@ -90,7 +91,7 @@ def main(
     explicit_env_vars: dict[str, str] = {}
     if project_name != "":
         explicit_env_vars[as_env_var_name("project_name")] = project_name
-    configure_logging(log_level)
+    log_handler = configure_logging(log_level)
     logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
@@ -105,6 +106,7 @@ def main(
         )
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
+    hide_secrets(log_handler, {**os.environ})
     command = ctx.invoked_subcommand
     logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
 
