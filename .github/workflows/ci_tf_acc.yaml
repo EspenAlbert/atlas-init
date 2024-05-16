@@ -1,0 +1,68 @@
+name: 'CI TF ACC'
+
+on:
+  push:
+    branches: "*"
+
+concurrency:
+    group: '${{ github.workflow }}'
+    cancel-in-progress: false
+
+env:
+  FORCE_COLOR: "yes"
+  MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+  MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  ATLAS_INIT_PROJECT_NAME: github-ci-tf
+  MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: eu-west-1
+  TF_INPUT: "false"
+  ATLAS_INIT_TEST_SUITES: federated
+
+
+
+jobs:
+  cli_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: atlas-init
+      - uses: actions/checkout@v4
+        with:
+          repository: mongodb/terraform-provider-mongodbatlas
+          path: tf
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - uses: yezz123/setup-uv@v4
+        with:
+            uv-version: "0.1.12"
+      - name: hatch-install
+        run: |
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      - name: cli_help
+        run: |
+          cd atlas-init
+          mkdir -p profiles/default
+          echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles/default" >> $GITHUB_ENV
+          ./atlasci_local_install.sh
+          ls .venv
+          ls .venv/bin
+      - name: check_profiles_path
+        run: echo $ATLAS_INIT_PROFILES_PATH
+      - uses: hashicorp/setup-terraform@v3
+        name: configure terraform
+        with:
+            terraform_version: "1.7.4"
+      - name: cli_init
+        run: source atlas-init/.venv/bin/activate && cd tf && atlasci init
+      - name: cli_apply
+        run: source atlas-init/.venv/bin/activate && cd tf && atlasci apply -auto-approve
+      # - name: go_test
+      #   run: cd py && hatch run default:atlasci -- test-go
+      - name: cli_destroy
+        run: source atlas-init/.venv/bin/activate && cd tf && atlasci destroy -auto-approve
+        if: always()
