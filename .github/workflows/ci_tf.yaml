@@ -18,6 +18,8 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_REGION: eu-west-1
+  TF_INPUT: "false"
+
 jobs:
   cli_check:
     runs-on: ubuntu-latest
@@ -39,3 +41,8 @@ jobs:
           hatch run default:atlasci
       - name: cli_init
         run: cd py && hatch run default:atlasci -- init
+      - name: cli_apply
+        run: cd py && hatch run default:atlasci -- apply -auto-approve
+      - name: cli_destroy
+        run: cd py && hatch run default:atlasci -- destroy -auto-approve
+        if: always()
