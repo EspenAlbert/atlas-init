@@ -1,0 +1,41 @@
+name: 'CI TF'
+
+on:
+  push:
+    branches: "*"
+
+concurrency:
+    group: '${{ github.workflow }}'
+    cancel-in-progress: false
+
+env:
+  FORCE_COLOR: "yes"
+  MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+  MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.MONGODB_ATLAS_ORG_ID }}
+  ATLAS_INIT_PROJECT_NAME: github-ci-tf
+  MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: eu-west-1
+jobs:
+  cli_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - uses: yezz123/setup-uv@v4
+        with:
+            uv-version: "0.1.12"
+      - name: hatch-install
+        run: |
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      - name: cli_help
+        run: |
+          mkdir -p profiles/default
+          cd py
+          hatch run default:atlasci
+      - name: cli_init
+        run: cd py && hatch run default:atlasci -- init
