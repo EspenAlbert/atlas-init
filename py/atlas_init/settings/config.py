@@ -3,10 +3,11 @@ from __future__ import annotations
 import fnmatch
 import logging
 from collections.abc import Iterable
+from functools import total_ordering
 from pathlib import Path
 from typing import Any
 
-from model_lib import Entity
+from model_lib import Entity, dump_ignore_falsy
 from pydantic import Field, model_validator
 
 from atlas_init.repos.path import owner_project_name
@@ -14,6 +15,7 @@ from atlas_init.repos.path import owner_project_name
 logger = logging.getLogger(__name__)
 
 
+@dump_ignore_falsy
 class TerraformVars(Entity):
     cluster_info: bool = False
     cluster_info_m10: bool = False
@@ -26,8 +28,8 @@ class TerraformVars(Entity):
     use_aws_s3: bool = False
     use_federated_vars: bool = False
 
-    def __add__(self, other: TerraformVars):
-        assert isinstance(other, TerraformVars)
+    def __add__(self, other: TerraformVars):  # type: ignore
+        assert isinstance(other, TerraformVars)  # type: ignore
         kwargs = {k: v or getattr(other, k) for k, v in self}
         return type(self)(**kwargs)
 
@@ -61,6 +63,8 @@ class TerraformVars(Entity):
         return config
 
 
+@dump_ignore_falsy
+@total_ordering
 class TestSuite(Entity):
     __test__ = False
 
@@ -68,7 +72,12 @@ class TestSuite(Entity):
     sequential_tests: bool = False
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)
     repo_globs: dict[str, list[str]] = Field(default_factory=dict)
-    vars: TerraformVars = Field(default_factory=TerraformVars)
+    vars: TerraformVars = Field(default_factory=TerraformVars)  # type: ignore
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, TestSuite):  # type: ignore
+            raise TypeError
+        return self.name < other.name
 
     def all_globs(self, repo_alias: str) -> list[str]:
         go_packages = self.repo_go_packages.get(repo_alias, [])
@@ -95,8 +104,8 @@ class RepoAliasNotFoundError(ValueError):
 
 
 class AtlasInitConfig(Entity):
-    test_suites: list[TestSuite] = Field(default_factory=list)
     repo_aliases: dict[str, str] = Field(default_factory=dict)
+    test_suites: list[TestSuite] = Field(default_factory=list)  # type: ignore
 
     def repo_alias(self, repo_url_path: str) -> str:
         alias = self.repo_aliases.get(repo_url_path)
@@ -115,7 +124,7 @@ class AtlasInitConfig(Entity):
         alias: str | None,
         change_paths: Iterable[str],
         forced_test_suites: list[str],
-    ) -> list[TestSuite]:
+    ) -> list[TestSuite]:  # type: ignore
         forced_suites = set(forced_test_suites)
         if forced_test_suites:
             logger.warning(f"using forced test suites: {forced_test_suites}")
@@ -143,7 +152,7 @@ def active_suites(
     repo_path: Path,
     cwd_rel_path: str,
     forced_test_suites: list[str],
-) -> list[TestSuite]:
+) -> list[TestSuite]:  # type: ignore
     repo_url_path = owner_project_name(repo_path)
     repo_alias = config.repo_alias(repo_url_path)
     logger.info(f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}")

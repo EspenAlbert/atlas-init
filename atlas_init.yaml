@@ -1,69 +1,69 @@
 repo_aliases:
-    mongodb/terraform-provider-mongodbatlas: tf
-    mongodb/mongodbatlas-cloudformation-resources: cfn
+  mongodb/terraform-provider-mongodbatlas: tf
+  mongodb/mongodbatlas-cloudformation-resources: cfn
 test_suites:
 - name: cluster
   repo_go_packages:
     cfn:
-      - 'cfn-resources/cluster'
+    - cfn-resources/cluster
 - name: federated
   repo_go_packages:
     tf:
-      - 'internal/service/federatedsettingsorgrolemapping'
+    - internal/service/federatedsettingsorgrolemapping
   vars:
     use_federated_vars: true
-- name: project
-  vars: 
-    use_project_extra: true
-  repo_go_packages:
-    cfn:
-    - 'cfn-resources/project'
-- name: network_peering
-  vars: 
-    use_aws_vpc: true
-    use_aws_vars: true
-    use_vpc_peering: true
-  repo_go_packages:
-    tf:
-    - 'internal/service/networkpeering'
 - name: network
-  vars: 
+  repo_go_packages:
+    tf:
+    - internal/service/privatelinkendpointservicedatafederationonlinearchive
+  vars:
     use_private_link: true
+- name: network_peering
   repo_go_packages:
     tf:
-    - 'internal/service/privatelinkendpointservicedatafederationonlinearchive'
-- name: privatelink
+    - internal/service/networkpeering
   vars:
-    use_aws_vpc: true
+    use_vpc_peering: true
     use_aws_vars: true
+    use_aws_vpc: true
+- name: privatelink
   repo_go_packages:
     tf:
-    - 'internal/service/privatelinkendpointservice'
-- name: stream_connection
-  repo_go_packages: 
-    tf:
-    - 'internal/service/streamconnection'
+    - internal/service/privatelinkendpointservice
+  vars:
+    use_aws_vars: true
+    use_aws_vpc: true
+- name: project
+  repo_go_packages:
     cfn:
-    - 'cfn-resources/stream-connection'
+    - cfn-resources/project
   vars:
-    cluster_info: true
-    stream_instance: true
-- name: search_index
-  repo_go_packages:
-    tf:
-    - 'internal/service/searchindex'
-  vars:
-    cluster_info: true
+    use_project_extra: true
 - name: s3
   repo_go_packages:
     tf:
-    - 'internal/service/cloudbackupsnapshotexportbucket'
+    - internal/service/cloudbackupsnapshotexportbucket
   vars:
     use_aws_s3: true
 - name: s3_with_cluster
   repo_go_packages:
     tf:
-    - 'internal/service/cloudbackupsnapshotexportjob'
+    - internal/service/cloudbackupsnapshotexportjob
   vars:
-    use_aws_s3: true
     cluster_info_m10: true
+    use_aws_s3: true
+- name: search_index
+  repo_go_packages:
+    tf:
+    - internal/service/searchindex
+  vars:
+    cluster_info: true
+- name: stream_connection
+  repo_go_packages:
+    tf:
+    - internal/service/streamconnection
+    cfn:
+    - cfn-resources/stream-connection
+  vars:
+    cluster_info: true
+    stream_instance: true

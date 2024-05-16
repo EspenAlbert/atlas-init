@@ -145,6 +145,14 @@ class AtlasInitPaths(BaseSettings):
     def tf_vars_path(self) -> Path:
         return self.tf_data_dir / "vars.auto.tfvars.json"
 
+    @property
+    def tf_state_path(self) -> Path:
+        return self.profile_dir / "tf_state"
+
+    @property
+    def tf_outputs_path(self) -> Path:
+        return self.profile_dir / "tf_outputs.json"
+
     def load_env_vars_generated(self) -> dict[str, str]:
         env_path = self.env_vars_generated
         assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"

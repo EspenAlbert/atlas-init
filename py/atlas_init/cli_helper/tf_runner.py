@@ -19,8 +19,8 @@ from atlas_init.settings.env_vars import AtlasInitSettings
 logger = logging.getLogger(__name__)
 
 
-def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> dict[str, Any]:
-    tf_vars = TerraformVars()
+def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> dict[str, Any]:  # type: ignore
+    tf_vars = TerraformVars()  # type: ignore
     tf_vars = sum((group.vars for group in active_groups), start=tf_vars)
     return {
         "atlas_public_key": settings.MONGODB_ATLAS_PUBLIC_KEY,
@@ -41,28 +41,22 @@ class TerraformRunError(Exception):
 
 @dataclass
 class state_copier:  # noqa: N801
-    profile_path: Path
+    state_path: Path
     tf_path: Path
 
-    @property
-    def state_path(self) -> Path:
-        return self.profile_path / "tf_state"
-
     def __enter__(self):
-        if not self.state_path.exists():
-            return
+        self.state_path.mkdir(exist_ok=True, parents=True)
         for state_path, rel_path in iter_paths_and_relative(self.state_path, "terraform.tfstate*", rglob=False):
             copy(state_path, self.tf_path / rel_path)
 
     def __exit__(self, *_):
-        if not self.tf_path.exists():
-            return
+        self.tf_path.mkdir(exist_ok=True, parents=True)
         for state_path, rel_path in iter_paths_and_relative(self.tf_path, "terraform.tfstate*", rglob=False):
             state_path.rename(self.state_path / rel_path)
 
 
 def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
-    with state_copier(settings.profile_dir, settings.tf_path):
+    with state_copier(settings.tf_state_path, settings.tf_path):
         _run_terraform(settings, command, extra_args)
 
 
@@ -103,12 +97,11 @@ def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
 
 
 def export_outputs(settings: AtlasInitSettings) -> None:
-    output_path = settings.profile_dir / "tf_outputs.json"
-    with state_copier(settings.profile_dir, settings.tf_path):
+    with state_copier(settings.tf_state_path, settings.tf_path):
         result = run_command_receive_result(
             "terraform output -json",
             settings.tf_path,
             logger,
             env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
         )
-    output_path.write_text(result)
+    settings.tf_outputs_path.write_text(result)

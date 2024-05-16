@@ -44,6 +44,9 @@ path = "atlas_init/__init__.py"
 [tool.hatch.envs.default]
 installer = "uv"
 
+[tool.hatch.envs.default.scripts]
+fmt_config = ["python scripts/atlas_init_sort.py"]
+
 [tool.hatch.envs.hatch-test]
 installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
@@ -67,7 +70,7 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 only-include = ["atlas_init"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
-path = "file_copy.py"
+path = "scripts/file_copy.py"
 require-runtime-dependencies=true
 
 [tool.ruff]

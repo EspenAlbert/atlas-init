@@ -33,6 +33,11 @@ variable "project_name" {
   }
 }
 
+variable "use_project_myip" {
+  type = bool
+  default = false
+}
+
 variable "out_dir" {
   type = string
 }

@@ -10,9 +10,10 @@ REL_PATH_FILES = [
     "terraform.yaml",
     "tf/modules/cfn/assume_role_services.yaml",
     "tf/modules/cfn/resource_actions.yaml",
+    "tf/.terraform.lock.hcl",
 ]
 
-PY_PATH = Path(__file__).parent
+PY_PATH = Path(__file__).parent.parent
 ATLAS_INIT_PATH = PY_PATH / "atlas_init"
 REPO_PATH = PY_PATH.parent
 logger = logging.getLogger(__name__)

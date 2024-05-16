@@ -149,6 +149,9 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
 def destroy(context: typer.Context):
     extra_args = context.args
     settings = init_settings()
+    if not settings.tf_state_path.exists():
+        logger.warning(f"no terraform state found  {settings.tf_state_path}, exiting")
+        return
     tf_vars = get_tf_vars(settings, [])
     dump_tf_vars(settings, tf_vars)
     try:
