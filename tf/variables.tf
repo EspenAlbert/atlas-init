@@ -11,6 +11,16 @@ variable "atlas_base_url" {
   default = "https://cloud-dev.mongodb.com/"
 }
 
+variable "user_id" {
+  type = string
+  default = ""
+}
+
+variable "is_mongodbgov_cloud" {
+  type = bool
+  default = false
+}
+
 variable "federated_settings_id" {
   type    = string
   default = ""

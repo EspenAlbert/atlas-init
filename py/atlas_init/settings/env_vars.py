@@ -52,6 +52,10 @@ class ExternalSettings(BaseSettings):
     @property
     def is_interactive(self) -> bool:
         return not self.non_interactive
+    
+    @property
+    def is_mongodbgov_cloud(self) -> bool:
+        return "mongodbgov" in self.MONGODB_ATLAS_BASE_URL
 
 
 def as_env_var_name(field_name: str) -> str:
