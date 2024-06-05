@@ -10,9 +10,11 @@ tf/modules/playground/
 tf/playground_caller.tf
 schema/
 tf2
+tf3
 dist
 .ruff_cache
 py/.coverage
 py/coverage.xml
 profiles_ci/
 .venv
+.sourcery.yaml
