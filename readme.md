@@ -26,23 +26,23 @@ Currently, used with
 3. create directories and store a file in `profiles/default/.env-manual` (`ATLAS_INIT_PROFILES_PATH/{profile_name}/.env-manual`)
 
 ```env
-export AWS_PROFILE=REPLACE_ME # your AWS profile used to create resources or other env-vars supported by AWS TF provider
-export MONGODB_ATLAS_ORG_ID=REPLACE_ME # ORG_ID_IN_URL_FROM_1
-export MONGODB_ATLAS_PUBLIC_KEY=REPLACE_ME # with 2
-export MONGODB_ATLAS_PRIVATE_KEY=REPLACE_ME # with 2
-export ATLAS_INIT_PROJECT_NAME=YOUR_NAME # the name of the project
-export MONGODB_ATLAS_BASE_URL=https://cloud-dev.mongodb.com/ # replace with https://cloud.mongodb.com/ if you are not a MongoDB Employe
+AWS_PROFILE=REPLACE_ME # your AWS profile used to create resources or other env-vars supported by AWS TF provider
+MONGODB_ATLAS_ORG_ID=REPLACE_ME # ORG_ID_IN_URL_FROM_1
+MONGODB_ATLAS_PUBLIC_KEY=REPLACE_ME # with 2
+MONGODB_ATLAS_PRIVATE_KEY=REPLACE_ME # with 2
+ATLAS_INIT_PROJECT_NAME=YOUR_NAME # the name of the project
+MONGODB_ATLAS_BASE_URL=https://cloud-dev.mongodb.com/ # replace with https://cloud.mongodb.com/ if you are not a MongoDB Employe
 
 # optional
 TF_VAR_federated_settings_id=REPLACE_ME # will need to add organization: <https://cloud-dev.mongodb.com/v2#/federation/{FEDERATION_SETTINGS_ID}/organizations> (see internal testing wiki)
 
 # if you want to use your locally built MongoDB atlas provider
 # see appendix for details on the content
-export TF_CLI_CONFIG_FILE=REPLACE_ME/dev.tfrc
+TF_CLI_CONFIG_FILE=REPLACE_ME/dev.tfrc
 
 # if you plan developing with cloudformation
-export ATLAS_INIT_CFN_PROFILE=YOUR_NAME
-export ATLAS_INIT_CFN_REGION=eu-south-2 # find a region with few other profiles
+ATLAS_INIT_CFN_PROFILE=YOUR_NAME
+ATLAS_INIT_CFN_REGION=eu-south-2 # find a region with few other profiles
 ```
 
 ## Two modes of running
