@@ -87,4 +87,5 @@ extend-ignore = [
   "B008",   # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
   "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
   "TCH001", # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
+  "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
 ]

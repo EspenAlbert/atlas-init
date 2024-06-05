@@ -5,6 +5,7 @@ import typer
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_helper.run import run_binary_command_is_ok
+from atlas_init.cli_tf.changelog import convert_to_changelog
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -71,3 +72,24 @@ def schema():
 def schema_optional_only():
     repo_path = current_repo_path(Repo.TF)
     log_optional_only(repo_path)
+
+
+@app.command()
+def changelog(
+    pr: str = typer.Argument("", help="the PR number, will read the file in .changelog/$pr_input.txt"),
+    delete_input: bool = typer.Option(False, "-d", "--delete-input"),
+):
+    repo_path = current_repo_path(Repo.TF)
+    changelog_input_path = repo_path / f".changelog/{pr}_input.txt"
+    if not changelog_input_path.exists():
+        logger.critical(f"no file @ {changelog_input_path}")
+        raise typer.Abort
+    changes_in = changelog_input_path.read_text()
+    logger.info(f"will generate changelog to {changelog_input_path} based on changes:\n{changes_in}")
+    changes_out = convert_to_changelog(changes_in)
+    changelog_path = repo_path / f".changelog/{pr}.txt"
+    changelog_path.write_text(changes_out)
+    logger.info(f"updated file ✅ \n{changes_in}\n--> TO:\n{changes_out} ")
+    if delete_input:
+        logger.warning(f"deleting input file {changelog_input_path}")
+        changelog_input_path.unlink()

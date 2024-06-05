@@ -29,11 +29,11 @@ _resource_roots = {
 }
 
 
-def _default_is_resource(_: Path) -> Callable[[Path], bool]:
-    raise NotImplementedError
+def _default_is_resource(p: Path) -> bool:
+    return "internal/service" in str(p)
 
 
-_resource_is_resource = {
+_resource_is_resource: dict[str, Callable[[Path], bool]] = {
     GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES: lambda p: (p / "cmd/main.go").exists(),
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS: _default_is_resource,
 }
