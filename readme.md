@@ -45,9 +45,10 @@ ATLAS_INIT_CFN_PROFILE=YOUR_NAME
 ATLAS_INIT_CFN_REGION=eu-south-2 # find a region with few other profiles
 ```
 
-## Two modes of running
+## Three modes of running
 
 ### 1. `pip install` normal user
+
 ```shell
 source .venv/bin/activate # ensure you are in your preferred python env
 (uv) pip install atlas-init
@@ -114,6 +115,7 @@ atals_init destroy # `terraform destroy`
 
 ### Configuring vscode to use your env vars
 - add to your `settings.json`
+
 ```json
 {
     "go.testEnvFile": "/{SOME_PREFIX}/atlas-init/profiles/default/.env-vscode",
@@ -139,6 +141,7 @@ provider_installation {
 ```
 
 ### Re-generating the lock files
+
 ```shell
 terraform providers lock \
     -platform=darwin_amd64 \
