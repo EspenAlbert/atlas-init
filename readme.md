@@ -80,6 +80,7 @@ cd .. # back to repo root
 # open in your IDE with virtualenv enabled
 code .
 # select venv path from $VENV_PYTHON output as python interpreter
+# in vs code: use cmd+p and `Python: select interpreter` command
 
 # to make it easy to invoke from any terminal
 export pypath=$(pwd)/py # pwd=repo root(atlas-init)
