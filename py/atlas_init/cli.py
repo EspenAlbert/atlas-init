@@ -8,7 +8,6 @@ from pydoc import locate
 import typer
 from zero_3rdparty.file_utils import iter_paths
 
-from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_helper import sdk_auto_changes
 from atlas_init.cli_helper.go import run_go_tests
@@ -34,6 +33,7 @@ from atlas_init.cli_helper.tf_runner import (
     run_terraform,
 )
 from atlas_init.cli_tf.app import app as app_tf
+from atlas_init.in_repo import running_in_repo
 from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 from atlas_init.repos.path import (
     Repo,
