@@ -25,6 +25,8 @@ def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> 
     return {
         "atlas_public_key": settings.MONGODB_ATLAS_PUBLIC_KEY,
         "atlas_private_key": settings.MONGODB_ATLAS_PRIVATE_KEY,
+        "atlas_base_url": settings.MONGODB_ATLAS_BASE_URL,
+        "is_mongodbgov_cloud": settings.is_mongodbgov_cloud,
         "org_id": settings.MONGODB_ATLAS_ORG_ID,
         "aws_region": settings.AWS_REGION,
         "project_name": settings.project_name,

@@ -37,6 +37,8 @@ test_suites:
   repo_go_packages:
     cfn:
     - cfn-resources/project
+    tf:
+    - internal/service/project
   vars:
     use_project_extra: true
 - name: s3

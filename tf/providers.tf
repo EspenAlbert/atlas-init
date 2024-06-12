@@ -23,6 +23,7 @@ provider "mongodbatlas" {
   public_key  = var.atlas_public_key
   private_key = var.atlas_private_key
   base_url    = var.atlas_base_url
+  # is_mongodbgov_cloud = var.is_mongodbgov_cloud the base_url takes preference in provider.go
 }
 provider "aws" {
   region = var.aws_region

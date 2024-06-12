@@ -52,6 +52,7 @@ installer = "uv"
 default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
 extra-dependencies = [
   "hatchling==1.24.2",
+  "pymongo==4.7.3",
   "pytest-cov==5.0.0"
 ] # used to make it simpler to sync venv with IDE
 
@@ -87,4 +88,5 @@ extend-ignore = [
   "B008",   # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
   "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
   "TCH001", # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
+  "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
 ]

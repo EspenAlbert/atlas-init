@@ -1,10 +1,15 @@
 import logging
 import sys
+from pathlib import Path
 
 import typer
 from zero_3rdparty.file_utils import clean_dir
 
-from atlas_init.cli_helper.run import run_binary_command_is_ok
+from atlas_init.cli_helper.run import (
+    run_binary_command_is_ok,
+    run_command_exit_on_failure,
+)
+from atlas_init.cli_tf.changelog import convert_to_changelog
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -71,3 +76,44 @@ def schema():
 def schema_optional_only():
     repo_path = current_repo_path(Repo.TF)
     log_optional_only(repo_path)
+
+
+@app.command()
+def changelog(
+    pr: str = typer.Argument("", help="the PR number, will read the file in .changelog/$pr_input.txt"),
+    delete_input: bool = typer.Option(False, "-d", "--delete-input"),
+):
+    repo_path = current_repo_path(Repo.TF)
+    changelog_input_path = repo_path / f".changelog/{pr}_input.txt"
+    if not changelog_input_path.exists():
+        logger.critical(f"no file @ {changelog_input_path}")
+        raise typer.Abort
+    changes_in = changelog_input_path.read_text()
+    logger.info(f"will generate changelog to {changelog_input_path} based on changes:\n{changes_in}")
+    changes_out = convert_to_changelog(changes_in)
+    changelog_path = repo_path / f".changelog/{pr}.txt"
+    changelog_path.write_text(changes_out)
+    logger.info(f"updated file ✅ \n{changes_in}\n--> TO:\n{changes_out} ")
+    if delete_input:
+        logger.warning(f"deleting input file {changelog_input_path}")
+        changelog_input_path.unlink()
+
+
+@app.command()
+def example_gen(
+    in_path: Path = typer.Argument(..., help="Path to the latest code"),
+    out_path: Path = typer.Argument("", help="Output path (empty will use input path)"),
+):
+    out_path = out_path or in_path  # type: ignore
+    assert in_path.is_dir(), f"path not found: {in_path}"
+    assert out_path.is_dir(), f"path not found: {out_path}"
+    run_command_exit_on_failure("terraform fmt", cwd=in_path, logger=logger)
+    if in_path == out_path:
+        logger.warning(f"will overwrite/change files in {out_path}")
+    else:
+        logger.info(f"will use from {in_path} -> {out_path}")
+    from zero_3rdparty import file_utils
+
+    for path, rel_path in file_utils.iter_paths_and_relative(in_path, "*.tf", "*.sh", "*.py", "*.md", rglob=False):
+        dest_path = out_path / rel_path
+        file_utils.copy(path, dest_path, clean_dest=False)

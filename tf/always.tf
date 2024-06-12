@@ -36,10 +36,17 @@ resource "mongodbatlas_project" "project" {
   org_id = var.org_id
 
   tags = local.tags
+  region_usage_restrictions = var.is_mongodbgov_cloud ? "GOV_REGIONS_ONLY" : null
+  project_owner_id = length(var.user_id) > 0 ? var.user_id : null
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
   count = var.use_project_myip ? 1 : 0
   project_id = mongodbatlas_project.project.id
   cidr_block = "${chomp(data.http.myip[0].response_body)}/32"
+}
+
+data "mongodbatlas_atlas_user" "this" {
+  count = length(var.user_id) > 0 ? 1 : 0
+  user_id = var.user_id
 }
