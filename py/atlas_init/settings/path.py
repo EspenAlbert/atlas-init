@@ -4,7 +4,7 @@ from pathlib import Path
 import dotenv
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
-from atlas_init import running_in_repo
+from atlas_init.in_repo import running_in_repo
 
 """WARNING these variables should only be used through the AtlasInitSettings, not directly"""
 FILE_PATH = Path(__file__)
@@ -14,7 +14,8 @@ if running_in_repo():
 else:
     ROOT_PATH = FILE_PATH.parent.parent  # site package install directory
     _default_profiles_path = os.environ.get("ATLAS_INIT_PROFILES_PATH")
-    assert _default_profiles_path, f"file_path={FILE_PATH} running in {ROOT_PATH} must set os.environ['ATLAS_INIT_PROFILES_PATH'] to a writeable directory for atlas_init to work"
+    err_msg = f"file_path={FILE_PATH} running in {ROOT_PATH} must set os.environ['ATLAS_INIT_PROFILES_PATH'] to a writeable directory for atlas_init to work"
+    assert _default_profiles_path, err_msg
     DEFAULT_PROFILES_PATH = Path(_default_profiles_path)
 DEFAULT_PROFILES_PATH.mkdir(exist_ok=True, parents=True)
 DEFAULT_TF_PATH = ROOT_PATH / "tf"
