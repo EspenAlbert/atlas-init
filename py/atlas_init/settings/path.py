@@ -13,9 +13,7 @@ if running_in_repo():
 else:
     ROOT_PATH = Path(__file__).parent.parent  # site package install directory
     _default_profiles_path = os.environ.get("ATLAS_INIT_PROFILES_PATH")
-    assert (
-        _default_profiles_path
-    ), "must set os.environ['ATLAS_INIT_PROFILES_PATH'] to a writeable directory for atlas_init to work"
+    assert _default_profiles_path, f"running in {ROOT_PATH} must set os.environ['ATLAS_INIT_PROFILES_PATH'] to a writeable directory for atlas_init to work"
     DEFAULT_PROFILES_PATH = Path(_default_profiles_path)
 DEFAULT_PROFILES_PATH.mkdir(exist_ok=True, parents=True)
 DEFAULT_TF_PATH = ROOT_PATH / "tf"
