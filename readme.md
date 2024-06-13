@@ -69,7 +69,7 @@ pre-commit install
 # check that everything works
 pre-commit run --all-files
 
-# configure your virtualenv
+# configure your virtualenv and validate the tests are working
 cd py
 hatch test
 export VENV_DIR=$(hatch env find hatch-test | grep py3.12) # hatch venv path for env=hatch-test
@@ -82,9 +82,9 @@ code .
 # select venv path from $VENV_PYTHON output as python interpreter
 # in vs code: use cmd+p and `Python: select interpreter` command
 
-# to make it easy to invoke from any terminal
-export pypath=$(pwd)/py # pwd=repo root(atlas-init)
-echo "alias atlas_init='export PYTHONPATH=$pypath && \"$VENV_PYTHON\" -m atlas_init'" >> ~/.zprofile # replace with your shell profile
+# to make it easy to invoke from any terminal (replace .zprofile with your terminal)
+export pypath=$(git rev-parse --show-toplevel)/py
+echo "alias atlas_init='export PYTHONPATH=$pypath && \"$VENV_PYTHON\" -m atlas_init'" >> ~/.zprofile
 
 # test that it works
 atlas_init # should show how to use the cli
