@@ -67,5 +67,5 @@ test_suites:
     cfn:
     - cfn-resources/stream-connection
   vars:
-    cluster_info: true
+    cluster_info_m10: true
     stream_instance: true

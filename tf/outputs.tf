@@ -63,7 +63,7 @@ locals {
 
 output "links" {
   value = {
-    org_url = "${var.atlas_base_url}v2#/org/${var.org_id}/projects"
+    org_url = "${trimsuffix(var.atlas_base_url, "/")}/v2#/org/${var.org_id}/projects"
   }
 }
 
