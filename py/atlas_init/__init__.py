@@ -8,5 +8,5 @@ def running_in_repo() -> bool:
     if py_directory.name != "py":
         return False
     git_directory = py_directory.parent / ".git"
-    fetch_head = git_directory / "FETCH_HEAD"
-    return git_directory.exists() and fetch_head.exists() and "atlas-init" in fetch_head.read_text()
+    git_config = git_directory / "config"
+    return git_directory.exists() and git_config.exists() and "atlas-init" in git_config.read_text()
