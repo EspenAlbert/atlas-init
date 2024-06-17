@@ -21,6 +21,7 @@ from atlas_init.cli_cfn.cfn import (
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
     decode_parameters,
+    dump_resource_to_file,
     infer_template_path,
     read_execution_role,
 )
@@ -102,8 +103,9 @@ def example(
     params: list[str] = typer.Option(..., "-p", default_factory=list),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
     stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
-    delete_first: bool = typer.Option(False),
+    delete_first: bool = typer.Option(False, help="Delete existing stack first"),
     force_deregister: bool = typer.Option(False),
+    export_example_to_inputs: bool = typer.Option(False),
 ):
     params_parsed: dict[str, str] = {}
     if params:
@@ -120,30 +122,10 @@ def example(
     repo_path, resource_path, _ = find_paths(Repo.CFN)
     env_vars_generated = settings.load_env_vars_generated()
     cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
-
-    cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
-    logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
-    if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
-        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
-        logger.warning(outdated_warning)
-        if force_deregister or confirm(
-            f"{outdated_warning}, should deregister?",
-            is_interactive=settings.is_interactive,
-            default=True,
-        ):
-            deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
-            cfn_type_details = None
-
-    submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
-    if cfn_type_details is None and confirm(
-        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
-        is_interactive=settings.is_interactive,
-        default=True,
-    ):
-        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
-        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
-    assert cfn_type_details, f"no cfn_type_details found for {type_name}"
-
+    if not export_example_to_inputs:
+        ensure_resource_activated(
+            type_name, region, force_deregister, settings.is_interactive, resource_path, cfn_execution_role
+        )
     if operation == Operation.DELETE or delete_first:
         delete_stack(region, stack_name)
         if not delete_first:
@@ -164,6 +146,10 @@ def example(
         raise typer.Exit(1)
     if not prompt.Confirm("parameters 👆looks good?")():
         raise typer.Exit(1)
+    if export_example_to_inputs:
+        out_inputs = dump_resource_to_file(resource_path / "inputs", template_path, type_name, parameters)
+        logger.info(f"dumped to {out_inputs} ✅")
+        return
     if operation == Operation.CREATE:
         create_stack(
             stack_name,
@@ -184,6 +170,38 @@ def example(
         )
     else:
         raise NotImplementedError
+
+
+def ensure_resource_activated(
+    type_name: str,
+    region: str,
+    force_deregister: bool,
+    is_interactive: bool,
+    resource_path: Path,
+    cfn_execution_role: str,
+) -> None:
+    cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
+    if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
+        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
+        logger.warning(outdated_warning)
+        if force_deregister or confirm(
+            f"{outdated_warning}, should deregister?",
+            is_interactive=is_interactive,
+            default=True,
+        ):
+            deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
+            cfn_type_details = None
+
+    submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
+    if cfn_type_details is None and confirm(
+        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
+        is_interactive=is_interactive,
+        default=True,
+    ):
+        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
+        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    assert cfn_type_details, f"no cfn_type_details found for {type_name}"
 
 
 def _create_sample_file(

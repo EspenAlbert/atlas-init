@@ -7,6 +7,7 @@ from model_lib import parse_payload
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
     decode_parameters,
+    dump_resource_to_file,
     updated_template_path,
 )
 
@@ -59,3 +60,19 @@ def test_updates():
     assert src.exists()
     assert dest.exists()
     assert parse_payload(src) == parse_payload(dest)
+
+
+def test_dump_resource_to_file(tmp_path):
+    params = [
+        {"ParameterKey": "ProjectId", "ParameterValue": "664619d870c247237f4b86a6"},
+        {"ParameterKey": "ClusterName", "ParameterValue": "cluster-example-test-espen"},
+        {"ParameterKey": "Profile", "ParameterValue": "espen2"},
+        {"ParameterKey": "PitEnabled", "ParameterValue": "false"},
+    ]
+    inputs_file = dump_resource_to_file(
+        tmp_path,
+        TEST_DATA / "cluster-self-managed-sharding.json",
+        "MongoDB::Atlas::Cluster",
+        params,  # type: ignore
+    )
+    assert '"Ref": ' not in inputs_file.read_text()
