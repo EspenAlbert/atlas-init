@@ -1,20 +1,19 @@
 import logging
 import os
-from pathlib import Path
 
-import humanize
 import typer
-from model_lib import dump, parse_payload
+from model_lib import parse_payload
 from rich import prompt
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_args import parse_key_values, parse_key_values_any
-from atlas_init.cli_cfn.cfn import (
+from atlas_init.cli_cfn.aws import (
     activate_resource_type,
     create_stack,
     deactivate_third_party_type,
     delete_stack,
     deregister_cfn_resource_type,
+    ensure_resource_type_activated,
     get_last_cfn_type,
     update_stack,
 )
@@ -25,6 +24,7 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
     infer_template_path,
     read_execution_role,
 )
+from atlas_init.cli_cfn.files import create_sample_file
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
@@ -36,7 +36,6 @@ from atlas_init.repos.cfn import (
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths
 from atlas_init.settings.env_vars import active_suites, init_settings
-from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 logger = logging.getLogger(__name__)
@@ -123,8 +122,13 @@ def example(
     env_vars_generated = settings.load_env_vars_generated()
     cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
     if not export_example_to_inputs:
-        ensure_resource_activated(
-            type_name, region, force_deregister, settings.is_interactive, resource_path, cfn_execution_role
+        ensure_resource_type_activated(
+            type_name,
+            region,
+            force_deregister,
+            settings.is_interactive,
+            resource_path,
+            cfn_execution_role,
         )
     if operation == Operation.DELETE or delete_first:
         delete_stack(region, stack_name)
@@ -170,57 +174,6 @@ def example(
         )
     else:
         raise NotImplementedError
-
-
-def ensure_resource_activated(
-    type_name: str,
-    region: str,
-    force_deregister: bool,
-    is_interactive: bool,
-    resource_path: Path,
-    cfn_execution_role: str,
-) -> None:
-    cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
-    logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
-    if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
-        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
-        logger.warning(outdated_warning)
-        if force_deregister or confirm(
-            f"{outdated_warning}, should deregister?",
-            is_interactive=is_interactive,
-            default=True,
-        ):
-            deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
-            cfn_type_details = None
-
-    submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
-    if cfn_type_details is None and confirm(
-        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
-        is_interactive=is_interactive,
-        default=True,
-    ):
-        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
-        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
-    assert cfn_type_details, f"no cfn_type_details found for {type_name}"
-
-
-def _create_sample_file(
-    samples_file: Path,
-    log_group_name: str,
-    resource_state: dict,
-    prev_resource_state: dict | None = None,
-):
-    logger.info(f"adding sample @ {samples_file}")
-    assert isinstance(resource_state, dict)
-    new_json = dump(
-        {
-            "providerLogGroupName": log_group_name,
-            "previousResourceState": prev_resource_state or {},
-            "desiredResourceState": resource_state,
-        },
-        "json",
-    )
-    samples_file.write_text(new_json)
 
 
 @app.command()
@@ -273,11 +226,11 @@ def inputs(
         assert isinstance(resource_state, dict), f"input file with not a dict {resource_state}"
         samples_file = samples_dir / file.name
         if file.name.endswith("_create.json"):
-            _create_sample_file(samples_file, log_group_name, resource_state)
+            create_sample_file(samples_file, log_group_name, resource_state)
         if file.name.endswith("_update.json"):
             prev_state_path = file.parent / file.name.replace("_update.json", "_create.json")
             prev_state: dict = parse_payload(prev_state_path)  # type: ignore
-            _create_sample_file(
+            create_sample_file(
                 samples_file,
                 log_group_name,
                 resource_state,

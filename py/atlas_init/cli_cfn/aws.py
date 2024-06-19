@@ -6,8 +6,10 @@ from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import UTC, datetime
 from functools import lru_cache, total_ordering
+from pathlib import Path
 
 import botocore.exceptions
+import humanize
 from boto3.session import Session
 from model_lib import Event
 from mypy_boto3_cloudformation import CloudFormationClient
@@ -16,7 +18,9 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fi
 from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.iter_utils import group_by_once
 
+from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import REGIONS, PascalAlias, region_continent
+from atlas_init.settings.interactive import confirm
 
 logger = logging.getLogger(__name__)
 EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=UTC)
@@ -340,3 +344,35 @@ def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_
         ExecutionRoleArn=execution_role_arn,
     )
     logger.info(f"activate response: {response}")
+
+
+def ensure_resource_type_activated(
+    type_name: str,
+    region: str,
+    force_deregister: bool,
+    is_interactive: bool,
+    resource_path: Path,
+    cfn_execution_role: str,
+) -> None:
+    cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
+    if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
+        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
+        logger.warning(outdated_warning)
+        if force_deregister or confirm(
+            f"{outdated_warning}, should deregister?",
+            is_interactive=is_interactive,
+            default=True,
+        ):
+            deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
+            cfn_type_details = None
+
+    submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
+    if cfn_type_details is None and confirm(
+        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
+        is_interactive=is_interactive,
+        default=True,
+    ):
+        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
+        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    assert cfn_type_details, f"no cfn_type_details found for {type_name}"

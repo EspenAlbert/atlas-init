@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from atlas_init.cli_cfn.cfn import get_last_cfn_type
+from atlas_init.cli_cfn.aws import get_last_cfn_type
 
 
 @pytest.mark.skipif(os.environ.get("AWS_PROFILE", "") == "", reason="needs os.environ[AWS_PROFILE]")
