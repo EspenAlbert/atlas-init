@@ -7,6 +7,7 @@ from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
 from zero_3rdparty.dict_nested import read_nested
+from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cloud.aws import PascalAlias
 from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
@@ -128,6 +129,28 @@ class CfnTemplate(Entity):
         resource = self.find_resource(type_name)
         resource.properties.update(resources)
 
+    def get_resource_properties(self, type_name: str, parameters: list[ParameterTypeDef]) -> dict:
+        resource = self.find_resource(type_name)
+        properties = resource.properties
+        for param in parameters:
+            key = param.get("ParameterKey")
+            assert key
+            if key not in properties:
+                key = next(
+                    (
+                        maybe_key
+                        for maybe_key, value in properties.items()
+                        if isinstance(value, dict) and value.get("Ref") == key
+                    ),
+                    None,
+                )
+                err_msg = f"unable to find parameter {key} in resource {type_name}"
+                assert key, err_msg
+            param_value = param.get("ParameterValue", "")
+            assert param_value
+            properties[key] = param_value
+        return properties
+
 
 def updated_template_path(path: Path) -> Path:
     old_stem = path.stem
@@ -184,3 +207,18 @@ def decode_parameters(
         {"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()
     ]
     return template_path, parameters, unknown_params
+
+
+def dump_resource_to_file(
+    inputs_dir: Path,
+    template_path: Path,
+    type_name: str,
+    parameters: list[ParameterTypeDef],
+) -> Path:
+    cfn_template = parse_model(template_path, t=CfnTemplate)
+    properties = cfn_template.get_resource_properties(type_name, parameters)
+    clean_dir(inputs_dir, recreate=True)
+    dest_path = inputs_dir / "inputs_1_create.json"
+    dest_json = dump(properties, "pretty_json")
+    dest_path.write_text(dest_json)
+    return dest_path

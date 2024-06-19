@@ -13,6 +13,7 @@ from model_lib import Event
 from mypy_boto3_cloudformation import CloudFormationClient
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.iter_utils import group_by_once
 
 from atlas_init.cloud.aws import REGIONS, PascalAlias, region_continent
@@ -286,6 +287,9 @@ class CfnTypeDetails(Event):
         if not isinstance(other, CfnTypeDetails):
             raise TypeError
         return self.last_updated < other.last_updated
+
+    def seconds_since_update(self) -> float:
+        return (utc_now() - self.last_updated).total_seconds()
 
 
 def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = False) -> None | CfnTypeDetails:
