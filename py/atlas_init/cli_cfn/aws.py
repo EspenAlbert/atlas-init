@@ -262,7 +262,7 @@ def get_last_version_all_regions(type_name: str) -> dict[str | None, list[str]]:
     futures = {}
     with ThreadPoolExecutor(max_workers=10) as pool:
         for region in REGIONS:
-            future = pool.submit(get_last_cfn_type, type_name, region)
+            future = pool.submit(get_last_cfn_type, type_name, region, is_third_party=True)
             futures[future] = region
         done, not_done = wait(futures.keys(), timeout=300)
         for f in not_done:

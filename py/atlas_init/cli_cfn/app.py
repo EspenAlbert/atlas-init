@@ -24,7 +24,7 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
     infer_template_path,
     read_execution_role,
 )
-from atlas_init.cli_cfn.files import create_sample_file
+from atlas_init.cli_cfn.files import create_sample_file, has_md_link, iterate_schemas
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
@@ -34,7 +34,7 @@ from atlas_init.repos.cfn import (
     infer_cfn_type_name,
     validate_type_name_regions,
 )
-from atlas_init.repos.path import Repo, current_dir, find_paths
+from atlas_init.repos.path import Repo, current_dir, find_paths, resource_root
 from atlas_init.settings.env_vars import active_suites, init_settings
 
 app = typer.Typer(no_args_is_help=True)
@@ -242,3 +242,12 @@ def inputs(
             new_filename = inputs_dir / new_name
             file.rename(new_filename)
             logger.info(f"renamed from {file} -> {new_filename}")
+
+
+@app.command()
+def gen_docs():
+    repo_path, *_ = find_paths(Repo.CFN)
+    root = resource_root(repo_path)
+    for path, schema in iterate_schemas(root):
+        if has_md_link(schema.description):
+            logger.warning(f"found md link in {schema.type_name} in {path}")
