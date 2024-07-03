@@ -10,6 +10,7 @@ from atlas_init.cli_helper.run import (
     run_command_exit_on_failure,
 )
 from atlas_init.cli_tf.changelog import convert_to_changelog
+from atlas_init.cli_tf.github_logs import print_log_failures
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -117,3 +118,8 @@ def example_gen(
     for path, rel_path in file_utils.iter_paths_and_relative(in_path, "*.tf", "*.sh", "*.py", "*.md", rglob=False):
         dest_path = out_path / rel_path
         file_utils.copy(path, dest_path, clean_dest=False)
+
+
+@app.command()
+def ci_tests():
+    print_log_failures()

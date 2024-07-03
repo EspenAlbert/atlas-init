@@ -18,3 +18,4 @@ py/coverage.xml
 profiles_ci/
 .venv
 .sourcery.yaml
+github_ci_run_logs
