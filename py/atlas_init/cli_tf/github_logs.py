@@ -1,7 +1,5 @@
-import io
 import logging
 import os
-import zipfile
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -9,7 +7,9 @@ from pathlib import Path
 import requests
 from github import Auth, Github
 from github.Repository import Repository
-from zero_3rdparty import datetime_utils
+from github.WorkflowJob import WorkflowJob
+from github.WorkflowRun import WorkflowRun
+from zero_3rdparty import datetime_utils, file_utils
 
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
@@ -47,13 +47,12 @@ def stem_name(workflow_path: str) -> str:
     return Path(workflow_path).stem
 
 
+def tf_repo() -> Repository:
+    return get_repo(GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS)
+
+
 def print_log_failures(since: datetime, max_downloads: int = MAX_DOWNLOADS):
-    repository = get_repo(GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS)
-    auth = get_auth()
-    headers = {
-        "Authorization": f"{auth.token_type} {auth.token}",
-        "Use-Agent": "PyGithub/Python",
-    }
+    repository = tf_repo()
     found_workflows = 0
     for workflow in repository.get_workflow_runs(
         created=f">{since.strftime('%Y-%m-%d')}",
@@ -64,40 +63,59 @@ def print_log_failures(since: datetime, max_downloads: int = MAX_DOWNLOADS):
         if workflow_name not in _USED_FILESTEMS:
             continue
         found_workflows += 1
-        dt = workflow.created_at
-        dt_str = datetime_utils.get_date_as_rfc3339_without_time(dt)
-
-        logs_url = workflow.logs_url
         logger.info(f"got workflow (#{found_workflows}): {workflow}")
-        logger.info(f"created at: {dt}")
-        logger.info(f"logs_url for: {workflow.name} {logs_url}")
-        download_file(logs_url, headers, dt_str, str(workflow.id), workflow_name)
+        download_workflow_logs(workflow)
         if found_workflows > max_downloads:
             logger.warning(f"found {max_downloads}, exiting")
             return
+
+
+def download_workflow_logs(workflow: WorkflowRun, *, force: bool = False):
+    workflow_dir = workflow_logs_dir(workflow)
+    if workflow_dir.exists() and not force:
+        logger.info(f"dir {workflow_dir} exists for {workflow.html_url}")
+        return
+    paginated_jobs = workflow.jobs("all")
+    for job in paginated_jobs:
+        if not is_test_job(job.name):
+            continue
+        path = logs_file(workflow_dir, job)
+        logger.info(
+            f"found test job: {job.name}, attempt {job.run_attempt}, {job.created_at}, url: {job.html_url}\n\t\t downloading to {path}"
+        )
+        try:
+            logs_response = requests.get(job.logs_url(), timeout=60)
+            logs_response.raise_for_status()
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"failed to download logs for {job.html_url}, e={e!r}")
+            continue
+        file_utils.ensure_parents_write_text(path, logs_response.text)
+        # TODO: also insert to a database
 
 
 def logs_dir() -> Path:
     return Path(os.environ[GITHUB_CI_RUN_LOGS_ENV_NAME])
 
 
-def download_file(url: str, headers: dict, date_str: str, run_id: str, stem_name: str):
-    rel_dir_path = f"{date_str}/{run_id}_{stem_name}"
-    local_dir = logs_dir() / rel_dir_path
-    if local_dir.exists():
-        logger.info(f"skipping logs, already exists at {rel_dir_path}")
-        return
-    local_dir.mkdir(parents=True)
-    logger.info(f"will write to {local_dir.absolute()}")
-    with requests.get(url, stream=True, headers=headers, timeout=60) as r:
-        if r.status_code == 404:  # noqa: PLR2004
-            logger.warning(f"failed to download logs from {url} got 404")
-            return
-        r.raise_for_status()
-        log_zip = io.BytesIO()
-        for chunk in r.iter_content(chunk_size=8192):
-            if chunk:
-                log_zip.write(chunk)
-        z = zipfile.ZipFile(log_zip)
-        z.extractall(local_dir)
-    return local_dir
+def workflow_logs_dir(workflow: WorkflowRun) -> Path:
+    dt = workflow.created_at
+    date_str = datetime_utils.get_date_as_rfc3339_without_time(dt)
+    workflow_name = stem_name(workflow.path)
+    return logs_dir() / f"{date_str}/{workflow.id}_{workflow_name}"
+
+
+def logs_file(workflow_dir: Path, job: WorkflowJob) -> Path:
+    if job.run_attempt != 1:
+        workflow_dir = workflow_dir.with_name(f"{workflow_dir.name}_attempt{job.run_attempt}")
+    filename = job.name.replace(" ", "_").replace("/", "_").replace("__", "_") + ".txt"
+    return workflow_dir / filename
+
+
+def is_test_job(job_name: str) -> bool:
+    """
+    >>> is_test_job("tests-1.8.x-latest / tests-1.8.x-latest-dev / config")
+    True
+    """
+    if "-before" in job_name or "-after" in job_name:
+        return False
+    return "tests-" in job_name and not job_name.endswith(("get-provider-version", "change-detection"))
