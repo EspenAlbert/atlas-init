@@ -1,16 +1,22 @@
 import logging
+import os
 import sys
+from datetime import timedelta
 from pathlib import Path
+from textwrap import indent
 
 import typer
+from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
+    run_command_receive_result,
 )
 from atlas_init.cli_tf.changelog import convert_to_changelog
-from atlas_init.cli_tf.github_logs import print_log_failures
+from atlas_init.cli_tf.github_logs import GH_TOKEN_ENV_NAME, find_test_runs, include_test_jobs
+from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -121,5 +127,23 @@ def example_gen(
 
 
 @app.command()
-def ci_tests():
-    print_log_failures()
+def ci_tests(test_group_name: str = typer.Option("", "-g"), max_days_ago: int = typer.Option(1, "-d", "--days")):
+    repo_path = current_repo_path(Repo.TF)
+    token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
+    os.environ[GH_TOKEN_ENV_NAME] = token
+    job_runs = find_test_runs(
+        utc_now() - timedelta(days=max_days_ago),
+        include_job=include_test_jobs(test_group_name),
+    )
+    for job_id in sorted(job_runs.keys(), reverse=True):
+        runs = job_runs[job_id]
+        if not runs:
+            logger.warning(f"no go tests for job_id={job_id}")
+            continue
+        job, summary = job_summary(runs)
+        logger.info(f"[b]Summary for job [/]: {job.name} @ {job.url}")
+        logger.info(summary)
+        if fail_summary := fail_test_summary(runs):
+            logger.info(indent(fail_summary, "  "))
+
+    assert job_runs

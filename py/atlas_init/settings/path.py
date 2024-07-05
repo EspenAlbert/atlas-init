@@ -21,6 +21,7 @@ DEFAULT_PROFILES_PATH.mkdir(exist_ok=True, parents=True)
 DEFAULT_TF_PATH = ROOT_PATH / "tf"
 DEFAULT_CONFIG_PATH = ROOT_PATH / "atlas_init.yaml"
 DEFAULT_SCHEMA_CONFIG_PATH = ROOT_PATH / "terraform.yaml"
+DEFAULT_GITHUB_CI_RUN_LOGS = ROOT_PATH / "github_ci_run_logs"
 
 
 def load_dotenv(env_path: Path) -> dict[str, str]:

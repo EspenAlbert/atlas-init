@@ -2,6 +2,7 @@ import logging
 import os
 from collections import defaultdict
 from collections.abc import Callable
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -18,6 +19,7 @@ from atlas_init.cli_tf.go_test_run import GoTestRun, parse
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
 )
+from atlas_init.settings.path import DEFAULT_GITHUB_CI_RUN_LOGS
 
 logger = logging.getLogger(__name__)
 
@@ -77,16 +79,33 @@ def find_test_runs(
         if not include_workflow(workflow):
             continue
         workflow_dir = workflow_logs_dir(workflow)
-        for job in workflow.jobs("all"):
-            if not include_job(job):
+        paginated_jobs = workflow.jobs("all")
+        worker_count = min(paginated_jobs.totalCount, 10) or 1
+        with ThreadPoolExecutor(max_workers=worker_count) as pool:
+            futures: dict[Future[list[GoTestRun]], WorkflowJob] = {}
+            for job in paginated_jobs:
+                if not include_job(job):
+                    continue
+                future = pool.submit(find_job_test_runs, workflow_dir, job)
+                futures[future] = job
+            done, not_done = wait(futures.keys(), timeout=300)
+            for f in not_done:
+                logger.warning(f"timeout to find go tests for job = {futures[f].html_url}")
+        for f in done:
+            try:
+                go_test_runs: list[GoTestRun] = f.result()
+            except Exception:
+                logger.exception(f"failed to find go tests for job: {futures[f].html_url}, error 👆")
                 continue
-            jobs_log_path = download_job_safely(workflow_dir, job)
-            if jobs_log_path is None:
-                continue
-            go_test_runs = parse_job_logs(job, jobs_log_path)
             jobs_found[job.id].extend(go_test_runs)
-            # TODO: also insert to a database
     return jobs_found
+
+
+def find_job_test_runs(workflow_dir: Path, job: WorkflowJob) -> list[GoTestRun]:
+    jobs_log_path = download_job_safely(workflow_dir, job)
+    if jobs_log_path is None:
+        return []
+    return parse_job_logs(job, jobs_log_path)
 
 
 def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
@@ -112,7 +131,11 @@ def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
 
 
 def logs_dir() -> Path:
-    return Path(os.environ[GITHUB_CI_RUN_LOGS_ENV_NAME])
+    logs_dir_str = os.environ.get(GITHUB_CI_RUN_LOGS_ENV_NAME)
+    if not logs_dir_str:
+        logger.warning(f"using {DEFAULT_GITHUB_CI_RUN_LOGS} to store github ci logs!")
+        return DEFAULT_GITHUB_CI_RUN_LOGS
+    return Path(logs_dir_str)
 
 
 def workflow_logs_dir(workflow: WorkflowRun) -> Path:
