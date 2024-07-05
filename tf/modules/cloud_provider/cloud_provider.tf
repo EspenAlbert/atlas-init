@@ -49,6 +49,7 @@ EOF
 output "env_vars" {
   value = {
     IAM_ROLE_ID = mongodbatlas_cloud_provider_access_authorization.auth_role.role_id
+    AWS_IAM_ROLE_ARN = aws_iam_role.aws_role.arn
   }
 }
 

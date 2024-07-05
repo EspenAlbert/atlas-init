@@ -23,7 +23,7 @@ _group_suffixes = {
 }
 type ChangelogType = Literal["feat", "fix"]
 CHANGELOG_SEPARATOR = "\n\n"
-_types_headers = {"feat": "enhancement", "fix": "bug,"}
+_types_headers = {"feat": "enhancement", "fix": "bug"}
 _line_regex = re.compile(r"(?P<type>feat|fix)\((?P<groups>[^\]]+)\)\:\s(?P<text>.*)")
 
 

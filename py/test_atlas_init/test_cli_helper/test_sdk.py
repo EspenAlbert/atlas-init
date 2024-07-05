@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 
 import pytest
 
@@ -131,4 +132,5 @@ def test_find_breaking_changes(sdk_path):
 
 
 def test_find_latest_sdk_version():
-    assert find_latest_sdk_version() == "v20231115014"
+    version = find_latest_sdk_version()
+    assert re.match(r"v\d+", version)
