@@ -1,18 +1,22 @@
+from collections import Counter
 from datetime import timedelta
 import os
 from pathlib import Path
+from textwrap import indent
 import pytest
+from zero_3rdparty import datetime_utils
 from zero_3rdparty.datetime_utils import utc_now
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     REQUIRED_GH_ENV_VARS,
-    download_workflow_logs,
-    print_log_failures,
+    find_test_runs,
+    include_test_jobs,
     select_step_and_log_content,
     tf_repo,
 )
 from github.WorkflowJob import WorkflowJob
 from atlas_init.cli_tf.github_logs import is_test_job
+from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
 from test_atlas_init.test_cli_tf.conftest import mock_job
 
 
@@ -22,16 +26,63 @@ skip_condition = pytest.mark.skipif(
 )
 
 
-@skip_condition
-def test_print_log_failures():
-    print_log_failures(utc_now() - timedelta(days=10), max_downloads=5)
+# @skip_condition
+# def test_print_log_failures():
+#     print_log_failures(utc_now() - timedelta(days=10), max_downloads=5)
+
+
+# @skip_condition
+# def test_download_logs_single():
+#     repo = tf_repo()
+#     workflow = repo.get_workflow_run(9671377861)
+#     # find_test_failures()
+#     download_workflow_logs(workflow)
+
+
+def format_job(job: WorkflowJob) -> str:
+    date = datetime_utils.date_filename(job.created_at)
+    if job.run_attempt > 1:
+        return f"{date}_{job.workflow_name}_attempt{job.run_attempt}"
+    return f"{date}_{job.workflow_name}"
+
+
+def job_summary(runs: list[GoTestRun]) -> str:
+    status_counts: dict[GoTestStatus, int] = Counter()
+    for run in runs:
+        status_counts[run.status] += 1
+    line = [f"{key}={status_counts[key]}" for key in sorted(status_counts.keys())]
+    job = runs[0].job
+    return f"{format_job(job)}:" + ",".join(line)
+
+
+def fail_test_summary(runs: list[GoTestRun]) -> str:
+    failed_runs = [r for r in runs if r.is_failure]
+    failed_details: list[str] = [run.finish_summary() for run in failed_runs]
+    return "\n".join(failed_details)
 
 
 @skip_condition
-def test_download_logs_single():
-    repo = tf_repo()
-    workflow = repo.get_workflow_run(9671377861)
-    download_workflow_logs(workflow)
+def test_find_test_failures():
+    job_runs = find_test_runs(
+        utc_now() - timedelta(days=14),
+        include_job=include_test_jobs("cluster_outage_simulation"),
+    )
+    for job_id in sorted(job_runs.keys(), reverse=True):
+        runs = job_runs[job_id]
+        summary = job_summary(runs)
+        print(summary)
+        if fail_summary := fail_test_summary(runs):
+            print(indent(fail_summary, "  "))
+
+    assert job_runs
+
+
+def test_include_test_jobs():
+    job = mock_job()
+    job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster_outage_simulation"  # type: ignore
+    assert include_test_jobs("cluster_outage_simulation")(job)
+    job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster"  # type: ignore
+    assert not include_test_jobs("cluster_outage_simulation")(job)
 
 
 @skip_condition

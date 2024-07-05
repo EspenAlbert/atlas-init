@@ -48,6 +48,14 @@ class GoTestRun(Entity):
 
     classifications: set[Classification] = Field(default_factory=set)
 
+    def finish_summary(self) -> str:
+        finish_line = self.finish_line
+        lines = [
+            self.start_line.text if finish_line is None else finish_line.text,
+            self.url,
+        ]
+        return "\n".join(lines + self.context_lines)
+
     @property
     def context_lines_str(self) -> str:
         return "\n".join(self.context_lines)

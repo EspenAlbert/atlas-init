@@ -1,5 +1,7 @@
 import logging
 import os
+from collections import defaultdict
+from collections.abc import Callable
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -12,7 +14,7 @@ from github.WorkflowRun import WorkflowRun
 from github.WorkflowStep import WorkflowStep
 from zero_3rdparty import datetime_utils, file_utils
 
-from atlas_init.cli_tf.go_test_run import parse
+from atlas_init.cli_tf.go_test_run import GoTestRun, parse
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
 )
@@ -45,6 +47,11 @@ _USED_FILESTEMS = {
 }
 
 
+def include_test_suite_or_compat_workflows(run: WorkflowRun) -> bool:
+    workflow_stem = stem_name(run.path)
+    return workflow_stem in _USED_FILESTEMS
+
+
 def stem_name(workflow_path: str) -> str:
     return Path(workflow_path).stem
 
@@ -53,50 +60,55 @@ def tf_repo() -> Repository:
     return get_repo(GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS)
 
 
-def print_log_failures(since: datetime, max_downloads: int = MAX_DOWNLOADS):
+def find_test_runs(
+    since: datetime,
+    include_workflow: Callable[[WorkflowRun], bool] | None = None,
+    include_job: Callable[[WorkflowJob], bool] | None = None,
+) -> dict[int, list[GoTestRun]]:
+    include_workflow = include_workflow or include_test_suite_or_compat_workflows
+    include_job = include_job or include_test_jobs()
+    jobs_found = defaultdict(list)
     repository = tf_repo()
-    found_workflows = 0
     for workflow in repository.get_workflow_runs(
         created=f">{since.strftime('%Y-%m-%d')}",
         branch="master",
         exclude_pull_requests=True,  # type: ignore
     ):
-        workflow_name = stem_name(workflow.path)
-        if workflow_name not in _USED_FILESTEMS:
+        if not include_workflow(workflow):
             continue
-        found_workflows += 1
-        logger.info(f"got workflow (#{found_workflows}): {workflow}")
-        download_workflow_logs(workflow)
-        if found_workflows > max_downloads:
-            logger.warning(f"found {max_downloads}, exiting")
-            return
+        workflow_dir = workflow_logs_dir(workflow)
+        for job in workflow.jobs("all"):
+            if not include_job(job):
+                continue
+            jobs_log_path = download_job_safely(workflow_dir, job)
+            if jobs_log_path is None:
+                continue
+            go_test_runs = parse_job_logs(job, jobs_log_path)
+            jobs_found[job.id].extend(go_test_runs)
+            # TODO: also insert to a database
+    return jobs_found
 
 
-def download_workflow_logs(workflow: WorkflowRun, *, force: bool = False):
-    workflow_dir = workflow_logs_dir(workflow)
-    if workflow_dir.exists() and not force:
-        logger.info(f"dir {workflow_dir} exists for {workflow.html_url}")
-        return
-    paginated_jobs = workflow.jobs("all")
-    for job in paginated_jobs:
-        if not is_test_job(job.name):
-            continue
-        path = logs_file(workflow_dir, job)
-        logger.info(
-            f"found test job: {job.name}, attempt {job.run_attempt}, {job.created_at}, url: {job.html_url}\n\t\t downloading to {path}"
-        )
-        try:
-            logs_response = requests.get(job.logs_url(), timeout=60)
-            logs_response.raise_for_status()
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"failed to download logs for {job.html_url}, e={e!r}")
-            continue
-        file_utils.ensure_parents_write_text(path, logs_response.text)
-        step, logs_lines = select_step_and_log_content(job, path)
-        for go_test in parse(logs_lines, job, step):
-            if go_test.is_failure:
-                logger.warning(f"found failing go test: {go_test.name} @ {go_test.url}")
-        # TODO: also insert to a database
+def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
+    step, logs_lines = select_step_and_log_content(job, logs_path)
+    return list(parse(logs_lines, job, step))
+
+
+def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
+    path = logs_file(workflow_dir, job)
+    job_summary = f"found test job: {job.name}, attempt {job.run_attempt}, {job.created_at}, url: {job.html_url}"
+    if path.exists():
+        logger.info(f"{job_summary} exist @ {path}")
+        return path
+    logger.info(f"{job_summary}\n\t\t downloading to {path}")
+    try:
+        logs_response = requests.get(job.logs_url(), timeout=60)
+        logs_response.raise_for_status()
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"failed to download logs for {job.html_url}, e={e!r}")
+        return None
+    file_utils.ensure_parents_write_text(path, logs_response.text)
+    return path
 
 
 def logs_dir() -> Path:
@@ -115,6 +127,21 @@ def logs_file(workflow_dir: Path, job: WorkflowJob) -> Path:
         workflow_dir = workflow_dir.with_name(f"{workflow_dir.name}_attempt{job.run_attempt}")
     filename = f"{job.id}_" + job.name.replace(" ", "").replace("/", "_").replace("__", "_") + ".txt"
     return workflow_dir / filename
+
+
+def as_test_group(job_name: str) -> str:
+    """tests-1.8.x-latest / tests-1.8.x-latest-dev / config"""
+    return "" if "/" not in job_name else job_name.split("/")[-1].strip()
+
+
+def include_test_jobs(test_group: str = "") -> Callable[[WorkflowJob], bool]:
+    def inner(job: WorkflowJob) -> bool:
+        job_name = job.name
+        if test_group:
+            return is_test_job(job_name) and as_test_group(job_name) == test_group
+        return is_test_job(job.name)
+
+    return inner
 
 
 def is_test_job(job_name: str) -> bool:
