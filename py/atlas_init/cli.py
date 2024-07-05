@@ -250,17 +250,18 @@ def pre_commit(
     skip_build: bool = typer.Option(default=False),
     skip_lint: bool = typer.Option(default=False),
 ):
+    golang_ci_lint_args = "--max-same-issues 1000 --max-issues-per-linter 1000"
     match current_repo():
         case Repo.CFN:
             repo_path, resource_path, r_name = find_paths()
             build_cmd = f"cd {resource_path} && make build"
             # TODO: understand why piping to grep doesn't work
             # f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}"
-            format_cmd_str = "cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources"
+            format_cmd_str = f"cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources {golang_ci_lint_args}"
         case Repo.TF:
             repo_path = current_repo_path()
             build_cmd = "make build"
-            format_cmd_str = "golangci-lint run"
+            format_cmd_str = f"golangci-lint run {golang_ci_lint_args}"
         case _:
             raise NotImplementedError
     if skip_build:
