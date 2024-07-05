@@ -92,10 +92,11 @@ def find_test_runs(
             for f in not_done:
                 logger.warning(f"timeout to find go tests for job = {futures[f].html_url}")
         for f in done:
+            job = futures[f]
             try:
                 go_test_runs: list[GoTestRun] = f.result()
             except Exception:
-                logger.exception(f"failed to find go tests for job: {futures[f].html_url}, error 👆")
+                logger.exception(f"failed to find go tests for job: {job.html_url}, error 👆")
                 continue
             jobs_found[job.id].extend(go_test_runs)
     return jobs_found

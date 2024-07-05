@@ -15,7 +15,11 @@ from atlas_init.cli_helper.run import (
     run_command_receive_result,
 )
 from atlas_init.cli_tf.changelog import convert_to_changelog
-from atlas_init.cli_tf.github_logs import GH_TOKEN_ENV_NAME, find_test_runs, include_test_jobs
+from atlas_init.cli_tf.github_logs import (
+    GH_TOKEN_ENV_NAME,
+    find_test_runs,
+    include_test_jobs,
+)
 from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
 from atlas_init.cli_tf.schema import (
     download_admin_api,
@@ -127,7 +131,11 @@ def example_gen(
 
 
 @app.command()
-def ci_tests(test_group_name: str = typer.Option("", "-g"), max_days_ago: int = typer.Option(1, "-d", "--days")):
+def ci_tests(
+    test_group_name: str = typer.Option("", "-g"),
+    max_days_ago: int = typer.Option(1, "-d", "--days"),
+    include_passing_jobs: bool = typer.Option(False, "-p", "--passing"),
+):
     repo_path = current_repo_path(Repo.TF)
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
     os.environ[GH_TOKEN_ENV_NAME] = token
@@ -135,15 +143,22 @@ def ci_tests(test_group_name: str = typer.Option("", "-g"), max_days_ago: int = 
         utc_now() - timedelta(days=max_days_ago),
         include_job=include_test_jobs(test_group_name),
     )
+    summary: list[str] = []
     for job_id in sorted(job_runs.keys(), reverse=True):
         runs = job_runs[job_id]
         if not runs:
             logger.warning(f"no go tests for job_id={job_id}")
             continue
-        job, summary = job_summary(runs)
-        logger.info(f"[b]Summary for job [/]: {job.name} @ {job.url}")
-        logger.info(summary)
+        job, job_summary_text = job_summary(runs)
+        job_lines = [
+            "",
+            "",
+            f"Summary for job: {job.name} @ {job.url}",
+            job_summary_text,
+        ]
         if fail_summary := fail_test_summary(runs):
-            logger.info(indent(fail_summary, "  "))
-
-    assert job_runs
+            job_lines.append(indent(fail_summary, "  "))
+        elif not include_passing_jobs:
+            continue
+        summary.extend(job_lines)
+    logger.info(f"# SUMMARY: {'\n'.join(summary)}")

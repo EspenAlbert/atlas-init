@@ -1,6 +1,5 @@
 from collections import Counter
 
-import humanize
 from github.WorkflowJob import WorkflowJob
 from zero_3rdparty import datetime_utils
 
@@ -11,7 +10,7 @@ def format_job(job: WorkflowJob) -> str:
     date = datetime_utils.date_filename(job.created_at)
     exec_time = "0s"
     if complete_ts := job.completed_at:
-        exec_time = humanize.naturaldelta(complete_ts - job.created_at)
+        exec_time = f"{(complete_ts - job.created_at).total_seconds()}s"
     return f"{date}_{job.workflow_name}_attempt{job.run_attempt}_ ({exec_time})"
 
 
