@@ -4,6 +4,7 @@ from github.WorkflowJob import WorkflowJob
 from unittest.mock import MagicMock
 
 from github.WorkflowStep import WorkflowStep
+import pytest
 
 
 def as_step(name: str) -> WorkflowStep:
@@ -11,7 +12,7 @@ def as_step(name: str) -> WorkflowStep:
     step.name = name
     return step
 
-
+@pytest.fixture()
 def mock_job() -> WorkflowJob:
     return MagicMock(
         spec=WorkflowJob,

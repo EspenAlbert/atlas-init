@@ -13,7 +13,6 @@ from atlas_init.cli_tf.github_logs import (
 )
 from atlas_init.cli_tf.github_logs import is_test_job
 from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
-from test_atlas_init.test_cli_tf.conftest import mock_job
 
 
 skip_condition = pytest.mark.skipif(
@@ -38,12 +37,11 @@ def test_find_test_failures():
     assert job_runs
 
 
-def test_include_test_jobs():
-    job = mock_job()
-    job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster_outage_simulation"  # type: ignore
-    assert include_test_jobs("cluster_outage_simulation")(job)
-    job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster"  # type: ignore
-    assert not include_test_jobs("cluster_outage_simulation")(job)
+def test_include_test_jobs(mock_job):
+    mock_job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster_outage_simulation"  # type: ignore
+    assert include_test_jobs("cluster_outage_simulation")(mock_job)
+    mock_job.name = "tests-1.8.x-latest / tests-1.8.x-latest-dev / cluster"  # type: ignore
+    assert not include_test_jobs("cluster_outage_simulation")(mock_job)
 
 
 @skip_condition
@@ -76,9 +74,9 @@ def test_is_test_job():
 @pytest.mark.skipif(
     os.environ.get("JOB_LOGS_PATH", "") == "", reason="needs os.environ[JOB_LOGS_PATH]"
 )
-def test_select_step_and_log_content():
+def test_select_step_and_log_content(mock_job):
     # https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26687675666#step:5:66
     job_logs_path = Path(os.environ["JOB_LOGS_PATH"])
-    step, content = select_step_and_log_content(mock_job(), job_logs_path)
+    step, content = select_step_and_log_content(mock_job, job_logs_path)
     assert step == 4
     assert "##[group]Run make testacc" in content[0]
