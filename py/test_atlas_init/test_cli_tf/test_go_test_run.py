@@ -1,7 +1,6 @@
 from pathlib import Path
 import pytest
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, context_start_match, extract_context, match_line, parse
-from test_atlas_init.test_cli_tf.conftest import mock_job
 
 _network_logs_one_failure = (
     Path(__file__).parent / "test_data/network_logs_one_failure.txt"
@@ -32,8 +31,7 @@ def test_no_match_line(line):
     assert match_line(line) is None
 
 
-def parse_tests(path: Path) -> list[GoTestRun]:
-    job = mock_job()
+def parse_tests(path: Path, job) -> list[GoTestRun]:
     log_lines = path.read_text().splitlines()
     return list(parse(log_lines, job, test_step_nr=5))
 
@@ -56,8 +54,8 @@ def check_status_counts(
         assert len(group_tests) == count, f"wrong count for {status}"
 
 
-def test_parse():
-    tests = parse_tests(_network_logs_one_failure)
+def test_parse(mock_job):
+    tests = parse_tests(_network_logs_one_failure, mock_job)
     assert tests
     check_status_counts(tests, fail_count=1, skip_count=6, pass_count=24)
 
@@ -98,8 +96,8 @@ def check_test(
     print(f"{test.name} context lines:\n{test.context_lines_str}")
 
 
-def test_parse_with_error_context():
-    tests = parse_tests(_backup_logs_multiple_failures_with_context)
+def test_parse_with_error_context(mock_job):
+    tests = parse_tests(_backup_logs_multiple_failures_with_context, mock_job)
     assert tests
     check_status_counts(tests, fail_count=4, skip_count=0, pass_count=19)
     check_test(tests, _backup_context_1_name, _backup_context_1, GoTestStatus.FAIL, "https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26681936440#step:5:235")
