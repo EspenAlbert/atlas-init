@@ -1,0 +1,176 @@
+2024-06-26T04:27:13.5521382Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/f63bb6f9-49b1-4023-bdb6-562fc59ea1d3
+2024-06-26T04:27:14.1765666Z ##[group]Run make testacc
+2024-06-26T04:27:14.1766112Z [36;1mmake testacc[0m
+2024-06-26T04:27:14.2142343Z ==> Checking that code complies with gofmt requirements...
+2024-06-26T04:27:16.1889186Z TF_ACC=1 go test ./internal/service/networkcontainer ./internal/service/networkpeering ./internal/service/privateendpointregionalmode ./internal/service/privatelinkendpoint ./internal/service/privatelinkendpointservice ./internal/service/privatelinkendpointservicedatafederationonlinearchive -run '^Test(Acc|Mig)' -v -parallel 20  -timeout 300m -ldflags="-s -w -X 'github.com/mongodb/terraform-provider-mongodbatlas/version.ProviderVersion=acc'"
+2024-06-26T04:27:16.2039519Z go: downloading github.com/hashicorp/terraform-plugin-testing v1.8.0
+2024-06-26T04:27:16.3732421Z go: downloading github.com/stretchr/testify v1.9.0
+2024-06-26T04:27:16.4526279Z go: downloading github.com/hashicorp/terraform-exec v0.21.0
+2024-06-26T04:27:16.4529783Z go: downloading github.com/hashicorp/terraform-json v0.22.1
+2024-06-26T04:27:16.5062353Z go: downloading github.com/hashicorp/hc-install v0.6.4
+2024-06-26T04:27:16.8990535Z go: downloading github.com/davecgh/go-spew v1.1.1
+2024-06-26T04:27:16.8998245Z go: downloading github.com/pmezard/go-difflib v1.0.0
+2024-06-26T04:27:16.8999543Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2024-06-26T04:27:16.9202716Z go: downloading github.com/hashicorp/go-checkpoint v0.5.0
+2024-06-26T04:27:16.9528654Z go: downloading github.com/ProtonMail/go-crypto v1.1.0-alpha.2
+2024-06-26T04:27:16.9638781Z go: downloading golang.org/x/mod v0.16.0
+2024-06-26T04:27:17.0205146Z go: downloading github.com/cloudflare/circl v1.3.7
+2024-06-26T04:39:53.9796615Z === RUN   TestMigNetworkContainer_basicAWS
+2024-06-26T04:39:53.9800096Z     resource_network_container_migration_test.go:16: Creating execution project: test-acc-tf-p-2019738639140136674
+2024-06-26T04:39:53.9801139Z --- PASS: TestMigNetworkContainer_basicAWS (127.52s)
+2024-06-26T04:39:53.9801727Z === RUN   TestMigNetworkContainer_basicAzure
+2024-06-26T04:39:53.9802343Z --- PASS: TestMigNetworkContainer_basicAzure (123.52s)
+2024-06-26T04:39:53.9802912Z === RUN   TestMigNetworkContainer_basicGCP
+2024-06-26T04:39:53.9803507Z --- PASS: TestMigNetworkContainer_basicGCP (123.78s)
+2024-06-26T04:39:53.9804046Z === RUN   TestAccNetworkContainer_basicAWS
+2024-06-26T04:39:53.9804541Z === PAUSE TestAccNetworkContainer_basicAWS
+2024-06-26T04:39:53.9805063Z === RUN   TestAccNetworkContainer_basicAzure
+2024-06-26T04:39:53.9805572Z === PAUSE TestAccNetworkContainer_basicAzure
+2024-06-26T04:39:53.9806086Z === RUN   TestAccNetworkContainer_basicGCP
+2024-06-26T04:39:53.9806571Z === PAUSE TestAccNetworkContainer_basicGCP
+2024-06-26T04:39:53.9807092Z === RUN   TestAccNetworkContainer_withRegionsGCP
+2024-06-26T04:39:53.9807752Z --- PASS: TestAccNetworkContainer_withRegionsGCP (121.26s)
+2024-06-26T04:39:53.9808386Z === RUN   TestAccNetworkContainer_updateIndividualFields
+2024-06-26T04:39:53.9809122Z --- PASS: TestAccNetworkContainer_updateIndividualFields (122.84s)
+2024-06-26T04:39:53.9809739Z === CONT  TestAccNetworkContainer_basicAWS
+2024-06-26T04:39:53.9810243Z === CONT  TestAccNetworkContainer_basicAzure
+2024-06-26T04:39:53.9810746Z === CONT  TestAccNetworkContainer_basicGCP
+2024-06-26T04:39:53.9811323Z --- PASS: TestAccNetworkContainer_basicAzure (122.58s)
+2024-06-26T04:39:53.9811972Z --- PASS: TestAccNetworkContainer_basicGCP (122.58s)
+2024-06-26T04:39:53.9812600Z --- PASS: TestAccNetworkContainer_basicAWS (122.82s)
+2024-06-26T04:39:53.9813043Z PASS
+2024-06-26T04:39:53.9813734Z Deleting execution project: test-acc-tf-p-2019738639140136674, id: 667b98b4487d301c71244108
+2024-06-26T04:39:53.9814902Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/networkcontainer	742.001s
+2024-06-26T04:41:47.7100334Z === RUN   TestMigNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7101323Z === PAUSE TestMigNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7102266Z === RUN   TestAccNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7103115Z === PAUSE TestAccNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7104029Z === RUN   TestAccNetworkRSNetworkPeering_basicAzure
+2024-06-26T04:41:47.7105997Z     resource_network_peering_test.go:30: Creating execution project: test-acc-tf-p-186700545511874836
+2024-06-26T04:41:47.7107531Z --- PASS: TestAccNetworkRSNetworkPeering_basicAzure (204.94s)
+2024-06-26T04:41:47.7108630Z === RUN   TestAccNetworkRSNetworkPeering_updateBasicAzure
+2024-06-26T04:41:47.7114072Z 2024-06-26T04:33:00.641Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_network_peering tf_req_id=363e3851-b56f-b123-c8c4-52f2b30c1865 diagnostic_detail="" diagnostic_severity=ERROR diagnostic_summary="error creating MongoDB Network Peering Connection: unexpected state 'FAILED', wanted target 'AVAILABLE, PENDING_ACCEPTANCE'. last error: %!s(<nil>)" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6
+2024-06-26T04:41:47.7120757Z 2024-06-26T04:33:00.645Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=2 test_working_directory=/tmp/plugintest1872897447 test_terraform_path=/home/runner/work/_temp/4a97114e-29e2-4689-b562-b8f2abe3e39f/terraform test_name=TestAccNetworkRSNetworkPeering_updateBasicAzure
+2024-06-26T04:41:47.7123451Z   error=
+2024-06-26T04:41:47.7124033Z   | Error running apply: exit status 1
+2024-06-26T04:41:47.7124690Z   | 
+2024-06-26T04:41:47.7126507Z   | Error: error creating MongoDB Network Peering Connection: unexpected state 'FAILED', wanted target 'AVAILABLE, PENDING_ACCEPTANCE'. last error: %!s(<nil>)
+2024-06-26T04:41:47.7128390Z   | 
+2024-06-26T04:41:47.7128980Z   |   with mongodbatlas_network_peering.test,
+2024-06-26T04:41:47.7130233Z   |   on terraform_plugin_test.tf line 19, in resource "mongodbatlas_network_peering" "test":
+2024-06-26T04:41:47.7131810Z   |   19: \t\tresource "mongodbatlas_network_peering" "test" {
+2024-06-26T04:41:47.7132626Z   | 
+2024-06-26T04:41:47.7133045Z   
+2024-06-26T04:41:47.7134208Z     resource_network_peering_test.go:76: Step 2/2 error: Error running apply: exit status 1
+2024-06-26T04:41:47.7135261Z         
+2024-06-26T04:41:47.7137393Z         Error: error creating MongoDB Network Peering Connection: unexpected state 'FAILED', wanted target 'AVAILABLE, PENDING_ACCEPTANCE'. last error: %!s(<nil>)
+2024-06-26T04:41:47.7138997Z         
+2024-06-26T04:41:47.7139736Z           with mongodbatlas_network_peering.test,
+2024-06-26T04:41:47.7141246Z           on terraform_plugin_test.tf line 19, in resource "mongodbatlas_network_peering" "test":
+2024-06-26T04:41:47.7142731Z           19: 		resource "mongodbatlas_network_peering" "test" {
+2024-06-26T04:41:47.7143527Z         
+2024-06-26T04:41:47.7148081Z 2024-06-26T04:38:21.971Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_network_container diagnostic_detail="" diagnostic_severity=ERROR diagnostic_summary="error deleting MongoDB Network Peering Container (667b9982d057b66238706c53): couldn't find resource (21 retries)" tf_req_id=0bcc5cda-8c0c-cd83-d63c-804722a61347 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6
+2024-06-26T04:41:47.7155167Z 2024-06-26T04:38:21.975Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_step_number=2 test_working_directory=/tmp/plugintest1872897447 test_terraform_path=/home/runner/work/_temp/4a97114e-29e2-4689-b562-b8f2abe3e39f/terraform test_name=TestAccNetworkRSNetworkPeering_updateBasicAzure
+2024-06-26T04:41:47.7158215Z   error=
+2024-06-26T04:41:47.7158710Z   | exit status 1
+2024-06-26T04:41:47.7159180Z   | 
+2024-06-26T04:41:47.7160637Z   | Error: error deleting MongoDB Network Peering Container (667b9982d057b66238706c53): couldn't find resource (21 retries)
+2024-06-26T04:41:47.7161915Z   | 
+2024-06-26T04:41:47.7162338Z   
+2024-06-26T04:41:47.7163617Z     panic.go:626: Error running post-test destroy, there may be dangling resources: exit status 1
+2024-06-26T04:41:47.7164739Z         
+2024-06-26T04:41:47.7166446Z         Error: error deleting MongoDB Network Peering Container (667b9982d057b66238706c53): couldn't find resource (21 retries)
+2024-06-26T04:41:47.7167742Z         
+2024-06-26T04:41:47.7168636Z --- FAIL: TestAccNetworkRSNetworkPeering_updateBasicAzure (443.97s)
+2024-06-26T04:41:47.7169711Z === RUN   TestAccNetworkRSNetworkPeering_basicGCP
+2024-06-26T04:41:47.7170658Z     resource_network_peering_test.go:108: 
+2024-06-26T04:41:47.7171679Z --- SKIP: TestAccNetworkRSNetworkPeering_basicGCP (0.00s)
+2024-06-26T04:41:47.7172781Z === RUN   TestAccNetworkRSNetworkPeering_updateBasicGCP
+2024-06-26T04:41:47.7173869Z     resource_network_peering_test.go:149: 
+2024-06-26T04:41:47.7174964Z --- SKIP: TestAccNetworkRSNetworkPeering_updateBasicGCP (0.00s)
+2024-06-26T04:41:47.7176103Z === RUN   TestAccNetworkRSNetworkPeering_AWSDifferentRegionName
+2024-06-26T04:41:47.7177235Z === PAUSE TestAccNetworkRSNetworkPeering_AWSDifferentRegionName
+2024-06-26T04:41:47.7178257Z === CONT  TestMigNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7179247Z === CONT  TestAccNetworkRSNetworkPeering_AWSDifferentRegionName
+2024-06-26T04:41:47.7180224Z === CONT  TestAccNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7181277Z --- PASS: TestAccNetworkNetworkPeering_basicAWS (165.25s)
+2024-06-26T04:41:47.7182398Z --- PASS: TestMigNetworkNetworkPeering_basicAWS (168.37s)
+2024-06-26T04:41:47.7183656Z --- PASS: TestAccNetworkRSNetworkPeering_AWSDifferentRegionName (205.67s)
+2024-06-26T04:41:47.7184587Z FAIL
+2024-06-26T04:41:47.7185924Z Deleting execution project: test-acc-tf-p-186700545511874836, id: 667b98b5487d301c7124414d
+2024-06-26T04:41:47.7189990Z Project deletion failed: 667b98b5487d301c7124414d, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b98b5487d301c7124414d DELETE: HTTP 409 Conflict (Error code: "CANNOT_CLOSE_GROUP_ACTIVE_PEERING_CONNECTIONS") Detail: There are active peering connections in this project. Reason: Conflict. Params: []
+2024-06-26T04:41:47.7194083Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/networkpeering	854.654s
+2024-06-26T04:41:47.7195478Z === RUN   TestMigPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7196429Z === PAUSE TestMigPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7197340Z === RUN   TestAccPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7198267Z === PAUSE TestAccPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7199181Z === RUN   TestAccPrivateEndpointRegionalMode_conn
+2024-06-26T04:41:47.7200373Z     resource_private_endpoint_regional_mode_test.go:21: 
+2024-06-26T04:41:47.7201624Z --- SKIP: TestAccPrivateEndpointRegionalMode_conn (0.00s)
+2024-06-26T04:41:47.7202609Z === CONT  TestMigPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7203520Z === CONT  TestAccPrivateEndpointRegionalMode_basic
+2024-06-26T04:41:47.7204636Z --- PASS: TestMigPrivateEndpointRegionalMode_basic (13.17s)
+2024-06-26T04:41:47.7205810Z --- PASS: TestAccPrivateEndpointRegionalMode_basic (15.49s)
+2024-06-26T04:41:47.7206623Z PASS
+2024-06-26T04:41:47.7207954Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/privateendpointregionalmode	15.506s
+2024-06-26T04:41:47.7209465Z === RUN   TestAccNetworkDSPrivateLinkEndpoint_basic
+2024-06-26T04:41:47.7210494Z     data_source_privatelink_endpoint_test.go:13: 
+2024-06-26T04:41:47.7211561Z --- SKIP: TestAccNetworkDSPrivateLinkEndpoint_basic (0.00s)
+2024-06-26T04:41:47.7212530Z === RUN   TestMigNetworkPrivateLinkEndpoint_basic
+2024-06-26T04:41:47.7213447Z === PAUSE TestMigNetworkPrivateLinkEndpoint_basic
+2024-06-26T04:41:47.7214409Z === RUN   TestAccNetworkRSPrivateLinkEndpointAWS_basic
+2024-06-26T04:41:47.7215429Z === PAUSE TestAccNetworkRSPrivateLinkEndpointAWS_basic
+2024-06-26T04:41:47.7216459Z === RUN   TestAccNetworkRSPrivateLinkEndpointAzure_basic
+2024-06-26T04:41:47.7217513Z === PAUSE TestAccNetworkRSPrivateLinkEndpointAzure_basic
+2024-06-26T04:41:47.7218552Z === RUN   TestAccNetworkRSPrivateLinkEndpointGCP_basic
+2024-06-26T04:41:47.7219565Z === PAUSE TestAccNetworkRSPrivateLinkEndpointGCP_basic
+2024-06-26T04:41:47.7220531Z === CONT  TestMigNetworkPrivateLinkEndpoint_basic
+2024-06-26T04:41:47.7221512Z === CONT  TestAccNetworkRSPrivateLinkEndpointAzure_basic
+2024-06-26T04:41:47.7222534Z === CONT  TestAccNetworkRSPrivateLinkEndpointAWS_basic
+2024-06-26T04:41:47.7223551Z === CONT  TestAccNetworkRSPrivateLinkEndpointGCP_basic
+2024-06-26T04:41:47.7224820Z --- PASS: TestAccNetworkRSPrivateLinkEndpointAzure_basic (151.26s)
+2024-06-26T04:41:47.7226128Z --- PASS: TestAccNetworkRSPrivateLinkEndpointAWS_basic (214.29s)
+2024-06-26T04:41:47.7227400Z --- PASS: TestMigNetworkPrivateLinkEndpoint_basic (216.77s)
+2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
+2024-06-26T04:41:47.7229504Z PASS
+2024-06-26T04:41:47.7230964Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/privatelinkendpoint	424.516s
+2024-06-26T04:41:47.7232358Z === RUN   TestMigNetworkNetworkPeering_basicAWS
+2024-06-26T04:41:47.7233455Z     resource_privatelink_endpoint_service_migration_test.go:11: 
+2024-06-26T04:41:47.7234628Z --- SKIP: TestMigNetworkNetworkPeering_basicAWS (0.00s)
+2024-06-26T04:41:47.7235726Z === RUN   TestAccNetworkRSPrivateLinkEndpointServiceAWS_Complete
+2024-06-26T04:41:47.7236914Z     resource_privatelink_endpoint_service_test.go:16: 
+2024-06-26T04:41:47.7238197Z --- SKIP: TestAccNetworkRSPrivateLinkEndpointServiceAWS_Complete (0.00s)
+2024-06-26T04:41:47.7239163Z PASS
+2024-06-26T04:41:47.7240458Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/privatelinkendpointservice	0.012s
+2024-06-26T04:41:47.7242533Z === RUN   TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchiveDS_basic
+2024-06-26T04:41:47.7245242Z     data_source_privatelink_endpoint_service_data_federation_online_archive_test.go:18: Creating execution project: test-acc-tf-p-2858253371523025273
+2024-06-26T04:41:47.7247532Z --- PASS: TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchiveDS_basic (2.49s)
+2024-06-26T04:41:47.7249397Z === RUN   TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchivesDSPlural_basic
+2024-06-26T04:41:47.7251488Z --- PASS: TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchivesDSPlural_basic (1.01s)
+2024-06-26T04:41:47.7253324Z === RUN   TestMigNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basic
+2024-06-26T04:41:47.7255186Z --- PASS: TestMigNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basic (3.06s)
+2024-06-26T04:41:47.7256881Z === RUN   TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basic
+2024-06-26T04:41:47.7258720Z --- PASS: TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basic (1.14s)
+2024-06-26T04:41:47.7260700Z === RUN   TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_updateComment
+2024-06-26T04:41:47.7262720Z --- PASS: TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_updateComment (2.26s)
+2024-06-26T04:41:47.7264665Z === RUN   TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basicWithRegionDnsName
+2024-06-26T04:41:47.7266836Z --- PASS: TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basicWithRegionDnsName (1.15s)
+2024-06-26T04:41:47.7268167Z PASS
+2024-06-26T04:41:47.7269252Z Deleting execution project: test-acc-tf-p-2858253371523025273, id: 667b98c6487d301c712447db
+2024-06-26T04:41:47.7271781Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/privatelinkendpointservicedatafederationonlinearchive	11.388s
+2024-06-26T04:41:47.7273465Z FAIL
+2024-06-26T04:41:47.8443612Z make: *** [GNUmakefile:47: testacc] Error 1
+2024-06-26T04:41:47.8459774Z ##[error]Process completed with exit code 2.
+2024-06-26T04:41:47.8547088Z Post job cleanup.
+2024-06-26T04:41:47.9465471Z [command]/usr/bin/git version
+2024-06-26T04:41:47.9503931Z git version 2.45.2
+2024-06-26T04:41:47.9544836Z Temporarily overriding HOME='/home/runner/work/_temp/e2720d57-1964-45b2-890b-6c39b29356be' before making global git config changes
+2024-06-26T04:41:47.9546672Z Adding repository directory to the temporary git global config as a safe directory
+2024-06-26T04:41:47.9550701Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2024-06-26T04:41:47.9585728Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2024-06-26T04:41:47.9617826Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2024-06-26T04:41:47.9858789Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2024-06-26T04:41:47.9879910Z http.https://github.com/.extraheader
+2024-06-26T04:41:47.9892653Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2024-06-26T04:41:47.9925056Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2024-06-26T04:41:48.0370190Z Cleaning up orphan processes

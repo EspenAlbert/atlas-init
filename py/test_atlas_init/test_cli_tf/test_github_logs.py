@@ -1,5 +1,6 @@
 from datetime import timedelta
 import os
+from pathlib import Path
 import pytest
 from zero_3rdparty.datetime_utils import utc_now
 from atlas_init.cli_tf.github_logs import (
@@ -7,10 +8,12 @@ from atlas_init.cli_tf.github_logs import (
     REQUIRED_GH_ENV_VARS,
     download_workflow_logs,
     print_log_failures,
+    select_step_and_log_content,
     tf_repo,
 )
 from github.WorkflowJob import WorkflowJob
 from atlas_init.cli_tf.github_logs import is_test_job
+from test_atlas_init.test_cli_tf.conftest import mock_job
 
 
 skip_condition = pytest.mark.skipif(
@@ -56,3 +59,14 @@ def test_is_test_job():
     )
     assert not is_test_job("clean-after / cleanup-test-env-general")
     assert not is_test_job("clean-before / cleanup-test-env-qa")
+
+
+@pytest.mark.skipif(
+    os.environ.get("JOB_LOGS_PATH", "") == "", reason="needs os.environ[JOB_LOGS_PATH]"
+)
+def test_select_step_and_log_content():
+    # https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26687675666#step:5:66
+    job_logs_path = Path(os.environ["JOB_LOGS_PATH"])
+    step, content = select_step_and_log_content(mock_job(), job_logs_path)
+    assert step == 4
+    assert "##[group]Run make testacc" in content[0]

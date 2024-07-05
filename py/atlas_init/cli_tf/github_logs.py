@@ -9,8 +9,10 @@ from github import Auth, Github
 from github.Repository import Repository
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowRun import WorkflowRun
+from github.WorkflowStep import WorkflowStep
 from zero_3rdparty import datetime_utils, file_utils
 
+from atlas_init.cli_tf.go_test_run import parse
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
 )
@@ -90,6 +92,10 @@ def download_workflow_logs(workflow: WorkflowRun, *, force: bool = False):
             logger.warning(f"failed to download logs for {job.html_url}, e={e!r}")
             continue
         file_utils.ensure_parents_write_text(path, logs_response.text)
+        step, logs_lines = select_step_and_log_content(job, path)
+        for go_test in parse(logs_lines, job, step):
+            if go_test.is_failure:
+                logger.warning(f"found failing go test: {go_test.name} @ {go_test.url}")
         # TODO: also insert to a database
 
 
@@ -107,7 +113,7 @@ def workflow_logs_dir(workflow: WorkflowRun) -> Path:
 def logs_file(workflow_dir: Path, job: WorkflowJob) -> Path:
     if job.run_attempt != 1:
         workflow_dir = workflow_dir.with_name(f"{workflow_dir.name}_attempt{job.run_attempt}")
-    filename = job.name.replace(" ", "_").replace("/", "_").replace("__", "_") + ".txt"
+    filename = f"{job.id}_" + job.name.replace(" ", "").replace("/", "_").replace("__", "_") + ".txt"
     return workflow_dir / filename
 
 
@@ -119,3 +125,29 @@ def is_test_job(job_name: str) -> bool:
     if "-before" in job_name or "-after" in job_name:
         return False
     return "tests-" in job_name and not job_name.endswith(("get-provider-version", "change-detection"))
+
+
+def select_step_and_log_content(job: WorkflowJob, logs_path: Path) -> tuple[int, list[str]]:
+    full_text = logs_path.read_text()
+    step = test_step(job.steps)
+    last_step_start = current_step_start = 1
+    # there is always an extra setup job step, so starting at 1
+    current_step = 1
+    lines = full_text.splitlines()
+    for line_index, line in enumerate(lines, 0):
+        if "##[group]Run " in line:
+            current_step += 1
+            last_step_start, current_step_start = current_step_start, line_index
+            if current_step == step + 1:
+                return step, lines[last_step_start:current_step_start]
+    assert step == current_step, f"didn't find enough step in logs for {job.html_url}"
+    return step, lines[current_step_start:]
+
+
+def test_step(steps: list[WorkflowStep]) -> int:
+    for i, step in enumerate(steps, 1):
+        if "test" in step.name.lower():
+            return i
+    last_step = len(steps)
+    logger.warning(f"using {last_step} as final step, unable to find 'test' in {steps}")
+    return last_step

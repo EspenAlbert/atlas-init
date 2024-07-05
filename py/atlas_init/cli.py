@@ -257,7 +257,9 @@ def pre_commit(
             build_cmd = f"cd {resource_path} && make build"
             # TODO: understand why piping to grep doesn't work
             # f"golangci-lint run --path-prefix=./cfn-resources | grep {r_name}"
-            format_cmd_str = f"cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources {golang_ci_lint_args}"
+            format_cmd_str = (
+                f"cd cfn-resources && golangci-lint run --path-prefix=./cfn-resources {golang_ci_lint_args}"
+            )
         case Repo.TF:
             repo_path = current_repo_path()
             build_cmd = "make build"

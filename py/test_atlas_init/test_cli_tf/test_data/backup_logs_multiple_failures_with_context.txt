@@ -1,0 +1,269 @@
+2024-06-26T00:17:15.6143072Z ##[group]Run make testacc
+2024-06-26T00:17:15.6143495Z [36;1mmake testacc[0m
+2024-06-26T00:17:15.6269866Z shell: /usr/bin/bash -e {0}
+2024-06-26T00:17:15.6270225Z env:
+2024-06-26T00:17:15.6270487Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6270765Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6271056Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6271391Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6271882Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6272421Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6273096Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6273637Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6274063Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6274582Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6275080Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6275643Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6276193Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6276688Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6277085Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6277568Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6277991Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6278465Z   IRRELEVANT_SECRETS
+2024-06-26T00:17:15.6280208Z   IRRELEVANT_SECRETS
+./internal/service/cloudbackupsnapshot
+./internal/service/cloudbackupsnapshotexportbucket
+./internal/service/cloudbackupsnapshotexportjob
+./internal/service/cloudbackupsnapshotrestorejob
+./internal/service/onlinearchive
+
+2024-06-26T00:17:15.6282034Z ##[endgroup]
+2024-06-26T00:17:15.6548920Z ==> Checking that code complies with gofmt requirements...
+2024-06-26T00:17:16.4384712Z TF_ACC=1 go test ./internal/service/cloudbackupschedule ./internal/service/cloudbackupsnapshot ./internal/service/cloudbackupsnapshotexportbucket ./internal/service/cloudbackupsnapshotexportjob ./internal/service/cloudbackupsnapshotrestorejob ./internal/service/onlinearchive -run '^Test(Acc|Mig)' -v -parallel 20  -timeout 300m -ldflags="-s -w -X 'github.com/mongodb/terraform-provider-mongodbatlas/version.ProviderVersion=acc'"
+2024-06-26T00:17:16.4565743Z go: downloading github.com/hashicorp/terraform-plugin-testing v1.8.0
+2024-06-26T00:17:16.6434769Z go: downloading github.com/stretchr/testify v1.9.0
+2024-06-26T00:17:16.7111040Z go: downloading github.com/hashicorp/terraform-exec v0.21.0
+2024-06-26T00:17:16.7123187Z go: downloading github.com/hashicorp/terraform-json v0.22.1
+2024-06-26T00:17:16.7797881Z go: downloading github.com/hashicorp/hc-install v0.6.4
+2024-06-26T00:17:17.2362594Z go: downloading github.com/davecgh/go-spew v1.1.1
+2024-06-26T00:17:17.2363938Z go: downloading github.com/pmezard/go-difflib v1.0.0
+2024-06-26T00:17:17.2369870Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2024-06-26T00:17:17.2602524Z go: downloading github.com/hashicorp/go-checkpoint v0.5.0
+2024-06-26T00:17:17.2703954Z go: downloading github.com/ProtonMail/go-crypto v1.1.0-alpha.2
+2024-06-26T00:17:17.2729638Z go: downloading golang.org/x/mod v0.16.0
+2024-06-26T00:17:17.3636724Z go: downloading github.com/cloudflare/circl v1.3.7
+2024-06-26T00:33:53.1068415Z === RUN   TestMigBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1072056Z     resource_cloud_backup_schedule_migration_test.go:15: Creating execution project: test-acc-tf-p-4221307003908130223
+2024-06-26T00:33:53.1073144Z === PAUSE TestMigBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1073984Z === RUN   TestAccBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1074768Z === PAUSE TestAccBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1075802Z === RUN   TestAccBackupRSCloudBackupSchedule_export
+2024-06-26T00:33:53.1076485Z === PAUSE TestAccBackupRSCloudBackupSchedule_export
+2024-06-26T00:33:53.1077171Z === RUN   TestAccBackupRSCloudBackupSchedule_onePolicy
+2024-06-26T00:33:53.1077867Z === PAUSE TestAccBackupRSCloudBackupSchedule_onePolicy
+2024-06-26T00:33:53.1078861Z === RUN   TestAccBackupRSCloudBackupSchedule_copySettings
+2024-06-26T00:33:53.1079604Z === PAUSE TestAccBackupRSCloudBackupSchedule_copySettings
+2024-06-26T00:33:53.1080317Z === RUN   TestAccBackupRSCloudBackupScheduleImport_basic
+2024-06-26T00:33:53.1080934Z === PAUSE TestAccBackupRSCloudBackupScheduleImport_basic
+2024-06-26T00:33:53.1081506Z === RUN   TestAccBackupRSCloudBackupSchedule_azure
+2024-06-26T00:33:53.1082042Z === PAUSE TestAccBackupRSCloudBackupSchedule_azure
+2024-06-26T00:33:53.1082664Z === CONT  TestMigBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1083397Z === CONT  TestAccBackupRSCloudBackupSchedule_export
+2024-06-26T00:33:53.1083941Z === CONT  TestAccBackupRSCloudBackupSchedule_basic
+2024-06-26T00:33:53.1084558Z === CONT  TestAccBackupRSCloudBackupSchedule_copySettings
+2024-06-26T00:33:53.1085257Z === CONT  TestAccBackupRSCloudBackupSchedule_azure
+2024-06-26T00:33:53.1085863Z === CONT  TestAccBackupRSCloudBackupSchedule_onePolicy
+2024-06-26T00:33:53.1086456Z === CONT  TestAccBackupRSCloudBackupScheduleImport_basic
+2024-06-26T00:33:53.1089839Z 2024/06/26 00:17:49 warning issue performing authorize: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b5e1d3994a7581feb8e06/cloudProviderAccess/667b5e2c3994a7581feb952b PATCH: HTTP 400 Bad Request (Error code: "CANNOT_ASSUME_ROLE") Detail: Atlas cannot assume the specified role (arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-4873912859980849404). Reason: Bad Request. Params: [arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-4873912859980849404] 
+2024-06-26T00:33:53.1092278Z 2024/06/26 00:17:49 retrying
+2024-06-26T00:33:53.1092909Z --- PASS: TestAccBackupRSCloudBackupSchedule_copySettings (767.51s)
+2024-06-26T00:33:53.1093915Z --- PASS: TestAccBackupRSCloudBackupSchedule_export (884.43s)
+2024-06-26T00:33:53.1094593Z --- PASS: TestAccBackupRSCloudBackupSchedule_azure (928.66s)
+2024-06-26T00:33:53.1095254Z --- PASS: TestAccBackupRSCloudBackupSchedule_basic (929.89s)
+2024-06-26T00:33:53.1095905Z --- PASS: TestMigBackupRSCloudBackupSchedule_basic (933.46s)
+2024-06-26T00:33:53.1096573Z --- PASS: TestAccBackupRSCloudBackupSchedule_onePolicy (957.73s)
+2024-06-26T00:33:53.1097284Z --- PASS: TestAccBackupRSCloudBackupScheduleImport_basic (976.72s)
+2024-06-26T00:33:53.1097772Z PASS
+2024-06-26T00:33:53.1098361Z Deleting execution project: test-acc-tf-p-4221307003908130223, id: 667b5e1d3994a7581feb8e06
+2024-06-26T00:33:53.1099399Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudbackupschedule	980.219s
+2024-06-26T00:57:43.9464523Z === RUN   TestMigBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9467467Z     resource_cloud_backup_snapshot_migration_test.go:13: Creating execution project: test-acc-tf-p-3245574277663302879
+2024-06-26T00:57:43.9468475Z === PAUSE TestMigBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9469281Z === RUN   TestMigBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9469949Z === PAUSE TestMigBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9470661Z === RUN   TestAccBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9471324Z === PAUSE TestAccBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9472010Z === RUN   TestAccBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9472731Z === PAUSE TestAccBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9473385Z === CONT  TestMigBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9474103Z === CONT  TestAccBackupRSCloudBackupSnapshot_basic
+2024-06-26T00:57:43.9474800Z === CONT  TestAccBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9475443Z === CONT  TestMigBackupRSCloudBackupSnapshot_sharded
+2024-06-26T00:57:43.9476284Z --- PASS: TestMigBackupRSCloudBackupSnapshot_basic (925.55s)
+2024-06-26T00:57:43.9477653Z --- PASS: TestAccBackupRSCloudBackupSnapshot_basic (1047.00s)
+2024-06-26T00:57:43.9478594Z --- PASS: TestAccBackupRSCloudBackupSnapshot_sharded (1527.76s)
+2024-06-26T00:57:43.9479358Z --- PASS: TestMigBackupRSCloudBackupSnapshot_sharded (2405.22s)
+2024-06-26T00:57:43.9479904Z PASS
+2024-06-26T00:57:43.9480857Z Deleting execution project: test-acc-tf-p-3245574277663302879, id: 667b5e1d595a110a50f70717
+2024-06-26T00:57:43.9482028Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudbackupsnapshot	2410.141s
+2024-06-26T00:57:43.9482976Z === RUN   TestMigBackupSnapshotExportBucket_basic
+2024-06-26T00:57:43.9484128Z     resource_cloud_backup_snapshot_export_bucket_migration_test.go:10: Creating execution project: test-acc-tf-p-2387088142570609852
+2024-06-26T00:57:43.9485145Z --- PASS: TestMigBackupSnapshotExportBucket_basic (58.26s)
+2024-06-26T00:57:43.9485876Z === RUN   TestAccBackupSnapshotExportBucket_basic
+2024-06-26T00:57:43.9486454Z === PAUSE TestAccBackupSnapshotExportBucket_basic
+2024-06-26T00:57:43.9487102Z === CONT  TestAccBackupSnapshotExportBucket_basic
+2024-06-26T00:57:43.9490137Z 2024/06/26 00:18:40 warning issue performing authorize: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b5e1d3994a7581feb8e44/cloudProviderAccess/667b5e5f3994a7581feba106 PATCH: HTTP 400 Bad Request (Error code: "CANNOT_ASSUME_ROLE") Detail: Atlas cannot assume the specified role (arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-3399154299059368079). Reason: Bad Request. Params: [arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-3399154299059368079] 
+2024-06-26T00:57:43.9492626Z 2024/06/26 00:18:40 retrying
+2024-06-26T00:57:43.9493217Z --- PASS: TestAccBackupSnapshotExportBucket_basic (42.00s)
+2024-06-26T00:57:43.9494011Z PASS
+2024-06-26T00:57:43.9494764Z Deleting execution project: test-acc-tf-p-2387088142570609852, id: 667b5e1d3994a7581feb8e44
+2024-06-26T00:57:43.9495949Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudbackupsnapshotexportbucket	100.576s
+2024-06-26T00:57:43.9496916Z === RUN   TestMigBackupSnapshotExportJob_basic
+2024-06-26T00:57:43.9498050Z     resource_cloud_backup_snapshot_export_job_migration_test.go:11: Creating execution project: test-acc-tf-p-3326169401290895822
+2024-06-26T00:57:43.9499029Z --- PASS: TestMigBackupSnapshotExportJob_basic (1088.93s)
+2024-06-26T00:57:43.9499698Z === RUN   TestAccBackupSnapshotExportJob_basic
+2024-06-26T00:57:43.9502670Z 2024/06/26 00:35:52 warning issue performing authorize: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b5e1e3994a7581feb8e45/cloudProviderAccess/667b6267595a110a50f7622c PATCH: HTTP 400 Bad Request (Error code: "CANNOT_ASSUME_ROLE") Detail: Atlas cannot assume the specified role (arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-4504392772174959461). Reason: Bad Request. Params: [arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-4504392772174959461] 
+2024-06-26T00:57:43.9505118Z 2024/06/26 00:35:52 retrying
+2024-06-26T00:57:43.9505719Z --- PASS: TestAccBackupSnapshotExportJob_basic (983.40s)
+2024-06-26T00:57:43.9506345Z PASS
+2024-06-26T00:57:43.9507026Z Deleting execution project: test-acc-tf-p-3326169401290895822, id: 667b5e1e3994a7581feb8e45
+2024-06-26T00:57:43.9508187Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudbackupsnapshotexportjob	2072.652s
+2024-06-26T00:57:43.9509170Z === RUN   TestMigCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9510347Z     resource_cloud_backup_snapshot_restore_job_migration_test.go:11: Creating execution project: test-acc-tf-p-5720627875905363776
+2024-06-26T00:57:43.9511309Z === PAUSE TestMigCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9511946Z === RUN   TestAccCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9512554Z === PAUSE TestAccCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9513355Z === RUN   TestAccCloudBackupSnapshotRestoreJob_basicDownload
+2024-06-26T00:57:43.9514036Z === PAUSE TestAccCloudBackupSnapshotRestoreJob_basicDownload
+2024-06-26T00:57:43.9514945Z === CONT  TestMigCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9515583Z === CONT  TestAccCloudBackupSnapshotRestoreJob_basicDownload
+2024-06-26T00:57:43.9516249Z === CONT  TestAccCloudBackupSnapshotRestoreJob_basic
+2024-06-26T00:57:43.9516952Z 2024/06/26 00:30:26 Automated restore cannot be cancelled
+2024-06-26T00:57:43.9517707Z 2024/06/26 00:33:32 Automated restore cannot be cancelled
+2024-06-26T00:57:43.9522086Z 2024-06-26T00:33:32.416Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR diagnostic_summary="error restore a snapshot: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b5e83595a110a50f71db9/clusters/test-acc-tf-c-7415201864123935359/backup/restoreJobs POST: HTTP 404 Not Found (Error code: \"SNAPSHOT_NOT_FOUND\") Detail: No snapshot with ID null exists for cluster test-acc-tf-c-7415201864123935359. Reason: Not Found. Params: [<nil> test-acc-tf-c-7415201864123935359]" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_cloud_backup_snapshot_restore_job tf_req_id=280d7b65-f280-801c-320c-7b4717997974 diagnostic_detail=""
+2024-06-26T00:57:43.9525819Z --- PASS: TestMigCloudBackupSnapshotRestoreJob_basic (931.93s)
+2024-06-26T00:57:43.9526739Z --- PASS: TestAccCloudBackupSnapshotRestoreJob_basic (1106.46s)
+2024-06-26T00:57:43.9527551Z --- PASS: TestAccCloudBackupSnapshotRestoreJob_basicDownload (1116.58s)
+2024-06-26T00:57:43.9528155Z PASS
+2024-06-26T00:57:43.9528883Z Deleting execution project: test-acc-tf-p-5720627875905363776, id: 667b5e83595a110a50f71db9
+2024-06-26T00:57:43.9530101Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudbackupsnapshotrestorejob	1118.601s
+2024-06-26T00:58:20.7849699Z === RUN   TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions
+2024-06-26T00:58:20.7851620Z === PAUSE TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions
+2024-06-26T00:58:20.7853337Z === RUN   TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7856403Z === PAUSE TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7857577Z === RUN   TestAccBackupRSOnlineArchiveBasic
+2024-06-26T00:58:20.7858669Z === PAUSE TestAccBackupRSOnlineArchiveBasic
+2024-06-26T00:58:20.7859743Z === RUN   TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7860951Z === PAUSE TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7862130Z === RUN   TestAccBackupRSOnlineArchiveInvalidProcessRegion
+2024-06-26T00:58:20.7863071Z === PAUSE TestAccBackupRSOnlineArchiveInvalidProcessRegion
+2024-06-26T00:58:20.7863987Z === CONT  TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions
+2024-06-26T00:58:20.7864780Z === CONT  TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7865515Z === CONT  TestAccBackupRSOnlineArchiveInvalidProcessRegion
+2024-06-26T00:58:20.7866137Z === CONT  TestAccBackupRSOnlineArchiveBasic
+2024-06-26T00:58:20.7866680Z === CONT  TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7871107Z 2024-06-26T00:44:00.556Z [ERROR] sdk.proto: Response contains error diagnostic: tf_resource_type=mongodbatlas_online_archive tf_proto_version=6.6 tf_req_id=c8a3754b-f23a-85c8-f5f6-92c5081f5690 diagnostic_severity=ERROR diagnostic_summary="error creating MongoDB Atlas Online Archive:: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b61f2595a110a50f75c59/clusters/test-acc-tf-c-7338829336765161387/onlineArchives POST: HTTP 400 Bad Request (Error code: \"INVALID_ATTRIBUTE\") Detail: Invalid attribute Data Process Region - Region specified. Reason: Bad Request. Params: [Data Process Region - Region]" diagnostic_detail="" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange
+2024-06-26T00:58:20.7874630Z 2024/06/26 00:44:09 timeout elapsed ....
+2024-06-26T00:58:20.7875196Z 2024/06/26 00:44:10 timeout elapsed ....
+2024-06-26T00:58:20.7875704Z 2024/06/26 00:44:19 timeout elapsed ....
+2024-06-26T00:58:20.7876244Z 2024/06/26 00:44:19 timeout elapsed ....
+2024-06-26T00:58:20.7876742Z querying for job 
+2024-06-26T00:58:20.7877660Z querying for job 
+2024-06-26T00:58:20.7878126Z querying for job 
+2024-06-26T00:58:20.7878488Z querying for job 
+2024-06-26T00:58:20.7878947Z 2024/06/26 00:44:39 timeout elapsed ....
+2024-06-26T00:58:20.7879483Z 2024/06/26 00:44:41 timeout elapsed ....
+2024-06-26T00:58:20.7879955Z 2024/06/26 00:44:49 timeout elapsed ....
+2024-06-26T00:58:20.7880687Z 2024/06/26 00:44:49 timeout elapsed ....
+2024-06-26T00:58:20.7881171Z querying for job 
+2024-06-26T00:58:20.7881664Z querying for job 
+2024-06-26T00:58:20.7882036Z querying for job 
+2024-06-26T00:58:20.7882414Z querying for job 
+2024-06-26T00:58:20.7883111Z --- PASS: TestAccBackupRSOnlineArchiveInvalidProcessRegion (817.87s)
+2024-06-26T00:58:20.7884725Z 2024-06-26T00:49:54.147Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest4151012881 test_step_number=2 test_name=TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions
+2024-06-26T00:58:20.7885982Z   error=
+2024-06-26T00:58:20.7886385Z   | Error running apply: exit status 1
+2024-06-26T00:58:20.7886843Z   | 
+2024-06-26T00:58:20.7887522Z   | Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7888156Z   | 
+2024-06-26T00:58:20.7888655Z   |   with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7889483Z   |   on terraform_plugin_test.tf line 54, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7890453Z   |   54: \tresource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7890997Z   | 
+2024-06-26T00:58:20.7891731Z    test_terraform_path=/home/runner/work/_temp/b47951ba-c5d3-4ed7-b1ce-063e6a2340b9/terraform
+2024-06-26T00:58:20.7892648Z === NAME  TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions
+2024-06-26T00:58:20.7896330Z     resource_online_archive_migration_test.go:30: Step 2/3 error: Error running apply: exit status 1
+2024-06-26T00:58:20.7897605Z         
+2024-06-26T00:58:20.7898690Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7899848Z         
+2024-06-26T00:58:20.7900952Z           with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7902027Z           on terraform_plugin_test.tf line 54, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7903074Z           54: 	resource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7903647Z         
+2024-06-26T00:58:20.7906158Z 2024-06-26T00:50:02.012Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="" diagnostic_severity=ERROR diagnostic_summary="error creating MongoDB Atlas Online Archive:: undefined response type" tf_req_id=6a5ac751-41c4-5d13-76ec-d8f762a7fa7b tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_online_archive
+2024-06-26T00:58:20.7909037Z 2024-06-26T00:50:02.018Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest2048657264 test_step_number=2
+2024-06-26T00:58:20.7909943Z   error=
+2024-06-26T00:58:20.7910410Z   | Error running apply: exit status 1
+2024-06-26T00:58:20.7910865Z   | 
+2024-06-26T00:58:20.7911440Z   | Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7912169Z   | 
+2024-06-26T00:58:20.7912610Z   |   with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7913513Z   |   on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7914393Z   |   52: \tresource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7915061Z   | 
+2024-06-26T00:58:20.7916017Z    test_name=TestAccBackupRSOnlineArchive test_terraform_path=/home/runner/work/_temp/b47951ba-c5d3-4ed7-b1ce-063e6a2340b9/terraform
+2024-06-26T00:58:20.7916997Z === NAME  TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7918346Z     resource_online_archive_test.go:32: Step 2/7 error: Error running apply: exit status 1
+2024-06-26T00:58:20.7919682Z         
+2024-06-26T00:58:20.7920573Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7921224Z         
+2024-06-26T00:58:20.7921829Z           with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7923085Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7924127Z           52: 	resource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7924792Z         
+2024-06-26T00:58:20.7927280Z 2024-06-26T00:50:02.042Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=cc2e1875-aac2-18de-6bec-0d27ee00a10f tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_online_archive diagnostic_summary="error creating MongoDB Atlas Online Archive:: undefined response type" diagnostic_detail="" diagnostic_severity=ERROR
+2024-06-26T00:58:20.7930642Z 2024-06-26T00:50:02.049Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=2 test_working_directory=/tmp/plugintest2833964334 test_name=TestAccBackupRSOnlineArchiveWithProcessRegion test_terraform_path=/home/runner/work/_temp/b47951ba-c5d3-4ed7-b1ce-063e6a2340b9/terraform
+2024-06-26T00:58:20.7932277Z   error=
+2024-06-26T00:58:20.7932675Z   | Error running apply: exit status 1
+2024-06-26T00:58:20.7933175Z   | 
+2024-06-26T00:58:20.7934320Z   | Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7935070Z   | 
+2024-06-26T00:58:20.7935559Z   |   with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7936385Z   |   on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7937313Z   |   52: \tresource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7937926Z   | 
+2024-06-26T00:58:20.7938407Z   
+2024-06-26T00:58:20.7938870Z === NAME  TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7939774Z     resource_online_archive_test.go:183: Step 2/4 error: Error running apply: exit status 1
+2024-06-26T00:58:20.7940563Z         
+2024-06-26T00:58:20.7941236Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7941974Z         
+2024-06-26T00:58:20.7942499Z           with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7943507Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7944500Z           52: 	resource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7945036Z         
+2024-06-26T00:58:20.7945708Z --- FAIL: TestAccBackupRSOnlineArchiveWithProcessRegion (1139.13s)
+2024-06-26T00:58:20.7946475Z --- FAIL: TestAccBackupRSOnlineArchive (1149.23s)
+2024-06-26T00:58:20.7947274Z --- FAIL: TestMigBackupRSOnlineArchiveWithNoChangeBetweenVersions (1181.71s)
+2024-06-26T00:58:20.7951021Z 2024-06-26T00:58:20.765Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.6 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_online_archive diagnostic_summary="error deleting MongoDB Atlas Online Archive: DELETE https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/667b61f23994a7581febe571/clusters/test-acc-tf-c-3339430331775515006/onlineArchives/667b64843994a7581fec09a0: 504 (request \"\")  archive_id (667b64843994a7581fec09a0)" diagnostic_detail="" diagnostic_severity=ERROR tf_req_id=3d2dc544-0909-3e73-abfd-003388f44a94
+2024-06-26T00:58:20.7955462Z 2024-06-26T00:58:20.773Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_terraform_path=/home/runner/work/_temp/b47951ba-c5d3-4ed7-b1ce-063e6a2340b9/terraform test_working_directory=/tmp/plugintest4035785384 test_step_number=3 test_name=TestAccBackupRSOnlineArchiveBasic
+2024-06-26T00:58:20.7957192Z   error=
+2024-06-26T00:58:20.7957594Z   | exit status 1
+2024-06-26T00:58:20.7958207Z   | 
+2024-06-26T00:58:20.7959999Z   | Error: error deleting MongoDB Atlas Online Archive: DELETE https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/667b61f23994a7581febe571/clusters/test-acc-tf-c-3339430331775515006/onlineArchives/667b64843994a7581fec09a0: 504 (request "")  archive_id (667b64843994a7581fec09a0)
+2024-06-26T00:58:20.7961624Z   | 
+2024-06-26T00:58:20.7962053Z   
+2024-06-26T00:58:20.7962441Z === NAME  TestAccBackupRSOnlineArchiveBasic
+2024-06-26T00:58:20.7963565Z     resource_online_archive_test.go:132: Error running post-test destroy, there may be dangling resources: exit status 1
+2024-06-26T00:58:20.7964356Z         
+2024-06-26T00:58:20.7966430Z         Error: error deleting MongoDB Atlas Online Archive: DELETE https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/667b61f23994a7581febe571/clusters/test-acc-tf-c-3339430331775515006/onlineArchives/667b64843994a7581fec09a0: 504 (request "")  archive_id (667b64843994a7581fec09a0)
+2024-06-26T00:58:20.7968010Z         
+2024-06-26T00:58:20.7968511Z --- FAIL: TestAccBackupRSOnlineArchiveBasic (1466.50s)
+2024-06-26T00:58:20.7969097Z FAIL
+2024-06-26T00:58:20.7969853Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/onlinearchive	1466.517s
+2024-06-26T00:58:20.7970567Z FAIL
+2024-06-26T00:58:20.9124018Z make: *** [GNUmakefile:47: testacc] Error 1
+2024-06-26T00:58:20.9144168Z ##[error]Process completed with exit code 2.
+2024-06-26T00:58:20.9242035Z Post job cleanup.
+2024-06-26T00:58:21.0166080Z [command]/usr/bin/git version
+2024-06-26T00:58:21.0202740Z git version 2.45.2
+2024-06-26T00:58:21.0243979Z Temporarily overriding HOME='/home/runner/work/_temp/34858a58-eba0-4660-a05c-18801f232b3b' before making global git config changes
+2024-06-26T00:58:21.0245375Z Adding repository directory to the temporary git global config as a safe directory
+2024-06-26T00:58:21.0256260Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2024-06-26T00:58:21.0291034Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2024-06-26T00:58:21.0324110Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2024-06-26T00:58:21.0580324Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2024-06-26T00:58:21.0602266Z http.https://github.com/.extraheader
+2024-06-26T00:58:21.0616760Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2024-06-26T00:58:21.0650960Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2024-06-26T00:58:21.1137613Z Cleaning up orphan processes
