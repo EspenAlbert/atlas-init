@@ -26,6 +26,12 @@ test_suites:
     use_vpc_peering: true
     use_aws_vars: true
     use_aws_vpc: true
+- name: private_endpoint_regional_mode
+  repo_go_packages:
+    tf:
+    - internal/service/privateendpointregionalmode
+  vars:
+    use_aws_vars: true
 - name: privatelink
   repo_go_packages:
     tf:
