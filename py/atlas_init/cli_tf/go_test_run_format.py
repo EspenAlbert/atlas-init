@@ -27,4 +27,5 @@ def fail_test_summary(runs: list[GoTestRun]) -> str:
     failed_runs = [r for r in runs if r.is_failure]
     failed_details: list[str] = [run.finish_summary() for run in failed_runs]
     failed_names = [f"- {run.name}" for run in failed_runs]
-    return "\n".join(failed_details) + "\n" + "\n".join(failed_names)
+    delimiter = "\n" + "-" * 40 + "\n"
+    return "\n".join(failed_details) + delimiter + "\n".join(failed_names)
