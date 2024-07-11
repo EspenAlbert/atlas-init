@@ -10,6 +10,7 @@ from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_helper.run import (
+    add_to_clipboard,
     run_binary_command_is_ok,
     run_command_exit_on_failure,
     run_command_receive_result,
@@ -135,7 +136,7 @@ def ci_tests(
     test_group_name: str = typer.Option("", "-g"),
     max_days_ago: int = typer.Option(1, "-d", "--days"),
     include_passing_jobs: bool = typer.Option(False, "-p", "--passing"),
-):
+):  # sourcery skip: use-named-expression
     repo_path = current_repo_path(Repo.TF)
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
     os.environ[GH_TOKEN_ENV_NAME] = token
@@ -144,6 +145,7 @@ def ci_tests(
         include_job=include_test_jobs(test_group_name),
     )
     summary: list[str] = []
+    failing_names: dict[str, str] = {}
     for job_id in sorted(job_runs.keys(), reverse=True):
         runs = job_runs[job_id]
         if not runs:
@@ -158,7 +160,12 @@ def ci_tests(
         ]
         if fail_summary := fail_test_summary(runs):
             job_lines.append(indent(fail_summary, "  "))
+            failing_names |= {run.name: run.url for run in runs if run.is_failure}
         elif not include_passing_jobs:
             continue
         summary.extend(job_lines)
     logger.info(f"# SUMMARY: {'\n'.join(summary)}")
+    names_formatted = "\n".join(f"- [{name}]({url})" for name, url in failing_names.items())
+    if names_formatted:
+        add_to_clipboard(names_formatted, logger)
+        logger.info(f"## Failing tests: \n{names_formatted}")

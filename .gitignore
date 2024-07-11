@@ -11,6 +11,7 @@ tf/playground_caller.tf
 schema/
 tf2
 tf3
+tf4
 dist
 .ruff_cache
 py/.coverage

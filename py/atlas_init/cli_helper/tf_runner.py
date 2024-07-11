@@ -1,6 +1,5 @@
 import logging
 import os
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -9,7 +8,7 @@ from model_lib import dump
 from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
 from atlas_init.cli_helper.run import (
-    find_binary_on_path,
+    add_to_clipboard,
     run_command_is_ok,
     run_command_receive_result,
 )
@@ -83,10 +82,7 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
     env_generated = settings.env_vars_generated
     if env_generated.exists():
         clipboard_content = "\n".join(f"export {line}" for line in env_generated.read_text().splitlines())
-        pb_binary = find_binary_on_path("pbcopy", logger, allow_missing=True)
-        if not pb_binary:
-            return
-        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)
+        add_to_clipboard(clipboard_content, logger)
         logger.info("loaded env-vars to clipboard ✅")
 
 
