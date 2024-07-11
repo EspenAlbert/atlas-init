@@ -249,8 +249,9 @@ def sdk_upgrade(
 def pre_commit(
     skip_build: bool = typer.Option(default=False),
     skip_lint: bool = typer.Option(default=False),
+    max_issues: int = typer.Option(1000, "-m", "--max"),
 ):
-    golang_ci_lint_args = "--max-same-issues 1000 --max-issues-per-linter 1000"
+    golang_ci_lint_args = f"--max-same-issues {max_issues} --max-issues-per-linter {max_issues}"
     match current_repo():
         case Repo.CFN:
             repo_path, resource_path, r_name = find_paths()
