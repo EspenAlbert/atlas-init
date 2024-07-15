@@ -160,7 +160,7 @@ def ci_tests(
         ]
         if fail_summary := fail_test_summary(runs):
             job_lines.append(indent(fail_summary, "  "))
-            failing_names |= {run.name: run.url for run in runs if run.is_failure}
+            failing_names |= {f"{run.name} {run.runtime_human}": run.url for run in runs if run.is_failure}
         elif not include_passing_jobs:
             continue
         summary.extend(job_lines)
