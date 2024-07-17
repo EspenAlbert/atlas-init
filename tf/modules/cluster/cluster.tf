@@ -28,42 +28,54 @@ variable "cloud_backup" {
 
 locals {
   use_free_cluster = var.instance_size == "M0"
-  cluster          = try(mongodbatlas_cluster.project_cluster_free[0], mongodbatlas_cluster.project_cluster[0])
-  container_id     = local.cluster.container_id
+  cluster          = try(mongodbatlas_advanced_cluster.project_cluster_free[0], mongodbatlas_advanced_cluster.project_cluster[0])
+  container_id     = one(values(local.cluster.replication_specs[0].container_id))
+  mongodb_url = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.connection_strings[0].standard_srv, "mongodb+srv://", "")}/?retryWrites=true"
 }
-resource "mongodbatlas_cluster" "project_cluster_free" {
+resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
   count      = local.use_free_cluster ? 1 : 0
   project_id = var.project_id
   name       = var.cluster_name
+  cluster_type = "REPLICASET"
 
-  provider_name               = "TENANT"
-  backing_provider_name       = "AWS"
-  provider_region_name        = var.region
-  provider_instance_size_name = var.instance_size
+  replication_specs {
+    region_configs {
+      auto_scaling {
+        disk_gb_enabled = false
+      }
+      priority = 7
+      provider_name               = "TENANT"
+      backing_provider_name       = "AWS"
+      region_name = var.region
+      electable_specs {
+        instance_size = var.instance_size
+      }
+    }
+  }
 }
 
-resource "mongodbatlas_cluster" "project_cluster" {
+resource "mongodbatlas_advanced_cluster" "project_cluster" {
   count        = local.use_free_cluster ? 0 : 1
   project_id   = var.project_id
   name         = var.cluster_name
-  cloud_backup = var.cloud_backup
+  backup_enabled = var.cloud_backup
+  disk_size_gb                = 10
   cluster_type = "REPLICASET"
+ 
   replication_specs {
-    num_shards = 1
-    regions_config {
-      region_name     = var.region
-      electable_nodes = 3
+    region_configs {
+      auto_scaling {
+        disk_gb_enabled = false
+      }
       priority        = 7
-      read_only_nodes = 0
+      provider_name = "AWS"
+      region_name     = var.region
+      electable_specs {
+        node_count = 3
+        instance_size = var.instance_size
+      }
     }
   }
-  auto_scaling_disk_gb_enabled = false
-  mongo_db_major_version       = "5.0"
-
-  # Provider Settings "block"
-  provider_name               = "AWS"
-  disk_size_gb                = 10
-  provider_instance_size_name = var.instance_size
 }
 
 resource "mongodbatlas_database_user" "mongo-user" {
@@ -90,11 +102,11 @@ output "info" {
   sensitive = true
   value = {
     standard_srv         = local.cluster.connection_strings[0].standard_srv
-    mongo_url            = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/?retryWrites=true"
+    mongo_url            = local.mongodb_url
     mongo_username       = var.mongo_user
     mongo_password       = var.mongo_password
-    mongo_url_with_db    = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.srv_address, "mongodb+srv://", "")}/${var.db_in_url}?retryWrites=true"
-    cluster_container_id = local.cluster.container_id
+    mongo_url_with_db    = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.connection_strings[0].standard_srv, "mongodb+srv://", "")}/${var.db_in_url}?retryWrites=true"
+    cluster_container_id = local.container_id
   }
 }
 
@@ -102,5 +114,6 @@ output "env_vars" {
   value = {
     MONGODB_ATLAS_CLUSTER_NAME = var.cluster_name
     MONGODB_ATLAS_CONTAINER_ID = local.container_id
+    MONGODB_URL = local.mongodb_url
   }
 }
