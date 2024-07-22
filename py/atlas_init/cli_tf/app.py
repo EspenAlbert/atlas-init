@@ -1,9 +1,9 @@
 import logging
 import os
 import sys
+from collections import defaultdict
 from datetime import timedelta
 from pathlib import Path
-from textwrap import indent
 
 import typer
 from zero_3rdparty.datetime_utils import utc_now
@@ -19,9 +19,10 @@ from atlas_init.cli_tf.changelog import convert_to_changelog
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     find_test_runs,
+    include_filestems,
     include_test_jobs,
 )
-from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
+from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -135,7 +136,9 @@ def example_gen(
 def ci_tests(
     test_group_name: str = typer.Option("", "-g"),
     max_days_ago: int = typer.Option(1, "-d", "--days"),
-    include_passing_jobs: bool = typer.Option(False, "-p", "--passing"),
+    branch: str = typer.Option("master", "-b", "--branch"),
+    workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
+    only_last_workflow: bool = typer.Option(False, "-l", "--last"),
 ):  # sourcery skip: use-named-expression
     repo_path = current_repo_path(Repo.TF)
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
@@ -143,29 +146,40 @@ def ci_tests(
     job_runs = find_test_runs(
         utc_now() - timedelta(days=max_days_ago),
         include_job=include_test_jobs(test_group_name),
+        branch=branch,
+        include_workflow=include_filestems(set(workflow_file_stems.split(","))),
     )
-    summary: list[str] = []
-    failing_names: dict[str, str] = {}
-    for job_id in sorted(job_runs.keys(), reverse=True):
-        runs = job_runs[job_id]
+    test_results: dict[str, list[GoTestRun]] = defaultdict(list)
+    workflow_ids = set()
+    for key in sorted(job_runs.keys(), reverse=True):
+        workflow_id, job_id = key
+        workflow_ids.add(workflow_id)
+        if only_last_workflow and len(workflow_ids) > 1:
+            logger.info("only showing last workflow")
+            break
+        runs = job_runs[key]
         if not runs:
             logger.warning(f"no go tests for job_id={job_id}")
             continue
-        job, job_summary_text = job_summary(runs)
-        job_lines = [
-            "",
-            "",
-            f"Summary for job: {job.name} @ {job.url}",
-            job_summary_text,
-        ]
-        if fail_summary := fail_test_summary(runs):
-            job_lines.append(indent(fail_summary, "  "))
-            failing_names |= {f"{run.name} {run.runtime_human}": run.url for run in runs if run.is_failure}
-        elif not include_passing_jobs:
-            continue
-        summary.extend(job_lines)
-    logger.info(f"# SUMMARY: {'\n'.join(summary)}")
-    names_formatted = "\n".join(f"- [{name}]({url})" for name, url in failing_names.items())
-    if names_formatted:
-        add_to_clipboard(names_formatted, logger)
-        logger.info(f"## Failing tests: \n{names_formatted}")
+        for run in runs:
+            test_results[run.name].append(run)
+
+    failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
+    if not failing_names:
+        logger.info("ALL TESTS PASSED! ✅")
+        return
+    summary = ["# SUMMARY OF FAILING TESTS"]
+    summary_fail_details: list[str] = ["# FAIL DETAILS"]
+
+    for fail_name in failing_names:
+        fail_tests = test_results[fail_name]
+        summary.append(f"- {fail_name} has {len(fail_tests)} failures:")
+        summary.extend(
+            f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})" for fail_run in fail_tests
+        )
+        summary_fail_details.append(f"\n\n ## {fail_name} details:")
+        summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)
+    logger.info("\n".join(summary_fail_details))
+    summary_str = "\n".join(summary)
+    add_to_clipboard(summary_str, logger)
+    logger.info(summary_str)

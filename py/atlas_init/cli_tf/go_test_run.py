@@ -58,6 +58,10 @@ class GoTestRun(Entity):
         return "\n".join(lines + self.context_lines)
 
     @property
+    def when(self) -> str:
+        return humanize.naturaltime(self.ts)
+
+    @property
     def runtime_human(self) -> str:
         if seconds := self.run_seconds:
             return humanize.naturaldelta(seconds)
