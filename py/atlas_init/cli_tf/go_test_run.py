@@ -5,6 +5,7 @@ import re
 from collections.abc import Iterable
 from enum import StrEnum
 
+import humanize
 from github.WorkflowJob import WorkflowJob
 from model_lib import Entity, Event, utc_datetime
 from pydantic import Field
@@ -55,6 +56,16 @@ class GoTestRun(Entity):
             self.url,
         ]
         return "\n".join(lines + self.context_lines)
+
+    @property
+    def when(self) -> str:
+        return humanize.naturaltime(self.ts)
+
+    @property
+    def runtime_human(self) -> str:
+        if seconds := self.run_seconds:
+            return humanize.naturaldelta(seconds)
+        return "unknown"
 
     @property
     def context_lines_str(self) -> str:

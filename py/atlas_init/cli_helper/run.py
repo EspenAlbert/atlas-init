@@ -13,7 +13,11 @@ StrT = TypeVar("StrT", bound=str)
 
 
 def run_command_is_ok(
-    cmd: list[StrT], env: dict | None, cwd: Path | str, logger: Logger, output: None | IO = None
+    cmd: list[StrT],
+    env: dict | None,
+    cwd: Path | str,
+    logger: Logger,
+    output: IO | None = None,
 ) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
@@ -83,3 +87,10 @@ def run_command_receive_result(command: str, cwd: Path, logger: Logger, env: dic
         logger.critical(f"command failed {command}, {output_text}")
         raise typer.Exit(1)
     return output_text
+
+
+def add_to_clipboard(clipboard_content: str, logger: Logger):
+    if pb_binary := find_binary_on_path("pbcopy", logger, allow_missing=True):
+        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)
+    else:
+        logger.warning("pbcopy not found on $PATH")

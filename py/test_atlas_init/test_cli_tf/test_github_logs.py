@@ -27,8 +27,8 @@ def test_find_test_failures():
         utc_now() - timedelta(days=8),
         include_job=include_test_jobs("cluster_outage_simulation"),
     )
-    for job_id in sorted(job_runs.keys(), reverse=True):
-        runs = job_runs[job_id]
+    for key in sorted(job_runs.keys(), reverse=True):
+        runs = job_runs[key]
         summary = job_summary(runs)
         print(summary)
         if fail_summary := fail_test_summary(runs):

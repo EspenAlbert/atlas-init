@@ -6,6 +6,7 @@ from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
+from typing import NamedTuple
 
 import requests
 from github import Auth, Github
@@ -43,15 +44,18 @@ def get_repo(repo_id: str) -> Repository:
     return g.get_repo(repo_id)
 
 
-_USED_FILESTEMS = {
+_DEFAULT_FILESTEMS = {
     "test-suite",
     "terraform-compatibility-matrix",
 }
 
 
-def include_test_suite_or_compat_workflows(run: WorkflowRun) -> bool:
-    workflow_stem = stem_name(run.path)
-    return workflow_stem in _USED_FILESTEMS
+def include_filestems(stems: set[str]) -> Callable[[WorkflowRun], bool]:
+    def inner(run: WorkflowRun) -> bool:
+        workflow_stem = stem_name(run.path)
+        return workflow_stem in stems
+
+    return inner
 
 
 def stem_name(workflow_path: str) -> str:
@@ -62,18 +66,24 @@ def tf_repo() -> Repository:
     return get_repo(GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS)
 
 
+class WorkflowJobId(NamedTuple):
+    workflow_id: int
+    job_id: int
+
+
 def find_test_runs(
     since: datetime,
     include_workflow: Callable[[WorkflowRun], bool] | None = None,
     include_job: Callable[[WorkflowJob], bool] | None = None,
-) -> dict[int, list[GoTestRun]]:
-    include_workflow = include_workflow or include_test_suite_or_compat_workflows
+    branch: str = "master",
+) -> dict[WorkflowJobId, list[GoTestRun]]:
+    include_workflow = include_workflow or include_filestems(_DEFAULT_FILESTEMS)
     include_job = include_job or include_test_jobs()
     jobs_found = defaultdict(list)
     repository = tf_repo()
     for workflow in repository.get_workflow_runs(
         created=f">{since.strftime('%Y-%m-%d')}",
-        branch="master",
+        branch=branch,
         exclude_pull_requests=True,  # type: ignore
     ):
         if not include_workflow(workflow):
@@ -91,6 +101,7 @@ def find_test_runs(
             done, not_done = wait(futures.keys(), timeout=300)
             for f in not_done:
                 logger.warning(f"timeout to find go tests for job = {futures[f].html_url}")
+        workflow_id = workflow.id
         for f in done:
             job = futures[f]
             try:
@@ -98,7 +109,7 @@ def find_test_runs(
             except Exception:
                 logger.exception(f"failed to find go tests for job: {job.html_url}, error 👆")
                 continue
-            jobs_found[job.id].extend(go_test_runs)
+            jobs_found[WorkflowJobId(workflow_id, job.id)].extend(go_test_runs)
     return jobs_found
 
 
