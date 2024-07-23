@@ -14,8 +14,11 @@ def read_examples() -> list[tuple[str, str, str]]:
     return sorted([as_test_case(path) for path in TEST_DATA.glob("*_expected.tf")])
 
 
+examples = read_examples()
+
+
 @pytest.mark.parametrize(
-    "name,legacy,expected", read_examples(), ids=[name for name, *_ in read_examples()]
+    "name,legacy,expected", examples, ids=[name for name, *_ in examples]
 )
 def test_convert_cluster(name, legacy, expected):
     new_config = convert_cluster_config(legacy)

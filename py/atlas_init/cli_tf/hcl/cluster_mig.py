@@ -67,6 +67,7 @@ _removed_attributes_root = {
     "provider_volume_type",
     "provider_region_name",
     "replication_factor",
+    "num_shards",
 }
 _removed_attributes_region_config = {
     "electable_nodes",
@@ -95,7 +96,9 @@ def attribute_migration(
 
 
 def write_attributes(
-    level: int, attributes: dict[str, str], block_name: Literal["root", "", "region_config"] = ""
+    level: int,
+    attributes: dict[str, str],
+    block_name: Literal["root", "", "region_config"] = "",
 ) -> list[str]:
     lines = []
     for key, value in attributes.items():
@@ -129,7 +132,8 @@ class ClusterMigContext:
     analytics_nodes: str = ""
 
     def add_region_config(self, region_config: dict[str, str]) -> Self:
-        return type(self)(**as_mig_context_kwargs(region_config), **asdict(self))
+        kwargs = asdict(self) | as_mig_context_kwargs(region_config)
+        return type(self)(**kwargs)
 
     @property
     def auto_scaling_lines(self) -> list[str]:
@@ -147,7 +151,8 @@ class ClusterMigContext:
         if not auto_scaling_block:
             return []
         return [
-            indent(3, "auto_scaling {", *write_attributes(4, auto_scaling_block)),
+            indent(3, "auto_scaling {"),
+            *write_attributes(4, auto_scaling_block),
             indent(3, "}"),
         ]
 
@@ -181,7 +186,8 @@ class ClusterMigContext:
             return []
         analytics_block = self.hardware_spec(self.analytics_nodes)
         return [
-            indent(3, "analytics_specs {", *write_attributes(4, analytics_block)),
+            indent(3, "analytics_specs {"),
+            *write_attributes(4, analytics_block),
             indent(3, "}"),
         ]
 
@@ -191,7 +197,8 @@ class ClusterMigContext:
             return []
         read_only_block = self.hardware_spec(self.read_only_nodes)
         return [
-            indent(3, "read_only_specs {", *write_attributes(4, read_only_block)),
+            indent(3, "read_only_specs {"),
+            *write_attributes(4, read_only_block),
             indent(3, "}"),
         ]
 
@@ -222,7 +229,7 @@ def as_mig_context_kwargs(attributes: dict[str, str]) -> dict[str, str]:
 
 _default_replication_spec_legacy = """\
   replication_specs {
-    region_config {
+    regions_config {
       priority = 7
     }
   }"""
@@ -269,7 +276,7 @@ def write_replication_spec(block: Block, mig_context: ClusterMigContext) -> list
         *write_attributes(2, attributes),
     ]
     for block in nested_blocks:
-        if block.name == "region_config":
+        if block.name == "regions_config":
             lines.extend(write_region_config(block, mig_context))
         else:
             lines.append(block.hcl)
