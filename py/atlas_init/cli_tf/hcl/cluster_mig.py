@@ -42,13 +42,13 @@ def convert_cluster_config(hcl_config: str) -> str:
     - node_counts are specs in new
     - auto_scaling_xx has moved to a block
     """
-    replacements = {}
+    converted_blocks = {}
     for block in iter_resource_blocks(hcl_config):
         if block.type != "mongodbatlas_cluster":
             continue
-        replacements[block] = convert_cluster_block(block)
-    logger.info(f"found {len(replacements)} blocks to replace")
-    for block, new_block in replacements.items():
+        converted_blocks[block] = convert_cluster_block(block)
+    logger.info(f"found {len(converted_blocks)} blocks to replace")
+    for block, new_block in converted_blocks.items():
         hcl_config = hcl_config.replace(block.hcl, new_block)
     return hcl_config
 
@@ -110,7 +110,7 @@ def write_attributes(
     return lines
 
 
-@dataclass()
+@dataclass
 class ClusterMigContext:
     # root level
     provider_name: str = ""
