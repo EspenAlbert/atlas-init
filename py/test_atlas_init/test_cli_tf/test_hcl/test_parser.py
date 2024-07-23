@@ -1,5 +1,5 @@
+from atlas_init.cli_tf.hcl.cluster_mig import get_replication_specs
 from atlas_init.cli_tf.hcl.parser import (
-    Block,
     ResourceBlock,
     hcl_attrs,
     iter_blocks,
@@ -47,7 +47,7 @@ def test_iter_resource_blocks():
             name="project_cluster_free",
             type="mongodbatlas_cluster",
             line_start=1,
-            indent="",
+            level=0,
             hcl=before1,
             line_end=10,
         )
@@ -57,7 +57,7 @@ def test_iter_resource_blocks():
             name="project_cluster_free",
             type="mongodbatlas_advanced_cluster",
             line_start=1,
-            indent="",
+            level=0,
             hcl=after1,
             line_end=21,
         )
@@ -132,12 +132,6 @@ resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
     }
   }
 }"""
-
-
-def get_replication_specs(resource: Block) -> list[Block]:
-    return [
-        block for block in iter_blocks(resource) if block.name == "replication_specs"
-    ]
 
 
 def test_iter_blocks():

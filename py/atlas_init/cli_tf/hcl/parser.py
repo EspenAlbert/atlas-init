@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 
 @dataclass(eq=True, frozen=False)
@@ -45,28 +45,22 @@ class ResourceBlock(Block):
         return hash((self.name, self.type))
 
 
-_resource_pattern = re.compile(
-    r"resource\s+\"(?P<type>[^\"]+)\"\s+\"(?P<name>[^\"]+)\"\s+\{"
-)
+_resource_pattern = re.compile(r"resource\s+\"(?P<type>[^\"]+)\"\s+\"(?P<name>[^\"]+)\"\s+\{")
 
 
 def iter_resource_blocks(hcl_config: str) -> Iterable[ResourceBlock]:
     # support line_nr indexing
-    lines = [""] + hcl_config.splitlines()
+    lines = ["", *hcl_config.splitlines()]
     current_block = None
     for i, line in enumerate(lines):
         if current_block is not None:
             if line.rstrip() == "}":
-                current_block.end_block(
-                    i, "\n".join(lines[current_block.line_start : i + 1])
-                )
+                current_block.end_block(i, "\n".join(lines[current_block.line_start : i + 1]))
                 yield current_block
                 current_block = None
             continue
         if match := _resource_pattern.match(line):
-            assert (
-                current_block is None
-            ), "Nested blocks resource blocks are not supported"
+            assert current_block is None, "Nested blocks resource blocks are not supported"
             current_block = ResourceBlock(
                 name=match.group("name"),
                 type=match.group("type"),
@@ -74,7 +68,8 @@ def iter_resource_blocks(hcl_config: str) -> Iterable[ResourceBlock]:
                 level=0,
             )
     if current_block is not None:
-        raise ValueError("Final resource block not closed")
+        err_msg = "Final resource block not closed"
+        raise ValueError(err_msg)
 
 
 _block_pattern = re.compile(r"(?P<name>[^\{]+)[\s=]+\{")
@@ -106,15 +101,14 @@ def iter_blocks(block: Block, level: int | None = None) -> Iterable[Block]:
                     hcl="\n".join(block_lines),
                 )
     if line_level_start_names.get(level) is not None:
-        raise ValueError(
-            f"Unfinished block @ {line_nr} in {block.name} at level {level}"
-        )
+        raise ValueError(f"Unfinished block @ {line_nr} in {block.name} at level {level}")
 
 
 def hcl_attrs(block: Block) -> dict[str, str]:
     nested_blocks = list(iter_blocks(block, level=block.level + 1))
     block_lines = as_block_lines(nested_blocks)
     return _hcl_attrs(block, block_lines)
+
 
 def _hcl_attrs(block: Block, block_lines: set[int]) -> dict[str, str]:
     attrs = defaultdict(list)
@@ -123,15 +117,11 @@ def _hcl_attrs(block: Block, block_lines: set[int]) -> dict[str, str]:
         if line_nr in block_lines:
             continue
         if "=" in line:
-            assert (
-                attr_name is None
-            ), f"unfinished attribute {attr_name}, new attribute at {line_nr}"
+            assert attr_name is None, f"unfinished attribute {attr_name}, new attribute at {line_nr}"
             attr_name, attr_value = line.split("=", 1)
             attrs[attr_name.strip()] = [attr_value.strip()]
             if line.rstrip().endswith(("{", "[", ",")):
-                raise ValueError(
-                    f"unsupported nested attribute assignment on {line_nr} in block: {block.name}"
-                )
+                raise ValueError(f"unsupported nested attribute assignment on {line_nr} in block: {block.name}")
             attr_name = None
     return {k: "\n".join(v) for k, v in attrs.items()}
 
