@@ -1,8 +1,10 @@
 import logging
 import os
 from pathlib import Path
+import re
 import pytest
 
+from atlas_init.cli_tf.hcl.cli import convert_and_validate, ensure_no_plan_changes
 from atlas_init.cli_tf.hcl.cluster_mig import (
     convert_cluster_config,
     convert_clusters,
@@ -47,3 +49,81 @@ def test_convert_cluster(name, legacy, expected):
 def test_live_no_plan_changes():
     tf_dir = Path(os.environ["TF_DIR"])
     assert convert_clusters(tf_dir)
+
+_main_tf = """\
+terraform {
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "1.16.0"
+    }
+  }
+}
+provider "mongodbatlas" {
+}
+
+variable "instance_size" {
+  type = string
+  default = "M10"
+}
+variable "region" {
+  type = string
+  default = "US_EAST_1"
+}
+
+locals {
+    use_free_cluster = true
+}
+
+resource "mongodbatlas_project" "this" {
+  name = "pytest"
+  org_id = "ORG_ID"
+}
+"""
+
+def _replace_project_id_and_cluster_name(hcl: str, name: str) -> str:
+    project_id_pattern = re.compile(r'^\s+project_id\s*=(.*)$', re.M)
+    hcl = project_id_pattern.sub(r'  project_id = mongodbatlas_project.this.id', hcl)
+    name_pattern = re.compile(r'^\s+name\s*=(.*)$', re.M)
+    return name_pattern.sub(rf'  name = "{name}"', hcl)
+
+_example = """\
+resource "mongodbatlas_cluster" "this" {
+  project_id = "ORG_ID"
+  name = "pytest-cluster"
+  cluster_type = "REPLICASET"
+}"""
+
+def test_replace_project_id_and_cluster_name():
+    assert _replace_project_id_and_cluster_name(_example, "pytest") == """\
+resource "mongodbatlas_cluster" "this" {
+  project_id = mongodbatlas_project.this.id
+  name = "pytest"
+  cluster_type = "REPLICASET"
+}"""
+
+
+
+def _project_main_tf(org_id: str) -> str:
+    return _main_tf.replace("ORG_ID", org_id)
+
+def _shorten_name(name: str) -> str:
+    return Path(name).stem.split("_", maxsplit=1)[1].replace("_", "-")
+
+@pytest.mark.skipif(
+    any(os.environ.get(name, "") == "" for name in ["MONGODB_ATLAS_BASE_URL", "TF_DIR", "MONGODB_ATLAS_PUBLIC_KEY", "MONGODB_ATLAS_PRIVATE_KEY", "MONGODB_ATLAS_ORG_ID"]),
+    reason='needs env vars: ["MONGODB_ATLAS_BASE_URL", "TF_DIR", "MONGODB_ATLAS_PUBLIC_KEY", "MONGODB_ATLAS_PRIVATE_KEY", "MONGODB_ATLAS_ORG_ID"]),',
+)
+def test_generated_examples_actually_has_no_plan_changes():
+    tf_dir = Path(os.environ["TF_DIR"])
+    org_id = os.environ["MONGODB_ATLAS_ORG_ID"]
+    main_tf_content = _project_main_tf(org_id)
+    main_tf_path = tf_dir / "main.tf"
+    main_tf_path.write_text(main_tf_content)
+    for name, legacy, expected in examples:
+        if expected.startswith(ERROR_PREFIX):
+            continue
+        cluster_path = tf_dir / name
+        cluster_path.write_text(_replace_project_id_and_cluster_name(legacy, _shorten_name(name)))
+    ensure_no_plan_changes(tf_dir)
+    convert_and_validate(tf_dir, is_interactive=False)

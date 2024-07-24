@@ -1,4 +1,4 @@
-resource "mongodbatlas_cluster" "multi_region" {
+resource "mongodbatlas_cluster" "dynamic_region" {
   project_id   = mongodbatlas_project.cluster_project.id
   name         = "cluster-multi-region"
   disk_size_gb = 100

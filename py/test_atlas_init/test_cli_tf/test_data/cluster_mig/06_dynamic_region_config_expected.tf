@@ -1,1 +1,1 @@
-# error: dynamic block found for mongodbatlas_cluster.multi_region @ L1-42, currently dynamic blocks are not supported
+# error: dynamic block found for mongodbatlas_cluster.dynamic_region @ L1-42, currently dynamic blocks are not supported

@@ -1,4 +1,4 @@
-resource "mongodbatlas_cluster" "test" {
+resource "mongodbatlas_cluster" "geosharded" {
   project_id   = mongodbatlas_project.test.id
   name         = "geoshareded-cluster"
   disk_size_gb = 80

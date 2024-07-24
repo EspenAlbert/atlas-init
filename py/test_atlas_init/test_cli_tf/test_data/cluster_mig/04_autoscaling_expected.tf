@@ -1,4 +1,4 @@
-resource "mongodbatlas_advanced_cluster" "test" {
+resource "mongodbatlas_advanced_cluster" "autoscaling" {
   project_id = var.project_id
   name = "with-auto-scaling"
   disk_size_gb = 100
