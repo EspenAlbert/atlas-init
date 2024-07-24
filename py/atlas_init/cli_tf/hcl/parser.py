@@ -44,6 +44,13 @@ class ResourceBlock(Block):
     def __hash__(self) -> int:
         return hash((self.name, self.type))
 
+    def __str__(self) -> str:
+        return f"{self.resource_id} @ L{self.line_start}-{self.line_end}"
+
+    @property
+    def resource_id(self) -> str:
+        return f"{self.type}.{self.name}"
+
 
 _resource_pattern = re.compile(r"resource\s+\"(?P<type>[^\"]+)\"\s+\"(?P<name>[^\"]+)\"\s+\{")
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Literal, Self
 
 from atlas_init.cli_tf.hcl.parser import (
@@ -15,10 +16,32 @@ from atlas_init.cli_tf.hcl.parser import (
 
 logger = logging.getLogger(__name__)
 INDENT = "  "
+LEGACY_CLUSTER_TYPE = "mongodbatlas_cluster"
+NEW_CLUSTER_TYPE = "mongodbatlas_advanced_cluster"
 
 
 def indent(level: int, line: str) -> str:
     return INDENT * level + line
+
+
+def convert_clusters(tf_dir: Path, out_path: Path | None = None) -> dict[tuple[Path, ResourceBlock], str]:
+    new_filepath = out_path or tf_dir / "conversion_cluster_adv_cluster.tf"
+    new_content: list[str] = []
+    all_blocks = {}
+    for path in tf_dir.glob("*.tf"):
+        legacy = path.read_text()
+        logger.info(f"checking for cluster blocks in {path}")
+        new_blocks = parse_and_convert_cluster_blocks(legacy)
+        if not new_blocks:
+            continue
+        all_blocks |= {(path, block): new_config for block, new_config in new_blocks.items()}
+        new_content.append(f"# file @ {path}")
+        for cluster, new_config in new_blocks.items():
+            logger.info(f"found {cluster} to migrate in {path}")
+            new_content.extend((f"# {cluster}", new_config))
+    assert new_content, "unable to find any cluster resources"
+    new_filepath.write_text("\n".join(new_content))
+    return all_blocks
 
 
 def convert_cluster_config(hcl_config: str) -> str:
@@ -43,15 +66,19 @@ def convert_cluster_config(hcl_config: str) -> str:
     - node_counts are specs in new
     - auto_scaling_xx has moved to a block
     """
-    converted_blocks = {}
-    for block in iter_resource_blocks(hcl_config):
-        if block.type != "mongodbatlas_cluster":
-            continue
-        converted_blocks[block] = convert_cluster_block(block)
+    converted_blocks = parse_and_convert_cluster_blocks(hcl_config)
     logger.info(f"found {len(converted_blocks)} blocks to replace")
     for block, new_block in converted_blocks.items():
         hcl_config = hcl_config.replace(block.hcl, new_block)
     return hcl_config
+
+
+def parse_and_convert_cluster_blocks(hcl_config: str) -> dict[ResourceBlock, str]:
+    return {
+        block: convert_cluster_block(block)
+        for block in iter_resource_blocks(hcl_config)
+        if block.type == LEGACY_CLUSTER_TYPE
+    }
 
 
 _removed_attributes_root = {
@@ -252,13 +279,13 @@ _dynamic_pattern = re.compile(r"dynamic\s+\"[^\"]+\"\s+{")
 
 def convert_cluster_block(root_block: ResourceBlock) -> str:
     if _dynamic_pattern.search(root_block.hcl):
-        err_msg = f"dynamic block found for {root_block.type}.{root_block.name}, currently, not supported"
+        err_msg = f"dynamic block found for {root_block}, currently dynamic blocks are not supported"
         raise ValueError(err_msg)
     root_blocks = list(iter_blocks(root_block))
     attributes_root = hcl_attrs(root_block)
     attributes_root.setdefault("cluster_type", '"REPLICASET"')
     cluster_content = [
-        f'resource "mongodbatlas_advanced_cluster" "{root_block.name}" {{',
+        f'resource "{NEW_CLUSTER_TYPE}" "{root_block.name}" {{',
     ]
     cluster_content.extend(write_attributes(1, attributes_root, "root"))
     mig_context = ClusterMigContext(**as_mig_context_kwargs(attributes_root))

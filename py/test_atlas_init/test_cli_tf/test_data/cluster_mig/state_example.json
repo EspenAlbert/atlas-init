@@ -1,0 +1,198 @@
+{
+    "format_version": "1.0",
+    "terraform_version": "1.8.0",
+    "values": {
+        "root_module": {
+            "resources": [
+                {
+                    "address": "mongodbatlas_cluster.this",
+                    "mode": "managed",
+                    "type": "mongodbatlas_cluster",
+                    "name": "this",
+                    "provider_name": "registry.terraform.io/mongodb/mongodbatlas",
+                    "schema_version": 1,
+                    "values": {
+                        "accept_data_risks_and_force_replica_set_reconfig": "",
+                        "advanced_configuration": [
+                            {
+                                "default_read_concern": "",
+                                "default_write_concern": "",
+                                "fail_index_key_too_long": false,
+                                "javascript_enabled": true,
+                                "minimum_enabled_tls_protocol": "TLS1_2",
+                                "no_table_scan": false,
+                                "oplog_min_retention_hours": 0,
+                                "oplog_size_mb": 0,
+                                "sample_refresh_interval_bi_connector": 0,
+                                "sample_size_bi_connector": 0,
+                                "transaction_lifetime_limit_seconds": 0
+                            }
+                        ],
+                        "auto_scaling_compute_enabled": false,
+                        "auto_scaling_compute_scale_down_enabled": false,
+                        "auto_scaling_disk_gb_enabled": true,
+                        "backing_provider_name": null,
+                        "backup_enabled": false,
+                        "bi_connector_config": [
+                            {
+                                "enabled": false,
+                                "read_preference": "secondary"
+                            }
+                        ],
+                        "cloud_backup": true,
+                        "cluster_id": "66a0ae0e9a67ed1584d6154d",
+                        "cluster_type": "REPLICASET",
+                        "connection_strings": [
+                            {
+                                "private": "",
+                                "private_endpoint": [],
+                                "private_srv": "",
+                                "standard": "mongodb://legacy-cluster-shard-00-00.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-01.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-02.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-03.jciib.mongodb-dev.net:27017/?ssl=true\u0026authSource=admin\u0026replicaSet=atlas-wktjrq-shard-0",
+                                "standard_srv": "mongodb+srv://legacy-cluster.jciib.mongodb-dev.net"
+                            }
+                        ],
+                        "container_id": "66a0ae0e9a67ed1584d6154c",
+                        "disk_size_gb": 10,
+                        "encryption_at_rest_provider": "NONE",
+                        "id": "Y2x1c3Rlcl9pZA==:NjZhMGFlMGU5YTY3ZWQxNTg0ZDYxNTRk-Y2x1c3Rlcl9uYW1l:bGVnYWN5LWNsdXN0ZXI=-cHJvamVjdF9pZA==:NjY0NjE5ZDg3MGMyNDcyMzdmNGI4NmE2-cHJvdmlkZXJfbmFtZQ==:QVdT",
+                        "labels": [],
+                        "mongo_db_major_version": "7.0",
+                        "mongo_db_version": "7.0.12",
+                        "mongo_uri": "mongodb://legacy-cluster-shard-00-00.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-01.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-02.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-03.jciib.mongodb-dev.net:27017",
+                        "mongo_uri_updated": "2024-07-24T07:44:00Z",
+                        "mongo_uri_with_options": "mongodb://legacy-cluster-shard-00-00.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-01.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-02.jciib.mongodb-dev.net:27017,legacy-cluster-shard-00-03.jciib.mongodb-dev.net:27017/?ssl=true\u0026authSource=admin\u0026replicaSet=atlas-wktjrq-shard-0",
+                        "name": "legacy-cluster",
+                        "num_shards": 1,
+                        "paused": false,
+                        "pit_enabled": false,
+                        "project_id": "664619d870c247237f4b86a6",
+                        "provider_auto_scaling_compute_max_instance_size": "",
+                        "provider_auto_scaling_compute_min_instance_size": "",
+                        "provider_disk_iops": 3000,
+                        "provider_disk_type_name": "",
+                        "provider_encrypt_ebs_volume": null,
+                        "provider_encrypt_ebs_volume_flag": true,
+                        "provider_instance_size_name": "M10",
+                        "provider_name": "AWS",
+                        "provider_region_name": "US_EAST_1",
+                        "provider_volume_type": "STANDARD",
+                        "replication_factor": 4,
+                        "replication_specs": [
+                            {
+                                "id": "66a0ae0e9a67ed1584d61542",
+                                "num_shards": 1,
+                                "regions_config": [
+                                    {
+                                        "analytics_nodes": 1,
+                                        "electable_nodes": 3,
+                                        "priority": 7,
+                                        "read_only_nodes": 0,
+                                        "region_name": "US_EAST_1"
+                                    }
+                                ],
+                                "zone_name": "ZoneName managed by Terraform"
+                            }
+                        ],
+                        "retain_backups_enabled": null,
+                        "snapshot_backup_policy": [
+                            {
+                                "cluster_id": "66a0ae0e9a67ed1584d6154d",
+                                "cluster_name": "legacy-cluster",
+                                "next_snapshot": "2024-07-24T13:43:27Z",
+                                "policies": [
+                                    {
+                                        "id": "66a0b09e2c0b4c7ddaf6dc5a",
+                                        "policy_item": [
+                                            {
+                                                "frequency_interval": 6,
+                                                "frequency_type": "hourly",
+                                                "id": "66a0b09e2c0b4c7ddaf6dc5b",
+                                                "retention_unit": "days",
+                                                "retention_value": 2
+                                            },
+                                            {
+                                                "frequency_interval": 1,
+                                                "frequency_type": "daily",
+                                                "id": "66a0b09e2c0b4c7ddaf6dc5c",
+                                                "retention_unit": "days",
+                                                "retention_value": 7
+                                            },
+                                            {
+                                                "frequency_interval": 6,
+                                                "frequency_type": "weekly",
+                                                "id": "66a0b09e2c0b4c7ddaf6dc5d",
+                                                "retention_unit": "weeks",
+                                                "retention_value": 4
+                                            },
+                                            {
+                                                "frequency_interval": 40,
+                                                "frequency_type": "monthly",
+                                                "id": "66a0b09e2c0b4c7ddaf6dc5e",
+                                                "retention_unit": "months",
+                                                "retention_value": 12
+                                            },
+                                            {
+                                                "frequency_interval": 12,
+                                                "frequency_type": "yearly",
+                                                "id": "66a0b09e2c0b4c7ddaf6dc5f",
+                                                "retention_unit": "years",
+                                                "retention_value": 1
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "reference_hour_of_day": 7,
+                                "reference_minute_of_hour": 43,
+                                "restore_window_days": 2,
+                                "update_snapshots": false
+                            }
+                        ],
+                        "srv_address": "mongodb+srv://legacy-cluster.jciib.mongodb-dev.net",
+                        "state_name": "IDLE",
+                        "tags": [],
+                        "termination_protection_enabled": false,
+                        "timeouts": null,
+                        "version_release_system": "LTS"
+                    },
+                    "sensitive_values": {
+                        "advanced_configuration": [
+                            {}
+                        ],
+                        "bi_connector_config": [
+                            {}
+                        ],
+                        "connection_strings": [
+                            {
+                                "private_endpoint": []
+                            }
+                        ],
+                        "labels": [],
+                        "replication_specs": [
+                            {
+                                "regions_config": [
+                                    {}
+                                ]
+                            }
+                        ],
+                        "snapshot_backup_policy": [
+                            {
+                                "policies": [
+                                    {
+                                        "policy_item": [
+                                            {},
+                                            {},
+                                            {},
+                                            {},
+                                            {}
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "tags": []
+                    }
+                }
+            ]
+        }
+    }
+}
