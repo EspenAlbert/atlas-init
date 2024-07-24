@@ -15,12 +15,18 @@ def read_examples() -> list[tuple[str, str, str]]:
 
 
 examples = read_examples()
+ERROR_PREFIX = "# error: "
 
 
 @pytest.mark.parametrize(
     "name,legacy,expected", examples, ids=[name for name, *_ in examples]
 )
 def test_convert_cluster(name, legacy, expected):
+    if expected.startswith(ERROR_PREFIX):
+        with pytest.raises(ValueError) as exc:
+            convert_cluster_config(legacy)
+        assert str(exc.value) == expected.removeprefix(ERROR_PREFIX)
+        return
     new_config = convert_cluster_config(legacy)
     print(f"new config for name: {name}f")
     print(new_config)

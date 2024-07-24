@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import asdict, dataclass
 from typing import Literal, Self
 
@@ -246,7 +247,13 @@ def default_replication_spec(line_start: int) -> Block:
     )
 
 
+_dynamic_pattern = re.compile(r"dynamic\s+\"[^\"]+\"\s+{")
+
+
 def convert_cluster_block(root_block: ResourceBlock) -> str:
+    if _dynamic_pattern.search(root_block.hcl):
+        err_msg = f"dynamic block found for {root_block.type}.{root_block.name}, currently, not supported"
+        raise ValueError(err_msg)
     root_blocks = list(iter_blocks(root_block))
     attributes_root = hcl_attrs(root_block)
     attributes_root.setdefault("cluster_type", '"REPLICASET"')
