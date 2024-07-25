@@ -9,8 +9,9 @@ def test_read_cluster_import_ids(tf_test_data_dir):
     state = state_example.read_text()
     import_ids = read_cluster_import_ids(state)
     assert import_ids == {
-        "mongodbatlas_cluster.this": "664619d870c247237f4b86a6-legacy-cluster"
+        "664619d870c247237f4b86a6-legacy-cluster": "mongodbatlas_cluster.this"
     }
+
 
 @pytest.mark.skipif(
     os.environ.get("TF_DIR", "") == "", reason="needs os.environ[TF_DIR]"
