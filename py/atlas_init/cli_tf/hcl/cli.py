@@ -53,9 +53,11 @@ def tf(cmd: str, tf_dir: Path, err_msg: str, err_msg_code_2: str = "") -> str:
 def convert_and_validate(tf_dir: Path, *, is_interactive: bool = False):
     out_path = tf_dir / "conversion_cluster_adv_cluster.tf"
     new_clusters_path = convert_clusters(tf_dir, out_path)
-    logger.info(f"found a total of {len(new_clusters_path)} clusters to convert and dumped them to {out_path}")
-    if should_continue(is_interactive, "should import the new clusters?"):
-        import_new_clusters(tf_dir, new_clusters_path)
+    logger.info(
+        f"found a total of {len(new_clusters_path)} clusters to convert and generated their config to {out_path}"
+    )
+    if should_continue(is_interactive, f"should import the new clusters in {out_path}?"):
+        import_new_clusters(tf_dir)
         ensure_no_plan_changes(tf_dir)
     else:
         logger.info("skipping import")
@@ -69,18 +71,29 @@ def convert_and_validate(tf_dir: Path, *, is_interactive: bool = False):
 
 
 def ensure_no_plan_changes(tf_dir):
-    tf("plan -detailed-exitcode", tf_dir, "error running terraform plan", "plan had changes")
+    tf(
+        "plan -detailed-exitcode",
+        tf_dir,
+        "error running terraform plan",
+        "plan had changes",
+    )
 
 
-def import_new_clusters(tf_dir: Path, new_clusters_path: dict[tuple[Path, ResourceBlock], str]) -> None:
+def import_new_clusters(tf_dir: Path) -> None:
+    cluster_import_ids = read_import_id_addresses(tf_dir)
+    for import_id, resource_address in cluster_import_ids.items():
+        new_resource_address = resource_address.replace(LEGACY_CLUSTER_TYPE, NEW_CLUSTER_TYPE)
+        logger.info(f"importing {import_id} to {new_resource_address}")
+        tf(
+            f"import {new_resource_address} {import_id}",
+            tf_dir,
+            f"failed to import {new_resource_address}",
+        )
+
+
+def read_import_id_addresses(tf_dir: Path) -> dict[str, str]:
     current_state = tf("show -json", tf_dir, "failed to read terraform state")
-    cluster_import_ids = read_cluster_import_ids(current_state)
-    for path, block in new_clusters_path:
-        import_id = cluster_import_ids.get(block.resource_id)
-        assert import_id, f"no existing state for for {block.resource_id} @ {path}"
-        new_resource_id = block.resource_id.replace(LEGACY_CLUSTER_TYPE, NEW_CLUSTER_TYPE)
-        logger.info(f"importing {new_resource_id} with {import_id}")
-        tf(f"import {new_resource_id} {import_id}", tf_dir, f"failed to import {new_resource_id}")
+    return read_cluster_import_ids(current_state)
 
 
 def replace_old_clusters(
@@ -95,7 +108,8 @@ def replace_old_clusters(
         old_text = path.read_text()
         new_text = old_text.replace(block.hcl, new_config)
         path.write_text(new_text)
-        tf(f"state rm {old_resource_id}", tf_dir, f"failed to remove {old_resource_id}")
+    for address in read_import_id_addresses(tf_dir).values():
+        tf(f"state rm {address}", tf_dir, f"failed to remove {address}")
 
 
 def read_cluster_import_ids(state: str) -> dict[str, str]:
@@ -111,7 +125,8 @@ def read_cluster_import_ids(state: str) -> dict[str, str]:
         if resource["type"] == LEGACY_CLUSTER_TYPE:
             project_id = resource["values"]["project_id"]
             name = resource["values"]["name"]
-            import_ids[resource["address"]] = f"{project_id}-{name}"
+            import_id = f"{project_id}-{name}"
+            import_ids[import_id] = resource["address"]
     return import_ids
 
 

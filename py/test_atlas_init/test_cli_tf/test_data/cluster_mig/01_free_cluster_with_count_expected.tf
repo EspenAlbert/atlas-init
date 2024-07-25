@@ -10,7 +10,7 @@ resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
       provider_name = "TENANT"
       backing_provider_name = "AWS"
       electable_specs {
-        instance_size = var.instance_size
+        instance_size = "M0"
       }
     }
   }

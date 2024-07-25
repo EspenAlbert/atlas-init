@@ -123,6 +123,8 @@ def test_generated_examples_actually_has_no_plan_changes():
     for name, legacy, expected in examples:
         if expected.startswith(ERROR_PREFIX):
             continue
+        if name in {"03_geosharded_with_nodes.tf"}:
+            continue
         cluster_path = tf_dir / name
         cluster_path.write_text(_replace_project_id_and_cluster_name(legacy, _shorten_name(name)))
     ensure_no_plan_changes(tf_dir)

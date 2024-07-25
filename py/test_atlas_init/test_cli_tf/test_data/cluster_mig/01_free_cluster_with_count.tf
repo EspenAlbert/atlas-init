@@ -6,5 +6,5 @@ resource "mongodbatlas_cluster" "project_cluster_free" {
   provider_name               = "TENANT"
   backing_provider_name       = "AWS"
   provider_region_name        = var.region
-  provider_instance_size_name = var.instance_size
+  provider_instance_size_name = "M0"
 }

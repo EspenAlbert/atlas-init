@@ -27,7 +27,7 @@ resource "mongodbatlas_advanced_cluster" "autoscaling" {
       }
     }
   }
-  lifecycle { // To simulate if there a new instance size name to avoid scale cluster down to original value
-    ignore_changes = [provider_instance_size_name]
+  lifecycle {
+    ignore_changes = []
   }
 }

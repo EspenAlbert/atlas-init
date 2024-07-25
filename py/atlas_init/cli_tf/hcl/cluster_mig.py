@@ -296,6 +296,8 @@ def convert_cluster_block(root_block: ResourceBlock) -> str:
     for block in root_blocks:
         if block.name == "replication_specs":
             cluster_content.extend(write_replication_spec(block, mig_context))
+        elif block.name == "lifecycle":
+            cluster_content.extend(write_lifecycle(block))
         else:
             cluster_content.append(block.hcl)
     cluster_content.append("}")
@@ -326,3 +328,19 @@ def write_region_config(block: Block, mig_context: ClusterMigContext) -> list[st
 
 def get_replication_specs(resource: Block) -> list[Block]:
     return [block for block in iter_blocks(resource) if block.name == "replication_specs"]
+
+
+def write_lifecycle(lifecycle: Block) -> list[str]:
+    attributes = hcl_attrs(lifecycle)
+    if ignore_changes := attributes.get("ignore_changes", ""):
+        for ignored_name in _removed_attributes_root:
+            regex = re.compile(f"{ignored_name},?")
+            ignore_changes = regex.sub("", ignore_changes)
+        attributes["ignore_changes"] = ignore_changes
+    blocks = list(iter_blocks(lifecycle))
+    return [
+        indent(1, "lifecycle {"),
+        *write_attributes(2, attributes),
+        *(block.hcl for block in blocks),
+        indent(1, "}"),
+    ]
