@@ -129,3 +129,15 @@ def test_generated_examples_actually_has_no_plan_changes():
         cluster_path.write_text(_replace_project_id_and_cluster_name(legacy, _shorten_name(name)))
     ensure_no_plan_changes(tf_dir)
     convert_and_validate(tf_dir, is_interactive=False)
+
+@pytest.mark.skipif(os.environ.get("CLI_TF_HCL_PATH", "") == "", reason="needs os.environ[CLI_TF_HCL_PATH]")
+def test_generate_standalone_script():
+    CLI_TF_HCL_PATH = Path(os.environ["CLI_TF_HCL_PATH"])
+    assert CLI_TF_HCL_PATH.is_dir()
+    full_content = []
+    for path in sorted(CLI_TF_HCL_PATH.glob("*.py")):
+        content = path.read_text()
+        full_content.append("# " + str(path.stem))
+        full_content.append(content)
+    print("full script:")
+    print("\n\n".join(full_content))
