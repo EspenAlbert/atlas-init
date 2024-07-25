@@ -1,3 +1,4 @@
+from pathlib import Path
 from github.WorkflowJob import WorkflowJob
 
 
@@ -12,6 +13,7 @@ def as_step(name: str) -> WorkflowStep:
     step.name = name
     return step
 
+
 @pytest.fixture()
 def mock_job() -> WorkflowJob:
     return MagicMock(
@@ -22,5 +24,9 @@ def mock_job() -> WorkflowJob:
             as_step(name="setup-terraform"),
             as_step(name="Acceptance Tests"),
         ],
-        html_url="https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26681936440"
+        html_url="https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26681936440",
     )
+
+@pytest.fixture()
+def tf_test_data_dir() -> Path:
+    return Path(__file__).parent / "test_data"
