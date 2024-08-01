@@ -13,10 +13,12 @@ resource "mongodbatlas_advanced_cluster" "multi_region" {
       electable_specs {
         node_count = 3
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
     }
     region_configs {
@@ -26,10 +28,12 @@ resource "mongodbatlas_advanced_cluster" "multi_region" {
       electable_specs {
         node_count = 1
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
     }
     region_configs {
@@ -39,10 +43,12 @@ resource "mongodbatlas_advanced_cluster" "multi_region" {
       electable_specs {
         node_count = 3
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M10"
+        ebs_volume_type = "STANDARD"
       }
     }
   }

@@ -20,10 +20,12 @@ resource "mongodbatlas_advanced_cluster" "autoscaling" {
       electable_specs {
         node_count = 3
         instance_size = "M20"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M20"
+        ebs_volume_type = "STANDARD"
       }
     }
   }

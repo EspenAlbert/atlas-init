@@ -14,10 +14,12 @@ resource "mongodbatlas_advanced_cluster" "geosharded" {
       electable_specs {
         node_count = 3
         instance_size = "M30"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M30"
+        ebs_volume_type = "STANDARD"
       }
     }
   }
@@ -31,10 +33,12 @@ resource "mongodbatlas_advanced_cluster" "geosharded" {
       electable_specs {
         node_count = 3
         instance_size = "M30"
+        ebs_volume_type = "STANDARD"
       }
       read_only_specs {
         node_count = 0
         instance_size = "M30"
+        ebs_volume_type = "STANDARD"
       }
     }
   }
