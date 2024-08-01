@@ -194,6 +194,8 @@ class ClusterMigContext:
             hardware_spec["disk_iops"] = self.provider_disk_iops
         if self.provider_volume_type:
             hardware_spec["ebs_volume_type"] = self.provider_volume_type
+        elif "AWS" in self.provider_name:
+            hardware_spec["ebs_volume_type"] = '"STANDARD"'
         return hardware_spec
 
     @property

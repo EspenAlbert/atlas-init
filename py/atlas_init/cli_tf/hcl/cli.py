@@ -75,7 +75,6 @@ def convert_and_validate(tf_dir: Path, *, is_interactive: bool = False):
         logger.info("skipping import")
     if should_continue(is_interactive, "should replace the old cluster resources with the new ones?"):
         replace_old_clusters(tf_dir, out_path, new_clusters_path)
-        logger.info("running plan to ensure there are no changes")
         ensure_no_plan_changes(tf_dir)
         logger.info(f"migration successful, migrated {len(new_clusters_path)} clusters!")
     else:
@@ -89,6 +88,7 @@ def remove_from_state(tf_dir, addresses: Iterable[str]) -> None:
 
 
 def ensure_no_plan_changes(tf_dir):
+    logger.info("running plan to ensure there are no changes")
     tf(
         "plan -detailed-exitcode",
         tf_dir,
