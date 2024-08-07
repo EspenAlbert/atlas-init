@@ -24,6 +24,9 @@ module "cfn" {
   atlas_private_key = var.atlas_private_key
   cfn_profile       = local.cfn_profile
   tags              = local.tags
+  aws_account_id    = local.aws_account_id
+  use_kms_key       = var.cfn_config.use_kms_key
+  aws_region        = var.cfn_config.region
 }
 
 module "cluster" {

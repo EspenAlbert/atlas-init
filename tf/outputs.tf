@@ -64,6 +64,8 @@ locals {
 output "links" {
   value = {
     org_url = "${trimsuffix(var.atlas_base_url, "/")}/v2#/org/${var.org_id}/projects"
+    # https://cloud.mongodb.com/v2/66ad0c5bae611a0fe4387767#/overview
+    project_url = "${trimsuffix(var.atlas_base_url, "/")}/66ad0c5bae611a0fe4387767#/overview"
   }
 }
 

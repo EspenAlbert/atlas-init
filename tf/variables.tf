@@ -56,10 +56,12 @@ variable "cfn_config" {
   type = object({
     profile = string
     region  = string
+    use_kms_key = bool
   })
   default = {
     profile = ""
     region  = "eu-west-1"
+    use_kms_key = false
   }
 }
 

@@ -189,9 +189,19 @@ class StackEvents(Event):
 
     def last_reason(self) -> str:
         for event in sorted(self.stack_events, reverse=True):
-            if reason := event.resource_status_reason:
+            if reason := event.resource_status_reason.strip():
                 return reason
         return ""
+
+    def multiple_reasons(self, max_reasons: int = 5) -> str:
+        reasons = []
+        for event in sorted(self.stack_events, reverse=True):
+            if reason := event.resource_status_reason.strip():
+                reason_number = len(reasons) + 1
+                reasons.append(f"{reason_number}. {reason}")
+                if reason_number >= max_reasons:
+                    break
+        return "\n".join(reasons)
 
 
 def wait_on_stack_ok(
@@ -238,8 +248,9 @@ def wait_on_stack_ok(
         status = current_event.resource_status
         logger.info(f"stack is ready {stack_name} {status} ✅")
         if "ROLLBACK" in status:
-            last_reason = parsed.last_reason()
+            last_reason = parsed.multiple_reasons()
             logger.warning(f"stack did rollback, got: {current_event!r}\n{last_reason}")
+
         return None
 
     return _wait_on_stack_ok()
@@ -356,6 +367,12 @@ def ensure_resource_type_activated(
 ) -> None:
     cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
+    is_third_party = False
+    if cfn_type_details is None:
+        cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=True)
+        if cfn_type_details:
+            is_third_party = True
+            logger.warning(f"foudn 3rd party extension for cfn type {type_name} active")
     if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
         outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
         logger.warning(outdated_warning)
@@ -364,7 +381,10 @@ def ensure_resource_type_activated(
             is_interactive=is_interactive,
             default=True,
         ):
-            deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
+            if is_third_party:
+                deactivate_third_party_type(type_name, region)
+            else:
+                deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
             cfn_type_details = None
 
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"

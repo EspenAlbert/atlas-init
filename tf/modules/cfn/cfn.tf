@@ -1,22 +1,3 @@
-variable "cfn_profile" {
-  type = string
-}
-variable "atlas_public_key" {
-  type = string
-}
-
-variable "atlas_private_key" {
-  type = string
-}
-
-variable "atlas_base_url" {
-  type = string
-}
-
-variable "tags" {
-  type = map(string)
-}
-
 terraform {
   required_providers {
     aws = {
@@ -30,13 +11,34 @@ locals {
   resource_actions_yaml = file("${path.module}/resource_actions.yaml")
   services              = yamldecode(local.services_yaml)
   resource_actions      = yamldecode(local.resource_actions_yaml)
+  role_name = "cfn-execution-role-${var.cfn_profile}"
+  iam_policy_statement =  {
+          Sid = "Original"
+          Action   = local.resource_actions
+          Effect   = "Allow"
+          Resource = "*"
+        }
+  iam_policy_statement_kms = {
+          Sid = "Extra"
+          Action   = ["kms:Decrypt"]
+          Effect   = "Allow"
+          Resource = try(aws_kms_key.this[0].arn, "invalid-arn-not-used")
+        }
+  iam_policy_statements = var.use_kms_key ? [local.iam_policy_statement, local.iam_policy_statement_kms] : [local.iam_policy_statement]
+  iam_role_policy_json = jsonencode({
+      Version = "2012-10-17"
+      Statement = local.iam_policy_statements
+    })
 }
 
 resource "aws_secretsmanager_secret" "cfn" {
   name                    = "cfn/atlas/profile/${var.cfn_profile}"
+  description             = "Secrets for the cfn ${var.cfn_profile} profile"
   recovery_window_in_days = 0 # allow force deletion
   tags                    = var.tags
+  kms_key_id              = var.use_kms_key ? aws_kms_key.this[0].arn : null
 }
+
 resource "aws_secretsmanager_secret_version" "cfn" {
   secret_id = aws_secretsmanager_secret.cfn.id
   secret_string = jsonencode({
@@ -46,6 +48,8 @@ resource "aws_secretsmanager_secret_version" "cfn" {
   })
 }
 
+data "aws_caller_identity" "this" {}
+
 data "aws_iam_policy_document" "assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -54,27 +58,22 @@ data "aws_iam_policy_document" "assume_role" {
       type        = "Service"
       identifiers = local.services
     }
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_caller_identity.this.arn] # Allow the terraform creator account to assume the role
+    }
   }
 }
 
 resource "aws_iam_role" "execution_role" {
-  name                 = "cfn-execution-role-${var.cfn_profile}"
+  name                 = local.role_name
   assume_role_policy   = data.aws_iam_policy_document.assume_role.json
   max_session_duration = 8400
 
   inline_policy {
     name = "ResourceTypePolicy"
 
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action   = local.resource_actions
-          Effect   = "Allow"
-          Resource = "*"
-        },
-      ]
-    })
+    policy = local.iam_role_policy_json
 
   }
 }
@@ -87,5 +86,13 @@ output "env_vars" {
     # cfn-e2e
     MONGODB_ATLAS_SECRET_PROFILE = var.cfn_profile
     CFN_EXAMPLE_EXECUTION_ROLE   = aws_iam_role.execution_role.arn
+  }
+}
+
+
+output "info" {
+  value = {
+    kms_key_policy_json = local.kms_key_policy_json
+    iam_role_policy_json     = local.iam_role_policy_json
   }
 }

@@ -185,6 +185,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
 
     cfn_profile: str = ""
     cfn_region: str = ""
+    cfn_use_kms_key: bool = False
     project_name: str = ""
 
     skip_copy: bool = False
@@ -250,7 +251,13 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
 
     def cfn_config(self) -> dict[str, Any]:
         if self.cfn_profile:
-            return {"cfn_config": {"profile": self.cfn_profile, "region": self.cfn_region}}
+            return {
+                "cfn_config": {
+                    "profile": self.cfn_profile,
+                    "region": self.cfn_region,
+                    "use_kms_key": self.cfn_use_kms_key,
+                }
+            }
         return {}
 
 
