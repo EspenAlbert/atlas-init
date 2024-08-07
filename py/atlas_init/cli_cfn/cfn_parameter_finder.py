@@ -170,9 +170,11 @@ def decode_parameters(
     if resource_params:
         cfn_template.add_resource_params(type_name, resource_params)
         template_path = updated_template_path(template_path)
-        logger.info(f"updating template {template_path}")
+        logger.info(f"updating template {template_path} with {resource_params}")
         raw_dict = cfn_template.model_dump(by_alias=True, exclude_unset=True)
-        template_str = dump(raw_dict, format=template_path.suffix.lstrip(".") + "_pretty")
+        file_extension = template_path.suffix.lstrip(".")
+        dump_format = "pretty_json" if file_extension == "json" else file_extension
+        template_str = dump(raw_dict, format=dump_format)
         template_path.write_text(template_str)
     parameters_dict: dict[str, Any] = {}
     type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})

@@ -6,16 +6,19 @@ from model_lib import parse_payload
 from rich import prompt
 from zero_3rdparty.file_utils import clean_dir
 
-from atlas_init.cli_args import parse_key_values, parse_key_values_any
+from atlas_init.cli_args import parse_key_values_any
 from atlas_init.cli_cfn.aws import (
     activate_resource_type,
     create_stack,
     deactivate_third_party_type,
-    delete_stack,
     deregister_cfn_resource_type,
     ensure_resource_type_activated,
     get_last_cfn_type,
     update_stack,
+    wait_on_stack_ok,
+)
+from atlas_init.cli_cfn.aws import (
+    delete_stack as delete_stack_aws,
 )
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
@@ -99,22 +102,20 @@ def example(
     region: str = typer.Argument(...),
     stack_name: str = typer.Argument(...),
     operation: str = typer.Argument(...),
-    params: list[str] = typer.Option(..., "-p", default_factory=list),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
     stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, help="Delete existing stack first"),
     force_deregister: bool = typer.Option(False),
     export_example_to_inputs: bool = typer.Option(False),
 ):
-    params_parsed: dict[str, str] = {}
-    if params:
-        params_parsed = parse_key_values(params)
     resource_params_parsed = {}
     if resource_params:
         resource_params_parsed = parse_key_values_any(resource_params)
         if resource_params_parsed:
             logger.info(f"using resource params: {resource_params_parsed}")
-    logger.info(f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {params}")
+    logger.info(
+        f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {resource_params_parsed}"
+    )
     settings = init_settings()
     type_name, region = CfnType.validate_type_region(type_name, region)  # type: ignore
     CfnOperation(operaton=operation)  # type: ignore
@@ -131,7 +132,7 @@ def example(
             cfn_execution_role,
         )
     if operation == Operation.DELETE or delete_first:
-        delete_stack(region, stack_name)
+        delete_stack_aws(region, stack_name)
         if not delete_first:
             return
     template_path = infer_template_path(repo_path, type_name, stack_name)
@@ -139,7 +140,7 @@ def example(
         exported_env_vars=env_vars_generated,
         template_path=template_path,
         stack_name=stack_name,
-        force_params=params_parsed,
+        force_params=resource_params_parsed,
         resource_params=resource_params_parsed,
         type_name=type_name,
     )
@@ -251,3 +252,22 @@ def gen_docs():
     for path, schema in iterate_schemas(root):
         if has_md_link(schema.description):
             logger.warning(f"found md link in {schema.type_name} in {path}")
+
+
+@app.command()
+def wait_on_stack(
+    stack_name: str = typer.Argument(...),
+    region: str = typer.Argument(...),
+    timeout_s: int = typer.Option(300, "-t", "--timeout-seconds"),
+):
+    wait_on_stack_ok(stack_name, region, timeout_seconds=timeout_s)
+    logger.info(f"stack {stack_name} in {region} is ready ✅")
+
+
+@app.command()
+def delete_stack(
+    stack_name: str = typer.Argument(...),
+    region: str = typer.Argument(...),
+):
+    delete_stack_aws(region, stack_name)
+    logger.info(f"stack {stack_name} in {region} is deleted ✅")
