@@ -89,8 +89,13 @@ def update_provider_code_spec(schema: PyTerraformSchema, provider_code_spec_path
 ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/atlas-sdk-go/main/openapi/atlas-api-transformed.yaml"
 
 
-def download_admin_api(dest: Path) -> None:
-    logger.info(f"downloading admin api to {dest} from {ADMIN_API_URL}")
-    response = requests.get(ADMIN_API_URL, timeout=10)
+def admin_api_url(branch: str) -> str:
+    return ADMIN_API_URL.replace("/main/", f"/{branch}/")
+
+
+def download_admin_api(dest: Path, branch: str = "main") -> None:
+    url = admin_api_url(branch)
+    logger.info(f"downloading admin api to {dest} from {url}")
+    response = requests.get(url, timeout=10)
     response.raise_for_status()
     dest.write_bytes(response.content)

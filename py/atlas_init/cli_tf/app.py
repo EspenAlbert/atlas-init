@@ -38,7 +38,9 @@ logger = logging.getLogger(__name__)
 
 
 @app.command()
-def schema():
+def schema(
+    branch: str = typer.Option("main", "-b", "--branch"),
+):
     settings = init_settings()
     schema_out_path = settings.schema_out_path_computed
     schema_out_path.mkdir(exist_ok=True)
@@ -49,10 +51,11 @@ def schema():
     generator_config_path.write_text(generator_config)
     provider_code_spec_path = schema_out_path / "provider-code-spec.json"
     admin_api_path = schema_out_path / "admin_api.yaml"
+
     if admin_api_path.exists():
         logger.warning(f"using existing admin api @ {admin_api_path}")
     else:
-        download_admin_api(admin_api_path)
+        download_admin_api(admin_api_path, branch=branch)
 
     if not run_binary_command_is_ok(
         cwd=schema_out_path,
