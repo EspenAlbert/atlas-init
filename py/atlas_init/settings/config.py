@@ -154,10 +154,16 @@ def active_suites(
     forced_test_suites: list[str],
 ) -> list[TestSuite]:  # type: ignore
     repo_url_path = owner_project_name(repo_path)
-    repo_alias = config.repo_alias(repo_url_path)
+    try:
+        repo_alias = config.repo_alias(repo_url_path)
+    except RepoAliasNotFoundError:
+        if forced_test_suites:
+            # still want to use the forced test suites
+            repo_alias = None
+        else:
+            raise
     logger.info(f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}")
     change_paths = [cwd_rel_path]
-
     active_suites = config.active_test_suites(repo_alias, change_paths, forced_test_suites)
     logger.info(f"active_suites: {[s.name for s in active_suites]}")
     return active_suites
