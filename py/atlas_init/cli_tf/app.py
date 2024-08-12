@@ -77,7 +77,7 @@ def schema(
     if not run_binary_command_is_ok(
         cwd=schema_out_path,
         binary_name="tfplugingen-framework",
-        command=f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
+        command=f"generate all --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
         logger=logger,
     ):
         logger.critical("failed to generate plugin schema")
