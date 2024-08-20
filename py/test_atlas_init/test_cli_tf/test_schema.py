@@ -9,6 +9,7 @@ from atlas_init.cli_tf.schema import (
     ProviderCodeSpec,
     PyTerraformSchema,
     RenameAttribute,
+    SkipValidators,
     TFResource,
     dump_generator_config,
     parse_py_terraform_schema,
@@ -119,14 +120,12 @@ def test_update_provider_code_spec(tmp_path: Path):
     ]
 
     resource_name = "project"
-    assert spec_before.resource_attribute_names(resource_name) == original_names
+    assert spec_before.attribute_names(resource_name) == original_names
     schema = _default_schema(tmp_path)
     spec_after_str = update_provider_code_spec(schema, EXAMPLE_PROVIDER_CODE_SPEC_PATH)
     spec_after = parse_model(spec_after_str, t=ProviderCodeSpec, format="json")
 
-    assert spec_after.resource_attribute_names(resource_name) == original_names + [
-        "tags"
-    ]
+    assert spec_after.attribute_names(resource_name) == original_names + ["tags"]
 
 
 def resource_provider_code_spec(name: str) -> Path:
@@ -136,7 +135,7 @@ def resource_provider_code_spec(name: str) -> Path:
     )
 
 
-def test_update_provider_code_spec_stream_processor(tmp_path):
+def test_update_provider_code_spec_stream_processor():
     resource_name = "streamprocessor"
     spec = resource_provider_code_spec(resource_name)
     ignore_links = IgnoreNested(path="*.links")
@@ -145,11 +144,17 @@ def test_update_provider_code_spec_stream_processor(tmp_path):
     change_attribute_type = ChangeAttributeType(
         path="processor_name", new_value=ComputedOptionalRequired.REQUIRED
     )
+    skip_validators = SkipValidators()
     schema = PyTerraformSchema(
         resources=[
             TFResource(
                 name=resource_name,
-                extensions=[ignore_links, rename_id, change_attribute_type],
+                extensions=[
+                    ignore_links,
+                    rename_id,
+                    change_attribute_type,
+                    skip_validators,
+                ],
             )
         ]
     )
@@ -158,5 +163,27 @@ def test_update_provider_code_spec_stream_processor(tmp_path):
     assert spec_after
     assert '"name":"links",' not in spec_after_str
     assert '"name":"_id",' not in spec_after_str
+    assert '"validators":' not in spec_after_str
     processor_name_after = spec_after.read_attribute(resource_name, "processor_name")
     assert change_attribute_type.read_value(processor_name_after) == "required"
+    all_attribute_paths = sorted(
+        (path, name) for path, name, _ in spec_after.iter_all_attributes(resource_name)
+    )
+    assert all_attribute_paths == [
+        ("coll", "[1].single_nested.attributes.[0].single_nested.attributes.[0]"),
+        (
+            "connection_name",
+            "[1].single_nested.attributes.[0].single_nested.attributes.[1]",
+        ),
+        ("db", "[1].single_nested.attributes.[0].single_nested.attributes.[2]"),
+        ("dlq", "[1].single_nested.attributes.[0]"),
+        ("instance_name", ""),
+        ("name", ""),
+        ("options", ""),
+        ("pipeline", ""),
+        ("processor_id", ""),
+        ("processor_name", ""),
+        ("project_id", ""),
+        ("state", ""),
+        ("stats", ""),
+    ]

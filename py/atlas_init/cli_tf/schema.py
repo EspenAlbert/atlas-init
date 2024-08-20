@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterable
 from functools import singledispatch
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 import pydantic
 import requests
@@ -61,11 +61,14 @@ class ChangeAttributeType(Entity):
     def update_value(self, attribute_dict: dict) -> None:
         attribute_dict["string"]["computed_optional_required"] = self.new_value
 
+class SkipValidators(Entity):
+    type: Literal["skip_validators"] = "skip_validators"
+
 
 class TFResource(Entity):
     model_config = pydantic.ConfigDict(extra="allow")
     name: str
-    extensions: list[IgnoreNested | RenameAttribute | ChangeAttributeType] = pydantic.Field(
+    extensions: list[IgnoreNested | RenameAttribute | ChangeAttributeType| SkipValidators] = pydantic.Field(
         default_factory=list, discriminator="type"
     )
     provider_spec_attributes: list[ProviderSpecAttribute] = pydantic.Field(default_factory=list)
@@ -100,6 +103,15 @@ def dump_generator_config(schema: PyTerraformSchema) -> str:
     return dump(generator_config, "yaml")
 
 
+class AttributeTuple(NamedTuple):
+    name: str
+    path: str
+    attribute_dict: dict
+
+    @property
+    def attribute_path(self) -> str:
+        return f"{self.path}.{self.name}" if self.path else self.name
+
 class ProviderCodeSpec(Entity):
     model_config = pydantic.ConfigDict(extra="allow")
     provider: dict
@@ -107,43 +119,62 @@ class ProviderCodeSpec(Entity):
     datasources: list[dict] = pydantic.Field(default_factory=list)
     version: str
 
-    def resource_attributes(self, name: str) -> list:
-        for r in self.resources:
-            if r["name"] == name:
-                return r["schema"]["attributes"]
-        raise ValueError(f"resource: {name} not found!")
+    def root_dict(self, name: str, is_datasource: bool = False) -> dict:
+        resources = self.datasources if is_datasource else self.resources
+        root_value = next((r for r in resources if r["name"] == name), None)
+        if root_value is None:
+            raise ValueError(f"{self.root_name(name, is_datasource)} not found!")
+        return root_value
 
-    def resource_attribute_names(self, name: str) -> list[str]:
-        return [a["name"] for a in self.resource_attributes(name)]
+    def schema_attributes(self, name: str, is_datasource: bool = False) -> list:
+        root_dict = self.root_dict(name, is_datasource)
+        return root_dict["schema"]["attributes"]
 
-    def iter_nested_attributes(self, name: str) -> Iterable[tuple[str, dict]]:
-        for i, attribute in enumerate(self.resource_attributes(name)):
+    def _type_name(self, is_datasource: bool):
+        return "datasource" if is_datasource else "resource"
+
+    def root_name(self, name: str, is_datasource: bool):
+        return f"{self._type_name(is_datasource)}.{name}"
+
+    def attribute_names(self, name: str, is_datasource: bool = False) -> list[str]:
+        return [a["name"] for a in self.schema_attributes(name, is_datasource=is_datasource)]
+
+    def iter_all_attributes(self, name: str, is_datasource: bool = False) -> Iterable[AttributeTuple]:
+        for attribute in self.schema_attributes(name=name, is_datasource=is_datasource):
+            yield AttributeTuple(attribute["name"], "", attribute)
+        yield from self.iter_nested_attributes(name, is_datasource=is_datasource)
+
+    def iter_nested_attributes(self, name: str, is_datasource: bool = False) -> Iterable[AttributeTuple]:
+        for i, attribute in enumerate(self.schema_attributes(name=name, is_datasource=is_datasource)):
             for path, attr_dict in dict_nested.iter_nested_key_values(
                 attribute, type_filter=dict, include_list_indexes=True
             ):
-                yield f"[{i}].{path}", attr_dict
+                full_path = f"[{i}].{path}"
+                if name := attr_dict.get("name", ""):
+                    yield AttributeTuple(name, full_path, attr_dict)
 
-    def remove_nested_attribute(self, resource_name: str, path: str):
-        logger.info(f"will remove attribute from {resource_name} with path: {path}")
-        resource = next(r for r in self.resources if r["name"] == resource_name)
+    def remove_nested_attribute(self, name: str, path: str, is_datasource: bool = False) -> None:
+        root_name = self.root_name(name, is_datasource)
+        logger.info(f"will remove attribute from {root_name} with path: {path}")
+        root_attributes = self.root_dict(name, is_datasource)
         full_path = f"schema.attributes.{path}"
-        popped = dict_nested.pop_nested(resource, full_path, "")
+        popped = dict_nested.pop_nested(root_attributes, full_path, "")
         if popped == "":
-            raise ValueError(f"failed to remove attribute from resource {resource_name} with path: {full_path}")
+            raise ValueError(f"failed to remove attribute from resource {name} with path: {full_path}")
         assert isinstance(popped, dict), f"expected removed attribute to be a dict, got: {popped}"
-        logger.info(f"removal ok, attribute_name: '{popped.get('name')}'")
+        logger.info(f"removal ok, attribute_name: '{root_name}.{popped.get('name')}'")
 
-    def read_attribute(self, resource_name: str, path: str) -> dict:
+    def read_attribute(self, name: str, path: str, *, is_datasource: bool = False) -> dict:
         if "." not in path:
-            attribute_dict = next((a for a in self.resource_attributes(resource_name) if a["name"] == path), None)
+            attribute_dict = next((a for a in self.schema_attributes(name, is_datasource) if a["name"] == path), None)
         else:
-            resource = next(r for r in self.resources if r["name"] == resource_name)
-            attribute_dict = dict_nested.read_nested_or_none(resource, f"schema.attributes.{path}")
+            root_dict = self.root_dict(name, is_datasource)
+            attribute_dict = dict_nested.read_nested_or_none(root_dict, f"schema.attributes.{path}")
         if attribute_dict is None:
-            raise ValueError(f"attribute {path} not found in resource {resource_name}")
+            raise ValueError(f"attribute {path} not found in {self.root_name(name, is_datasource)}")
         assert isinstance(
             attribute_dict, dict
-        ), f"expected attribute to be a dict, got: {attribute_dict} @ {path} for resource={resource_name}"
+        ), f"expected attribute to be a dict, got: {attribute_dict} @ {path} for resource={name}"
         return attribute_dict
 
 
@@ -155,40 +186,46 @@ def update_provider_code_spec(schema: PyTerraformSchema, provider_code_spec_path
             add_explicit_attributes(spec, resource_name, extra_spec_attributes)
         for extension in resource.extensions:
             apply_extension(extension, spec, resource_name)
+    for data_source in schema.data_sources:
+        data_source_name = data_source.name
+        if extra_spec_attributes := data_source.provider_spec_attributes:
+            add_explicit_attributes(spec, data_source_name, extra_spec_attributes, is_datasource=True)
+        for extension in data_source.extensions:
+            apply_extension(extension, spec, data_source_name, is_datasource=True)
     return dump(spec, "json")
 
 
-def add_explicit_attributes(spec, resource_name, extra_spec_attributes):
-    resource_attributes = spec.resource_attributes(resource_name)
-    existing_names = spec.resource_attribute_names(resource_name)
+def add_explicit_attributes(spec: ProviderCodeSpec, name: str, extra_spec_attributes: list[ProviderSpecAttribute], *, is_datasource=False):
+    resource_attributes = spec.schema_attributes(name, is_datasource=is_datasource)
+    existing_names = spec.attribute_names(name, is_datasource=is_datasource)
     new_names = [extra.name for extra in extra_spec_attributes]
     if both := set(existing_names) & set(new_names):
-        raise ValueError(f"resource: {resource_name}, has already: {both} attributes")
+        raise ValueError(f"resource: {name}, has already: {both} attributes")
     resource_attributes.extend(extra.dump_provider_code_spec() for extra in extra_spec_attributes)
 
 
 @singledispatch
-def apply_extension(extension: object, spec: ProviderCodeSpec, resource_name: str):  # noqa: ARG001
+def apply_extension(extension: object, spec: ProviderCodeSpec, resource_name: str, *, is_datasource: bool = False):  # noqa: ARG001
     raise NotImplementedError(f"unsupported extension: {extension!r}")
 
 
 @apply_extension.register  # type: ignore
-def _ignore_nested(extension: IgnoreNested, spec: ProviderCodeSpec, resource_name: str):
+def _ignore_nested(extension: IgnoreNested, spec: ProviderCodeSpec, resource_name: str, *, is_datasource: bool = False):
     if extension.use_wildcard:
         name_to_remove = extension.path.removeprefix("*.")
         assert "*" not in name_to_remove, f"only prefix *. is allowed for wildcard in path {extension.path}"
         found_paths = [
             path
-            for path, attribute_dict in spec.iter_nested_attributes(resource_name)
-            if attribute_dict.get("name", "") == name_to_remove
+            for name, path, attribute_dict in spec.iter_nested_attributes(resource_name, is_datasource=is_datasource)
+            if name == name_to_remove
         ]
         while found_paths:
             next_to_remove = found_paths.pop()
-            spec.remove_nested_attribute(resource_name, next_to_remove)
+            spec.remove_nested_attribute(resource_name, next_to_remove, is_datasource=is_datasource)
             found_paths = [
                 path
-                for path, attribute_dict in spec.iter_nested_attributes(resource_name)
-                if attribute_dict.get("name", "") == name_to_remove
+                for name, path, attribute_dict in spec.iter_nested_attributes(resource_name, is_datasource=is_datasource)
+                if name == name_to_remove
             ]
     else:
         err_msg = "only wildcard path is supported"
@@ -196,24 +233,39 @@ def _ignore_nested(extension: IgnoreNested, spec: ProviderCodeSpec, resource_nam
 
 
 @apply_extension.register  # type: ignore
-def _rename_attribute(extension: RenameAttribute, spec: ProviderCodeSpec, resource_name: str):
-    for attribute_dict in spec.resource_attributes(resource_name):
+def _rename_attribute(extension: RenameAttribute, spec: ProviderCodeSpec, resource_name: str, *, is_datasource: bool = False):
+    for attribute_dict in spec.schema_attributes(resource_name, is_datasource=is_datasource):
         if attribute_dict.get("name") == extension.from_name:
-            logger.info(f"renaming attribute for {resource_name}: {extension.from_name} -> {extension.to_name}")
+            logger.info(f"renaming attribute for {spec.root_name(resource_name, is_datasource)}: {extension.from_name} -> {extension.to_name}")
             attribute_dict["name"] = extension.to_name
 
 
 @apply_extension.register  # type: ignore
-def _change_attribute_type(extension: ChangeAttributeType, spec: ProviderCodeSpec, resource_name: str):
-    attribute_dict = spec.read_attribute(resource_name, extension.path)
+def _change_attribute_type(extension: ChangeAttributeType, spec: ProviderCodeSpec, resource_name: str, *, is_datasource: bool = False):
+    attribute_dict = spec.read_attribute(resource_name, extension.path, is_datasource=is_datasource)
     old_value = extension.read_value(attribute_dict)
     if old_value == extension.new_value:
-        logger.info(f"no change for {resource_name}: {extension.path} -> {extension.new_value}")
+        logger.info(f"no change for '{spec.root_name(resource_name, is_datasource)}': {extension.path} -> {extension.new_value}")
         return
 
-    logger.info(f"changing attribute type for '{resource_name}.{extension.path}': {old_value} -> {extension.new_value}")
+    logger.info(f"changing attribute type for '{spec.root_name(resource_name, is_datasource)}.{extension.path}': {old_value} -> {extension.new_value}")
     extension.update_value(attribute_dict)
 
+@apply_extension.register  # type: ignore
+def _skip_validators(extension: SkipValidators, spec: ProviderCodeSpec, resource_name: str, *, is_datasource: bool = False):
+    for attr_tuple in spec.iter_all_attributes(resource_name, is_datasource=is_datasource):
+        attribute_dict = attr_tuple.attribute_dict
+        paths_to_pop = [
+            f"{path}.validators"
+            for path, nested_dict in dict_nested.iter_nested_key_values(
+                attribute_dict, type_filter=dict
+            )
+            if "validators" in nested_dict
+        ]
+        if paths_to_pop:
+            logger.info(f"popping validators from '{attr_tuple.attribute_path}'")
+        for path in paths_to_pop:
+            dict_nested.pop_nested(attribute_dict, path)
 
 # reusing url from terraform-provider-mongodbatlas/scripts/schema-scaffold.sh
 ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/atlas-sdk-go/main/openapi/atlas-api-transformed.yaml"
