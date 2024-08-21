@@ -203,6 +203,7 @@ def schema2(
         "", "-a", "--admin-api-path", help="the path to store/download the openapi spec"
     ),
     config_path: Path = typer.Option("", "-c", "--config", help="the path to the SchemaV2 config"),
+    replace: bool = typer.Option(False, "-r", "--replace", help="replace the existing schema file"),
 ):
     repo_path = current_repo_path(Repo.TF)
     config_path = config_path or repo_path / "schema_v2.yaml"
@@ -212,12 +213,17 @@ def schema2(
     else:
         download_admin_api(admin_api_path, branch=branch)
     schema = parse_schema(config_path)
-    add_api_spec_info(schema, admin_api_path)
+    logger.info("adding api spec info to schema")
+    add_api_spec_info(schema, admin_api_path, minimal_refs=True)
     go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
     if not go_old.exists():
         logger.critical(f"no file found @ {go_old}")
         raise typer.Abort
-    go_new = go_old.with_name("resource_schema_gen.go")
+    if replace:
+        logger.warning(f"replacing existing schema @ {go_old}")
+        go_new = go_old
+    else:
+        go_new = go_old.with_name("resource_schema_gen.go")
     gen_src = generate_resource_go_resource_schema(schema, resource)
     go_new.write_text(gen_src)
     logger.info(f"generated new schema @ {go_new} ✅")

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Iterable
 from pathlib import Path
+from queue import Queue
 from typing import ClassVar
 
 from model_lib import Entity
@@ -70,22 +71,32 @@ class OpenapiSchema(Entity):
             return None
         return value.get("schema", {}).get("$ref")
 
+    def schema_ref_component(self, ref: str, attributes_skip: set[str]) -> SchemaResource:
+        schemas = self.components.get("schemas", {})
+        assert isinstance(schemas, dict), "Expected a dict @ components.schemas"
+        schema = schemas.get(ref.split("/")[-1])
+        assert isinstance(schema, dict), f"Expected a dict @ components.schemas.{ref}"
+        return self._as_schema_resource(attributes_skip, schema, ref)
+
     def schema_ref_components(self, attributes_skip: set[str]) -> Iterable[SchemaResource]:
         schemas = self.components.get("schemas", {})
         assert isinstance(schemas, dict), "Expected a dict @ components.schemas"
         for name, schema in schemas.items():
             ref = f"#/components/schemas/{name}"
-            schema_resource = SchemaResource(
-                name=ref,
-                description=schema.get("description", ""),
-                attributes_skip=attributes_skip,
-            )
-            required_names = schema.get("required", [])
-            for prop in self.schema_properties(ref):
-                if attr := parse_api_spec_param(self, prop, schema_resource):
-                    attr.is_required = prop["name"] in required_names
-                    schema_resource.attributes[attr.name] = attr
-            yield schema_resource
+            yield self._as_schema_resource(attributes_skip, schema, ref)
+
+    def _as_schema_resource(self, attributes_skip: set[str], schema: dict, ref: str):
+        schema_resource = SchemaResource(
+            name=ref,
+            description=schema.get("description", ""),
+            attributes_skip=attributes_skip,
+        )
+        required_names = schema.get("required", [])
+        for prop in self.schema_properties(ref):
+            if attr := parse_api_spec_param(self, prop, schema_resource):
+                attr.is_required = prop["name"] in required_names
+                schema_resource.attributes[attr.name] = attr
+        return schema_resource
 
 
 def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaResource) -> SchemaAttribute | None:
@@ -120,7 +131,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
             raise NotImplementedError
     try:
         existing = resource.lookup_attribute(attribute.name)
-        logger.info("Merging attribute %s into %s", attribute.name, resource.name)
+        logger.info(f"Merging attribute {attribute.name} into {existing.name}")
         attribute = existing.merge(attribute)
     except NewAttribute:
         logger.info("Adding new attribute %s to %s", attribute.name, resource.name)
@@ -130,7 +141,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
     return attribute
 
 
-def add_api_spec_info(schema: SchemaV2, api_spec_path: Path) -> None:
+def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bool = False) -> None:
     api_spec = parse_model(api_spec_path, t=OpenapiSchema)
     for resource in schema.resources.values():
         for path in resource.paths:
@@ -151,5 +162,26 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path) -> None:
             if response_ref := api_spec.method_response_ref(read_method):
                 for property_dict in api_spec.schema_properties(response_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
-    for resource in api_spec.schema_ref_components(schema.attributes_skip):
-        schema.ref_resources[resource.name] = resource
+    if minimal_refs:
+        minimal_ref_resources(schema, api_spec)
+    else:
+        for resource in api_spec.schema_ref_components(schema.attributes_skip):
+            schema.ref_resources[resource.name] = resource
+
+
+def minimal_ref_resources(schema: SchemaV2, api_spec: OpenapiSchema) -> None:
+    include_refs = Queue()
+    seen_refs = set()
+    for resource in schema.resources.values():
+        for attribute in resource.attributes.values():
+            if attribute.schema_ref:
+                include_refs.put(attribute.schema_ref)
+    while not include_refs.empty():
+        ref = include_refs.get()
+        logger.info(f"Adding ref {ref}")
+        seen_refs.add(ref)
+        ref_resource = api_spec.schema_ref_component(ref, schema.attributes_skip)
+        schema.ref_resources[ref_resource.name] = ref_resource
+        for attribute in ref_resource.attributes.values():
+            if attribute.schema_ref and attribute.schema_ref not in seen_refs:
+                include_refs.put(attribute.schema_ref)

@@ -11,6 +11,8 @@ resources:
       required:
       - pipeline
       - options.*
+      computed_optional:
+      - state
     attributes:
       id:
         type: string
@@ -33,6 +35,3 @@ resources:
           - validate.StringIsJSON 
       stats:
         type: string
-      state:
-        is_optional: true
-        is_computed: true
