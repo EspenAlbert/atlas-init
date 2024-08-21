@@ -188,9 +188,7 @@ class SchemaV2(Entity):
         if ref not in self.ref_resources:
             raise ValueError(f"Resource {ref} not found in ref_resources")
         resource = self.ref_resources[ref]
-        if use_name:
-            return copy_and_validate(resource, name=use_name)
-        return resource
+        return copy_and_validate(resource, name=use_name) if use_name else resource
 
     @model_validator(mode="after")
     def set_resource_names(self):
@@ -359,6 +357,7 @@ def validate_call(validator: SchemaAttributeValidator) -> str:
 
 
 def validate_attribute_lines(attr: SchemaAttribute, line_indent: int) -> list[str]:
+    # sourcery skip: reintroduce-else, swap-if-else-branches, use-named-expression
     if not attr.validators or attr.is_computed:
         return []
     validator_header = {
