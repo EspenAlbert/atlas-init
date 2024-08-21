@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from fnmatch import fnmatch
 import logging
-from collections.abc import Iterable
-from pathlib import Path
 import re
+from collections.abc import Iterable
+from fnmatch import fnmatch
+from pathlib import Path
+from queue import Queue
 from tempfile import TemporaryDirectory
 from typing import Literal
 
@@ -98,13 +99,13 @@ class SchemaAttribute(Entity):
                 raise ValueError(f"Unknown attribute type {attr_type}")
 
 
-class SkipAttribute(Exception):
+class SkipAttribute(Exception):  # noqa: N818
     def __init__(self, attr_name: str):
         self.attr_name = attr_name
         super().__init__(f"Skipping attribute {attr_name}")
 
 
-class NewAttribute(Exception):
+class NewAttribute(Exception):  # noqa: N818
     def __init__(self, attr_name: str):
         self.attr_name = attr_name
         super().__init__(f"New attribute {attr_name}")
@@ -120,9 +121,7 @@ class AttributeTypeModifiers(Entity):
     computed: list[str] = Field(default_factory=list)
     computed_optional: set[str] = Field(default_factory=set)
 
-    def set_attribute_type(
-        self, attr: SchemaAttribute, parent_path: str = ""
-    ) -> SchemaAttribute:
+    def set_attribute_type(self, attr: SchemaAttribute, parent_path: str = "") -> SchemaAttribute:
         attr_path = f"{parent_path}.{attr.tf_name}" if parent_path else attr.tf_name
         for attr_type, names in self.model_dump().items():
             for path_matcher in names:
@@ -136,14 +135,10 @@ class AttributeTypeModifiers(Entity):
             attr.is_optional = False
 
         if attr.is_computed and attr.is_required:
-            logger.warning(
-                f"Attribute {attr.name} cannot be both computed and required, using required"
-            )
+            logger.warning(f"Attribute {attr.name} cannot be both computed and required, using required")
             attr.is_computed = False
         if attr.is_optional and attr.is_required:
-            raise ValueError(
-                f"Attribute {attr.name} cannot be both optional and required"
-            )
+            raise ValueError(f"Attribute {attr.name} cannot be both optional and required")
         if not attr.is_computed and not attr.is_required and not attr.is_optional:
             logger.warning(
                 f"Attribute {attr.name} is neither read_only, required, nor optional, using computed-optional"
@@ -159,9 +154,7 @@ class SchemaResource(Entity):
     attributes: dict[str, SchemaAttribute] = Field(default_factory=dict)
     attributes_skip: set[str] = Field(default_factory=set)
     paths: list[str] = Field(default_factory=list)
-    attribute_type_modifiers: AttributeTypeModifiers = Field(
-        default_factory=AttributeTypeModifiers
-    )
+    attribute_type_modifiers: AttributeTypeModifiers = Field(default_factory=AttributeTypeModifiers)
 
     @model_validator(mode="after")
     def set_attribute_names(self):
@@ -244,14 +237,12 @@ _import_urls = [
 ]
 _import_urls_dict = {url.split("/")[-1]: url for url in _import_urls}
 
-package_usage_pattern = re.compile(
-    r"(?P<package_name>[\w\d_]+)\.(?P<package_func>[\w\d_]+)"
-)
+package_usage_pattern = re.compile(r"(?P<package_name>[\w\d_]+)\.(?P<package_func>[\w\d_]+)")
 
 
 def extend_import_urls(import_urls: set[str], code_lines: list[str]) -> None:
     for line in code_lines:
-        if match := package_usage_pattern.search(line):
+        for match in package_usage_pattern.finditer(line):
             package_name = match.group("package_name")
             if package_name in _import_urls_dict:
                 import_urls.add(_import_urls_dict[package_name])
@@ -277,8 +268,10 @@ def import_lines(import_urls: set[str]) -> list[str]:
 
 def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> str:
     func_lines = resource_schema_func(schema, resource)
+    object_type_lines = resource_object_type_lines(schema, resource)
     import_urls = set()
     extend_import_urls(import_urls, func_lines)
+    extend_import_urls(import_urls, object_type_lines)
     unformatted = "\n".join(
         [
             f"package {package_name(resource.name)}",
@@ -286,15 +279,15 @@ def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> s
             *import_lines(import_urls),
             "",
             *func_lines,
+            "",
+            *object_type_lines,
         ]
     )
     with TemporaryDirectory() as temp_dir:
         filename = f"{resource.name}.go"
         result_file = Path(temp_dir) / filename
         result_file.write_text(unformatted)
-        if not run_binary_command_is_ok(
-            "go", f"fmt {filename}", cwd=Path(temp_dir), logger=logger
-        ):
+        if not run_binary_command_is_ok("go", f"fmt {filename}", cwd=Path(temp_dir), logger=logger):
             raise ValueError(f"Failed to format {result_file}")
         return result_file.read_text()
 
@@ -306,9 +299,7 @@ def resource_schema_func(schema: SchemaV2, resource: SchemaResource) -> list[str
         indent(2, "Attributes: map[string]schema.Attribute{"),
     ]
     for attr in resource.sorted_attributes():
-        func_lines.extend(
-            generate_go_attribute_schema_lines(schema, attr, 3, [resource])
-        )
+        func_lines.extend(generate_go_attribute_schema_lines(schema, attr, 3, [resource]))
     func_lines.extend((indent(2, "},"), indent(1, "}"), "}"))
     return func_lines
 
@@ -350,10 +341,7 @@ def plan_modifiers_lines(attr: SchemaAttribute, line_indent: int) -> list[str]:
         raise NotImplementedError
     return [
         indent(line_indent, f"PlanModifiers: []{modifier_header}{{"),
-        *[
-            indent(line_indent + 1, plan_modifier_call(modifier, modifier_package))
-            for modifier in plan_modifiers
-        ],
+        *[indent(line_indent + 1, plan_modifier_call(modifier, modifier_package)) for modifier in plan_modifiers],
         indent(line_indent, "},"),
     ]
 
@@ -374,10 +362,7 @@ def validate_attribute_lines(attr: SchemaAttribute, line_indent: int) -> list[st
         raise NotImplementedError
     return [
         indent(line_indent, f"Validators: []{validator_header}{{"),
-        *[
-            indent(line_indent + 1, validate_call(validator))
-            for validator in attr.validators
-        ],
+        *[indent(line_indent + 1, validate_call(validator)) for validator in attr.validators],
         indent(line_indent, "},"),
     ]
 
@@ -392,14 +377,8 @@ def generate_go_attribute_schema_lines(
     parent_resources[0].attribute_type_modifiers.set_attribute_type(attr, parent_path)
     attr_name = attr.tf_name
     lines = [indent(line_indent, f'"{attr_name}": {attribute_header(attr)}{{')]
-    if desc := attr.description:
-        lines.append(
-            indent(line_indent + 1, f'Description: "{desc.replace('\n', '\\n')}",')
-        )
-    elif attr.is_nested and (desc := schema.ref_resource(attr.schema_ref).description):
-        lines.append(
-            indent(line_indent + 1, f'Description: "{desc.replace('\n', '\\n')}",')
-        )
+    if desc := attr.description or attr.is_nested and (desc := schema.ref_resource(attr.schema_ref).description):
+        lines.append(indent(line_indent + 1, f'Description: "{desc.replace('\n', '\\n')}",'))
     if attr.is_required:
         lines.append(indent(line_indent + 1, "Required: true,"))
     if attr.is_optional:
@@ -411,16 +390,104 @@ def generate_go_attribute_schema_lines(
     if attr.plan_modifiers:
         lines.extend(plan_modifiers_lines(attr, line_indent + 1))
     if attr.is_nested:
-        lines.append(
-            indent(line_indent + 1, "Attributes: map[string]schema.Attribute{")
-        )
+        lines.append(indent(line_indent + 1, "Attributes: map[string]schema.Attribute{"))
         nested_attr = schema.ref_resource(attr.schema_ref, use_name=attr_name)
         for nes in nested_attr.attributes.values():
             lines.extend(
-                generate_go_attribute_schema_lines(
-                    schema, nes, line_indent + 2, parent_resources + [nested_attr]
-                )
+                generate_go_attribute_schema_lines(schema, nes, line_indent + 2, [*parent_resources, nested_attr])
             )
         lines.append(indent(line_indent + 1, "},"))
     lines.append(indent(line_indent, "},"))
+    return lines
+
+
+def struct_def(tf_name: str, resource_type: Literal["rs", "ds", "dsp", ""]) -> str:
+    type_name = f"TF{pascalize(tf_name)}"
+    suffix = {
+        "rs": "RS",
+        "ds": "DS",
+        "dsp": "DS",
+        "": "",
+    }[resource_type]
+    suffix += "Model"
+    return f"type {type_name}{suffix} struct {{"
+
+
+_tpf_types = {
+    "string": "String",
+    "int": "Int",
+    "bool": "Bool",
+    "map": "Map",
+    "list": "List",
+    "array": "List",
+    "object": "Object",
+}
+
+
+def as_tpf_type(type_name: str) -> str:
+    if tpf_type := _tpf_types.get(type_name):
+        return tpf_type
+    raise ValueError(f"Don't know how to convert {type_name} to TPF type")
+
+
+def struct_field_line(attr: SchemaAttribute) -> str:
+    tpf_type = as_tpf_type(attr.type)
+    struct_field_name = pascalize(attr.tf_name).replace("Id", "ID").replace("Db", "DB")  # type: ignore
+    return f'{struct_field_name} types.{tpf_type} `tfsdk:"{attr.tf_name}"`'
+
+
+def as_object_type_name(attr: SchemaAttribute) -> str:
+    tpf_type = as_tpf_type(attr.type)
+    return f"{tpf_type}Type"
+
+
+def custom_object_type_name(attr: SchemaAttribute) -> str:
+    return f"{pascalize(attr.tf_name)}ObjectType"
+
+
+def object_type_def(attr: SchemaAttribute) -> str:
+    return f"var {custom_object_type_name(attr)} = types.ObjectType{{AttrTypes: map[string]attr.Type{{"
+
+
+def object_type_field_line(attr: SchemaAttribute) -> str:
+    if attr.is_nested:
+        return f'"{attr.tf_name}": {custom_object_type_name(attr)},'
+    object_type_name = as_object_type_name(attr)
+    return f'"{attr.tf_name}": types.{object_type_name},'
+
+
+def resource_object_type_lines(schema: SchemaV2, resource: SchemaResource) -> list[str]:
+    nested_attributes = Queue()
+    lines = [
+        struct_def(resource.name, "rs"),
+        *[indent(1, struct_field_line(attr)) for attr in resource.sorted_attributes()],
+        "}",
+        "",
+    ]
+    for attr in resource.sorted_attributes():
+        if attr.is_nested:
+            nested_attributes.put(attr)
+    while not nested_attributes.empty():
+        nested_attr = nested_attributes.get()
+        nested_resource = schema.ref_resource(nested_attr.schema_ref, use_name=nested_attr.tf_name)
+        logger.info("creating struct for nested attribute %s", nested_attr.name)
+        lines.extend(
+            [
+                struct_def(nested_attr.tf_name, ""),
+                *[indent(1, struct_field_line(attr)) for attr in nested_resource.sorted_attributes()],
+                "}",
+                "",
+            ]
+        )
+        lines.extend(
+            [
+                object_type_def(nested_attr),
+                *[indent(1, object_type_field_line(attr)) for attr in nested_resource.sorted_attributes()],
+                "}}",
+                "",
+            ]
+        )
+        for attr in nested_resource.sorted_attributes():
+            if attr.is_nested:
+                nested_attributes.put(attr)
     return lines

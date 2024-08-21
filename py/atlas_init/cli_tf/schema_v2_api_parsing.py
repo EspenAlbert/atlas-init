@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Iterable
 from pathlib import Path
+from typing import ClassVar
 
 from model_lib import Entity
 
@@ -17,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class OpenapiSchema(Entity):
+    PARAMETERS_PREFIX: ClassVar[str] = "#/components/parameters/"
+    SCHEMAS_PREFIX: ClassVar[str] = "#/components/schemas/"
+
     openapi: str
     info: dict
     paths: dict
@@ -30,14 +34,14 @@ class OpenapiSchema(Entity):
         return self.paths.get(path, {}).get("get")
 
     def parameter(self, ref: str) -> dict:
-        assert ref.startswith("#/components/parameters/")
+        assert ref.startswith(OpenapiSchema.PARAMETERS_PREFIX)
         parameter_name = ref.split("/")[-1]
         param_dict = self.components["parameters"][parameter_name]
         assert isinstance(param_dict, dict), f"Expected a dict @ {ref}"
         return param_dict
 
     def schema_properties(self, ref: str) -> Iterable[dict]:
-        assert ref.startswith("#/components/schemas/")
+        assert ref.startswith(OpenapiSchema.SCHEMAS_PREFIX)
         schema_name = ref.split("/")[-1]
         schema_dict = self.components["schemas"][schema_name]
         assert isinstance(schema_dict, dict), f"Expected a dict @ {ref}"
@@ -65,13 +69,17 @@ class OpenapiSchema(Entity):
         if not isinstance(key, str) or not key.endswith("json"):
             return None
         return value.get("schema", {}).get("$ref")
-    
+
     def schema_ref_components(self, attributes_skip: set[str]) -> Iterable[SchemaResource]:
         schemas = self.components.get("schemas", {})
         assert isinstance(schemas, dict), "Expected a dict @ components.schemas"
         for name, schema in schemas.items():
             ref = f"#/components/schemas/{name}"
-            schema_resource = SchemaResource(name=ref, description=schema.get("description", ""), attributes_skip=attributes_skip)
+            schema_resource = SchemaResource(
+                name=ref,
+                description=schema.get("description", ""),
+                attributes_skip=attributes_skip,
+            )
             required_names = schema.get("required", [])
             for prop in self.schema_properties(ref):
                 if attr := parse_api_spec_param(self, prop, schema_resource):
@@ -80,14 +88,12 @@ class OpenapiSchema(Entity):
             yield schema_resource
 
 
-def parse_api_spec_param(
-    api_spec: OpenapiSchema, param: dict, resource: SchemaResource, parent_ref: str = ""
-) -> SchemaAttribute | None:
+def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaResource) -> SchemaAttribute | None:
     match param:
-        case {"$ref": ref} if ref.startswith("#/components/parameters/"):
+        case {"$ref": ref} if ref.startswith(OpenapiSchema.PARAMETERS_PREFIX):
             param_root = api_spec.parameter(ref)
-            return parse_api_spec_param(api_spec, param_root, resource, parent_ref=ref)
-        case {"$ref": ref, "name": name} if ref.startswith("#/components/schemas/"):
+            return parse_api_spec_param(api_spec, param_root, resource)
+        case {"$ref": ref, "name": name} if ref.startswith(OpenapiSchema.SCHEMAS_PREFIX):
             # nested attribute
             attribute = SchemaAttribute(
                 type="object",
@@ -135,9 +141,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path) -> None:
                 parse_api_spec_param(api_spec, param, resource)
             if req_ref := api_spec.method_request_body_ref(create_method):
                 for property_dict in api_spec.schema_properties(req_ref):
-                    parse_api_spec_param(
-                        api_spec, property_dict, resource, parent_ref=req_ref
-                    )
+                    parse_api_spec_param(api_spec, property_dict, resource)
         for path in resource.paths:
             read_method = api_spec.read_method(path)
             if not read_method:
@@ -146,8 +150,6 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path) -> None:
                 parse_api_spec_param(api_spec, param, resource)
             if response_ref := api_spec.method_response_ref(read_method):
                 for property_dict in api_spec.schema_properties(response_ref):
-                    parse_api_spec_param(
-                        api_spec, property_dict, resource, parent_ref=response_ref
-                    )
+                    parse_api_spec_param(api_spec, property_dict, resource)
     for resource in api_spec.schema_ref_components(schema.attributes_skip):
         schema.ref_resources[resource.name] = resource

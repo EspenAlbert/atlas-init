@@ -62,7 +62,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"processor_name": schema.StringAttribute{
-				Description: "Human-readable label that identifies the stream processor.",
+				Description: "Human-readable name of the stream processor.",
 				Required:    true,
 			},
 			"project_id": schema.StringAttribute{
@@ -83,10 +83,10 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 }
 
 type TFStreamProcessorRSModel struct {
+	ID            types.String `tfsdk:"id"`
 	InstanceName  types.String `tfsdk:"instance_name"`
 	Options       types.Object `tfsdk:"options"`
 	Pipeline      types.String `tfsdk:"pipeline"`
-	ProcessorID   types.String `tfsdk:"id"`
 	ProcessorName types.String `tfsdk:"processor_name"`
 	ProjectID     types.String `tfsdk:"project_id"`
 	State         types.String `tfsdk:"state"`
@@ -97,19 +97,18 @@ type TFOptionsModel struct {
 	Dlq types.Object `tfsdk:"dlq"`
 }
 
+var OptionsObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+	"dlq": DlqObjectType,
+}}
+
 type TFDlqModel struct {
 	Coll           types.String `tfsdk:"coll"`
 	ConnectionName types.String `tfsdk:"connection_name"`
 	DB             types.String `tfsdk:"db"`
 }
 
-var OptionsObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
-	"dlq": DlqObjectType,
-}}
-
 var DlqObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
 	"coll":            types.StringType,
 	"connection_name": types.StringType,
 	"db":              types.StringType,
-},
-}
+}}
