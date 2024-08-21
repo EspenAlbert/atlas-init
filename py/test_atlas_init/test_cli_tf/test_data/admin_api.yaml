@@ -1,0 +1,284 @@
+openapi: 3.0.1
+info:
+  description: >-
+    The MongoDB Atlas Administration API allows developers to manage all
+    components in MongoDB Atlas.
+
+
+    The Atlas Administration API uses HTTP Digest Authentication to authenticate requests. Provide a programmatic API public key and corresponding private key as the username and password when constructing the HTTP request. For example, to [return database access history](#tag/Access-Tracking/operation/listAccessLogsByClusterName) with [cURL](https://en.wikipedia.org/wiki/CURL), run the following command in the terminal:
+
+
+    ```
+
+    curl --user "{PUBLIC-KEY}:{PRIVATE-KEY}" \
+      --digest \
+      --header "Accept: application/vnd.atlas.2025-01-01+json" \
+      -X GET "https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/dbAccessHistory/clusters/{clusterName}?pretty=true"
+    ```
+
+
+    To learn more, see [Get Started with the Atlas Administration API](https://www.mongodb.com/docs/atlas/configure-api-access/). For support, see [MongoDB Support](https://www.mongodb.com/support/get-started).
+  license:
+    name: CC BY-NC-SA 3.0 US
+    url: https://creativecommons.org/licenses/by-nc-sa/3.0/us/
+  termsOfService: https://www.mongodb.com/mongodb-management-service-terms-and-conditions
+  title: MongoDB Atlas Administration API
+  version: "2.0"
+  x-xgen-sha: ee2764bd1a687c1e90356e0e6626d38dcf562279
+servers:
+  - url: https://cloud.mongodb.com
+tags:
+  - description: Returns access logs for authentication attempts made to Atlas
+      database deployments. To view database access history, you must have
+      either the Project Owner or Organization Owner role.
+    name: Access Tracking
+paths:
+  /api/atlas/v2:
+    get:
+      description: This resource returns information about the MongoDB application
+        along with API key meta data.
+      operationId: getSystemStatus
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: "#/components/schemas/SystemStatus"
+              x-xgen-version: 2023-01-01
+          description: OK
+        "401":
+          description: Unauthorized.
+        "500":
+          $ref: "#/components/responses/internalServerError"
+      security:
+        - DigestAuth: []
+      summary: Return the status of this MongoDB application
+      tags:
+        - Root
+  "/api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor":
+    post:
+      description: Create one Stream Processor within the specified stream instance.
+        To use this resource, the requesting API Key must have the Project Owner
+        role or Project Stream Processing Owner role.
+      operationId: createStreamProcessor
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+        - description: Human-readable label that identifies the stream instance.
+          in: path
+          name: tenantName
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: "#/components/schemas/StreamsProcessor"
+        description: Details to create an Atlas Streams Processor.
+        required: true
+      responses:
+        "200":
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: "#/components/schemas/StreamsProcessor"
+              x-xgen-version: 2024-05-30
+          description: OK
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "409":
+          $ref: "#/components/responses/unauthorized"
+        "500":
+          $ref: "#/components/responses/internalServerError"
+      security:
+        - DigestAuth: []
+      summary: Create One Stream Processor
+      tags:
+        - Streams
+  "/api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}":
+    get:
+      description: Get one Stream Processor within the specified stream instance. To
+        use this resource, the requesting API Key must have the Project Owner
+        role or Project Stream Processing Owner role.
+      operationId: getStreamProcessor
+      parameters:
+        - $ref: "#/components/parameters/groupId"
+        - description: Human-readable label that identifies the stream instance.
+          in: path
+          name: tenantName
+          required: true
+          schema:
+            type: string
+        - description: Human-readable label that identifies the stream processor.
+          in: path
+          name: processorName
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: "#/components/schemas/StreamsProcessorWithStats"
+              x-xgen-version: 2024-05-30
+          description: OK
+        "400":
+          $ref: "#/components/responses/badRequest"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "404":
+          $ref: "#/components/responses/notFound"
+        "500":
+          $ref: "#/components/responses/internalServerError"
+      security:
+        - DigestAuth: []
+      summary: Get One Stream Processor
+      tags:
+        - Streams
+components:
+  parameters:
+    groupId:
+      description: >-
+        Unique 24-hexadecimal digit string that identifies your project. Use the
+        [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all
+        projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.
+      in: path
+      name: groupId
+      required: true
+      schema:
+        type: string
+        example: 32b6e34b3d91647abb20e7b8
+        maxLength: 24
+        minLength: 24
+        pattern: ^([a-f0-9]{24})$
+  schemas:
+    StreamsProcessor:
+      type: object
+      description: An atlas stream processor.
+      properties:
+        _id:
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the stream
+            processor.
+          example: 32b6e34b3d91647abb20e7b8
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to
+            API sub-resources, related API resources, or both. RFC 5988 outlines
+            these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: "#/components/schemas/Link"
+          readOnly: true
+        name:
+          type: string
+          description: Human-readable name of the stream processor.
+        options:
+          $ref: "#/components/schemas/StreamsOptions"
+        pipeline:
+          type: array
+          description: Stream aggregation pipeline you want to apply to your streaming data.
+          items:
+            $ref: "#/components/schemas/Document"
+    StreamsProcessorWithStats:
+      type: object
+      description: An atlas stream processor with optional stats.
+      properties:
+        _id:
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the stream
+            processor.
+          example: 32b6e34b3d91647abb20e7b8
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to
+            API sub-resources, related API resources, or both. RFC 5988 outlines
+            these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: "#/components/schemas/Link"
+          readOnly: true
+        name:
+          type: string
+          description: Human-readable name of the stream processor.
+          readOnly: true
+        pipeline:
+          type: array
+          description: Stream aggregation pipeline you want to apply to your streaming data.
+          items:
+            $ref: "#/components/schemas/Document"
+          readOnly: true
+        state:
+          type: string
+          description: The state of the stream processor.
+          readOnly: true
+        stats:
+          type: object
+          description: The stats associated with the stream processor.
+          readOnly: true
+      required:
+        - _id
+        - name
+        - pipeline
+        - state
+    StreamsOptions:
+      type: object
+      description: Optional configuration for the stream processor.
+      properties:
+        dlq:
+          $ref: "#/components/schemas/StreamsDLQ"
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to
+            API sub-resources, related API resources, or both. RFC 5988 outlines
+            these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: "#/components/schemas/Link"
+          readOnly: true
+    StreamsDLQ:
+      type: object
+      description: Dead letter queue for the stream processor.
+      properties:
+        coll:
+          type: string
+          description: Name of the collection that will be used for the DLQ.
+        connectionName:
+          type: string
+          description: Connection name that will be used to write DLQ messages to. Has to
+            be an Atlas connection.
+        db:
+          type: string
+          description: Name of the database that will be used for the DLQ.
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to
+            API sub-resources, related API resources, or both. RFC 5988 outlines
+            these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: "#/components/schemas/Link"
+          readOnly: true

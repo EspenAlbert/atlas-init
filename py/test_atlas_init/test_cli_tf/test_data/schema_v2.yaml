@@ -1,0 +1,38 @@
+attributes_skip:
+  - pretty
+  - envelope
+  - links
+resources:
+  stream_processor:
+    paths:
+      - /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor
+      - /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}
+    attribute_type_modifiers:
+      required:
+      - pipeline
+      - options.*
+    attributes:
+      id:
+        type: string
+        alias: _id
+        plan_modifiers:
+          - UseStateForUnknown
+      project_id:
+        alias: groupId
+      instance_name:
+        alias: tenantName
+      options:
+        is_optional: true
+      processor_name:
+        alias: name,processorName
+      pipeline:
+        type: string
+        plan_modifiers:
+          - schemafunc.DiffSuppressJSON
+        validators:
+          - validate.StringIsJSON 
+      stats:
+        type: string
+      state:
+        is_optional: true
+        is_computed: true
