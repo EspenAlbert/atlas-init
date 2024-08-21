@@ -30,6 +30,11 @@ from atlas_init.cli_tf.schema import (
     update_provider_code_spec,
 )
 from atlas_init.cli_tf.schema_inspection import log_optional_only
+from atlas_init.cli_tf.schema_v2 import (
+    generate_resource_go_resource_schema,
+    parse_schema,
+)
+from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import init_settings
 
@@ -186,3 +191,33 @@ def ci_tests(
     summary_str = "\n".join(summary)
     add_to_clipboard(summary_str, logger)
     logger.info(summary_str)
+
+
+@app.command()
+def schema2(
+    resource: str = typer.Argument(
+        "", help="the resource name to generate the schema for. Must exist in the schema. E.g., 'stream_processor'"
+    ),
+    branch: str = typer.Option("main", "-b", "--branch", help="the branch for downloading openapi spec"),
+    admin_api_path: Path = typer.Option(
+        "", "-a", "--admin-api-path", help="the path to store/download the openapi spec"
+    ),
+    config_path: Path = typer.Option("", "-c", "--config", help="the path to the SchemaV2 config"),
+):
+    repo_path = current_repo_path(Repo.TF)
+    config_path = config_path or repo_path / "schema_v2.yaml"
+    admin_api_path = admin_api_path or repo_path / "admin_api.yaml"
+    if admin_api_path.exists():
+        logger.info(f"using existing admin api @ {admin_api_path}")
+    else:
+        download_admin_api(admin_api_path, branch=branch)
+    schema = parse_schema(config_path)
+    add_api_spec_info(schema, admin_api_path)
+    go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
+    if not go_old.exists():
+        logger.critical(f"no file found @ {go_old}")
+        raise typer.Abort
+    go_new = go_old.with_name("resource_schema_gen.go")
+    gen_src = generate_resource_go_resource_schema(schema, resource)
+    go_new.write_text(gen_src)
+    logger.info(f"generated new schema @ {go_new} ✅")

@@ -133,7 +133,6 @@ class AttributeTypeModifiers(Entity):
             attr.is_required = True
             attr.is_computed = False
             attr.is_optional = False
-
         if attr.is_computed and attr.is_required:
             logger.warning(f"Attribute {attr.name} cannot be both computed and required, using required")
             attr.is_computed = False
@@ -208,6 +207,13 @@ class SchemaV2(Entity):
 
 def parse_schema(path: Path) -> SchemaV2:
     return parse_model(path, t=SchemaV2)
+
+
+def generate_resource_go_resource_schema(schema: SchemaV2, resource_name: str) -> str:
+    if resource_name not in schema.resources:
+        raise ValueError(f"Resource {resource_name} not found in schema")
+    resource = schema.resources[resource_name]
+    return generate_go_resource_schema(schema, resource)
 
 
 def generate_resource_go_schemas(schema: SchemaV2) -> Iterable[str]:
