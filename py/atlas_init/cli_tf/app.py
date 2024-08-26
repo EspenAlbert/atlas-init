@@ -30,6 +30,11 @@ from atlas_init.cli_tf.schema import (
     update_provider_code_spec,
 )
 from atlas_init.cli_tf.schema_inspection import log_optional_only
+from atlas_init.cli_tf.schema_v2 import (
+    generate_resource_go_resource_schema,
+    parse_schema,
+)
+from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import init_settings
 
@@ -38,7 +43,9 @@ logger = logging.getLogger(__name__)
 
 
 @app.command()
-def schema():
+def schema(
+    branch: str = typer.Option("main", "-b", "--branch"),
+):
     settings = init_settings()
     schema_out_path = settings.schema_out_path_computed
     schema_out_path.mkdir(exist_ok=True)
@@ -49,10 +56,11 @@ def schema():
     generator_config_path.write_text(generator_config)
     provider_code_spec_path = schema_out_path / "provider-code-spec.json"
     admin_api_path = schema_out_path / "admin_api.yaml"
+
     if admin_api_path.exists():
         logger.warning(f"using existing admin api @ {admin_api_path}")
     else:
-        download_admin_api(admin_api_path)
+        download_admin_api(admin_api_path, branch=branch)
 
     if not run_binary_command_is_ok(
         cwd=schema_out_path,
@@ -74,7 +82,7 @@ def schema():
     if not run_binary_command_is_ok(
         cwd=schema_out_path,
         binary_name="tfplugingen-framework",
-        command=f"generate resources --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
+        command=f"generate all --input ./{provider_code_spec_path.name} --output {go_code_output.name}",
         logger=logger,
     ):
         logger.critical("failed to generate plugin schema")
@@ -183,3 +191,39 @@ def ci_tests(
     summary_str = "\n".join(summary)
     add_to_clipboard(summary_str, logger)
     logger.info(summary_str)
+
+
+@app.command()
+def schema2(
+    resource: str = typer.Argument(
+        "", help="the resource name to generate the schema for. Must exist in the schema. E.g., 'stream_processor'"
+    ),
+    branch: str = typer.Option("main", "-b", "--branch", help="the branch for downloading openapi spec"),
+    admin_api_path: Path = typer.Option(
+        "", "-a", "--admin-api-path", help="the path to store/download the openapi spec"
+    ),
+    config_path: Path = typer.Option("", "-c", "--config", help="the path to the SchemaV2 config"),
+    replace: bool = typer.Option(False, "-r", "--replace", help="replace the existing schema file"),
+):
+    repo_path = current_repo_path(Repo.TF)
+    config_path = config_path or repo_path / "schema_v2.yaml"
+    admin_api_path = admin_api_path or repo_path / "admin_api.yaml"
+    if admin_api_path.exists():
+        logger.info(f"using existing admin api @ {admin_api_path}")
+    else:
+        download_admin_api(admin_api_path, branch=branch)
+    schema = parse_schema(config_path)
+    logger.info("adding api spec info to schema")
+    add_api_spec_info(schema, admin_api_path, minimal_refs=True)
+    go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
+    if not go_old.exists():
+        logger.critical(f"no file found @ {go_old}")
+        raise typer.Abort
+    if replace:
+        logger.warning(f"replacing existing schema @ {go_old}")
+        go_new = go_old
+    else:
+        go_new = go_old.with_name("resource_schema_gen.go")
+    gen_src = generate_resource_go_resource_schema(schema, resource)
+    go_new.write_text(gen_src)
+    logger.info(f"generated new schema @ {go_new} ✅")

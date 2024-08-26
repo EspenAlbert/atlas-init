@@ -1,0 +1,186 @@
+{
+    "provider": {
+        "name": "mongodbatlas"
+    },
+    "resources": [
+        {
+            "name": "streamprocessor",
+            "schema": {
+                "attributes": [
+                    {
+                        "name": "name",
+                        "string": {
+                            "computed_optional_required": "computed_optional",
+                            "description": "Human-readable name of the stream processor."
+                        }
+                    },
+                    {
+                        "name": "options",
+                        "single_nested": {
+                            "computed_optional_required": "computed_optional",
+                            "attributes": [
+                                {
+                                    "name": "dlq",
+                                    "single_nested": {
+                                        "computed_optional_required": "computed_optional",
+                                        "attributes": [
+                                            {
+                                                "name": "coll",
+                                                "string": {
+                                                    "computed_optional_required": "computed_optional",
+                                                    "description": "Name of the collection that will be used for the DLQ."
+                                                }
+                                            },
+                                            {
+                                                "name": "connection_name",
+                                                "string": {
+                                                    "computed_optional_required": "computed_optional",
+                                                    "description": "Connection name that will be used to write DLQ messages to. Has to be an Atlas connection."
+                                                }
+                                            },
+                                            {
+                                                "name": "db",
+                                                "string": {
+                                                    "computed_optional_required": "computed_optional",
+                                                    "description": "Name of the database that will be used for the DLQ."
+                                                }
+                                            },
+                                            {
+                                                "name": "links",
+                                                "list_nested": {
+                                                    "computed_optional_required": "computed_optional",
+                                                    "nested_object": {
+                                                        "attributes": [
+                                                            {
+                                                                "name": "href",
+                                                                "string": {
+                                                                    "computed_optional_required": "computed_optional",
+                                                                    "description": "Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`."
+                                                                }
+                                                            },
+                                                            {
+                                                                "name": "rel",
+                                                                "string": {
+                                                                    "computed_optional_required": "computed_optional",
+                                                                    "description": "Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`."
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    "description": "List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships."
+                                                }
+                                            }
+                                        ],
+                                        "description": "Dead letter queue for the stream processor."
+                                    }
+                                },
+                                {
+                                    "name": "links",
+                                    "list_nested": {
+                                        "computed_optional_required": "computed_optional",
+                                        "nested_object": {
+                                            "attributes": [
+                                                {
+                                                    "name": "href",
+                                                    "string": {
+                                                        "computed_optional_required": "computed_optional",
+                                                        "description": "Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`."
+                                                    }
+                                                },
+                                                {
+                                                    "name": "rel",
+                                                    "string": {
+                                                        "computed_optional_required": "computed_optional",
+                                                        "description": "Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`."
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "description": "List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships."
+                                    }
+                                }
+                            ],
+                            "description": "Optional configuration for the stream processor."
+                        }
+                    },
+                    {
+                        "name": "pipeline",
+                        "list_nested": {
+                            "computed_optional_required": "computed_optional",
+                            "nested_object": {},
+                            "description": "Stream aggregation pipeline you want to apply to your streaming data."
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "string": {
+                            "computed_optional_required": "computed",
+                            "description": "The state of the stream processor."
+                        }
+                    },
+                    {
+                        "name": "stats",
+                        "single_nested": {
+                            "computed_optional_required": "computed",
+                            "description": "The stats associated with the stream processor."
+                        }
+                    },
+                    {
+                        "name": "project_id",
+                        "string": {
+                            "computed_optional_required": "computed_optional",
+                            "description": "Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.\n\n**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.",
+                            "validators": [
+                                {
+                                    "custom": {
+                                        "imports": [
+                                            {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                            }
+                                        ],
+                                        "schema_definition": "stringvalidator.LengthBetween(24, 24)"
+                                    }
+                                },
+                                {
+                                    "custom": {
+                                        "imports": [
+                                            {
+                                                "path": "regexp"
+                                            },
+                                            {
+                                                "path": "github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+                                            }
+                                        ],
+                                        "schema_definition": "stringvalidator.RegexMatches(regexp.MustCompile(\"^([a-f0-9]{24})$\"), \"\")"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "instance_name",
+                        "string": {
+                            "computed_optional_required": "computed_optional",
+                            "description": "Human-readable label that identifies the stream instance."
+                        }
+                    },
+                    {
+                        "name": "processor_name",
+                        "string": {
+                            "computed_optional_required": "computed_optional",
+                            "description": "Human-readable label that identifies the stream processor."
+                        }
+                    },
+                    {
+                        "name": "_id",
+                        "string": {
+                            "description": "Unique identifier of the processor",
+                            "computed_optional_required": "computed"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "version": "0.1"
+}
