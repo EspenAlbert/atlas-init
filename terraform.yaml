@@ -51,7 +51,7 @@ resources:
       - links
     attributes: # (only works on path attributes)
       aliases:
-        # _id: processor_id
+        # _id: id
         # name: processor_name
         groupId: project_id
         tenantName: instance_name
@@ -68,7 +68,7 @@ resources:
   #   path: api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor
   #   method: PATCH
 data_sources:
-- name: streamprocessor
+- name: stream_processor
   extensions:
   - type: rename_attribute
     from_name: _id
@@ -85,6 +85,8 @@ data_sources:
     path: project_id
     new_value: required
   - type: skip_validators
+  # pagination attributes
+  # generating test files
   read:
     path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}
     method: GET
@@ -97,3 +99,8 @@ data_sources:
     attributes: # (only works on path attributes)
       aliases:
         groupId: project_id
+- name: stream_processors
+  read:
+    # unable to extract the description here
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processors
+    method: GET
