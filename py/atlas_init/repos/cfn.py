@@ -9,6 +9,7 @@ from zero_3rdparty.dict_nested import read_nested_or_none
 from zero_3rdparty.str_utils import ensure_prefix
 
 from atlas_init.cloud.aws import REGIONS, AwsRegion
+from atlas_init.humps import pascalize
 from atlas_init.repos.path import current_dir
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class CfnType(Entity):
 
     @model_validator(mode="after")
     def ensure_type_name_prefix(self):
-        self.type_name = ensure_prefix(self.type_name.capitalize(), self.MONGODB_ATLAS_CFN_TYPE_PREFIX)
+        self.type_name = ensure_prefix(pascalize(self.type_name), self.MONGODB_ATLAS_CFN_TYPE_PREFIX)
         return self
 
 

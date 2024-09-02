@@ -124,9 +124,11 @@ def init(context: typer.Context):
 def plan(context: typer.Context, *, skip_outputs: bool = False):
     _plan_or_apply(context.args, "plan", skip_outputs=skip_outputs)
 
+
 @app_command()
 def apply(context: typer.Context, *, skip_outputs: bool = False):
     _plan_or_apply(context.args, "apply", skip_outputs=skip_outputs)
+
 
 def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool):
     settings = init_settings()
