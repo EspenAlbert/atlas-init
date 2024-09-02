@@ -106,3 +106,7 @@ output "last_provider_version" {
 output "aws_account_id" {
   value = local.aws_account_id
 }
+
+output "my_ip" {
+  value = var.use_project_myip ? chomp(data.http.myip[0].response_body) : null
+}

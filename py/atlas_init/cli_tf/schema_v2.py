@@ -53,6 +53,14 @@ class SchemaAttribute(Entity):
         return decamelize(self.name)  # type: ignore
 
     @property
+    def schema_ref_name(self) -> str:
+        return self.schema_ref.split("/")[-1] if "/" in self.schema_ref else ""
+
+    @property
+    def tf_struct_name(self) -> str:
+        return pascalize(self.schema_ref_name) or pascalize(self.name)
+
+    @property
     def aliases(self) -> list[str]:
         return self.alias.split(",") if self.alias else []
 
@@ -61,11 +69,15 @@ class SchemaAttribute(Entity):
         return self.schema_ref != ""
 
     def merge(self, other: SchemaAttribute) -> SchemaAttribute:
+        # avoid schema_ref when type is different, e.g., setting `pipeline` to a string
+        schema_ref = (
+            self.schema_ref or other.schema_ref if not self.type or self.type == other.type else self.schema_ref
+        )
         return SchemaAttribute(
             type=self.type or other.type,
             name=self.name or other.name,
             description=self.description or other.description,
-            schema_ref=self.schema_ref or other.schema_ref,
+            schema_ref=schema_ref,
             alias=self.alias or other.alias,
             is_required=self.is_required or other.is_required,
             is_optional=self.is_optional or other.is_optional,
@@ -292,6 +304,7 @@ def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> s
         result_file = Path(temp_dir) / filename
         result_file.write_text(unformatted)
         if not run_binary_command_is_ok("go", f"fmt {filename}", cwd=Path(temp_dir), logger=logger):
+            logger.warning(f"go file unformatted:\n{unformatted}")
             raise ValueError(f"Failed to format {result_file}")
         return result_file.read_text()
 
@@ -311,16 +324,21 @@ def resource_schema_func(schema: SchemaV2, resource: SchemaResource) -> list[str
 _attr_schema_types = {
     "string": "schema.StringAttribute",
 }
+_attr_nested_schema_types = {
+    "object": "schema.SingleNestedAttribute",
+    "array": "schema.ListNestedAttribute",
+}
 
 
 def attribute_header(attr: SchemaAttribute) -> str:
     if attr.is_nested:
-        if attr.type != "object":
-            raise NotImplementedError
-        return "schema.SingleNestedAttribute"
+        header = _attr_nested_schema_types.get(attr.type)
+        if header is None:
+            raise NotImplementedError(f"Unknown nested attribute type: {attr.type}")
+        return header
     header = _attr_schema_types.get(attr.type)
     if header is None:
-        raise NotImplementedError
+        raise NotImplementedError(f"Unknown attribute type: {attr.type}")
     return header
 
 
@@ -395,13 +413,23 @@ def generate_go_attribute_schema_lines(
     if attr.plan_modifiers:
         lines.extend(plan_modifiers_lines(attr, line_indent + 1))
     if attr.is_nested:
-        lines.append(indent(line_indent + 1, "Attributes: map[string]schema.Attribute{"))
         nested_attr = schema.ref_resource(attr.schema_ref, use_name=attr_name)
-        for nes in nested_attr.attributes.values():
-            lines.extend(
-                generate_go_attribute_schema_lines(schema, nes, line_indent + 2, [*parent_resources, nested_attr])
-            )
-        lines.append(indent(line_indent + 1, "},"))
+        if attr.type == "array":
+            lines.append(indent(line_indent + 1, "NestedObject: schema.NestedAttributeObject{"))
+            lines.extend(generate_nested_attribute_schema_lines(schema, line_indent + 1, parent_resources, nested_attr))
+            lines.append(indent(line_indent + 1, "},"))
+        else:
+            lines.extend(generate_nested_attribute_schema_lines(schema, line_indent + 1, parent_resources, nested_attr))
+    lines.append(indent(line_indent, "},"))
+    return lines
+
+
+def generate_nested_attribute_schema_lines(
+    schema: SchemaV2, line_indent: int, parent_resources: list[SchemaResource], nested_attr: SchemaResource
+) -> list[str]:
+    lines = [indent(line_indent, "Attributes: map[string]schema.Attribute{")]
+    for nes in nested_attr.attributes.values():
+        lines.extend(generate_go_attribute_schema_lines(schema, nes, line_indent + 1, [*parent_resources, nested_attr]))
     lines.append(indent(line_indent, "},"))
     return lines
 
@@ -447,7 +475,7 @@ def as_object_type_name(attr: SchemaAttribute) -> str:
 
 
 def custom_object_type_name(attr: SchemaAttribute) -> str:
-    return f"{pascalize(attr.tf_name)}ObjectType"
+    return f"{pascalize(attr.tf_struct_name)}ObjectType"
 
 
 def object_type_def(attr: SchemaAttribute) -> str:
@@ -461,8 +489,11 @@ def object_type_field_line(attr: SchemaAttribute) -> str:
     return f'"{attr.tf_name}": types.{object_type_name},'
 
 
+_used_refs: set[str] = set()
+
+
 def resource_object_type_lines(schema: SchemaV2, resource: SchemaResource) -> list[str]:
-    nested_attributes = Queue()
+    nested_attributes: Queue[SchemaAttribute] = Queue()
     lines = [
         struct_def(resource.name, "rs"),
         *[indent(1, struct_field_line(attr)) for attr in resource.sorted_attributes()],
@@ -474,11 +505,15 @@ def resource_object_type_lines(schema: SchemaV2, resource: SchemaResource) -> li
             nested_attributes.put(attr)
     while not nested_attributes.empty():
         nested_attr = nested_attributes.get()
-        nested_resource = schema.ref_resource(nested_attr.schema_ref, use_name=nested_attr.tf_name)
-        logger.info("creating struct for nested attribute %s", nested_attr.name)
+        schema_ref = nested_attr.schema_ref
+        if schema_ref in _used_refs:
+            continue
+        _used_refs.add(schema_ref)
+        nested_resource = schema.ref_resource(schema_ref, use_name=nested_attr.tf_name)
+        logger.info(f"creating struct for nested attribute %s, ref={schema_ref}", nested_attr.name)
         lines.extend(
             [
-                struct_def(nested_attr.tf_name, ""),
+                struct_def(nested_attr.tf_struct_name, ""),
                 *[indent(1, struct_field_line(attr)) for attr in nested_resource.sorted_attributes()],
                 "}",
                 "",

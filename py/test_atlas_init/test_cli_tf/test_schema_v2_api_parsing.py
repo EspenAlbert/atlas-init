@@ -1,3 +1,7 @@
+import os
+from pathlib import Path
+from model_lib import dump, parse_model, parse_payload
+import pytest
 from atlas_init.cli_tf.schema_v2 import SchemaV2
 from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, parse_api_spec_param
 
@@ -73,3 +77,39 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
         "state",
         "stats",
     ]
+
+
+def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: OpenapiSchema):
+    resource_policy = schema_v2.resources["resource_policy"]
+    assert resource_policy
+    ref = "#/components/schemas/ApiAtlasResourcePolicyCreateView"
+    schema_properties = list(openapi_schema.schema_properties(ref))
+    assert sorted(d["name"] for d in schema_properties) == [
+        "name",
+        "policies",
+    ]
+    policies = [d for d in schema_properties if d["name"] == "policies"][0]
+    schema_attribute = parse_api_spec_param(openapi_schema, policies, resource_policy)
+    assert schema_attribute, "unable to infer attribute for policies"
+    assert schema_attribute.type == "array"
+    assert (
+        schema_attribute.schema_ref == "#/components/schemas/ApiAtlasPolicyCreateView"
+    )
+    assert schema_attribute.is_nested
+
+
+@pytest.mark.skipif(
+    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
+)
+def test_print_out_paths_in_yaml(schema_v2):
+    api_path = Path(os.environ["API_SPEC_PATH"])
+    parsed_raw = parse_payload(api_path, "json")
+    spec_yaml = dump(parsed_raw, "yaml")
+    api_path.with_name(f"{api_path.stem}.yaml").write_text(spec_yaml)
+    openapi_schema = parse_model(api_path, t=OpenapiSchema)
+    for resource in schema_v2.resources.values():
+        for path in resource.paths:
+            spec_path = openapi_schema.paths[path]
+            spec_path_yaml = dump(spec_path, "yaml")
+            print(f"content of: {path}")
+            print(spec_path_yaml)

@@ -93,21 +93,21 @@ type TFStreamProcessorRSModel struct {
 	Stats         types.String `tfsdk:"stats"`
 }
 
-type TFOptionsModel struct {
+type TFStreamsOptionsModel struct {
 	Dlq types.Object `tfsdk:"dlq"`
 }
 
-var OptionsObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
-	"dlq": DlqObjectType,
+var StreamsOptionsObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+	"dlq": StreamsDLQObjectType,
 }}
 
-type TFDlqModel struct {
+type TFStreamsDLQModel struct {
 	Coll           types.String `tfsdk:"coll"`
 	ConnectionName types.String `tfsdk:"connection_name"`
 	DB             types.String `tfsdk:"db"`
 }
 
-var DlqObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+var StreamsDLQObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
 	"coll":            types.StringType,
 	"connection_name": types.StringType,
 	"db":              types.StringType,

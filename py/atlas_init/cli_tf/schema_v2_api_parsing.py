@@ -111,6 +111,15 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
                 name=name,
                 schema_ref=ref,
             )
+        case {"type": "array", "items": {"$ref": ref}, "name": name}:
+            attribute = SchemaAttribute(
+                type="array",
+                name=name,
+                schema_ref=ref,
+                description=param.get("description", ""),
+                is_computed=param.get("readOnly", False),
+                is_required=param.get("required", False),
+            )
         case {"name": name, "schema": schema}:
             attribute = SchemaAttribute(
                 type=schema["type"],

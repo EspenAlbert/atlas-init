@@ -1,5 +1,7 @@
 import logging
 from pathlib import Path
+
+import pytest
 from atlas_init.cli_helper.run import run_binary_command_is_ok, run_command_is_ok
 from atlas_init.cli_tf.schema_v2 import (
     SchemaAttribute,
@@ -64,12 +66,13 @@ def test_add_api_spec_info(schema_v2, api_spec_path):
     ]
 
 
+@pytest.mark.parametrize("resource_name", ["stream_processor", "resource_policy"])
 def test_resource_schema_full(
-    schema_with_api_info: SchemaV2, tf_test_data_dir, file_regression
+    schema_with_api_info: SchemaV2, resource_name, file_regression
 ):
     schema = schema_with_api_info
-    actual = generate_go_resource_schema(schema, schema.resources["stream_processor"])
-    file_regression.check(actual, extension=".go")
+    actual = generate_go_resource_schema(schema, schema.resources[resource_name])
+    file_regression.check(actual, basename=resource_name, extension=".go")
 
 
 _expected_import_lines = """\

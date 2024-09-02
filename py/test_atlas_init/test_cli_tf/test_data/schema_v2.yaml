@@ -2,7 +2,28 @@ attributes_skip:
   - pretty
   - envelope
   - links
+  - orgId
 resources:
+  resource_policy:
+    paths:
+    - /api/atlas/v2/orgs/{orgId}/resourcePolicies
+    - /api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}
+    attributes:
+      id:
+        type: string
+        alias: resourcePolicyId
+        plan_modifiers:
+          - UseStateForUnknown
+      policies:
+        schema_ref: "#/components/schemas/ApiAtlasPolicy"
+    attribute_type_modifiers:
+      required:
+      - policies
+      - policies.body
+      computed_optional:
+      - version
+      computed:
+      - id
   stream_processor:
     paths:
       - /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor

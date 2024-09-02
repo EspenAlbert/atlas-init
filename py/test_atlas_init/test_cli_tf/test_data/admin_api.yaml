@@ -139,8 +139,202 @@ paths:
       summary: Get One Stream Processor
       tags:
         - Streams
+  "/api/atlas/v2/orgs/{orgId}/resourcePolicies":
+    get:
+      tags:
+      - Atlas Resource Policies
+      summary: Return all Atlas Resource Policies
+      description: Return all Atlas Resource Policies for the org.
+      operationId: getAtlasResourcePolicies
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
+              x-xgen-version: '2025-01-01'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Dedicated
+    post:
+      tags:
+      - Atlas Resource Policies
+      summary: Create one Atlas Resource Policy
+      description: Create one Atlas Resource Policy for an org.
+      operationId: createAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      requestBody:
+        description: Atlas Resource Policy to create.
+        content:
+          application/vnd.atlas.2025-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ApiAtlasResourcePolicyCreateView'
+            x-xgen-version: '2025-01-01'
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
+              x-xgen-version: '2025-01-01'
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiAtlasInvalidResourcePolicyCreateErrorView'
+              x-xgen-version: '2025-01-01'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Dedicated
+  "/api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}":
+    get:
+      tags:
+      - Atlas Resource Policies
+      summary: Return one Atlas Resource Policy
+      description: Return one Atlas Resource Policy for an org.
+      operationId: getAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
+              x-xgen-version: '2025-01-01'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Dedicated
+    delete:
+      tags:
+      - Atlas Resource Policies
+      summary: Delete one Atlas Resource Policy
+      description: Delete one Atlas Resource Policy for an org.
+      operationId: deleteAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: This endpoint does not return a response body.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/NoBody'
+              x-xgen-version: '2025-01-01'
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Dedicated
+    patch:
+      tags:
+      - Atlas Resource Policies
+      summary: Update one Atlas Resource Policy
+      description: Update one Atlas Resource Policy for an org.
+      operationId: updateAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Atlas Resource Policy to update.
+        content:
+          application/vnd.atlas.2025-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ApiAtlasResourcePolicyEditView'
+            x-xgen-version: '2025-01-01'
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
+              x-xgen-version: '2025-01-01'
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiAtlasInvalidResourcePolicyCreateErrorView'
+              x-xgen-version: '2025-01-01'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Dedicated
 components:
   parameters:
+    orgId:
+      name: orgId
+      in: path
+      description: Unique 24-hexadecimal digit string that identifies the organization
+        that contains your projects. Use the
+        [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to
+        retrieve all organizations to which the authenticated user has access.
+      required: true
+      schema:
+        maxLength: 24
+        minLength: 24
+        pattern: ^([a-f0-9]{24})$
+        type: string
+        example: 4888442a3354817a7320eb61
     groupId:
       description: >-
         Unique 24-hexadecimal digit string that identifies your project. Use the
@@ -159,6 +353,33 @@ components:
         minLength: 24
         pattern: ^([a-f0-9]{24})$
   schemas:
+    ApiAtlasPolicyCreate:
+      type: object
+      properties:
+        body:
+          type: string
+          description: A string that defines the permissions for the policy. The syntax
+            used is the Cedar Policy language.
+          example: |2
+              forbid (
+                principal,
+                action == cloud::Action::"cluster.createEdit",
+                resource
+              ) when {
+               context.cluster.regions.contains(cloud::region::"aws:us-east-1")
+              };
+    ApiAtlasResourcePolicyCreateView:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable label that describes the atlas resource policy.
+        policies:
+          type: array
+          description: List of policies that make up the atlas resource policy.
+          items:
+            $ref: "#/components/schemas/ApiAtlasPolicyCreate"
+    
     StreamsProcessor:
       type: object
       description: An atlas stream processor.
@@ -193,6 +414,113 @@ components:
           description: Stream aggregation pipeline you want to apply to your streaming data.
           items:
             $ref: "#/components/schemas/Document"
+    ApiAtlasUserMetadataView:
+      type: object
+      properties:
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies a user.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+        name:
+          type: string
+          description: Human-readable label that describes a user.
+          readOnly: true
+      description: The user that last updated the atlas resource policy.
+      readOnly: true
+    ApiAtlasPolicyView:
+      type: object
+      properties:
+        body:
+          type: string
+          description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
+          readOnly: true
+          example: some example
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+    ApiAtlasPolicy:
+      type: object
+      properties:
+        body:
+          type: string
+          description: A string that defines the permissions for the policy. The syntax
+            used is the Cedar Policy language.
+          readOnly: true
+          example: |2
+              forbid (
+                principal,
+                action == cloud::Action::"cluster.createEdit",
+                resource
+              ) when {
+               context.cluster.regions.contains(cloud::region::"aws:us-east-1")
+              };
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+    ApiAtlasResourcePolicyView:
+      type: object
+      properties:
+        createdByUser:
+          $ref: '#/components/schemas/ApiAtlasUserMetadataView'
+        createdDate:
+          type: string
+          description: Date and time in UTC when the atlas resource policy was created.
+          format: date-time
+          readOnly: true
+          example: '2022-01-01T00:00:00Z'
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+        lastUpdatedByUser:
+          $ref: '#/components/schemas/ApiAtlasUserMetadataView'
+        lastUpdatedDate:
+          type: string
+          description: Date and time in UTC when the atlas resource policy was last updated.
+          format: date-time
+          readOnly: true
+          example: '2022-01-01T00:00:00Z'
+        name:
+          type: string
+          description: Human-readable label that describes the atlas resource policy.
+          readOnly: true
+        orgId:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the organization the atlas resource policy belongs to.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+        policies:
+          type: array
+          description: List of policies that make up the atlas resource policy.
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/ApiAtlasPolicyView'
+        version:
+          type: string
+          description: A string that identifies the version of the atlas resource policy.
+          readOnly: true
+          example: v1
     StreamsProcessorWithStats:
       type: object
       description: An atlas stream processor with optional stats.
