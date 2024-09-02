@@ -4,6 +4,7 @@ import sys
 from collections.abc import Callable
 from functools import partial
 from pydoc import locate
+from typing import Literal
 
 import typer
 from zero_3rdparty.file_utils import iter_paths
@@ -120,11 +121,16 @@ def init(context: typer.Context):
 
 
 @app_command()
+def plan(context: typer.Context, *, skip_outputs: bool = False):
+    _plan_or_apply(context.args, "plan", skip_outputs=skip_outputs)
+
+@app_command()
 def apply(context: typer.Context, *, skip_outputs: bool = False):
+    _plan_or_apply(context.args, "apply", skip_outputs=skip_outputs)
+
+def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool):
     settings = init_settings()
-    extra_args = context.args
-    logger.info(f"apply extra args: {extra_args}")
-    logger.info("in the apply command")
+    logger.info(f"using the '{command}' command, extra args: {extra_args}")
     try:
         suites = active_suites(settings)
     except (CwdIsNoRepoPathError, RepoAliasNotFoundError) as e:
@@ -135,7 +141,7 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
     dump_tf_vars(settings, tf_vars)
 
     try:
-        run_terraform(settings, "apply", extra_args)
+        run_terraform(settings, command, extra_args)
     except TerraformRunError as e:
         logger.error(repr(e))  # noqa: TRY400
         raise typer.Exit(1) from e
@@ -198,8 +204,10 @@ def sdk_upgrade(
 
     sdk_breaking_changes_path = go_sdk_breaking_changes(repo_path)
     all_breaking_changes = parse_breaking_changes(sdk_breaking_changes_path, old, new)
-    replace_in = f"go.mongodb.org/atlas-sdk/{old}/admin"
-    replace_out = f"go.mongodb.org/atlas-sdk/{new}/admin"
+    replacements = {
+        f"go.mongodb.org/atlas-sdk/{old}/mockadmin": f"go.mongodb.org/atlas-sdk/{new}/mockadmin",
+        f"go.mongodb.org/atlas-sdk/{old}/admin": f"go.mongodb.org/atlas-sdk/{new}/admin",
+    }
     auto_modifier: Callable[[str, str], str] | None = None
     if auto_change_name:
         func_path = f"{sdk_auto_changes.__name__}.{auto_change_name}"
@@ -210,7 +218,7 @@ def sdk_upgrade(
     resources_breaking_changes: set[str] = set()
     for path in iter_paths(repo_path, "*.go", ".mockery.yaml"):
         text_old = path.read_text()
-        if replace_in not in text_old:
+        if not any(replace_in in text_old for replace_in in replacements):
             continue
         r_name = resource_name(repo_path, path)
         if resource and resource != r_name:
@@ -222,7 +230,9 @@ def sdk_upgrade(
             logger.warning(f"found breaking changes: {changes_formatted}")
             if is_removed(breaking_changes):
                 resources_breaking_changes.add(r_name)
-        text_new = text_old.replace(replace_in, replace_out)
+        text_new = text_old
+        for replace_in, replace_out in replacements.items():
+            text_new = text_new.replace(replace_in, replace_out)
         if not dry_run:
             if auto_modifier:
                 text_new = auto_modifier(text_new, old)
