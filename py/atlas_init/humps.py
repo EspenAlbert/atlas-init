@@ -3,15 +3,16 @@
 This module contains all the core logic for humps.
 """
 import re
-from collections.abc import Mapping  # pylint: disable-msg=E0611
+from collections.abc import Mapping
+from typing import TypeVar  # pylint: disable-msg=E0611
 
 ACRONYM_RE = re.compile(r"([A-Z\d]+)(?=[A-Z\d]|$)")
 PASCAL_RE = re.compile(r"([^\-_]+)")
 SPLIT_RE = re.compile(r"([\-_]*(?<=[^0-9])(?=[A-Z])[^A-Z]*[\-_]*)")
 UNDERSCORE_RE = re.compile(r"(?<=[^\-_])[\-_]+[^\-_]")
+T = TypeVar("T")
 
-
-def pascalize(str_or_iter):
+def pascalize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to pascal case.
 
@@ -39,7 +40,7 @@ def pascalize(str_or_iter):
     return s[0].upper() + s[1:] if len(s) != 0 else s
 
 
-def camelize(str_or_iter):
+def camelize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to camel case.
 
@@ -65,7 +66,7 @@ def camelize(str_or_iter):
     return UNDERSCORE_RE.sub(lambda m: m.group(0)[-1].upper(), s)
 
 
-def kebabize(str_or_iter):
+def kebabize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to kebab case.
     :param str_or_iter:
@@ -93,7 +94,7 @@ def kebabize(str_or_iter):
     return UNDERSCORE_RE.sub(lambda m: "-" + m.group(0)[-1], s)
 
 
-def decamelize(str_or_iter):
+def decamelize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to snake case.
 
@@ -114,7 +115,7 @@ def decamelize(str_or_iter):
     return _separate_words(_fix_abbreviations(s)).lower()
 
 
-def depascalize(str_or_iter):
+def depascalize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to snake case.
 
@@ -127,7 +128,7 @@ def depascalize(str_or_iter):
     return decamelize(str_or_iter)
 
 
-def dekebabize(str_or_iter):
+def dekebabize(str_or_iter: T) -> T:
     """
     Convert a string, dict, or list of dicts to snake case.
     :param str_or_iter:
@@ -147,7 +148,7 @@ def dekebabize(str_or_iter):
     return s.replace("-", "_")
 
 
-def is_camelcase(str_or_iter):
+def is_camelcase(str_or_iter: T) -> T:
     """
     Determine if a string, dict, or list of dicts is camel case.
 
@@ -161,7 +162,7 @@ def is_camelcase(str_or_iter):
     return str_or_iter == camelize(str_or_iter)
 
 
-def is_pascalcase(str_or_iter):
+def is_pascalcase(str_or_iter: T) -> T:
     """
     Determine if a string, dict, or list of dicts is pascal case.
 
@@ -174,7 +175,7 @@ def is_pascalcase(str_or_iter):
     return str_or_iter == pascalize(str_or_iter)
 
 
-def is_kebabcase(str_or_iter):
+def is_kebabcase(str_or_iter: T) -> T:
     """
     Determine if a string, dict, or list of dicts is camel case.
     :param str_or_iter:
@@ -187,7 +188,7 @@ def is_kebabcase(str_or_iter):
     return str_or_iter == kebabize(str_or_iter)
 
 
-def is_snakecase(str_or_iter):
+def is_snakecase(str_or_iter: T) -> T:
     """
     Determine if a string, dict, or list of dicts is snake case.
 
