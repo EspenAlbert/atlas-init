@@ -47,6 +47,8 @@ class SchemaAttribute(Entity):
     is_computed: bool = False
     plan_modifiers: list[PlanModifier] = Field(default_factory=list)
     validators: list[SchemaAttributeValidator] = Field(default_factory=list)
+    # not used during dumping but backtrace which parameters are used in the api spec
+    parameter_ref: str = ""
 
     @property
     def tf_name(self) -> str:
@@ -84,6 +86,7 @@ class SchemaAttribute(Entity):
             is_computed=self.is_computed or other.is_computed,
             plan_modifiers=self.plan_modifiers + other.plan_modifiers,
             validators=self.validators + other.validators,
+            parameter_ref=self.parameter_ref or other.parameter_ref,
         )
 
     def set_attribute_type(
@@ -214,6 +217,11 @@ class SchemaV2(Entity):
             resource.attributes_skip |= self.attributes_skip
         return self
 
+    def reset_attributes_skip(self) -> None:
+        self.attributes_skip.clear()
+        for resource in self.resources.values():
+            resource.attributes_skip.clear()
+
 
 def parse_schema(path: Path) -> SchemaV2:
     return parse_model(path, t=SchemaV2)
@@ -332,13 +340,14 @@ _attr_nested_schema_types = {
 
 def attribute_header(attr: SchemaAttribute) -> str:
     if attr.is_nested:
-        header = _attr_nested_schema_types.get(attr.type)
-        if header is None:
-            raise NotImplementedError(f"Unknown nested attribute type: {attr.type}")
-        return header
-    header = _attr_schema_types.get(attr.type)
+        err_msg = f"Unknown nested attribute type: {attr.type}"
+        schema_types = _attr_nested_schema_types
+    else:
+        err_msg = f"Unknown attribute type: {attr.type}"
+        schema_types = _attr_schema_types
+    header = schema_types.get(attr.type)
     if header is None:
-        raise NotImplementedError(f"Unknown attribute type: {attr.type}")
+        raise NotImplementedError(err_msg)
     return header
 
 

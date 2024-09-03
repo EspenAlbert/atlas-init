@@ -1,5 +1,7 @@
 import logging
+
 from atlas_init.cli_helper.run import run_command_receive_result
+
 logger = logging.getLogger(__name__)
 
 

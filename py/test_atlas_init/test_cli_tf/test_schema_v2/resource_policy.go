@@ -33,7 +33,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 			},
 			"id": schema.StringAttribute{
-				Description: "Unique 24-hexadecimal character string that identifies the atlas resource policy.",
+				Description: "Unique 24-hexadecimal digit string that identifies an atlas resource policy.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
@@ -98,12 +98,12 @@ type TFResourcePolicyRSModel struct {
 	Version           types.String `tfsdk:"version"`
 }
 
-type TFApiAtlasUserMetadataViewModel struct {
+type TFApiAtlasUserMetadataModel struct {
 	ID   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-var ApiAtlasUserMetadataViewObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+var ApiAtlasUserMetadataObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
 	"id":   types.StringType,
 	"name": types.StringType,
 }}

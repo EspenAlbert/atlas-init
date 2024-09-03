@@ -5,6 +5,7 @@ from queue import Queue
 from typing import ClassVar
 
 from model_lib import Entity
+from pydantic import Field
 
 from atlas_init.cli_tf.schema_v2 import (
     NewAttribute,
@@ -26,13 +27,21 @@ class OpenapiSchema(Entity):
     info: dict
     paths: dict
     components: dict
-    tags: list
+    tags: list = Field(default_factory=list)
 
     def create_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("post")
 
     def read_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("get")
+
+    def method_refs(self, path: str) -> Iterable[str]:
+        for method in [self.create_method(path), self.read_method(path)]:
+            if method:
+                if req_ref := self.method_request_body_ref(method):
+                    yield req_ref
+                if resp_ref := self.method_response_ref(method):
+                    yield resp_ref
 
     def parameter(self, ref: str) -> dict:
         assert ref.startswith(OpenapiSchema.PARAMETERS_PREFIX)
@@ -63,7 +72,7 @@ class OpenapiSchema(Entity):
         return self._unpack_schema_ref(ok_response)
 
     def _unpack_schema_ref(self, response: dict) -> str | None:
-        content = response.get("content", {})
+        content = {**response.get("content", {})}  # avoid side effects
         if not content:
             return None
         key, value = content.popitem()
@@ -98,12 +107,35 @@ class OpenapiSchema(Entity):
                 schema_resource.attributes[attr.name] = attr
         return schema_resource
 
+    def add_schema_ref(self, ref: str, ref_value: dict) -> None:
+        if ref.startswith(self.PARAMETERS_PREFIX):
+            prefix = self.PARAMETERS_PREFIX
+            parent_dict = self.components["parameters"]
+        elif ref.startswith(self.SCHEMAS_PREFIX):
+            prefix = self.SCHEMAS_PREFIX
+            parent_dict = self.components["schemas"]
+        else:
+            err_msg = f"Unknown schema_ref {ref}"
+            raise ValueError(err_msg)
+        parent_dict[ref.removeprefix(prefix)] = ref_value
+
+    def resolve_ref(self, ref: str) -> dict:
+        if ref.startswith(self.PARAMETERS_PREFIX):
+            return self.parameter(ref)
+        if ref.startswith(self.SCHEMAS_PREFIX):
+            return self.components["schemas"][ref.split("/")[-1]]
+        err_msg = f"Unknown ref {ref}"
+        raise ValueError(err_msg)
+
 
 def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaResource) -> SchemaAttribute | None:
     match param:
         case {"$ref": ref} if ref.startswith(OpenapiSchema.PARAMETERS_PREFIX):
             param_root = api_spec.parameter(ref)
-            return parse_api_spec_param(api_spec, param_root, resource)
+            found_attribute = parse_api_spec_param(api_spec, param_root, resource)
+            if found_attribute:
+                found_attribute.parameter_ref = ref
+            return found_attribute
         case {"$ref": ref, "name": name} if ref.startswith(OpenapiSchema.SCHEMAS_PREFIX):
             # nested attribute
             attribute = SchemaAttribute(
@@ -127,7 +159,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
                 description=param.get("description", ""),
                 is_computed=schema.get("readOnly", False),
                 is_required=param.get("required", False),
-            )  # type: ignore
+            )
         case {"name": name, "type": type_}:
             attribute = SchemaAttribute(
                 type=type_,
@@ -194,3 +226,44 @@ def minimal_ref_resources(schema: SchemaV2, api_spec: OpenapiSchema) -> None:
         for attribute in ref_resource.attributes.values():
             if attribute.schema_ref and attribute.schema_ref not in seen_refs:
                 include_refs.put(attribute.schema_ref)
+
+
+def minimal_api_spec(schema: SchemaV2, original_api_spec_path: Path) -> OpenapiSchema:
+    schema.reset_attributes_skip()
+    full_spec = parse_model(original_api_spec_path, t=OpenapiSchema)
+    add_api_spec_info(schema, original_api_spec_path, minimal_refs=True)
+    minimal_spec = OpenapiSchema(
+        openapi=full_spec.openapi,
+        info=full_spec.info,
+        paths={},
+        components={"schemas": {}, "parameters": {}},
+    )
+    include_refs = Queue()
+    seen_refs = set()
+
+    def add_from_resource(resource: SchemaResource) -> None:
+        for path in resource.paths:
+            minimal_spec.paths[path] = full_spec.paths[path]
+            for ref in full_spec.method_refs(path):
+                minimal_spec.add_schema_ref(ref, full_spec.resolve_ref(ref))
+                include_refs.put(ref)
+        for attribute in resource.attributes.values():
+            if attribute.schema_ref:
+                minimal_spec.add_schema_ref(attribute.schema_ref, full_spec.resolve_ref(attribute.schema_ref))
+                include_refs.put(attribute.schema_ref)
+            if attribute.parameter_ref:
+                minimal_spec.add_schema_ref(
+                    attribute.parameter_ref,
+                    full_spec.resolve_ref(attribute.parameter_ref),
+                )
+
+    for resource in schema.resources.values():
+        add_from_resource(resource)
+    while not include_refs.empty():
+        ref = include_refs.get()
+        if ref in seen_refs:
+            continue
+        seen_refs.add(ref)
+        ref_resource = full_spec.schema_ref_component(ref, schema.attributes_skip)
+        add_from_resource(ref_resource)
+    return minimal_spec
