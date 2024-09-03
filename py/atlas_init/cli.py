@@ -220,7 +220,7 @@ def sdk_upgrade(
     resources_breaking_changes: set[str] = set()
     for path in iter_paths(repo_path, "*.go", ".mockery.yaml"):
         text_old = path.read_text()
-        if not any(replace_in in text_old for replace_in in replacements):
+        if all(replace_in not in text_old for replace_in in replacements):
             continue
         r_name = resource_name(repo_path, path)
         if resource and resource != r_name:
