@@ -7,6 +7,7 @@ from model_lib import dump, parse_model, parse_payload
 from atlas_init.cli_tf.schema_v2 import SchemaV2
 from atlas_init.cli_tf.schema_v2_api_parsing import (
     OpenapiSchema,
+    api_spec_text_changes,
     minimal_api_spec,
     parse_api_spec_param,
 )
@@ -118,3 +119,9 @@ def test_ensure_test_data_admin_api_is_up_to_date(
     minimal_spec = minimal_api_spec(schema_v2, api_path)
     minimal_spec_yaml = dump(minimal_spec, "yaml")
     file_regression.check(minimal_spec_yaml, fullpath=api_spec_path)
+
+
+def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
+    updated = api_spec_text_changes(schema_v2, openapi_schema)
+    updated_yaml = dump(updated, "yaml")
+    file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")

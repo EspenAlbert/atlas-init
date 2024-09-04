@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import logging
+import re
 from collections.abc import Iterable
 from pathlib import Path
 from queue import Queue
 from typing import ClassVar
 
-from model_lib import Entity
+from model_lib import Entity, dump
 from pydantic import Field
 
 from atlas_init.cli_tf.schema_v2 import (
@@ -17,6 +20,32 @@ from atlas_init.cli_tf.schema_v2 import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def api_spec_text_changes(schema: SchemaV2, api_spec_parsed: OpenapiSchema) -> OpenapiSchema:
+    openapi_changes = schema.openapi_changes
+    schema_to_update = api_spec_parsed.components.get("schemas", {})
+    original_schema = {**api_spec_parsed.components.get("schemas", {})}  # copy used for iteration
+    assert isinstance(original_schema, dict), "Expected a dict @ components.schemas"
+    for prefix in openapi_changes.schema_prefix_removal:
+        for name, value in original_schema.items():
+            if name.startswith(prefix):
+                schema_to_update.pop(name)
+                name_no_prefix = name.removeprefix(prefix)
+                assert (
+                    name_no_prefix not in schema_to_update
+                ), f"removed {prefix} from {name} in schema but {name_no_prefix} already exists"
+                schema_to_update[name_no_prefix] = value
+    openapi_yaml = dump(api_spec_parsed, "yaml")
+    for prefix in openapi_changes.schema_prefix_removal:
+        pattern = re.compile(rf"{OpenapiSchema.SCHEMAS_PREFIX}(?P<prefix>{prefix})(?P<name>\w+)")
+        openapi_yaml = pattern.sub(rf"{OpenapiSchema.SCHEMAS_PREFIX}\g<name>", openapi_yaml)
+    return parse_model(openapi_yaml, t=OpenapiSchema, format="yaml")
+
+
+def parse_openapi_schema_after_modifications(schema: SchemaV2, api_spec_path: Path) -> OpenapiSchema:
+    original = parse_model(api_spec_path, t=OpenapiSchema)
+    return api_spec_text_changes(schema, original)
 
 
 class OpenapiSchema(Entity):
@@ -183,7 +212,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
 
 
 def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bool = False) -> None:
-    api_spec = parse_model(api_spec_path, t=OpenapiSchema)
+    api_spec = parse_openapi_schema_after_modifications(schema, api_spec_path)
     for resource in schema.resources.values():
         for path in resource.paths:
             create_method = api_spec.create_method(path)
@@ -230,7 +259,7 @@ def minimal_ref_resources(schema: SchemaV2, api_spec: OpenapiSchema) -> None:
 
 def minimal_api_spec(schema: SchemaV2, original_api_spec_path: Path) -> OpenapiSchema:
     schema.reset_attributes_skip()
-    full_spec = parse_model(original_api_spec_path, t=OpenapiSchema)
+    full_spec = parse_openapi_schema_after_modifications(schema, original_api_spec_path)
     add_api_spec_info(schema, original_api_spec_path, minimal_refs=True)
     minimal_spec = OpenapiSchema(
         openapi=full_spec.openapi,

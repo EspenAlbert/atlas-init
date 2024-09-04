@@ -1,0 +1,650 @@
+openapi: 3.0.1
+info:
+  title: MongoDB Atlas Administration API
+  description: "The MongoDB Atlas Administration API allows developers to manage all components in MongoDB Atlas.\n\nThe Atlas Administration API uses HTTP Digest Authentication to authenticate requests. Provide a programmatic API public key and corresponding private key as the username and password when constructing the HTTP request. For example, to [return database access history](#tag/Access-Tracking/operation/listAccessLogsByClusterName) with [cURL](https://en.wikipedia.org/wiki/CURL), run the following command in the terminal:\n\n```\ncurl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-01-01+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/dbAccessHistory/clusters/{clusterName}?pretty=true\"\n```\n\nTo learn more, see [Get Started with the Atlas Administration API](https://www.mongodb.com/docs/atlas/configure-api-access/). For support, see [MongoDB Support](https://www.mongodb.com/support/get-started).\n\
+    \nYou can also explore the various endpoints available through the Atlas Administration API in MongoDB's [Postman workspace](https://www.postman.com/mongodb-devrel/workspace/mongodb-atlas-administration-apis/)."
+  termsOfService: https://www.mongodb.com/mongodb-management-service-terms-and-conditions
+  license:
+    name: CC BY-NC-SA 3.0 US
+    url: https://creativecommons.org/licenses/by-nc-sa/3.0/us/
+  version: '2.0'
+paths:
+  /api/atlas/v2/orgs/{orgId}/resourcePolicies:
+    get:
+      tags:
+      - Atlas Resource Policies
+      summary: Return all Atlas Resource Policies
+      description: Return all Atlas Resource Policies for the org.
+      externalDocs:
+        description: Atlas Resource Policies
+        url: https://docs.atlas.mongodb.com
+      operationId: getAtlasResourcePolicies
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResourcePolicy'
+              x-xgen-version: 2025-01-01
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-hidden-env:
+        envs: prod
+      x-xgen-owner-team: Atlas Dedicated
+    post:
+      tags:
+      - Atlas Resource Policies
+      summary: Create one Atlas Resource Policy
+      description: Create one Atlas Resource Policy for an org.
+      externalDocs:
+        description: Atlas Resource Policies
+        url: https://docs.atlas.mongodb.com
+      operationId: createAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      requestBody:
+        description: Atlas Resource Policy to create.
+        content:
+          application/vnd.atlas.2025-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ResourcePolicyCreate'
+            x-xgen-version: 2025-01-01
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ResourcePolicy'
+              x-xgen-version: 2025-01-01
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/InvalidResourcePolicyCreateError'
+              x-xgen-version: 2025-01-01
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-hidden-env:
+        envs: prod
+      x-xgen-owner-team: Atlas Dedicated
+  /api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}:
+    get:
+      tags:
+      - Atlas Resource Policies
+      summary: Return one Atlas Resource Policy
+      description: Return one Atlas Resource Policy for an org.
+      externalDocs:
+        description: Atlas Resource Policies
+        url: https://docs.atlas.mongodb.com
+      operationId: getAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        description: Unique 24-hexadecimal digit string that identifies an atlas resource policy.
+        required: true
+        schema:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ResourcePolicy'
+              x-xgen-version: 2025-01-01
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-hidden-env:
+        envs: prod
+      x-xgen-owner-team: Atlas Dedicated
+    delete:
+      tags:
+      - Atlas Resource Policies
+      summary: Delete one Atlas Resource Policy
+      description: Delete one Atlas Resource Policy for an org.
+      externalDocs:
+        description: Atlas Resource Policies
+        url: https://docs.atlas.mongodb.com
+      operationId: deleteAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        description: Unique 24-hexadecimal digit string that identifies an atlas resource policy.
+        required: true
+        schema:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+      responses:
+        '200':
+          description: This endpoint does not return a response body.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/NoBody'
+              x-xgen-version: 2025-01-01
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-hidden-env:
+        envs: prod
+      x-xgen-owner-team: Atlas Dedicated
+    patch:
+      tags:
+      - Atlas Resource Policies
+      summary: Update one Atlas Resource Policy
+      description: Update one Atlas Resource Policy for an org.
+      externalDocs:
+        description: Atlas Resource Policies
+        url: https://docs.atlas.mongodb.com
+      operationId: updateAtlasResourcePolicy
+      parameters:
+      - $ref: '#/components/parameters/orgId'
+      - name: resourcePolicyId
+        in: path
+        description: Unique 24-hexadecimal digit string that identifies an atlas resource policy.
+        required: true
+        schema:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+      requestBody:
+        description: Atlas Resource Policy to update.
+        content:
+          application/vnd.atlas.2025-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ResourcePolicyEdit'
+            x-xgen-version: 2025-01-01
+        required: true
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ResourcePolicy'
+              x-xgen-version: 2025-01-01
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.atlas.2025-01-01+json:
+              schema:
+                $ref: '#/components/schemas/InvalidResourcePolicyCreateError'
+              x-xgen-version: 2025-01-01
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-hidden-env:
+        envs: prod
+      x-xgen-owner-team: Atlas Dedicated
+  /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor:
+    post:
+      tags:
+      - Streams
+      summary: Create One Stream Processor
+      description: Create one Stream Processor within the specified stream instance. To use this resource, the requesting API Key must have the Project Owner role or Project Stream Processing Owner role.
+      operationId: createStreamProcessor
+      parameters:
+      - $ref: '#/components/parameters/groupId'
+      - name: tenantName
+        in: path
+        description: Human-readable label that identifies the stream instance.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Details to create an Atlas Streams Processor.
+        content:
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: '#/components/schemas/StreamsProcessor'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/StreamsProcessor'
+              x-xgen-version: 2024-05-30
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '409':
+          $ref: '#/components/responses/unauthorized'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Streams
+  /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}:
+    get:
+      tags:
+      - Streams
+      summary: Get One Stream Processor
+      description: Get one Stream Processor within the specified stream instance. To use this resource, the requesting API Key must have the Project Owner role or Project Stream Processing Owner role.
+      operationId: getStreamProcessor
+      parameters:
+      - $ref: '#/components/parameters/groupId'
+      - name: tenantName
+        in: path
+        description: Human-readable label that identifies the stream instance.
+        required: true
+        schema:
+          type: string
+      - name: processorName
+        in: path
+        description: Human-readable label that identifies the stream processor.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/StreamsProcessorWithStats'
+              x-xgen-version: 2024-05-30
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Streams
+    delete:
+      tags:
+      - Streams
+      summary: Delete One Stream Processor
+      description: Delete a Stream Processor within the specified stream instance. To use this resource, the requesting API Key must have the Project Owner role or Project Stream Processing Owner role.
+      operationId: deleteStreamProcessor
+      parameters:
+      - $ref: '#/components/parameters/groupId'
+      - name: tenantName
+        in: path
+        description: Human-readable label that identifies the stream instance.
+        required: true
+        schema:
+          type: string
+      - name: processorName
+        in: path
+        description: Human-readable label that identifies the stream processor.
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: This endpoint does not return a response body.
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              x-xgen-version: 2024-05-30
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      security:
+      - DigestAuth: []
+      x-xgen-owner-team: Atlas Streams
+components:
+  schemas:
+    StreamsProcessor:
+      type: object
+      properties:
+        _id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the stream processor.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: _id
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          readOnly: true
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          name: links
+        name:
+          type: string
+          description: Human-readable name of the stream processor.
+          name: name
+        options:
+          $ref: '#/components/schemas/StreamsOptions'
+          name: options
+        pipeline:
+          type: array
+          description: Stream aggregation pipeline you want to apply to your streaming data.
+          items:
+            $ref: '#/components/schemas/Document'
+          name: pipeline
+      description: An atlas stream processor.
+    StreamsProcessorWithStats:
+      required:
+      - _id
+      - name
+      - pipeline
+      - state
+      type: object
+      properties:
+        _id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the stream processor.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: _id
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          readOnly: true
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          name: links
+        name:
+          type: string
+          description: Human-readable name of the stream processor.
+          readOnly: true
+          name: name
+        options:
+          $ref: '#/components/schemas/StreamsOptions'
+          name: options
+        pipeline:
+          type: array
+          description: Stream aggregation pipeline you want to apply to your streaming data.
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Document'
+          name: pipeline
+        state:
+          type: string
+          description: The state of the stream processor.
+          readOnly: true
+          name: state
+        stats:
+          type: object
+          description: The stats associated with the stream processor.
+          readOnly: true
+          name: stats
+      description: An atlas stream processor with optional stats.
+    StreamsOptions:
+      type: object
+      properties:
+        dlq:
+          $ref: '#/components/schemas/StreamsDLQ'
+          name: dlq
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          readOnly: true
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          name: links
+      description: Optional configuration for the stream processor.
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          name: href
+        rel:
+          type: string
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          name: rel
+    Document:
+      type: object
+      description: The stats associated with the stream processor.
+      readOnly: true
+    StreamsDLQ:
+      type: object
+      properties:
+        coll:
+          type: string
+          description: Name of the collection that will be used for the DLQ.
+          name: coll
+        connectionName:
+          type: string
+          description: Connection name that will be used to write DLQ messages to. Has to be an Atlas connection.
+          name: connectionName
+        db:
+          type: string
+          description: Name of the database that will be used for the DLQ.
+          name: db
+        links:
+          type: array
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          readOnly: true
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          name: links
+      description: Dead letter queue for the stream processor.
+    ResourcePolicyCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable label that describes the atlas resource policy.
+          name: name
+        policies:
+          type: array
+          description: List of policies that make up the atlas resource policy.
+          items:
+            $ref: '#/components/schemas/PolicyCreate'
+          name: policies
+    ResourcePolicy:
+      type: object
+      properties:
+        createdByUser:
+          $ref: '#/components/schemas/UserMetadata'
+          name: createdByUser
+        createdDate:
+          type: string
+          description: Date and time in UTC when the atlas resource policy was created.
+          format: date-time
+          readOnly: true
+          example: 2022-01-01 00:00:00+00:00
+          name: createdDate
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: id
+        lastUpdatedByUser:
+          $ref: '#/components/schemas/UserMetadata'
+          name: lastUpdatedByUser
+        lastUpdatedDate:
+          type: string
+          description: Date and time in UTC when the atlas resource policy was last updated.
+          format: date-time
+          readOnly: true
+          example: 2022-01-01 00:00:00+00:00
+          name: lastUpdatedDate
+        name:
+          type: string
+          description: Human-readable label that describes the atlas resource policy.
+          readOnly: true
+          name: name
+        orgId:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the organization the atlas resource policy belongs to.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: orgId
+        policies:
+          type: array
+          description: List of policies that make up the atlas resource policy.
+          readOnly: true
+          items:
+            $ref: '#/components/schemas/Policy'
+          name: policies
+        version:
+          type: string
+          description: A string that identifies the version of the atlas resource policy.
+          readOnly: true
+          example: v1
+          name: version
+    Policy:
+      type: object
+      properties:
+        body:
+          type: string
+          description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
+          readOnly: true
+          example: "  forbid (\n    principal,\n    action == cloud::Action::\"cluster.createEdit\",\n    resource\n  ) when {\n   context.cluster.regions.contains(cloud::region::\"aws:us-east-1\")\n  };\n"
+          name: body
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies the policy.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: id
+    UserMetadata:
+      type: object
+      properties:
+        id:
+          maxLength: 24
+          minLength: 24
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          description: Unique 24-hexadecimal character string that identifies a user.
+          readOnly: true
+          example: 32b6e34b3d91647abb20e7b8
+          name: id
+        name:
+          type: string
+          description: Human-readable label that describes a user.
+          readOnly: true
+          name: name
+      description: The user that last updated the atlas resource policy.
+      readOnly: true
+    PolicyCreate:
+      type: object
+      properties:
+        body:
+          type: string
+          description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
+          example: "  forbid (\n    principal,\n    action == cloud::Action::\"cluster.createEdit\",\n    resource\n  ) when {\n   context.cluster.regions.contains(cloud::region::\"aws:us-east-1\")\n  };\n"
+          name: body
+  parameters:
+    orgId:
+      name: orgId
+      in: path
+      description: Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.
+      required: true
+      schema:
+        maxLength: 24
+        minLength: 24
+        pattern: ^([a-f0-9]{24})$
+        type: string
+        example: 4888442a3354817a7320eb61
+    groupId:
+      name: groupId
+      in: path
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      required: true
+      schema:
+        maxLength: 24
+        minLength: 24
+        pattern: ^([a-f0-9]{24})$
+        type: string
+        example: 32b6e34b3d91647abb20e7b8
+tags: []

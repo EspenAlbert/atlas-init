@@ -194,8 +194,13 @@ class SchemaResource(Entity):
         return sorted(self.attributes.values(), key=lambda a: a.name)
 
 
+class OpenAPIChanges(Entity):
+    schema_prefix_removal: list[str] = Field(default_factory=list)
+
+
 class SchemaV2(Entity):
     attributes_skip: set[str] = Field(default_factory=set)
+    openapi_changes: OpenAPIChanges = Field(default_factory=OpenAPIChanges)
     resources: dict[str, SchemaResource] = Field(default_factory=dict)
     ref_resources: dict[str, SchemaResource] = Field(default_factory=dict)
 

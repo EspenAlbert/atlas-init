@@ -1,8 +1,10 @@
+openapi_changes:
+  schema_prefix_removal:
+  - ApiAtlas
 attributes_skip:
   - pretty
   - envelope
   - links
-  - orgId
 resources:
   resource_policy:
     paths:
@@ -15,15 +17,19 @@ resources:
         plan_modifiers:
           - UseStateForUnknown
       policies:
-        schema_ref: "#/components/schemas/ApiAtlasPolicy"
+        schema_ref: "#/components/schemas/Policy"
     attribute_type_modifiers:
+      optional:
+      - name
       required:
+      - org_id
       - policies
       - policies.body
-      computed_optional:
-      - version
       computed:
+      - created_by_user
+      - last_updated_by_user
       - id
+      - version
   stream_processor:
     paths:
       - /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor

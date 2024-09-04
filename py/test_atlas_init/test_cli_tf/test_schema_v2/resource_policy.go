@@ -15,7 +15,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 		Attributes: map[string]schema.Attribute{
 			"created_by_user": schema.SingleNestedAttribute{
 				Description: "The user that last updated the atlas resource policy.",
-				Optional:    true,
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
@@ -41,7 +40,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"last_updated_by_user": schema.SingleNestedAttribute{
 				Description: "The user that last updated the atlas resource policy.",
-				Optional:    true,
 				Computed:    true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
@@ -60,7 +58,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"name": schema.StringAttribute{
 				Description: "Human-readable label that describes the atlas resource policy.",
-				Computed:    true,
+				Optional:    true,
+			},
+			"org_id": schema.StringAttribute{
+				Description: "Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.",
+				Required:    true,
 			},
 			"policies": schema.ListNestedAttribute{
 				Description: "List of policies that make up the atlas resource policy.",
@@ -80,7 +82,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"version": schema.StringAttribute{
 				Description: "A string that identifies the version of the atlas resource policy.",
-				Optional:    true,
 				Computed:    true,
 			},
 		},
@@ -94,26 +95,27 @@ type TFResourcePolicyRSModel struct {
 	LastUpdatedByUser types.Object `tfsdk:"last_updated_by_user"`
 	LastUpdatedDate   types.String `tfsdk:"last_updated_date"`
 	Name              types.String `tfsdk:"name"`
+	OrgID             types.String `tfsdk:"org_id"`
 	Policies          types.List   `tfsdk:"policies"`
 	Version           types.String `tfsdk:"version"`
 }
 
-type TFApiAtlasUserMetadataModel struct {
+type TFUserMetadataModel struct {
 	ID   types.String `tfsdk:"id"`
 	Name types.String `tfsdk:"name"`
 }
 
-var ApiAtlasUserMetadataObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+var UserMetadataObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
 	"id":   types.StringType,
 	"name": types.StringType,
 }}
 
-type TFApiAtlasPolicyModel struct {
+type TFPolicyModel struct {
 	Body types.String `tfsdk:"body"`
 	ID   types.String `tfsdk:"id"`
 }
 
-var ApiAtlasPolicyObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
+var PolicyObjectType = types.ObjectType{AttrTypes: map[string]attr.Type{
 	"body": types.StringType,
 	"id":   types.StringType,
 }}
