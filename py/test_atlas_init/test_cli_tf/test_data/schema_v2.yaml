@@ -6,6 +6,23 @@ attributes_skip:
   - envelope
   - links
 resources:
+  push_based_log_export:
+    paths:
+    - /api/atlas/v2/groups/{groupId}/pushBasedLogExport
+  non_compliant_resources:
+    paths:
+    - /api/atlas/v2/orgs/{orgId}/resourcePolicies/nonCompliantResources
+  employee_access_grant:
+    paths:
+    - "/api/atlas/v2/groups/{groupId}/clusters/{clusterName}:grantEmployeeClusterAccess"
+    - "/api/atlas/v2/groups/{groupId}/clusters/{clusterName}:revokeEmployeeClusterAccess"
+    attribute_type_modifiers:
+      required:
+      - grant_type
+      - expiration
+    attributes:
+      project_id:
+        alias: groupId
   resource_policy:
     paths:
     - /api/atlas/v2/orgs/{orgId}/resourcePolicies

@@ -17,43 +17,51 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 	return schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Unique 24-hexadecimal character string that identifies the stream processor.",
-				Computed:    true,
+				Description:         "Unique 24-hexadecimal character string that identifies the stream processor.",
+				MarkdownDescription: "Unique 24-hexadecimal character string that identifies the stream processor.",
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"instance_name": schema.StringAttribute{
-				Description: "Human-readable label that identifies the stream instance.",
-				Required:    true,
+				Description:         "Human-readable label that identifies the stream instance.",
+				MarkdownDescription: "Human-readable label that identifies the stream instance.",
+				Required:            true,
 			},
 			"options": schema.SingleNestedAttribute{
-				Description: "Optional configuration for the stream processor.",
-				Optional:    true,
+				Description:         "Optional configuration for the stream processor.",
+				MarkdownDescription: "Optional configuration for the stream processor.",
+				Optional:            true,
 				Attributes: map[string]schema.Attribute{
 					"dlq": schema.SingleNestedAttribute{
-						Description: "Dead letter queue for the stream processor.",
-						Required:    true,
+						Description:         "Dead letter queue for the stream processor.",
+						MarkdownDescription: "Dead letter queue for the stream processor.",
+						Required:            true,
 						Attributes: map[string]schema.Attribute{
 							"coll": schema.StringAttribute{
-								Description: "Name of the collection that will be used for the DLQ.",
-								Required:    true,
+								Description:         "Name of the collection that will be used for the DLQ.",
+								MarkdownDescription: "Name of the collection that will be used for the DLQ.",
+								Required:            true,
 							},
 							"connection_name": schema.StringAttribute{
-								Description: "Connection name that will be used to write DLQ messages to. Has to be an Atlas connection.",
-								Required:    true,
+								Description:         "Connection name that will be used to write DLQ messages to. Has to be an Atlas connection.",
+								MarkdownDescription: "Connection name that will be used to write DLQ messages to. Has to be an Atlas connection.",
+								Required:            true,
 							},
 							"db": schema.StringAttribute{
-								Description: "Name of the database that will be used for the DLQ.",
-								Required:    true,
+								Description:         "Name of the database that will be used for the DLQ.",
+								MarkdownDescription: "Name of the database that will be used for the DLQ.",
+								Required:            true,
 							},
 						},
 					},
 				},
 			},
 			"pipeline": schema.StringAttribute{
-				Description: "Stream aggregation pipeline you want to apply to your streaming data.",
-				Required:    true,
+				Description:         "Stream aggregation pipeline you want to apply to your streaming data.",
+				MarkdownDescription: "Stream aggregation pipeline you want to apply to your streaming data.",
+				Required:            true,
 				Validators: []validator.String{
 					validate.StringIsJSON(),
 				},
@@ -62,21 +70,25 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"processor_name": schema.StringAttribute{
-				Description: "Human-readable name of the stream processor.",
-				Required:    true,
+				Description:         "Human-readable name of the stream processor.",
+				MarkdownDescription: "Human-readable name of the stream processor.",
+				Required:            true,
 			},
 			"project_id": schema.StringAttribute{
-				Description: "Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.\n\n**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.",
-				Required:    true,
+				Description:         "Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.\n\n**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.",
+				MarkdownDescription: "Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.\n\n**NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.",
+				Required:            true,
 			},
 			"state": schema.StringAttribute{
-				Description: "The state of the stream processor.",
-				Optional:    true,
-				Computed:    true,
+				Description:         "The state of the stream processor.",
+				MarkdownDescription: "The state of the stream processor.",
+				Optional:            true,
+				Computed:            true,
 			},
 			"stats": schema.StringAttribute{
-				Description: "The stats associated with the stream processor.",
-				Computed:    true,
+				Description:         "The stats associated with the stream processor.",
+				MarkdownDescription: "The stats associated with the stream processor.",
+				Computed:            true,
 			},
 		},
 	}

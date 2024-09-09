@@ -64,7 +64,7 @@ def test_add_api_spec_info(schema_v2, api_spec_path):
     ]
 
 
-@pytest.mark.parametrize("resource_name", ["stream_processor", "resource_policy"])
+@pytest.mark.parametrize("resource_name", ["stream_processor", "resource_policy", "employee_access_grant", "non_compliant_resources", "push_based_log_export"])
 def test_resource_schema_full(
     schema_with_api_info: SchemaV2, resource_name, file_regression
 ):
