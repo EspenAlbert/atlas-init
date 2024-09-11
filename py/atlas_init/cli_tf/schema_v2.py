@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from collections.abc import Iterable
 from fnmatch import fnmatch
 from pathlib import Path
 from queue import Queue
 from tempfile import TemporaryDirectory
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from model_lib import Entity, copy_and_validate, parse_model
 from pydantic import ConfigDict, Field, model_validator
@@ -162,6 +163,15 @@ class AttributeTypeModifiers(Entity):
         return attr
 
 
+class SDKModelExample(Entity):
+    name: str
+    examples: list[str] = Field(default_factory=list)
+
+
+class SDKConversion(Entity):
+    sdk_start_refs: list[SDKModelExample] = Field(default_factory=list)
+
+
 class SchemaResource(Entity):
     name: str = ""  # populated by the key of the resources dict
     description: str = ""
@@ -169,6 +179,7 @@ class SchemaResource(Entity):
     attributes_skip: set[str] = Field(default_factory=set)
     paths: list[str] = Field(default_factory=list)
     attribute_type_modifiers: AttributeTypeModifiers = Field(default_factory=AttributeTypeModifiers)
+    conversion: SDKConversion = Field(default_factory=SDKConversion)
 
     @model_validator(mode="after")
     def set_attribute_names(self):
@@ -179,6 +190,15 @@ class SchemaResource(Entity):
     @property
     def nested_refs(self) -> set[str]:
         return {attr.schema_ref for attr in self.attributes.values() if attr.is_nested}
+
+    def lookup_tf_name(self, tf_name: str) -> SchemaAttribute:
+        for name, attr in self.attributes.items():
+            if tf_name == decamelize(name):
+                return attr
+            for alias in attr.aliases:
+                if tf_name == decamelize(alias):
+                    return attr
+        raise ValueError(f"Attribute {tf_name} not found in resource {self.name}")
 
     def lookup_attribute(self, name: str) -> SchemaAttribute:
         if name in self.attributes_skip:
@@ -253,26 +273,47 @@ def indent(level: int, line: str) -> str:
     return INDENT * level + line
 
 
+admin_version = os.getenv("ATLAS_SDK_VERSION", "v20240805003")
+
 _import_urls = [
     "context",
     "github.com/hashicorp/terraform-plugin-framework/attr",
+    "github.com/hashicorp/terraform-plugin-framework/diag",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier",
     "github.com/hashicorp/terraform-plugin-framework/schema/validator",
     "github.com/hashicorp/terraform-plugin-framework/types",
+    "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/conversion",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/schemafunc",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/validate",
+    f"go.mongodb.org/atlas-sdk/{admin_version}/admin",
 ]
 _import_urls_dict = {url.split("/")[-1]: url for url in _import_urls}
 
 package_usage_pattern = re.compile(r"(?P<package_name>[\w\d_]+)\.(?P<package_func>[\w\d_]+)")
+
+_variable_names = set()
+
+
+def add_go_variable_names(names: Iterable[str]) -> None:
+    _variable_names.update(names)
+
+
+_variable_suffixes = (
+    "Model",
+    "ObjectType",
+)
 
 
 def extend_import_urls(import_urls: set[str], code_lines: list[str]) -> None:
     for line in code_lines:
         for match in package_usage_pattern.finditer(line):
             package_name = match.group("package_name")
+            if package_name in _variable_names:
+                continue
+            if package_name.endswith(_variable_suffixes):
+                continue
             if package_name in _import_urls_dict:
                 import_urls.add(_import_urls_dict[package_name])
             else:
@@ -312,6 +353,10 @@ def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> s
             *object_type_lines,
         ]
     )
+    return go_fmt(resource, unformatted)
+
+
+def go_fmt(resource: SchemaResource, unformatted: str) -> str:
     with TemporaryDirectory() as temp_dir:
         filename = f"{resource.name}.go"
         result_file = Path(temp_dir) / filename
@@ -449,16 +494,16 @@ def generate_nested_attribute_schema_lines(
     return lines
 
 
-def struct_def(tf_name: str, resource_type: Literal["rs", "ds", "dsp", ""]) -> str:
-    type_name = f"TF{pascalize(tf_name)}"
-    suffix = {
-        "rs": "RS",
-        "ds": "DS",
-        "dsp": "DS",
-        "": "",
-    }[resource_type]
-    suffix += "Model"
-    return f"type {type_name}{suffix} struct {{"
+ResourceTypes: TypeAlias = Literal["rs", "ds", "dsp", ""]
+
+
+def as_struct_name(resource_name: str, resource_type: ResourceTypes) -> str:
+    return f"TF{pascalize(resource_name)}{resource_type.upper()}Model"
+
+
+def struct_def(tf_name: str, resource_type: ResourceTypes) -> str:
+    name = as_struct_name(tf_name, resource_type)
+    return f"type {name} struct {{"
 
 
 _tpf_types = {

@@ -75,7 +75,7 @@ only-include = ["atlas_init"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
 path = "scripts/file_copy.py"
-require-runtime-dependencies=true
+require-runtime-dependencies = true
 
 [tool.ruff]
 extend-exclude = ["test_atlas_init", "atlas_init/humps.py"]
@@ -88,8 +88,9 @@ extend-ignore = [
   "S101",
   "EM102",
   "FBT001",
-  "B008",   # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
-  "TCH002", # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
-  "TCH001", # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
+  "B008",    # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
+  "TCH002",  # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
+  "TCH001",  # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
+  "UP040",   #  Type alias `ResourceTypes` uses `TypeAlias` annotation instead of the `type` keyword
 ]

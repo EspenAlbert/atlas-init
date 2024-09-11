@@ -24,6 +24,11 @@ resources:
       project_id:
         alias: groupId
   resource_policy:
+    conversion:
+      sdk_start_refs: 
+      - name: ApiAtlasResourcePolicy
+        examples:
+        - resource_policy_clusterForbidCloudProvider.json
     paths:
     - /api/atlas/v2/orgs/{orgId}/resourcePolicies
     - /api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}
