@@ -98,6 +98,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Description:         "A string that identifies the version of the atlas resource policy.",
 				MarkdownDescription: "A string that identifies the version of the atlas resource policy.",
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}

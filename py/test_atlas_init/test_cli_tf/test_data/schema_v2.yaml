@@ -40,6 +40,9 @@ resources:
           - UseStateForUnknown
       policies:
         schema_ref: "#/components/schemas/Policy"
+      version:
+        plan_modifiers:
+          - UseStateForUnknown
     attribute_type_modifiers:
       optional:
       - name

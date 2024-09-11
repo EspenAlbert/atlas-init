@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 
 import pytest
 
@@ -81,6 +83,33 @@ import (
   "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 """
+
+@pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
+def test_sync_generated_schemas(original_datadir):
+    tf_repo_path = Path(os.environ["TF_REPO_PATH"])
+    pkg_filter = "resourcepolicy"
+    for schema_go in original_datadir.glob("*.go"):
+        stem = schema_go.stem
+        filename_suffixes = [
+            "data_source_schema",
+            "data_source_plural_schema",
+        ]
+        dest_filename = "resource_schema.go"
+        for suffix in filename_suffixes:
+            if not stem.endswith(suffix):
+                continue
+            stem = stem.replace(suffix, "")
+            dest_filename = f"{suffix}.go"
+        pkg_name = stem.replace("_", "")
+        if pkg_filter and pkg_name != pkg_filter:
+            continue
+        dest_path = tf_repo_path / f"internal/service/{pkg_name}/{dest_filename}"
+        short_name = f"{pkg_name}/{dest_filename}"
+        if dest_path.exists():
+            logger.info(f"Copying {short_name}")
+            dest_path.write_text(schema_go.read_text())
+        else:
+            logger.warning(f"Skipping {short_name} because {dest_path} does not exist")
 
 
 def test_extend_import_urls():
