@@ -89,7 +89,7 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
 def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: OpenapiSchema):
     resource_policy = schema_v2.resources["resource_policy"]
     assert resource_policy
-    ref = "#/components/schemas/ApiAtlasResourcePolicyCreate"
+    ref = "#/components/schemas/ResourcePolicyCreate"
     schema_properties = list(openapi_schema.schema_properties(ref))
     assert sorted(d["name"] for d in schema_properties) == [
         "name",
@@ -99,7 +99,7 @@ def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: Openapi
     schema_attribute = parse_api_spec_param(openapi_schema, policies, resource_policy)
     assert schema_attribute, "unable to infer attribute for policies"
     assert schema_attribute.type == "array"
-    assert schema_attribute.schema_ref == "#/components/schemas/ApiAtlasPolicy"
+    assert schema_attribute.schema_ref == "#/components/schemas/Policy"
     assert schema_attribute.is_nested
 
 
