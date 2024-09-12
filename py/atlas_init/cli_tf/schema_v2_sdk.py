@@ -211,7 +211,9 @@ def as_tf_struct_field_name(schema_attribute: SchemaAttribute) -> str:
 
 
 def tf_struct_create(
-    resource: SchemaResource, sdk_model: SDKModel, sdk_var_name: GoVarName = GoVarName.INPUT
+    resource: SchemaResource,
+    sdk_model: SDKModel,
+    sdk_var_name: GoVarName = GoVarName.INPUT,
 ) -> list[str]:
     lines = []
     for schema_attribute in resource.sorted_attributes():
@@ -219,7 +221,7 @@ def tf_struct_create(
         tf_struct_field_name = as_tf_struct_field_name(schema_attribute)
         if sdk_attribute.is_nested:
             var_name = camelize(sdk_attribute.struct_name)
-            lines.append(f"    {tf_struct_field_name}: *{var_name},")
+            lines.append(f"    {tf_struct_field_name}: {var_name},")
         else:
             lines.append(
                 f"    {tf_struct_field_name}: {sdk_to_tf_attribute_value(schema_attribute, sdk_attribute, sdk_var_name)},"
@@ -235,15 +237,19 @@ def call_nested_functions(
     for sdk_attribute in sdk_attributes:
         schema_attribute = find_schema_attribute(schema, resource, sdk_attribute)
         var_name = camelize(sdk_attribute.struct_name)
+        lines.append(
+            f"  {var_name} := New{custom_object_type_name(schema_attribute)}(ctx, {GoVarName.INPUT}.{sdk_attribute.struct_name}, {GoVarName.DIAGS})"
+        )
+        nested_attributes.put(SDKAndSchemaAttribute(sdk_attribute, schema_attribute))
+    if lines:
+        lines.insert(0, "  diags := &diag.Diagnostics{}")
         lines.extend(
             [
-                f"  {var_name}, diags := New{custom_object_type_name(schema_attribute)}(ctx, {GoVarName.INPUT}.{sdk_attribute.struct_name})",
                 "  if diags.HasError() {",
-                "    return nil, diags",
+                "    return nil, *diags",
                 "  }",
             ]
         )
-        nested_attributes.put(SDKAndSchemaAttribute(sdk_attribute, schema_attribute))
     return nested_attributes, lines
 
 
@@ -267,10 +273,10 @@ def sdk_to_tf_func_object(
 ) -> list[str]:
     object_type_name = custom_object_type_name(schema_attribute)
     lines: list[str] = [
-        f"func New{object_type_name}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_attribute.struct_type_name}) (*types.Object, diag.Diagnostics) {{",
-        f"  if {GoVarName.INPUT} == nil {{",
-        f"    empty := types.ObjectNull({object_type_name}.AttrTypes)",
-        "    return &empty, nil",
+        f"func New{object_type_name}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_attribute.struct_type_name}, diags *diag.Diagnostics) types.Object {{",
+        f"  var nilPointer *admin.{sdk_attribute.struct_type_name}",
+        f"  if {GoVarName.INPUT} == nilPointer {{",
+        f"    return types.ObjectNull({object_type_name}.AttrTypes)",
         "  }",
     ]
     resource = schema.ref_resource(schema_attribute.schema_ref, use_name=schema_attribute.schema_ref_name)
@@ -283,11 +289,9 @@ def sdk_to_tf_func_object(
             f"  tfModel := {struct_name}{{",
             *tf_struct_create(resource, sdk_attribute.as_sdk_model()),
             "  }",
-            f"  objType, diags := types.ObjectValueFrom(ctx, {object_type_name}.AttrTypes, tfModel)",
-            "  if diags.HasError() {",
-            "    return nil, diags",
-            "  }",
-            "  return &objType, nil",
+            f"  objType, diagsLocal := types.ObjectValueFrom(ctx, {object_type_name}.AttrTypes, tfModel)",
+            f"  {GoVarName.DIAGS}.Append(diagsLocal...)",
+            "  return objType",
             "}\n",
         ]
     )
@@ -299,10 +303,10 @@ def sdk_to_tf_func_list(schema: SchemaV2, schema_attribute: SchemaAttribute, sdk
     list_object_type = custom_object_type_name(schema_attribute)
     nested_resource = schema.ref_resource(schema_attribute.schema_ref, use_name=schema_attribute.schema_ref_name)
     lines: list[str] = [
-        f"func New{list_object_type}(ctx context.Context, {GoVarName.INPUT} *[]admin.{sdk_attribute.struct_type_name}) (*types.List, diag.Diagnostics) {{",
-        f"  if {GoVarName.INPUT} == nil {{",
-        f"    empty := types.ListNull({list_object_type})",
-        "    return &empty, nil",
+        f"func New{list_object_type}(ctx context.Context, {GoVarName.INPUT} *[]admin.{sdk_attribute.struct_type_name}, diags *diag.Diagnostics) types.List {{",
+        f"  var nilPointer *[]admin.{sdk_attribute.struct_type_name}",
+        f"  if {GoVarName.INPUT} == nilPointer {{",
+        f"    return types.ListNull({list_object_type})",
         "  }",
     ]
     struct_name = as_struct_name(nested_resource.name, "")
@@ -313,14 +317,16 @@ def sdk_to_tf_func_list(schema: SchemaV2, schema_attribute: SchemaAttribute, sdk
             f"  tfModels := make([]{struct_name}, len(*{GoVarName.INPUT}))",
             f"  for i, item := range *{GoVarName.INPUT} {{",
             f"    tfModels[i] = {struct_name}{{",
-            *tf_struct_create(nested_resource, sdk_attribute.as_sdk_model(), sdk_var_name=GoVarName.ITEM),
+            *tf_struct_create(
+                nested_resource,
+                sdk_attribute.as_sdk_model(),
+                sdk_var_name=GoVarName.ITEM,
+            ),
             "    }",
             "  }",
-            f"  listType, diags := types.ListValueFrom(ctx, {list_object_type}, tfModels)",
-            "  if diags.HasError() {",
-            "    return nil, diags",
-            "  }",
-            "  return &listType, nil",
+            f"  listType, diagsLocal := types.ListValueFrom(ctx, {list_object_type}, tfModels)",
+            f"  {GoVarName.DIAGS}.Append(diagsLocal...)",
+            "  return listType",
             "}\n",
         ]
     )
