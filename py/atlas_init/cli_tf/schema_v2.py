@@ -171,6 +171,9 @@ class SDKModelExample(Entity):
 class SDKConversion(Entity):
     sdk_start_refs: list[SDKModelExample] = Field(default_factory=list)
 
+    def __bool__(self) -> bool:
+        return bool(self.sdk_start_refs)
+
 
 class SchemaResource(Entity):
     name: str = ""  # populated by the key of the resources dict
@@ -273,7 +276,7 @@ def indent(level: int, line: str) -> str:
     return INDENT * level + line
 
 
-admin_version = os.getenv("ATLAS_SDK_VERSION", "v20240805003")
+admin_version = os.getenv("ATLAS_SDK_VERSION", "v20240805004")
 
 _import_urls = [
     "context",

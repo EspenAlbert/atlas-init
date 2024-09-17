@@ -35,6 +35,7 @@ from atlas_init.cli_tf.schema_v2 import (
     parse_schema,
 )
 from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
+from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import init_settings
 from atlas_init.settings.interactive import confirm
@@ -205,6 +206,7 @@ def schema2(
     ),
     config_path: Path = typer.Option("", "-c", "--config", help="the path to the SchemaV2 config"),
     replace: bool = typer.Option(False, "-r", "--replace", help="replace the existing schema file"),
+    sdk_repo_path_str: str = typer.Option("", "-sdk", "--sdk-repo-path", help="the path to the sdk repo"),
 ):
     repo_path = current_repo_path(Repo.TF)
     config_path = config_path or repo_path / "schema_v2.yaml"
@@ -231,3 +233,26 @@ def schema2(
     gen_src = generate_resource_go_resource_schema(schema, resource)
     go_new.write_text(gen_src)
     logger.info(f"generated new schema @ {go_new} ✅")
+
+    resource_schema = schema.resources[resource]
+    if conversion_config := resource_schema.conversion:
+        if not confirm(
+            f"resource {resource} has conversion, ok to generate conversion functions?",
+            is_interactive=True,
+            default=True,
+        ):
+            logger.info("skipping conversion functions")
+            return
+        logger.info("generating conversion functions")
+        if not sdk_repo_path_str:
+            logger.critical("must provide sdk repo path when generating conversion functions")
+            raise typer.Abort
+        sdk_repo_path = Path(sdk_repo_path_str)
+        if not sdk_repo_path.exists():
+            logger.critical(f"no sdk repo found @ {sdk_repo_path}")
+            raise typer.Abort
+        for sdk_start_ref in conversion_config.sdk_start_refs:
+            sdk_model = parse_sdk_model(sdk_repo_path, sdk_start_ref.name)
+            go_conversion_src = generate_model_go(schema, resource_schema, sdk_model)
+            go_conversion_path = go_old.with_name("model.go")
+            go_conversion_path.write_text(go_conversion_src)
