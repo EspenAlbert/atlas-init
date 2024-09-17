@@ -4,6 +4,7 @@ import fnmatch
 import logging
 from collections.abc import Iterable
 from functools import total_ordering
+from os import getenv
 from pathlib import Path
 from typing import Any
 
@@ -59,7 +60,8 @@ class TerraformVars(Entity):
         if self.use_federated_vars:
             config["use_federated_vars"] = True
         if self.stream_instance:
-            config["stream_instance_config"] = {"name": "atlas-init"}
+            # hack until backend bug with stream instance is fixed
+            config["stream_instance_config"] = {"name": getenv("ATLAS_STREAM_INSTANCE_NAME", "atlas-init")}
         return config
 
 

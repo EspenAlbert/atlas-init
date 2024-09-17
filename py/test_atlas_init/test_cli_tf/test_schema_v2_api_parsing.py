@@ -1,5 +1,16 @@
+import os
+from pathlib import Path
+
+import pytest
+from model_lib import dump, parse_model, parse_payload
+
 from atlas_init.cli_tf.schema_v2 import SchemaV2
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, parse_api_spec_param
+from atlas_init.cli_tf.schema_v2_api_parsing import (
+    OpenapiSchema,
+    api_spec_text_changes,
+    minimal_api_spec,
+    parse_api_spec_param,
+)
 
 
 def test_openapi_schema_create_parameters(
@@ -60,7 +71,6 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
     assert group_id_param == {"$ref": "#/components/parameters/groupId"}
     assert tenant_name_param["name"] == "tenantName"
     assert processor_name_param["name"] == "processorName"
-
     response_ref = openapi_schema.method_response_ref(read_method)
     assert response_ref == "#/components/schemas/StreamsProcessorWithStats"
     property_dicts = list(openapi_schema.schema_properties(response_ref))
@@ -69,7 +79,49 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
         "_id",
         "links",
         "name",
+        "options",
         "pipeline",
         "state",
         "stats",
     ]
+
+
+def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: OpenapiSchema):
+    resource_policy = schema_v2.resources["resource_policy"]
+    assert resource_policy
+    ref = "#/components/schemas/ResourcePolicyCreate"
+    schema_properties = list(openapi_schema.schema_properties(ref))
+    assert sorted(d["name"] for d in schema_properties) == [
+        "name",
+        "policies",
+    ]
+    policies = [d for d in schema_properties if d["name"] == "policies"][0]
+    schema_attribute = parse_api_spec_param(openapi_schema, policies, resource_policy)
+    assert schema_attribute, "unable to infer attribute for policies"
+    assert schema_attribute.type == "array"
+    assert schema_attribute.schema_ref == "#/components/schemas/Policy"
+    assert schema_attribute.is_nested
+
+
+@pytest.mark.skipif(
+    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
+)
+def test_ensure_test_data_admin_api_is_up_to_date(
+    schema_v2, file_regression, api_spec_path
+):
+    api_path = Path(os.environ["API_SPEC_PATH"])
+    openapi_schema = parse_model(api_path, t=OpenapiSchema)
+    assert openapi_schema, "unable to parse admin api spec"
+    if api_spec_path.suffix not in [".yaml", ".yml"]:
+        parsed_raw = parse_payload(api_path)
+        spec_yaml = dump(parsed_raw, "yaml")
+        api_path.with_name(f"{api_path.stem}.yaml").write_text(spec_yaml)
+    minimal_spec = minimal_api_spec(schema_v2, api_path)
+    minimal_spec_yaml = dump(minimal_spec, "yaml")
+    file_regression.check(minimal_spec_yaml, fullpath=api_spec_path)
+
+
+def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
+    updated = api_spec_text_changes(schema_v2, openapi_schema)
+    updated_yaml = dump(updated, "yaml")
+    file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")

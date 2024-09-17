@@ -15,7 +15,7 @@ resources:
       - tags
     attributes:
       aliases:
-        groupId: id
+        groupId: project_id
   create:
     path: /api/atlas/v2/groups
     method: POST

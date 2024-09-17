@@ -1,12 +1,10 @@
 from pathlib import Path
-from github.WorkflowJob import WorkflowJob
-
-
 from unittest.mock import MagicMock
 
+import pytest
+from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
 from model_lib import parse_model
-import pytest
 
 from atlas_init.cli_tf.schema_v2 import SchemaV2, parse_schema
 from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, add_api_spec_info
@@ -18,7 +16,7 @@ def as_step(name: str) -> WorkflowStep:
     return step
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_job() -> WorkflowJob:
     return MagicMock(
         spec=WorkflowJob,
@@ -32,27 +30,27 @@ def mock_job() -> WorkflowJob:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def tf_test_data_dir() -> Path:
     return Path(__file__).parent / "test_data"
 
 
-@pytest.fixture()
+@pytest.fixture
 def schema_v2(tf_test_data_dir) -> SchemaV2:
     return parse_schema(tf_test_data_dir / "schema_v2.yaml")
 
 
-@pytest.fixture()
+@pytest.fixture
 def api_spec_path(tf_test_data_dir) -> Path:
     return tf_test_data_dir / "admin_api.yaml"
 
 
-@pytest.fixture()
+@pytest.fixture
 def openapi_schema(api_spec_path) -> OpenapiSchema:
     return parse_model(api_spec_path, t=OpenapiSchema)
 
 
-@pytest.fixture()
+@pytest.fixture
 def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
     add_api_spec_info(schema_v2, api_spec_path)
     return schema_v2

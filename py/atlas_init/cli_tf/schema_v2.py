@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 from collections.abc import Iterable
 from fnmatch import fnmatch
 from pathlib import Path
 from queue import Queue
 from tempfile import TemporaryDirectory
-from typing import Literal
+from typing import Literal, TypeAlias
 
 from model_lib import Entity, copy_and_validate, parse_model
 from pydantic import ConfigDict, Field, model_validator
@@ -33,7 +34,7 @@ class SchemaAttribute(Entity):
     model_config = ConfigDict(
         frozen=False,
         validate_assignment=True,
-        allow_population_by_field_name=True,
+        populate_by_name=True,
         extra="ignore",
     )  # type: ignore
 
@@ -47,10 +48,20 @@ class SchemaAttribute(Entity):
     is_computed: bool = False
     plan_modifiers: list[PlanModifier] = Field(default_factory=list)
     validators: list[SchemaAttributeValidator] = Field(default_factory=list)
+    # not used during dumping but backtrace which parameters are used in the api spec
+    parameter_ref: str = ""
 
     @property
     def tf_name(self) -> str:
         return decamelize(self.name)  # type: ignore
+
+    @property
+    def schema_ref_name(self) -> str:
+        return self.schema_ref.split("/")[-1] if "/" in self.schema_ref else ""
+
+    @property
+    def tf_struct_name(self) -> str:
+        return pascalize(self.schema_ref_name) or pascalize(self.name)
 
     @property
     def aliases(self) -> list[str]:
@@ -61,17 +72,22 @@ class SchemaAttribute(Entity):
         return self.schema_ref != ""
 
     def merge(self, other: SchemaAttribute) -> SchemaAttribute:
+        # avoid schema_ref when type is different, e.g., setting `pipeline` to a string
+        schema_ref = (
+            self.schema_ref or other.schema_ref if not self.type or self.type == other.type else self.schema_ref
+        )
         return SchemaAttribute(
             type=self.type or other.type,
             name=self.name or other.name,
             description=self.description or other.description,
-            schema_ref=self.schema_ref or other.schema_ref,
+            schema_ref=schema_ref,
             alias=self.alias or other.alias,
             is_required=self.is_required or other.is_required,
             is_optional=self.is_optional or other.is_optional,
             is_computed=self.is_computed or other.is_computed,
             plan_modifiers=self.plan_modifiers + other.plan_modifiers,
             validators=self.validators + other.validators,
+            parameter_ref=self.parameter_ref or other.parameter_ref,
         )
 
     def set_attribute_type(
@@ -147,6 +163,15 @@ class AttributeTypeModifiers(Entity):
         return attr
 
 
+class SDKModelExample(Entity):
+    name: str
+    examples: list[str] = Field(default_factory=list)
+
+
+class SDKConversion(Entity):
+    sdk_start_refs: list[SDKModelExample] = Field(default_factory=list)
+
+
 class SchemaResource(Entity):
     name: str = ""  # populated by the key of the resources dict
     description: str = ""
@@ -154,6 +179,7 @@ class SchemaResource(Entity):
     attributes_skip: set[str] = Field(default_factory=set)
     paths: list[str] = Field(default_factory=list)
     attribute_type_modifiers: AttributeTypeModifiers = Field(default_factory=AttributeTypeModifiers)
+    conversion: SDKConversion = Field(default_factory=SDKConversion)
 
     @model_validator(mode="after")
     def set_attribute_names(self):
@@ -164,6 +190,15 @@ class SchemaResource(Entity):
     @property
     def nested_refs(self) -> set[str]:
         return {attr.schema_ref for attr in self.attributes.values() if attr.is_nested}
+
+    def lookup_tf_name(self, tf_name: str) -> SchemaAttribute:
+        for name, attr in self.attributes.items():
+            if tf_name == decamelize(name):
+                return attr
+            for alias in attr.aliases:
+                if tf_name == decamelize(alias):
+                    return attr
+        raise ValueError(f"Attribute {tf_name} not found in resource {self.name}")
 
     def lookup_attribute(self, name: str) -> SchemaAttribute:
         if name in self.attributes_skip:
@@ -179,8 +214,13 @@ class SchemaResource(Entity):
         return sorted(self.attributes.values(), key=lambda a: a.name)
 
 
+class OpenAPIChanges(Entity):
+    schema_prefix_removal: list[str] = Field(default_factory=list)
+
+
 class SchemaV2(Entity):
     attributes_skip: set[str] = Field(default_factory=set)
+    openapi_changes: OpenAPIChanges = Field(default_factory=OpenAPIChanges)
     resources: dict[str, SchemaResource] = Field(default_factory=dict)
     ref_resources: dict[str, SchemaResource] = Field(default_factory=dict)
 
@@ -201,6 +241,11 @@ class SchemaV2(Entity):
         for resource in self.resources.values():
             resource.attributes_skip |= self.attributes_skip
         return self
+
+    def reset_attributes_skip(self) -> None:
+        self.attributes_skip.clear()
+        for resource in self.resources.values():
+            resource.attributes_skip.clear()
 
 
 def parse_schema(path: Path) -> SchemaV2:
@@ -228,26 +273,47 @@ def indent(level: int, line: str) -> str:
     return INDENT * level + line
 
 
+admin_version = os.getenv("ATLAS_SDK_VERSION", "v20240805003")
+
 _import_urls = [
     "context",
     "github.com/hashicorp/terraform-plugin-framework/attr",
+    "github.com/hashicorp/terraform-plugin-framework/diag",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier",
     "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier",
     "github.com/hashicorp/terraform-plugin-framework/schema/validator",
     "github.com/hashicorp/terraform-plugin-framework/types",
+    "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/conversion",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/schemafunc",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/validate",
+    f"go.mongodb.org/atlas-sdk/{admin_version}/admin",
 ]
 _import_urls_dict = {url.split("/")[-1]: url for url in _import_urls}
 
 package_usage_pattern = re.compile(r"(?P<package_name>[\w\d_]+)\.(?P<package_func>[\w\d_]+)")
+
+_variable_names = set()
+
+
+def add_go_variable_names(names: Iterable[str]) -> None:
+    _variable_names.update(names)
+
+
+_variable_suffixes = (
+    "Model",
+    "ObjectType",
+)
 
 
 def extend_import_urls(import_urls: set[str], code_lines: list[str]) -> None:
     for line in code_lines:
         for match in package_usage_pattern.finditer(line):
             package_name = match.group("package_name")
+            if package_name in _variable_names:
+                continue
+            if package_name.endswith(_variable_suffixes):
+                continue
             if package_name in _import_urls_dict:
                 import_urls.add(_import_urls_dict[package_name])
             else:
@@ -287,11 +353,16 @@ def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> s
             *object_type_lines,
         ]
     )
+    return go_fmt(resource, unformatted)
+
+
+def go_fmt(resource: SchemaResource, unformatted: str) -> str:
     with TemporaryDirectory() as temp_dir:
         filename = f"{resource.name}.go"
         result_file = Path(temp_dir) / filename
         result_file.write_text(unformatted)
         if not run_binary_command_is_ok("go", f"fmt {filename}", cwd=Path(temp_dir), logger=logger):
+            logger.warning(f"go file unformatted:\n{unformatted}")
             raise ValueError(f"Failed to format {result_file}")
         return result_file.read_text()
 
@@ -311,16 +382,22 @@ def resource_schema_func(schema: SchemaV2, resource: SchemaResource) -> list[str
 _attr_schema_types = {
     "string": "schema.StringAttribute",
 }
+_attr_nested_schema_types = {
+    "object": "schema.SingleNestedAttribute",
+    "array": "schema.ListNestedAttribute",
+}
 
 
 def attribute_header(attr: SchemaAttribute) -> str:
     if attr.is_nested:
-        if attr.type != "object":
-            raise NotImplementedError
-        return "schema.SingleNestedAttribute"
-    header = _attr_schema_types.get(attr.type)
+        err_msg = f"Unknown nested attribute type: {attr.type}"
+        schema_types = _attr_nested_schema_types
+    else:
+        err_msg = f"Unknown attribute type: {attr.type}"
+        schema_types = _attr_schema_types
+    header = schema_types.get(attr.type)
     if header is None:
-        raise NotImplementedError
+        raise NotImplementedError(err_msg)
     return header
 
 
@@ -384,6 +461,7 @@ def generate_go_attribute_schema_lines(
     lines = [indent(line_indent, f'"{attr_name}": {attribute_header(attr)}{{')]
     if desc := attr.description or attr.is_nested and (desc := schema.ref_resource(attr.schema_ref).description):
         lines.append(indent(line_indent + 1, f'Description: "{desc.replace('\n', '\\n')}",'))
+        lines.append(indent(line_indent + 1, f'MarkdownDescription: "{desc.replace('\n', '\\n')}",'))
     if attr.is_required:
         lines.append(indent(line_indent + 1, "Required: true,"))
     if attr.is_optional:
@@ -395,27 +473,37 @@ def generate_go_attribute_schema_lines(
     if attr.plan_modifiers:
         lines.extend(plan_modifiers_lines(attr, line_indent + 1))
     if attr.is_nested:
-        lines.append(indent(line_indent + 1, "Attributes: map[string]schema.Attribute{"))
         nested_attr = schema.ref_resource(attr.schema_ref, use_name=attr_name)
-        for nes in nested_attr.attributes.values():
-            lines.extend(
-                generate_go_attribute_schema_lines(schema, nes, line_indent + 2, [*parent_resources, nested_attr])
-            )
-        lines.append(indent(line_indent + 1, "},"))
+        if attr.type == "array":
+            lines.append(indent(line_indent + 1, "NestedObject: schema.NestedAttributeObject{"))
+            lines.extend(generate_nested_attribute_schema_lines(schema, line_indent + 1, parent_resources, nested_attr))
+            lines.append(indent(line_indent + 1, "},"))
+        else:
+            lines.extend(generate_nested_attribute_schema_lines(schema, line_indent + 1, parent_resources, nested_attr))
     lines.append(indent(line_indent, "},"))
     return lines
 
 
-def struct_def(tf_name: str, resource_type: Literal["rs", "ds", "dsp", ""]) -> str:
-    type_name = f"TF{pascalize(tf_name)}"
-    suffix = {
-        "rs": "RS",
-        "ds": "DS",
-        "dsp": "DS",
-        "": "",
-    }[resource_type]
-    suffix += "Model"
-    return f"type {type_name}{suffix} struct {{"
+def generate_nested_attribute_schema_lines(
+    schema: SchemaV2, line_indent: int, parent_resources: list[SchemaResource], nested_attr: SchemaResource
+) -> list[str]:
+    lines = [indent(line_indent, "Attributes: map[string]schema.Attribute{")]
+    for nes in nested_attr.attributes.values():
+        lines.extend(generate_go_attribute_schema_lines(schema, nes, line_indent + 1, [*parent_resources, nested_attr]))
+    lines.append(indent(line_indent, "},"))
+    return lines
+
+
+ResourceTypes: TypeAlias = Literal["rs", "ds", "dsp", ""]
+
+
+def as_struct_name(resource_name: str, resource_type: ResourceTypes) -> str:
+    return f"TF{pascalize(resource_name)}{resource_type.upper()}Model"
+
+
+def struct_def(tf_name: str, resource_type: ResourceTypes) -> str:
+    name = as_struct_name(tf_name, resource_type)
+    return f"type {name} struct {{"
 
 
 _tpf_types = {
@@ -447,7 +535,7 @@ def as_object_type_name(attr: SchemaAttribute) -> str:
 
 
 def custom_object_type_name(attr: SchemaAttribute) -> str:
-    return f"{pascalize(attr.tf_name)}ObjectType"
+    return f"{pascalize(attr.tf_struct_name)}ObjectType"
 
 
 def object_type_def(attr: SchemaAttribute) -> str:
@@ -461,8 +549,11 @@ def object_type_field_line(attr: SchemaAttribute) -> str:
     return f'"{attr.tf_name}": types.{object_type_name},'
 
 
+_used_refs: set[str] = set()
+
+
 def resource_object_type_lines(schema: SchemaV2, resource: SchemaResource) -> list[str]:
-    nested_attributes = Queue()
+    nested_attributes: Queue[SchemaAttribute] = Queue()
     lines = [
         struct_def(resource.name, "rs"),
         *[indent(1, struct_field_line(attr)) for attr in resource.sorted_attributes()],
@@ -474,11 +565,15 @@ def resource_object_type_lines(schema: SchemaV2, resource: SchemaResource) -> li
             nested_attributes.put(attr)
     while not nested_attributes.empty():
         nested_attr = nested_attributes.get()
-        nested_resource = schema.ref_resource(nested_attr.schema_ref, use_name=nested_attr.tf_name)
-        logger.info("creating struct for nested attribute %s", nested_attr.name)
+        schema_ref = nested_attr.schema_ref
+        if schema_ref in _used_refs:
+            continue
+        _used_refs.add(schema_ref)
+        nested_resource = schema.ref_resource(schema_ref, use_name=nested_attr.tf_name)
+        logger.info(f"creating struct for nested attribute %s, ref={schema_ref}", nested_attr.name)
         lines.extend(
             [
-                struct_def(nested_attr.tf_name, ""),
+                struct_def(nested_attr.tf_struct_name, ""),
                 *[indent(1, struct_field_line(attr)) for attr in nested_resource.sorted_attributes()],
                 "}",
                 "",

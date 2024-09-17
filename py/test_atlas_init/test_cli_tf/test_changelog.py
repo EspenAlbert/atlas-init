@@ -1,6 +1,5 @@
 from atlas_init.cli_tf.changelog import convert_to_changelog
 
-
 _example1 = """\
 rs=mongodbatlas_federated_settings_org_config
 - feat(rs+ds+dsp): Adds `data_access_identity_provider_ids`

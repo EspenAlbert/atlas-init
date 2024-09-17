@@ -1,11 +1,12 @@
 import json
 import os
 from pathlib import Path
-from model_lib import dump, parse_payload
-import pytest
-from zero_3rdparty.file_utils import ensure_parents_write_text
-from atlas_init.cli_cfn.files import CfnSchema, has_md_link, iterate_schemas
 
+import pytest
+from model_lib import parse_payload
+from zero_3rdparty.file_utils import ensure_parents_write_text
+
+from atlas_init.cli_cfn.files import CfnSchema, has_md_link, iterate_schemas
 
 _schema = """\
 {

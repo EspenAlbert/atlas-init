@@ -48,9 +48,9 @@ locals {
     MCLI_ORG_ID                   = var.org_id
     MCLI_SKIP_UPDATE_CHECK        = "yes"
 
-    PROJECT_NAME = var.project_name
+    PROJECT_NAME                   = var.project_name
     MONGODB_ATLAS_PROJECT_OWNER_ID = try(data.mongodbatlas_atlas_user.this[0].user_id, "")
-    
+
     # tf
     TF_ACC         = 1
     AWS_ACCOUNT_ID = local.aws_account_id
@@ -105,4 +105,8 @@ output "last_provider_version" {
 
 output "aws_account_id" {
   value = local.aws_account_id
+}
+
+output "my_ip" {
+  value = var.use_project_myip ? chomp(data.http.myip[0].response_body) : null
 }

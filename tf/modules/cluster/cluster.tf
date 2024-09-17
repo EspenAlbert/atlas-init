@@ -59,20 +59,17 @@ resource "mongodbatlas_advanced_cluster" "project_cluster" {
   project_id   = var.project_id
   name         = var.cluster_name
   backup_enabled = var.cloud_backup
-  disk_size_gb                = 10
   cluster_type = "REPLICASET"
  
   replication_specs {
     region_configs {
-      auto_scaling {
-        disk_gb_enabled = false
-      }
       priority        = 7
       provider_name = "AWS"
       region_name     = var.region
       electable_specs {
         node_count = 3
         instance_size = var.instance_size
+        disk_size_gb = 10
       }
     }
   }

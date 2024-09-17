@@ -1,6 +1,15 @@
 from pathlib import Path
+
 import pytest
-from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, context_start_match, extract_context, match_line, parse
+
+from atlas_init.cli_tf.go_test_run import (
+    GoTestRun,
+    GoTestStatus,
+    context_start_match,
+    extract_context,
+    match_line,
+    parse,
+)
 
 _network_logs_one_failure = (
     Path(__file__).parent / "test_data/network_logs_one_failure.txt"

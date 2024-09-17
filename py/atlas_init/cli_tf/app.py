@@ -37,6 +37,7 @@ from atlas_init.cli_tf.schema_v2 import (
 from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import init_settings
+from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 logger = logging.getLogger(__name__)
@@ -217,8 +218,11 @@ def schema2(
     add_api_spec_info(schema, admin_api_path, minimal_refs=True)
     go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
     if not go_old.exists():
-        logger.critical(f"no file found @ {go_old}")
-        raise typer.Abort
+        if confirm(f"no file found @ {go_old}, ok to create it?", is_interactive=True, default=True):
+            go_old.parent.mkdir(exist_ok=True, parents=True)
+        else:
+            logger.critical(f"no file found @ {go_old}")
+            raise typer.Abort
     if replace:
         logger.warning(f"replacing existing schema @ {go_old}")
         go_new = go_old

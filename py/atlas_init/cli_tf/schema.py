@@ -2,7 +2,7 @@ import logging
 from collections.abc import Iterable
 from functools import singledispatch
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Annotated, Literal, NamedTuple
 
 import pydantic
 import requests
@@ -66,12 +66,13 @@ class SkipValidators(Entity):
     type: Literal["skip_validators"] = "skip_validators"
 
 
+Extension = Annotated[IgnoreNested | RenameAttribute | ChangeAttributeType | SkipValidators, pydantic.Field("type")]
+
+
 class TFResource(Entity):
     model_config = pydantic.ConfigDict(extra="allow")
     name: str
-    extensions: list[IgnoreNested | RenameAttribute | ChangeAttributeType | SkipValidators] = pydantic.Field(
-        default_factory=list, discriminator="type"
-    )
+    extensions: list[Extension] = pydantic.Field(default_factory=list)
     provider_spec_attributes: list[ProviderSpecAttribute] = pydantic.Field(default_factory=list)
 
     def dump_generator_config(self) -> dict:

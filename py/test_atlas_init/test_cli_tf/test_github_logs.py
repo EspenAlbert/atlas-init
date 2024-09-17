@@ -1,19 +1,20 @@
-from datetime import timedelta
 import os
+from datetime import timedelta
 from pathlib import Path
 from textwrap import indent
+
 import pytest
 from zero_3rdparty.datetime_utils import utc_now
+
 from atlas_init.cli_tf.github_logs import (
     REQUIRED_GH_ENV_VARS,
     find_test_runs,
     include_test_jobs,
+    is_test_job,
     select_step_and_log_content,
     tf_repo,
 )
-from atlas_init.cli_tf.github_logs import is_test_job
 from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
-
 
 skip_condition = pytest.mark.skipif(
     any(os.environ.get(name, "") == "" for name in REQUIRED_GH_ENV_VARS),

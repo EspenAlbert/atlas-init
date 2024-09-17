@@ -1,14 +1,14 @@
 import logging
 import os
-from pathlib import Path
 import re
+from pathlib import Path
+
 import pytest
 
 from atlas_init.cli_tf.hcl.cli import convert_and_validate, ensure_no_plan_changes
 from atlas_init.cli_tf.hcl.cluster_mig import (
     convert_cluster_config,
     convert_clusters,
-    parse_and_convert_cluster_blocks,
 )
 
 logger = logging.getLogger(__name__)
