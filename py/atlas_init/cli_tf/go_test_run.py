@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import total_ordering
 import logging
 import re
 from collections.abc import Iterable
@@ -33,7 +34,7 @@ class LineInfo(Event):
     number: int
     text: str
 
-
+@total_ordering
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
@@ -56,6 +57,11 @@ class GoTestRun(Entity):
             self.url,
         ]
         return "\n".join(lines + self.context_lines)
+    
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, GoTestRun):
+            raise TypeError
+        return (self.ts, self.name) < (other.ts, other.name)
 
     @property
     def when(self) -> str:

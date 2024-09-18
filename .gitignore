@@ -21,3 +21,4 @@ profiles_ci/
 .sourcery.yaml
 github_ci_run_logs
 tf_bug_files
+github_ci_summary
