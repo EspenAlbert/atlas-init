@@ -35,6 +35,10 @@ def tf_test_data_dir() -> Path:
     return Path(__file__).parent / "test_data"
 
 
+@pytest.fixture()
+def github_ci_logs_dir(tf_test_data_dir) -> Path:
+    return tf_test_data_dir / "github_ci_logs"
+
 @pytest.fixture
 def schema_v2(tf_test_data_dir) -> SchemaV2:
     return parse_schema(tf_test_data_dir / "schema_v2.yaml")

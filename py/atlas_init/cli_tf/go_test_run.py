@@ -135,7 +135,11 @@ def match_line(line: str) -> LineMatch | None:
     2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
     """
     if match := line_result.match(line):
-        return LineMatch(**match.groupdict())
+        line_match = LineMatch(**match.groupdict())
+        # avoid nested tests
+        if f"{line_match.name}/" in line:
+            return None
+        return line_match
     return None
 
 
