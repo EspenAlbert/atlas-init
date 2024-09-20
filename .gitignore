@@ -12,6 +12,7 @@ schema/
 tf2
 tf3
 tf4
+tf5
 dist
 .ruff_cache
 py/.coverage

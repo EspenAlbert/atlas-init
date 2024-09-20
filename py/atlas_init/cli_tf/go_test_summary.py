@@ -4,8 +4,9 @@ from functools import total_ordering
 
 from model_lib import Entity
 from pydantic import Field, model_validator
-from zero_3rdparty import datetime_utils
+from zero_3rdparty import datetime_utils, file_utils
 
+from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
 
 logger = logging.getLogger(__name__)
@@ -101,3 +102,38 @@ def failure_details(summary: GoTestSummary) -> list[str]:
 
 def format_test_oneline(test: GoTestRun) -> str:
     return f"[{test.status} {test.runtime_human}]({test.url})"
+
+
+def create_detailed_summary(
+    summary_name: str,
+    end_test_date: datetime,
+    start_test_date: datetime,
+    test_results: dict[str, list[GoTestRun]],
+) -> list[str]:
+    summary_dir_path = summary_dir(summary_name)
+    file_utils.clean_dir(summary_dir_path)
+    summaries = [GoTestSummary(name=name, results=runs) for name, runs in test_results.items()]
+    summaries = [summary for summary in summaries if summary.results and not summary.is_skipped]
+    top_level_summary = ["# SUMMARY OF ALL TESTS name (success rate)"]
+    for summary in sorted(summaries):
+        test_summary_path = summary_dir_path / f"{summary.success_rate_human}_{summary.name}.md"
+        test_summary_md = summary_str(summary, start_test_date, end_test_date)
+        file_utils.ensure_parents_write_text(test_summary_path, test_summary_md)
+        top_level_summary.append(f"- {summary.name} ({summary.success_rate_human}) ({summary.last_pass_human()})")
+    return top_level_summary
+
+
+def create_short_summary(test_results: dict[str, list[GoTestRun]], failing_names: list[str]) -> list[str]:
+    summary = ["# SUMMARY OF FAILING TESTS"]
+    summary_fail_details: list[str] = ["# FAIL DETAILS"]
+
+    for fail_name in failing_names:
+        fail_tests = test_results[fail_name]
+        summary.append(f"- {fail_name} has {len(fail_tests)} failures:")
+        summary.extend(
+            f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})" for fail_run in fail_tests
+        )
+        summary_fail_details.append(f"\n\n ## {fail_name} details:")
+        summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)
+    logger.info("\n".join(summary_fail_details))
+    return summary

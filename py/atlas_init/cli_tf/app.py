@@ -6,7 +6,6 @@ from datetime import timedelta
 from pathlib import Path
 
 import typer
-from zero_3rdparty import file_utils
 from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.file_utils import clean_dir
 
@@ -22,10 +21,12 @@ from atlas_init.cli_tf.github_logs import (
     find_test_runs,
     include_filestems,
     include_test_jobs,
-    summary_dir,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun
-from atlas_init.cli_tf.go_test_summary import GoTestSummary, summary_str
+from atlas_init.cli_tf.go_test_summary import (
+    create_detailed_summary,
+    create_short_summary,
+)
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -190,31 +191,10 @@ def ci_tests(
         logger.info("ALL TESTS PASSED! ✅")
         return
     if summary_name:
-        summary_dir_path = summary_dir(summary_name)
-        file_utils.clean_dir(summary_dir_path)
-        summaries = [GoTestSummary(name=name, results=runs) for name, runs in test_results.items()]
-        summaries = [summary for summary in summaries if summary.results and not summary.is_skipped]
-        top_level_summary = ["# SUMMARY OF ALL TESTS name (success rate)"]
-        for summary in sorted(summaries):
-            test_summary_path = summary_dir_path / f"{summary.success_rate_human}_{summary.name}.md"
-            test_summary_md = summary_str(summary, start_test_date, end_test_date)
-            file_utils.ensure_parents_write_text(test_summary_path, test_summary_md)
-            top_level_summary.append(f"- {summary.name} ({summary.success_rate_human}) ({summary.last_pass_human()})")
-        summary_str = "\n".join(top_level_summary)
+        summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results)
     else:
-        summary = ["# SUMMARY OF FAILING TESTS"]
-        summary_fail_details: list[str] = ["# FAIL DETAILS"]
-
-        for fail_name in failing_names:
-            fail_tests = test_results[fail_name]
-            summary.append(f"- {fail_name} has {len(fail_tests)} failures:")
-            summary.extend(
-                f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})" for fail_run in fail_tests
-            )
-            summary_fail_details.append(f"\n\n ## {fail_name} details:")
-            summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)
-        logger.info("\n".join(summary_fail_details))
-        summary_str = "\n".join(summary)
+        summary = create_short_summary(test_results, failing_names)
+    summary_str = "\n".join(summary)
     add_to_clipboard(summary_str, logger)
     logger.info(summary_str)
 
