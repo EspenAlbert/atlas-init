@@ -130,6 +130,10 @@ line_result = re.compile(
 )
 
 
+def _test_name_is_nested(name: str, line: str) -> bool:
+    return f"{name}/" in line
+
+
 def match_line(line: str) -> LineMatch | None:
     """
     2024-06-26T04:41:47.7209465Z === RUN   TestAccNetworkDSPrivateLinkEndpoint_basic
@@ -137,10 +141,7 @@ def match_line(line: str) -> LineMatch | None:
     """
     if match := line_result.match(line):
         line_match = LineMatch(**match.groupdict())
-        # avoid nested tests
-        if f"{line_match.name}/" in line:
-            return None
-        return line_match
+        return None if _test_name_is_nested(line_match.name, line) else line_match
     return None
 
 
