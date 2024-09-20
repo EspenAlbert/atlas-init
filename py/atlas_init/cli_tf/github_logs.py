@@ -104,9 +104,7 @@ def find_test_runs(
                 futures[future] = job
             done, not_done = wait(futures.keys(), timeout=300)
             for f in not_done:
-                logger.warning(
-                    f"timeout to find go tests for job = {futures[f].html_url}"
-                )
+                logger.warning(f"timeout to find go tests for job = {futures[f].html_url}")
         workflow_id = workflow.id
         for f in done:
             job = futures[f]
@@ -160,9 +158,7 @@ def logs_dir() -> Path:
 def summary_dir(summary_name: str) -> Path:
     summary_dir_str = os.environ.get(GITHUB_CI_SUMMARY_DIR_ENV_NAME)
     if not summary_dir_str:
-        logger.warning(
-            f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries"
-        )
+        logger.warning(f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries")
         return DEFAULT_GITHUB_SUMMARY_DIR / summary_name
     return Path(summary_dir_str) / summary_name
 
@@ -176,14 +172,8 @@ def workflow_logs_dir(workflow: WorkflowRun) -> Path:
 
 def logs_file(workflow_dir: Path, job: WorkflowJob) -> Path:
     if job.run_attempt != 1:
-        workflow_dir = workflow_dir.with_name(
-            f"{workflow_dir.name}_attempt{job.run_attempt}"
-        )
-    filename = (
-        f"{job.id}_"
-        + job.name.replace(" ", "").replace("/", "_").replace("__", "_")
-        + ".txt"
-    )
+        workflow_dir = workflow_dir.with_name(f"{workflow_dir.name}_attempt{job.run_attempt}")
+    filename = f"{job.id}_" + job.name.replace(" ", "").replace("/", "_").replace("__", "_") + ".txt"
     return workflow_dir / filename
 
 
@@ -209,14 +199,10 @@ def is_test_job(job_name: str) -> bool:
     """
     if "-before" in job_name or "-after" in job_name:
         return False
-    return "tests-" in job_name and not job_name.endswith(
-        ("get-provider-version", "change-detection")
-    )
+    return "tests-" in job_name and not job_name.endswith(("get-provider-version", "change-detection"))
 
 
-def select_step_and_log_content(
-    job: WorkflowJob, logs_path: Path
-) -> tuple[int, list[str]]:
+def select_step_and_log_content(job: WorkflowJob, logs_path: Path) -> tuple[int, list[str]]:
     full_text = logs_path.read_text()
     step = test_step(job.steps)
     last_step_start = current_step_start = 1

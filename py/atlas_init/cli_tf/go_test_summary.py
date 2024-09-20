@@ -1,13 +1,15 @@
+import logging
 from datetime import date, datetime, timedelta
 from functools import total_ordering
-import logging
-from model_lib import Entity
-from pydantic import Field
 
-from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
+from model_lib import Entity
+from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils
 
+from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
+
 logger = logging.getLogger(__name__)
+_COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
 
 
 @total_ordering
@@ -15,13 +17,23 @@ class GoTestSummary(Entity):
     name: str
     results: list[GoTestRun] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def sort_results(self):
+        self.results.sort()
+        return self
+
+    @property
+    def total_completed(self) -> int:
+        return sum((r.status in _COMPLETE_STATUSES for r in self.results), 0)
+
     @property
     def success_rate(self) -> float:
-        if not self.results:
+        total = self.total_completed
+        if total == 0:
             logger.warning(f"No results to calculate success rate for {self.name}")
             return 0
-        return sum(r.status == "PASS" for r in self.results) / len(self.results)
-    
+        return sum(r.status == "PASS" for r in self.results) / total
+
     @property
     def is_skipped(self) -> bool:
         return all(r.status == GoTestStatus.SKIP for r in self.results)
@@ -29,6 +41,12 @@ class GoTestSummary(Entity):
     @property
     def success_rate_human(self) -> str:
         return f"{self.success_rate:.2%}"
+
+    def last_pass_human(self) -> str:
+        return next(
+            (f"Passed {test.when}" for test in reversed(self.results) if test.status == GoTestStatus.PASS),
+            "never passed",
+        )
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, GoTestSummary):
@@ -39,9 +57,7 @@ class GoTestSummary(Entity):
         return [r for r in self.results if r.ts.date() == date]
 
 
-def summary_lines(
-    summary: GoTestSummary, start_date: datetime, end_date: datetime
-) -> str:
+def summary_str(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> str:
     return "\n".join(
         [
             f"## {summary.name}",
@@ -55,14 +71,10 @@ def summary_lines(
     )
 
 
-def timeline_lines(
-    summary: GoTestSummary, start_date: datetime, end_date: datetime
-) -> list[str]:
+def timeline_lines(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> list[str]:
     lines = []
     one_day = timedelta(days=1)
-    for active_date in datetime_utils.day_range(
-        start_date.date(), (end_date + one_day).date(), one_day
-    ):
+    for active_date in datetime_utils.day_range(start_date.date(), (end_date + one_day).date(), one_day):
         active_tests = summary.select_tests(active_date)
         if not active_tests:
             lines.append(f"{active_date:%Y-%m-%d}: MISSING")
