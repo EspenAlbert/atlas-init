@@ -1,0 +1,46 @@
+ï»¿2024-09-17T00:20:37.2689623Z Current runner version: '2.319.1'
+2024-09-17T00:20:37.2714271Z ##[group]Operating System
+2024-09-17T00:20:37.2715095Z Ubuntu
+2024-09-17T00:20:37.2715475Z 22.04.4
+2024-09-17T00:20:37.2715934Z LTS
+2024-09-17T00:20:37.2716311Z ##[endgroup]
+2024-09-17T00:20:37.2716790Z ##[group]Runner Image
+2024-09-17T00:20:37.2717334Z Image: ubuntu-22.04
+2024-09-17T00:20:37.2717787Z Version: 20240908.1.0
+2024-09-17T00:20:37.2718935Z Included Software: https://github.com/actions/runner-images/blob/ubuntu22/20240908.1/images/ubuntu/Ubuntu2204-Readme.md
+2024-09-17T00:20:37.2720464Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu22%2F20240908.1
+2024-09-17T00:20:37.2721403Z ##[endgroup]
+2024-09-17T00:20:37.2721928Z ##[group]Runner Image Provisioner
+2024-09-17T00:20:37.2722451Z 2.0.384.1
+2024-09-17T00:20:37.2722840Z ##[endgroup]
+2024-09-17T00:20:37.2738106Z ##[group]GITHUB_TOKEN Permissions
+2024-09-17T00:20:37.2739807Z Metadata: read
+2024-09-17T00:20:37.2740576Z ##[endgroup]
+2024-09-17T00:20:37.2743303Z Secret source: Actions
+
+2024-09-17T00:22:05.6663121Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations
+2024-09-17T00:22:05.6664583Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2024-09-17T00:22:05.6666516Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2024-09-17T00:22:05.6668559Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2024-09-17T00:22:05.6670430Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2024-09-17T00:22:05.6672390Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2024-09-17T00:22:05.6674348Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2024-09-17T00:22:05.6676147Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2024-09-17T00:22:05.6677877Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2024-09-17T00:22:05.6679853Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2024-09-17T00:22:05.6681682Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2024-09-17T00:22:05.6683433Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2024-09-17T00:22:05.6685140Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2024-09-17T00:22:05.6686931Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2024-09-17T00:22:05.6688816Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2024-09-17T00:22:05.6690801Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2024-09-17T00:22:05.6787019Z --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations (0.00s)
+2024-09-17T00:22:05.6789009Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined (0.46s)
+2024-09-17T00:22:05.6791348Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined (0.49s)
+2024-09-17T00:22:05.6793760Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined (0.51s)
+2024-09-17T00:22:05.6796045Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined (0.54s)
+2024-09-17T00:22:05.6798774Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined (0.54s)
+2024-09-17T00:22:05.6800282Z === CONT  TestAccConfigDSAtlasUser_InvalidAttrCombination
+2024-09-17T00:22:05.6801303Z === CONT  TestAccConfigDSAtlasUsers_ByTeamID
+2024-09-17T00:22:05.6802368Z === CONT  TestAccConfigDSAtlasUsers_UsingPagination
+2024-09-17T00:22:05.6803421Z === CONT  TestAccConfigDSAtlasUsers_ByProjectID

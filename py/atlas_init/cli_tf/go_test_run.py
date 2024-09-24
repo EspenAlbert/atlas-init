@@ -4,6 +4,7 @@ import logging
 import re
 from collections.abc import Iterable
 from enum import StrEnum
+from functools import total_ordering
 
 import humanize
 from github.WorkflowJob import WorkflowJob
@@ -34,6 +35,7 @@ class LineInfo(Event):
     text: str
 
 
+@total_ordering
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
@@ -56,6 +58,11 @@ class GoTestRun(Entity):
             self.url,
         ]
         return "\n".join(lines + self.context_lines)
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, GoTestRun):
+            raise TypeError
+        return (self.ts, self.name) < (other.ts, other.name)
 
     @property
     def when(self) -> str:
@@ -123,13 +130,18 @@ line_result = re.compile(
 )
 
 
+def _test_name_is_nested(name: str, line: str) -> bool:
+    return f"{name}/" in line
+
+
 def match_line(line: str) -> LineMatch | None:
     """
     2024-06-26T04:41:47.7209465Z === RUN   TestAccNetworkDSPrivateLinkEndpoint_basic
     2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
     """
     if match := line_result.match(line):
-        return LineMatch(**match.groupdict())
+        line_match = LineMatch(**match.groupdict())
+        return None if _test_name_is_nested(line_match.name, line) else line_match
     return None
 
 

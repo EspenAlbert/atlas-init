@@ -20,12 +20,16 @@ from atlas_init.cli_tf.go_test_run import GoTestRun, parse
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
 )
-from atlas_init.settings.path import DEFAULT_GITHUB_CI_RUN_LOGS
+from atlas_init.settings.path import (
+    DEFAULT_GITHUB_CI_RUN_LOGS,
+    DEFAULT_GITHUB_SUMMARY_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
 GH_TOKEN_ENV_NAME = "GH_TOKEN"  # noqa: S105
 GITHUB_CI_RUN_LOGS_ENV_NAME = "GITHUB_CI_RUN_LOGS"
+GITHUB_CI_SUMMARY_DIR_ENV_NAME = "GITHUB_CI_SUMMARY_DIR_ENV_NAME"
 REQUIRED_GH_ENV_VARS = [GH_TOKEN_ENV_NAME, GITHUB_CI_RUN_LOGS_ENV_NAME]
 MAX_DOWNLOADS = 5
 
@@ -107,7 +111,10 @@ def find_test_runs(
             try:
                 go_test_runs: list[GoTestRun] = f.result()
             except Exception:
-                logger.exception(f"failed to find go tests for job: {job.html_url}, error 👆")
+                job_log_path = logs_file(workflow_dir, job)
+                logger.exception(
+                    f"failed to find go tests for job: {job.html_url}, error 👆, local_path: {job_log_path}"
+                )
                 continue
             jobs_found[WorkflowJobId(workflow_id, job.id)].extend(go_test_runs)
     return jobs_found
@@ -115,9 +122,7 @@ def find_test_runs(
 
 def find_job_test_runs(workflow_dir: Path, job: WorkflowJob) -> list[GoTestRun]:
     jobs_log_path = download_job_safely(workflow_dir, job)
-    if jobs_log_path is None:
-        return []
-    return parse_job_logs(job, jobs_log_path)
+    return [] if jobs_log_path is None else parse_job_logs(job, jobs_log_path)
 
 
 def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
@@ -148,6 +153,14 @@ def logs_dir() -> Path:
         logger.warning(f"using {DEFAULT_GITHUB_CI_RUN_LOGS} to store github ci logs!")
         return DEFAULT_GITHUB_CI_RUN_LOGS
     return Path(logs_dir_str)
+
+
+def summary_dir(summary_name: str) -> Path:
+    summary_dir_str = os.environ.get(GITHUB_CI_SUMMARY_DIR_ENV_NAME)
+    if not summary_dir_str:
+        logger.warning(f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries")
+        return DEFAULT_GITHUB_SUMMARY_DIR / summary_name
+    return Path(summary_dir_str) / summary_name
 
 
 def workflow_logs_dir(workflow: WorkflowRun) -> Path:

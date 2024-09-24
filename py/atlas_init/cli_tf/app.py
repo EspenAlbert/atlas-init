@@ -23,6 +23,10 @@ from atlas_init.cli_tf.github_logs import (
     include_test_jobs,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun
+from atlas_init.cli_tf.go_test_summary import (
+    create_detailed_summary,
+    create_short_summary,
+)
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -149,12 +153,20 @@ def ci_tests(
     branch: str = typer.Option("master", "-b", "--branch"),
     workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
     only_last_workflow: bool = typer.Option(False, "-l", "--last"),
+    summary_name: str = typer.Option(
+        "",
+        "-s",
+        "--summary",
+        help="the name of the summary directory to store detailed test results",
+    ),
 ):  # sourcery skip: use-named-expression
     repo_path = current_repo_path(Repo.TF)
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
     os.environ[GH_TOKEN_ENV_NAME] = token
+    end_test_date = utc_now()
+    start_test_date = end_test_date - timedelta(days=max_days_ago)
     job_runs = find_test_runs(
-        utc_now() - timedelta(days=max_days_ago),
+        start_test_date,
         include_job=include_test_jobs(test_group_name),
         branch=branch,
         include_workflow=include_filestems(set(workflow_file_stems.split(","))),
@@ -174,22 +186,14 @@ def ci_tests(
         for run in runs:
             test_results[run.name].append(run)
 
-    failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
-    if not failing_names:
-        logger.info("ALL TESTS PASSED! ✅")
-        return
-    summary = ["# SUMMARY OF FAILING TESTS"]
-    summary_fail_details: list[str] = ["# FAIL DETAILS"]
-
-    for fail_name in failing_names:
-        fail_tests = test_results[fail_name]
-        summary.append(f"- {fail_name} has {len(fail_tests)} failures:")
-        summary.extend(
-            f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})" for fail_run in fail_tests
-        )
-        summary_fail_details.append(f"\n\n ## {fail_name} details:")
-        summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)
-    logger.info("\n".join(summary_fail_details))
+    if summary_name:
+        summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results)
+    else:
+        failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
+        if not failing_names:
+            logger.info("ALL TESTS PASSED! ✅")
+            return
+        summary = create_short_summary(test_results, failing_names)
     summary_str = "\n".join(summary)
     add_to_clipboard(summary_str, logger)
     logger.info(summary_str)
@@ -198,7 +202,8 @@ def ci_tests(
 @app.command()
 def schema2(
     resource: str = typer.Argument(
-        "", help="the resource name to generate the schema for. Must exist in the schema. E.g., 'stream_processor'"
+        "",
+        help="the resource name to generate the schema for. Must exist in the schema. E.g., 'stream_processor'",
     ),
     branch: str = typer.Option("main", "-b", "--branch", help="the branch for downloading openapi spec"),
     admin_api_path: Path = typer.Option(
@@ -220,7 +225,11 @@ def schema2(
     add_api_spec_info(schema, admin_api_path, minimal_refs=True)
     go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
     if not go_old.exists():
-        if confirm(f"no file found @ {go_old}, ok to create it?", is_interactive=True, default=True):
+        if confirm(
+            f"no file found @ {go_old}, ok to create it?",
+            is_interactive=True,
+            default=True,
+        ):
             go_old.parent.mkdir(exist_ok=True, parents=True)
         else:
             logger.critical(f"no file found @ {go_old}")

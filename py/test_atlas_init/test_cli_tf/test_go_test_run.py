@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -27,6 +28,7 @@ _ok_examples = """\
 
 _none_examples = """\
 2024-06-26T04:41:47.7229504Z PASS
+2024-09-17T00:22:05.6676147Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
 2024-06-26T04:41:47.7189990Z Project deletion failed: 667b98b5487d301c7124414d, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/667b98b5487d301c7124414d DELETE: HTTP 409 Conflict (Error code: "CANNOT_CLOSE_GROUP_ACTIVE_PEERING_CONNECTIONS") Detail: There are active peering connections in this project. Reason: Conflict. Params: []"""
 
 
@@ -141,3 +143,12 @@ def test_context_lines():
         if more_context := extract_context(line):
             full_context.append(more_context)
     assert _expected_context_lines == "\n".join(full_context)
+
+
+def test_parsing_nested_test(github_ci_logs_dir: Path, mock_job):
+    file_path = github_ci_logs_dir / "30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config.txt"
+    tests = parse_tests(file_path, mock_job)
+    nested_test = "TestAccConfigDSAtlasUsers_InvalidAttrCombinations"
+    nested_test = next((test for test in tests if test.name == nested_test), None)
+    assert nested_test
+    assert nested_test.status == GoTestStatus.PASS
