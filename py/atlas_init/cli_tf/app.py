@@ -186,13 +186,13 @@ def ci_tests(
         for run in runs:
             test_results[run.name].append(run)
 
-    failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
-    if not failing_names:
-        logger.info("ALL TESTS PASSED! ✅")
-        return
     if summary_name:
         summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results)
     else:
+        failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
+        if not failing_names:
+            logger.info("ALL TESTS PASSED! ✅")
+            return
         summary = create_short_summary(test_results, failing_names)
     summary_str = "\n".join(summary)
     add_to_clipboard(summary_str, logger)
