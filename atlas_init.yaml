@@ -47,6 +47,10 @@ test_suites:
     - internal/service/project
   vars:
     use_project_extra: true
+- name: resource_policy
+  repo_go_packages:
+    cfn:
+    - cfn-resources/resource-policy
 - name: s3
   repo_go_packages:
     tf:

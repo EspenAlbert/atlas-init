@@ -11,24 +11,24 @@ locals {
   resource_actions_yaml = file("${path.module}/resource_actions.yaml")
   services              = yamldecode(local.services_yaml)
   resource_actions      = yamldecode(local.resource_actions_yaml)
-  role_name = "cfn-execution-role-${var.cfn_profile}"
-  iam_policy_statement =  {
-          Sid = "Original"
-          Action   = local.resource_actions
-          Effect   = "Allow"
-          Resource = "*"
-        }
+  role_name             = "cfn-execution-role-${var.cfn_profile}"
+  iam_policy_statement = {
+    Sid      = "Original"
+    Action   = local.resource_actions
+    Effect   = "Allow"
+    Resource = "*"
+  }
   iam_policy_statement_kms = {
-          Sid = "Extra"
-          Action   = ["kms:Decrypt"]
-          Effect   = "Allow"
-          Resource = try(aws_kms_key.this[0].arn, "invalid-arn-not-used")
-        }
+    Sid      = "Extra"
+    Action   = ["kms:Decrypt"]
+    Effect   = "Allow"
+    Resource = try(aws_kms_key.this[0].arn, "invalid-arn-not-used")
+  }
   iam_policy_statements = var.use_kms_key ? [local.iam_policy_statement, local.iam_policy_statement_kms] : [local.iam_policy_statement]
   iam_role_policy_json = jsonencode({
-      Version = "2012-10-17"
-      Statement = local.iam_policy_statements
-    })
+    Version   = "2012-10-17"
+    Statement = local.iam_policy_statements
+  })
 }
 
 resource "aws_secretsmanager_secret" "cfn" {
@@ -42,9 +42,10 @@ resource "aws_secretsmanager_secret" "cfn" {
 resource "aws_secretsmanager_secret_version" "cfn" {
   secret_id = aws_secretsmanager_secret.cfn.id
   secret_string = jsonencode({
-    BaseUrl    = var.atlas_base_url
-    PublicKey  = var.atlas_public_key
-    PrivateKey = var.atlas_private_key
+    BaseUrl     = var.atlas_base_url
+    PublicKey   = var.atlas_public_key
+    PrivateKey  = var.atlas_private_key
+    DebugClient = true
   })
 }
 
@@ -92,7 +93,7 @@ output "env_vars" {
 
 output "info" {
   value = {
-    kms_key_policy_json = local.kms_key_policy_json
-    iam_role_policy_json     = local.iam_role_policy_json
+    kms_key_policy_json  = local.kms_key_policy_json
+    iam_role_policy_json = local.iam_role_policy_json
   }
 }
