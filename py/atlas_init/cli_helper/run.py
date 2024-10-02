@@ -77,13 +77,16 @@ def run_command_exit_on_failure(
         raise typer.Exit(1)
 
 
-def run_command_receive_result(command: str, cwd: Path, logger: Logger, env: dict | None = None) -> str:
+def run_command_receive_result(command: str, cwd: Path, logger: Logger, env: dict | None = None, *,  can_fail: bool = False) -> str:
     with TemporaryDirectory() as temp_dir:
         result_file = Path(temp_dir) / "file"
         with open(result_file, "w") as file:
             is_ok = run_command_is_ok(command.split(), env=env, cwd=cwd, logger=logger, output=file)
         output_text = result_file.read_text().strip()
     if not is_ok:
+        if can_fail:
+            logger.warning(f"command failed {command}, {output_text}")
+            return f"FAIL: {output_text}"
         logger.critical(f"command failed {command}, {output_text}")
         raise typer.Exit(1)
     return output_text

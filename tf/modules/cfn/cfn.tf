@@ -24,7 +24,13 @@ locals {
     Effect   = "Allow"
     Resource = try(aws_kms_key.this[0].arn, "invalid-arn-not-used")
   }
-  iam_policy_statements = var.use_kms_key ? [local.iam_policy_statement, local.iam_policy_statement_kms] : [local.iam_policy_statement]
+  iam_policy_statement_cloudwatch = {
+    Sid      = "CloudwatchLogs"
+    Action   = ["logs:*"]
+    Effect   = "Allow"
+    Resource = "*"
+  }
+  iam_policy_statements = var.use_kms_key ? [local.iam_policy_statement, local.iam_policy_statement_kms, local.iam_policy_statement_cloudwatch] : [local.iam_policy_statement, local.iam_policy_statement_cloudwatch]
   iam_role_policy_json = jsonencode({
     Version   = "2012-10-17"
     Statement = local.iam_policy_statements

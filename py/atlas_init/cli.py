@@ -3,10 +3,12 @@ import os
 import sys
 from collections.abc import Callable
 from functools import partial
+from pathlib import Path
 from pydoc import locate
 from typing import Literal
 
 import typer
+from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
 from atlas_init import running_in_repo
@@ -16,6 +18,7 @@ from atlas_init.cli_helper.go import run_go_tests
 from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
+    run_command_receive_result,
 )
 from atlas_init.cli_helper.sdk import (
     SDK_VERSION_HELP,
@@ -88,6 +91,7 @@ def main(
         envvar=env_var_names("project_name"),
         help="atlas project name to create",
     ),
+    show_secrets: bool = typer.Option(False, help="show secrets in the logs"),
 ):
     explicit_env_vars: dict[str, str] = {}
     if project_name != "":
@@ -107,7 +111,8 @@ def main(
         )
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
-    hide_secrets(log_handler, {**os.environ})
+    if not show_secrets:
+        hide_secrets(log_handler, {**os.environ})
     command = ctx.invoked_subcommand
     logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
 
@@ -287,6 +292,38 @@ def pre_commit(
         logger.warning("skipping formatting")
     else:
         run_command_exit_on_failure(format_cmd_str, cwd=repo_path, logger=logger)
+
+
+@app_command()
+def repo_dump():
+    code_root = Path.home() / "code"
+    path_urls = {}
+    for repo_git_path in iter_paths(code_root, ".git", exclude_folder_names=[".terraform"]):
+        repo_path = repo_git_path.parent
+        logger.info(f"repo: {repo_path}")
+        url = run_command_receive_result("git remote get-url origin", cwd=repo_path, logger=logger, can_fail=True)
+        if url.startswith("FAIL:"):
+            continue
+        path_urls[str(repo_path)] = url
+    print(path_urls)
+    out_path = code_root / "repos.json"
+    repos_json = dump(path_urls, "pretty_json")
+    out_path.write_text(repos_json)
+
+
+@app_command()
+def repo_clone():
+    repos_file = Path.home() / "code" / "repos.json"
+    repo_path_json: dict[str, str] = parse_payload(repos_file) # type: ignore
+    for repo_path, url in repo_path_json.items():
+        logger.info(f"cloning {url} @ {repo_path}")
+        repo_path = Path(repo_path)
+        parent_dir = repo_path.parent
+        parent_dir.mkdir(parents=True, exist_ok=True)
+        if repo_path.exists():
+            logger.warning(f"skipping {repo_path}, already exists")
+            continue
+        run_command_exit_on_failure(f"git clone {url} {repo_path.name}", cwd=parent_dir, logger=logger)
 
 
 def typer_main():
