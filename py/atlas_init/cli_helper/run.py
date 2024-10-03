@@ -77,7 +77,9 @@ def run_command_exit_on_failure(
         raise typer.Exit(1)
 
 
-def run_command_receive_result(command: str, cwd: Path, logger: Logger, env: dict | None = None, *,  can_fail: bool = False) -> str:
+def run_command_receive_result(
+    command: str, cwd: Path, logger: Logger, env: dict | None = None, *, can_fail: bool = False
+) -> str:
     with TemporaryDirectory() as temp_dir:
         result_file = Path(temp_dir) / "file"
         with open(result_file, "w") as file:

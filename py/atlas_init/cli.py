@@ -305,7 +305,6 @@ def repo_dump():
         if url.startswith("FAIL:"):
             continue
         path_urls[str(repo_path)] = url
-    print(path_urls)
     out_path = code_root / "repos.json"
     repos_json = dump(path_urls, "pretty_json")
     out_path.write_text(repos_json)
@@ -314,10 +313,10 @@ def repo_dump():
 @app_command()
 def repo_clone():
     repos_file = Path.home() / "code" / "repos.json"
-    repo_path_json: dict[str, str] = parse_payload(repos_file) # type: ignore
-    for repo_path, url in repo_path_json.items():
-        logger.info(f"cloning {url} @ {repo_path}")
-        repo_path = Path(repo_path)
+    repo_path_json: dict[str, str] = parse_payload(repos_file)  # type: ignore
+    for repo_path_str, url in repo_path_json.items():
+        logger.info(f"cloning {url} @ {repo_path_str}")
+        repo_path = Path(repo_path_str)
         parent_dir = repo_path.parent
         parent_dir.mkdir(parents=True, exist_ok=True)
         if repo_path.exists():

@@ -23,3 +23,4 @@ profiles_ci/
 github_ci_run_logs
 tf_bug_files
 github_ci_summary
+*.pyc
