@@ -6,6 +6,9 @@ test_suites:
   repo_go_packages:
     cfn:
     - cfn-resources/cluster
+- name: clusterm10
+  vars:
+    cluster_info_m10: true
 - name: federated
   repo_go_packages:
     tf:
