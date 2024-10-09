@@ -7,6 +7,7 @@ from pathlib import Path
 import stringcase
 from model_lib import Entity, dump, parse_model
 from pydantic import ConfigDict, Field, ValidationError
+from zero_3rdparty import file_utils
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +26,9 @@ def create_sample_file(
             "previousResourceState": prev_resource_state or {},
             "desiredResourceState": resource_state,
         },
-        "json",
+        "pretty_json",
     )
-    samples_file.write_text(new_json)
+    file_utils.ensure_parents_write_text(samples_file, new_json)
 
 
 CamelAlias = ConfigDict(alias_generator=stringcase.camelcase, populate_by_name=True)

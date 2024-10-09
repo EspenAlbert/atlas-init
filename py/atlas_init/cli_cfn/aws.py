@@ -13,7 +13,7 @@ import humanize
 from boto3.session import Session
 from model_lib import Event
 from mypy_boto3_cloudformation import CloudFormationClient
-from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
+from mypy_boto3_cloudformation.type_defs import ListTypesOutputTypeDef, ParameterTypeDef
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.iter_utils import group_by_once
@@ -321,7 +321,7 @@ def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = Fal
     }
     next_token = ""
     for _ in range(100):
-        types_response = client.list_types(**kwargs)  # type: ignore
+        types_response: ListTypesOutputTypeDef = client.list_types(**kwargs)  # type: ignore
         next_token = types_response.get("NextToken", "")
         kwargs["NextToken"] = next_token
         for t in types_response["TypeSummaries"]:
@@ -387,6 +387,16 @@ def ensure_resource_type_activated(
                 deregister_cfn_resource_type(type_name, deregister=True, region_filter=region)
             cfn_type_details = None
 
+    # assert cfn_type_details, f"no cfn_type_details found for {type_name}"
+    # client = cloud_formation_client(region)
+    # response = client.activate_type(
+    #     Type="RESOURCE",
+    #     # PublicTypeArn=cfn_type_details.type_arn.replace(":type/", "::type/"),
+    #     PublicTypeArn="arn:aws:cloudformation:eu-south-2:358363220050::type/resource/MongoDB-Atlas-ResourcePolicy/00000001",
+    #     ExecutionRoleArn=cfn_execution_role,
+    #     LoggingConfig={"LogRoleArn": cfn_execution_role, "LogGroupName": "/apix/espen/cfn-test1"},
+    # )
+    # logger.info(f"activate response: {response}")
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
     if cfn_type_details is None and confirm(
         f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",

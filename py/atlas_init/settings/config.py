@@ -164,7 +164,9 @@ def active_suites(
             repo_alias = None
         else:
             raise
-    logger.info(f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}")
+    logger.info(
+        f"repo_alias={repo_alias}, repo_path={repo_path}, repo_url_path={repo_url_path}, cwd_rel_path={cwd_rel_path}"
+    )
     change_paths = [cwd_rel_path]
     active_suites = config.active_test_suites(repo_alias, change_paths, forced_test_suites)
     logger.info(f"active_suites: {[s.name for s in active_suites]}")
