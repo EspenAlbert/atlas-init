@@ -29,9 +29,10 @@ def load_dotenv(env_path: Path) -> dict[str, str]:
     return {k: v for k, v in dotenv.dotenv_values(env_path).items() if v}
 
 
-def dump_vscode_dotenv(generated_path: Path, vscode_env_path: Path) -> None:
+def dump_vscode_dotenv(generated_path: Path, vscode_env_path: Path, **extras: str) -> None:
     vscode_env_vars = load_dotenv(generated_path)
     vscode_env_vars.pop("TF_CLI_CONFIG_FILE", None)  # migration tests will use local provider instead of online
+    vscode_env_vars.update(extras)
     dump_dotenv(vscode_env_path, vscode_env_vars)
 
 

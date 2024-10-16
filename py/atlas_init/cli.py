@@ -1,8 +1,5 @@
 import logging
-import os
-import sys
 from collections.abc import Callable
-from functools import partial
 from pathlib import Path
 from pydoc import locate
 from typing import Literal
@@ -11,8 +8,6 @@ import typer
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
-from atlas_init import running_in_repo
-from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_helper import sdk_auto_changes
 from atlas_init.cli_helper.go import run_go_tests
 from atlas_init.cli_helper.run import (
@@ -37,7 +32,6 @@ from atlas_init.cli_helper.tf_runner import (
     get_tf_vars,
     run_terraform,
 )
-from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.repos.go_sdk import go_sdk_breaking_changes
 from atlas_init.repos.path import (
     Repo,
@@ -49,11 +43,7 @@ from atlas_init.repos.path import (
 )
 from atlas_init.settings.config import RepoAliasNotFoundError
 from atlas_init.settings.env_vars import (
-    DEFAULT_PROFILE,
-    AtlasInitSettings,
     active_suites,
-    as_env_var_name,
-    env_var_names,
     init_settings,
 )
 from atlas_init.settings.path import (
@@ -61,60 +51,9 @@ from atlas_init.settings.path import (
     dump_vscode_dotenv,
     repo_path_rel_path,
 )
-from atlas_init.settings.rich_utils import configure_logging, hide_secrets
+from atlas_init.typer_app import app, app_command, extra_root_commands
 
 logger = logging.getLogger(__name__)
-app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
-app.add_typer(app_cfn, name="cfn")
-app.add_typer(app_tf, name="tf")
-
-app_command = partial(
-    app.command,
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-)
-
-
-@app.callback(invoke_without_command=True)
-def main(
-    ctx: typer.Context,
-    log_level: str = typer.Option("INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"),
-    profile: str = typer.Option(
-        DEFAULT_PROFILE,
-        "-p",
-        "--profile",
-        envvar=env_var_names("profile"),
-        help="used to load .env_manual, store terraform state and variables, and dump .env files.",
-    ),
-    project_name: str = typer.Option(
-        "",
-        "--project",
-        envvar=env_var_names("project_name"),
-        help="atlas project name to create",
-    ),
-    show_secrets: bool = typer.Option(False, help="show secrets in the logs"),
-):
-    explicit_env_vars: dict[str, str] = {}
-    if project_name != "":
-        explicit_env_vars[as_env_var_name("project_name")] = project_name
-    log_handler = configure_logging(log_level)
-    logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
-    missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
-        profile,
-        required_extra_fields=["project_name"],
-        explicit_env_vars=explicit_env_vars,
-    )
-    if missing_env_vars:
-        typer.echo(f"missing env_vars: {missing_env_vars}")
-    if ambiguous_env_vars:
-        typer.echo(
-            f"amiguous env_vars: {missing_env_vars} (specified both in cli & in .env-manual file with different values)"
-        )
-    if missing_env_vars or ambiguous_env_vars:
-        raise typer.Exit(1)
-    if not show_secrets:
-        hide_secrets(log_handler, {**os.environ})
-    command = ctx.invoked_subcommand
-    logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
 
 
 @app_command()
@@ -326,6 +265,7 @@ def repo_clone():
 
 
 def typer_main():
+    extra_root_commands()
     app()
 
 
