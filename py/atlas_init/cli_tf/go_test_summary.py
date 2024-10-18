@@ -111,7 +111,8 @@ def create_detailed_summary(
     test_results: dict[str, list[GoTestRun]],
 ) -> list[str]:
     summary_dir_path = summary_dir(summary_name)
-    file_utils.clean_dir(summary_dir_path)
+    if summary_dir_path.exists():
+        file_utils.clean_dir(summary_dir_path)
     summaries = [GoTestSummary(name=name, results=runs) for name, runs in test_results.items()]
     summaries = [summary for summary in summaries if summary.results and not summary.is_skipped]
     top_level_summary = ["# SUMMARY OF ALL TESTS name (success rate)"]

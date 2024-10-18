@@ -92,6 +92,10 @@ type_names_defaults: dict[str, dict[str, str]] = {
         STACK_NAME_PARAM: "ClusterName",
         "ProjectName": "Cluster-CFN-Example",
     },
+    "resourcepolicy": {
+        STACK_NAME_PARAM: "Name",
+        "Policies": 'forbid (principal, action == cloud::Action::"project.edit",resource) when {context.project.ipAccessList.contains(ip("0.0.0.0/0"))};',
+    },
 }
 
 

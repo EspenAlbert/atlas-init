@@ -104,8 +104,8 @@ def example(
     operation: str = typer.Argument(...),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
     stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
-    delete_first: bool = typer.Option(False, help="Delete existing stack first"),
-    force_deregister: bool = typer.Option(False),
+    delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
+    force_deregister: bool = typer.Option(False, "-f", "--force-deregister", help="Force deregister CFN Type"),
     export_example_to_inputs: bool = typer.Option(False),
 ):
     resource_params_parsed = {}
