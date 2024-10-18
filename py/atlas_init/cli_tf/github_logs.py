@@ -51,6 +51,7 @@ def get_repo(repo_id: str) -> Repository:
 _DEFAULT_FILESTEMS = {
     "test-suite",
     "terraform-compatibility-matrix",
+    # "acceptance-tests",
 }
 
 
