@@ -109,12 +109,15 @@ def create_detailed_summary(
     end_test_date: datetime,
     start_test_date: datetime,
     test_results: dict[str, list[GoTestRun]],
+    expected_names: set[str] | None = None,
 ) -> list[str]:
     summary_dir_path = summary_dir(summary_name)
     if summary_dir_path.exists():
         file_utils.clean_dir(summary_dir_path)
     summaries = [GoTestSummary(name=name, results=runs) for name, runs in test_results.items()]
     summaries = [summary for summary in summaries if summary.results and not summary.is_skipped]
+    if expected_names and (skipped_names := expected_names - {summary.name for summary in summaries}):
+        logger.warning(f"skipped test names: {'\n'.join(skipped_names)}")
     top_level_summary = ["# SUMMARY OF ALL TESTS name (success rate)"]
     for summary in sorted(summaries):
         test_summary_path = summary_dir_path / f"{summary.success_rate_human}_{summary.name}.md"
