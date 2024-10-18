@@ -153,6 +153,12 @@ def ci_tests(
     branch: str = typer.Option("master", "-b", "--branch"),
     workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
     only_last_workflow: bool = typer.Option(False, "-l", "--last"),
+    names: str = typer.Option(
+        "",
+        "-n",
+        "--test-names",
+        help="comma separated list of test names to filter, e.g., TestAccCloudProviderAccessAuthorizationAzure_basic,TestAccBackupSnapshotExportBucket_basicAzure",
+    ),
     summary_name: str = typer.Option(
         "",
         "-s",
@@ -160,6 +166,10 @@ def ci_tests(
         help="the name of the summary directory to store detailed test results",
     ),
 ):  # sourcery skip: use-named-expression
+    names_set: set[str] = set()
+    if names:
+        names_set.update(names.split(","))
+        logger.info(f"filtering tests by names: {names_set}")
     repo_path = current_repo_path(Repo.TF)
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
     os.environ[GH_TOKEN_ENV_NAME] = token
@@ -184,10 +194,13 @@ def ci_tests(
             logger.warning(f"no go tests for job_id={job_id}")
             continue
         for run in runs:
-            test_results[run.name].append(run)
+            test_name = run.name
+            if names_set and test_name not in names_set:
+                continue
+            test_results[test_name].append(run)
 
     if summary_name:
-        summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results)
+        summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results, names_set)
     else:
         failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
         if not failing_names:
