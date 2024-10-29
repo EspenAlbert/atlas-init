@@ -81,12 +81,12 @@ def deactivate_type(type_name: str, region: str):
     client.deactivate_type(TypeName=type_name, Type="RESOURCE")
 
 
-def delete_role_stack(type_name: str, region_name: str) -> None:
+def delete_role_stack(type_name: str, region_name: str, role_arn: str = "") -> None:
     stack_name = type_name.replace("::", "-").lower() + "-role-stack"
-    delete_stack(region_name, stack_name)
+    delete_stack(region_name, stack_name, role_arn)
 
 
-def delete_stack(region_name: str, stack_name: str):
+def delete_stack(region_name: str, stack_name: str, role_arn: str = ""):
     client = cloud_formation_client(region_name)
     logger.warning(f"deleting stack {stack_name} in region={region_name}")
     try:
@@ -96,7 +96,7 @@ def delete_stack(region_name: str, stack_name: str):
             logger.warning(f"stack {stack_name} not found")
             return
         raise
-    client.delete_stack(StackName=stack_name)
+    client.delete_stack(StackName=stack_name, RoleARN=role_arn)
     wait_on_stack_ok(stack_name, region_name, expect_not_found=True)
 
 
@@ -115,7 +115,9 @@ def create_stack(
         Parameters=parameters,
         RoleARN=role_arn,
     )
-    logger.info(f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']}")
+    logger.info(
+        f"stack with name: {stack_name} created in {region_name} has id: {stack_id['StackId']} role_arn:{role_arn}"
+    )
     wait_on_stack_ok(stack_name, region_name, timeout_seconds=timeout_seconds)
 
 
@@ -354,7 +356,7 @@ def activate_resource_type(details: CfnTypeDetails, region: str, execution_role_
         PublicTypeArn=details.type_arn,
         ExecutionRoleArn=execution_role_arn,
     )
-    logger.info(f"activate response: {response}")
+    logger.info(f"activate response: {response} role={execution_role_arn}")
 
 
 def ensure_resource_type_activated(
@@ -405,4 +407,16 @@ def ensure_resource_type_activated(
     ):
         assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
         cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
+    if cfn_type_details is None:
+        third_party = get_last_cfn_type(type_name, region, is_third_party=True)
+        assert third_party, f"unable to find 3rd party type for {type_name}"
+        last_updated = third_party.last_updated
+        if confirm(
+            f"No existing {type_name} found, ok to activate 3rd party: :\n'{third_party.version} ({humanize.naturalday(last_updated), {last_updated.isoformat()}})'\n?",
+            is_interactive=is_interactive,
+            default=True,
+        ):
+            activate_resource_type(third_party, region, cfn_execution_role)
+            cfn_type_details = third_party
     assert cfn_type_details, f"no cfn_type_details found for {type_name}"
+    # TODO: validate the active type details uses the execution role

@@ -48,13 +48,15 @@ class TemplatePathNotFoundError(Exception):
         self.examples_dir = examples_dir
 
 
-def infer_template_path(repo_path: Path, type_name: str, stack_name: str) -> Path:
+def infer_template_path(repo_path: Path, type_name: str, stack_name: str, example_name: str = "") -> Path:
     examples_dir = cfn_examples_dir(repo_path)
     template_paths: list[Path] = []
     type_setting = f'"Type": "{type_name}"'
     for p in examples_dir.rglob("*.json"):
+        if example_name and example_name != p.stem:
+            continue
         if type_setting in p.read_text():
-            logger.info(f"found template @ {p}")
+            logger.info(f"found template @ '{p.stem}': {p.parent}")
             template_paths.append(p)
     if not template_paths:
         raise TemplatePathNotFoundError(type_name, examples_dir)
@@ -208,7 +210,7 @@ def decode_parameters(
 
     if force_params:
         logger.warning(f"overiding params: {force_params} for {stack_name}")
-        parameters_dict.update(force_params)
+        parameters_dict |= force_params
     unknown_params = {key for key, value in parameters_dict.items() if value == "UNKNOWN"}
     parameters: list[ParameterTypeDef] = [
         {"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()
