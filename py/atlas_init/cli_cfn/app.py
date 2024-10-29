@@ -24,6 +24,7 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
     check_execution_role,
     decode_parameters,
     dump_resource_to_file,
+    dump_sample_file,
     infer_template_path,
     read_execution_role,
 )
@@ -103,10 +104,15 @@ def example(
     stack_name: str = typer.Argument(...),
     operation: str = typer.Argument(...),
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
-    stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
+    stack_timeout_s: int = typer.Option(3600, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
     force_deregister: bool = typer.Option(False, "-f", "--force-deregister", help="Force deregister CFN Type"),
-    export_example_to_inputs: bool = typer.Option(False),
+    export_example_to_inputs: bool = typer.Option(
+        False, "-o", "--export-example-to-inputs", help="Export example to inputs"
+    ),
+    export_example_to_samples: bool = typer.Option(
+        False, "-s", "--export-example-to-samples", help="Export example to samples"
+    ),
 ):
     resource_params_parsed = {}
     if resource_params:
@@ -122,7 +128,8 @@ def example(
     repo_path, resource_path, _ = find_paths(Repo.CFN)
     env_vars_generated = settings.load_env_vars_generated()
     cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
-    if not export_example_to_inputs:
+    is_export = export_example_to_inputs or export_example_to_samples
+    if not is_export:
         ensure_resource_type_activated(
             type_name,
             region,
@@ -131,7 +138,7 @@ def example(
             resource_path,
             cfn_execution_role,
         )
-    if operation == Operation.DELETE or delete_first:
+    if not is_export and (operation == Operation.DELETE or delete_first):
         delete_stack_aws(region, stack_name)
         if not delete_first:
             return
@@ -154,6 +161,11 @@ def example(
     if export_example_to_inputs:
         out_inputs = dump_resource_to_file(resource_path / "inputs", template_path, type_name, parameters)
         logger.info(f"dumped to {out_inputs} ✅")
+        return
+    if export_example_to_samples:
+        samples_dir = resource_path / "samples"
+        samples_path = dump_sample_file(samples_dir, template_path, type_name, parameters)
+        logger.info(f"dumped to {samples_path} ✅")
         return
     if operation == Operation.CREATE:
         create_stack(

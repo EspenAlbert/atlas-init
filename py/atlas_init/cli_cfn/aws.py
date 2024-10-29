@@ -374,7 +374,7 @@ def ensure_resource_type_activated(
             is_third_party = True
             logger.warning(f"found 3rd party extension for cfn type {type_name} active")
     if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
-        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name}"
+        outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name} {cfn_type_details.version}"
         logger.warning(outdated_warning)
         if force_deregister or confirm(
             f"{outdated_warning}, should deregister?",

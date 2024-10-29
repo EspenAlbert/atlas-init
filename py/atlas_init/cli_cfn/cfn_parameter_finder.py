@@ -9,8 +9,9 @@ from rich import prompt
 from zero_3rdparty.dict_nested import read_nested
 from zero_3rdparty.file_utils import clean_dir
 
+from atlas_init.cli_cfn.files import create_sample_file, default_log_group_name
 from atlas_init.cloud.aws import PascalAlias
-from atlas_init.repos.cfn import cfn_examples_dir, cfn_type_normalized
+from atlas_init.repos.cfn import CfnType, cfn_examples_dir, cfn_type_normalized
 from atlas_init.settings.path import DEFAULT_TF_PATH
 
 logger = logging.getLogger(__name__)
@@ -228,3 +229,20 @@ def dump_resource_to_file(
     dest_json = dump(properties, "pretty_json")
     dest_path.write_text(dest_json)
     return dest_path
+
+
+def dump_sample_file(
+    samples_dir: Path,
+    template_path: Path,
+    type_name: str,
+    parameters: list[ParameterTypeDef],
+):
+    cfn_template = parse_model(template_path, t=CfnTemplate)
+    samples_path = samples_dir / template_path.stem / "create.json"
+    create_sample_file(
+        samples_path,
+        default_log_group_name(CfnType.resource_name(type_name)),
+        cfn_template.get_resource_properties(type_name, parameters),
+        prev_resource_state={},
+    )
+    return samples_path

@@ -45,6 +45,10 @@ class CfnType(Entity):
         self.type_name = ensure_prefix(pascalize(self.type_name), self.MONGODB_ATLAS_CFN_TYPE_PREFIX)
         return self
 
+    @classmethod
+    def resource_name(cls, type_name: str) -> str:
+        return type_name.removeprefix(cls.MONGODB_ATLAS_CFN_TYPE_PREFIX).lower()
+
 
 class Operation(StrEnum):
     DELETE = "delete"
