@@ -309,6 +309,11 @@ class CfnTypeDetails(Event):
         return (utc_now() - self.last_updated).total_seconds()
 
 
+def publish_cfn_type(region: str):
+    client: CloudFormationClient = cloud_formation_client(region)
+    client.publish_type()
+
+
 def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = False) -> None | CfnTypeDetails:
     client: CloudFormationClient = cloud_formation_client(region)
     prefix = type_name
