@@ -3,44 +3,33 @@ import os
 
 import typer
 from model_lib import parse_payload
-from rich import prompt
 from zero_3rdparty.file_utils import clean_dir
 
-from atlas_init.cli_args import parse_key_values_any
 from atlas_init.cli_cfn.aws import (
     activate_resource_type,
-    create_stack,
     deactivate_third_party_type,
     deregister_cfn_resource_type,
-    ensure_resource_type_activated,
     get_last_cfn_type,
-    update_stack,
     wait_on_stack_ok,
 )
 from atlas_init.cli_cfn.aws import (
     delete_stack as delete_stack_aws,
 )
 from atlas_init.cli_cfn.cfn_parameter_finder import (
-    check_execution_role,
-    decode_parameters,
-    dump_resource_to_file,
-    infer_template_path,
     read_execution_role,
 )
+from atlas_init.cli_cfn.example import example_cmd
 from atlas_init.cli_cfn.files import create_sample_file, has_md_link, iterate_schemas
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
-    CfnOperation,
-    CfnType,
-    Operation,
-    infer_cfn_type_name,
     validate_type_name_regions,
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths, resource_root
 from atlas_init.settings.env_vars import active_suites, init_settings
 
 app = typer.Typer(no_args_is_help=True)
+app.command(name="example")(example_cmd)
 logger = logging.getLogger(__name__)
 
 
@@ -94,87 +83,6 @@ def dereg(
     else:
         logger.info("deregistering 3rd party")
         run_in_regions(deactivate, regions)
-
-
-@app.command()
-def example(
-    type_name: str = typer.Argument(default_factory=infer_cfn_type_name),
-    region: str = typer.Argument(...),
-    stack_name: str = typer.Argument(...),
-    operation: str = typer.Argument(...),
-    resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
-    stack_timeout_s: int = typer.Option(300, "-t", "--stack-timeout-s"),
-    delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
-    force_deregister: bool = typer.Option(False, "-f", "--force-deregister", help="Force deregister CFN Type"),
-    export_example_to_inputs: bool = typer.Option(False),
-):
-    resource_params_parsed = {}
-    if resource_params:
-        resource_params_parsed = parse_key_values_any(resource_params)
-        if resource_params_parsed:
-            logger.info(f"using resource params: {resource_params_parsed}")
-    logger.info(
-        f"about to update stack {stack_name} for {type_name} in {region} with {operation}, params: {resource_params_parsed}"
-    )
-    settings = init_settings()
-    type_name, region = CfnType.validate_type_region(type_name, region)  # type: ignore
-    CfnOperation(operaton=operation)  # type: ignore
-    repo_path, resource_path, _ = find_paths(Repo.CFN)
-    env_vars_generated = settings.load_env_vars_generated()
-    cfn_execution_role = check_execution_role(repo_path, env_vars_generated)
-    if not export_example_to_inputs:
-        ensure_resource_type_activated(
-            type_name,
-            region,
-            force_deregister,
-            settings.is_interactive,
-            resource_path,
-            cfn_execution_role,
-        )
-    if operation == Operation.DELETE or delete_first:
-        delete_stack_aws(region, stack_name)
-        if not delete_first:
-            return
-    template_path = infer_template_path(repo_path, type_name, stack_name)
-    template_path, parameters, not_found = decode_parameters(
-        exported_env_vars=env_vars_generated,
-        template_path=template_path,
-        stack_name=stack_name,
-        force_params=resource_params_parsed,
-        resource_params=resource_params_parsed,
-        type_name=type_name,
-    )
-    logger.info(f"parameters: {parameters}")
-    if not_found:
-        # TODO: support specifying these extra
-        logger.critical(f"need to fill out parameters manually: {not_found} for {type_name}")
-        raise typer.Exit(1)
-    if not prompt.Confirm("parameters 👆looks good?")():
-        raise typer.Exit(1)
-    if export_example_to_inputs:
-        out_inputs = dump_resource_to_file(resource_path / "inputs", template_path, type_name, parameters)
-        logger.info(f"dumped to {out_inputs} ✅")
-        return
-    if operation == Operation.CREATE:
-        create_stack(
-            stack_name,
-            template_str=template_path.read_text(),
-            region_name=region,
-            role_arn=cfn_execution_role,
-            parameters=parameters,
-            timeout_seconds=stack_timeout_s,
-        )
-    elif operation == Operation.UPDATE:
-        update_stack(
-            stack_name,
-            template_str=template_path.read_text(),
-            region_name=region,
-            parameters=parameters,
-            role_arn=cfn_execution_role,
-            timeout_seconds=stack_timeout_s,
-        )
-    else:
-        raise NotImplementedError
 
 
 @app.command()

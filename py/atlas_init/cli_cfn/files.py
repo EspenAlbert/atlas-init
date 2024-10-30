@@ -57,3 +57,7 @@ _md_patterns = [
 
 def has_md_link(text: str) -> bool:
     return any(bool(pattern.findall(text)) for pattern in _md_patterns)
+
+
+def default_log_group_name(resource_name: str) -> str:
+    return f"mongodb-atlas-{resource_name}-logs"
