@@ -1,0 +1,296 @@
+schema:
+    description: Create one Atlas Resource Policy for an org.
+    deprecationmessage: null
+    attributes:
+        - list: null
+          setnested: null
+          float64: null
+          string: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested:
+            default: null
+            nestedobject:
+                attributes:
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: Unique 24-hexadecimal character string that identifies a user.
+                      name: id
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: computed
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: Human-readable label that describes a user.
+                      name: name
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: computed
+          timeouts: null
+          description: The user that last updated the atlas resource policy.
+          name: created_by_user
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: Date and time in UTC when the atlas resource policy was created.
+          name: created_date
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+          name: id
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+        - list: null
+          setnested: null
+          float64: null
+          string: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested:
+            default: null
+            nestedobject:
+                attributes:
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: Unique 24-hexadecimal character string that identifies a user.
+                      name: id
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: computed
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: Human-readable label that describes a user.
+                      name: name
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: computed
+          timeouts: null
+          description: The user that last updated the atlas resource policy.
+          name: last_updated_by_user
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: Date and time in UTC when the atlas resource policy was last updated.
+          name: last_updated_date
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: Human-readable label that describes the atlas resource policy.
+          name: name
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: required
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.
+          name: org_id
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: required
+        - list: null
+          setnested: null
+          float64: null
+          string: null
+          bool: null
+          listnested:
+            default: null
+            nestedobject:
+                attributes:
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
+                      name: body
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: required
+                    - list: null
+                      setnested: null
+                      float64: null
+                      string:
+                        default: null
+                      bool: null
+                      listnested: null
+                      map: null
+                      mapnested: null
+                      number: null
+                      set: null
+                      int64: null
+                      singlenested: null
+                      timeouts: null
+                      description: Unique 24-hexadecimal character string that identifies the policy.
+                      name: id
+                      deprecationmessage: null
+                      sensitive: null
+                      computedoptionalrequired: computed
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: List of policies that make up the atlas resource policy.
+          name: policies
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: required
+        - list: null
+          setnested: null
+          float64: null
+          string:
+            default: null
+          bool: null
+          listnested: null
+          map: null
+          mapnested: null
+          number: null
+          set: null
+          int64: null
+          singlenested: null
+          timeouts: null
+          description: A string that identifies the version of the atlas resource policy.
+          name: version
+          deprecationmessage: null
+          sensitive: null
+          computedoptionalrequired: computed
+name: resource_policy
