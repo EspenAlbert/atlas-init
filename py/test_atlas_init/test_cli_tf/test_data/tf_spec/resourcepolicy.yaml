@@ -1,70 +1,70 @@
 schema:
   description: Create one Atlas Resource Policy for an org.
   attributes:
-  - singlenested:
-      nestedobject:
-        attributes:
-        - string: {}
-          description: Unique 24-hexadecimal character string that identifies a user.
-          name: id
-          computedoptionalrequired: computed
-        - string: {}
-          description: Human-readable label that describes a user.
-          name: name
-          computedoptionalrequired: computed
-    description: The user that last updated the atlas resource policy.
-    name: created_by_user
-    computedoptionalrequired: computed
-  - string: {}
-    description: Date and time in UTC when the atlas resource policy was created.
-    name: created_date
-    computedoptionalrequired: computed
-  - string: {}
-    description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
-    name: id
-    computedoptionalrequired: computed
-  - singlenested:
-      nestedobject:
-        attributes:
-        - string: {}
-          description: Unique 24-hexadecimal character string that identifies a user.
-          name: id
-          computedoptionalrequired: computed
-        - string: {}
-          description: Human-readable label that describes a user.
-          name: name
-          computedoptionalrequired: computed
-    description: The user that last updated the atlas resource policy.
-    name: last_updated_by_user
-    computedoptionalrequired: computed
-  - string: {}
-    description: Date and time in UTC when the atlas resource policy was last updated.
-    name: last_updated_date
-    computedoptionalrequired: computed
-  - string: {}
-    description: Human-readable label that describes the atlas resource policy.
-    name: name
-    computedoptionalrequired: required
-  - string: {}
-    description: Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.
-    name: org_id
-    computedoptionalrequired: required
-  - listnested:
-      nestedobject:
-        attributes:
-        - string: {}
-          description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
-          name: body
-          computedoptionalrequired: required
-        - string: {}
-          description: Unique 24-hexadecimal character string that identifies the policy.
-          name: id
-          computedoptionalrequired: computed
-    description: List of policies that make up the atlas resource policy.
-    name: policies
-    computedoptionalrequired: required
-  - string: {}
-    description: A string that identifies the version of the atlas resource policy.
-    name: version
-    computedoptionalrequired: computed
+    - singlenested:
+        nestedobject:
+          attributes:
+            - string:
+              description: Unique 24-hexadecimal character string that identifies a user.
+              name: id
+              computedoptionalrequired: computed
+            - string:
+              description: Human-readable label that describes a user.
+              name: name
+              computedoptionalrequired: computed
+      description: The user that last updated the atlas resource policy.
+      name: created_by_user
+      computedoptionalrequired: computed
+    - string:
+      description: Date and time in UTC when the atlas resource policy was created.
+      name: created_date
+      computedoptionalrequired: computed
+    - string:
+      description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
+      name: id
+      computedoptionalrequired: computed
+    - singlenested:
+        nestedobject:
+          attributes:
+            - string:
+              description: Unique 24-hexadecimal character string that identifies a user.
+              name: id
+              computedoptionalrequired: computed
+            - string:
+              description: Human-readable label that describes a user.
+              name: name
+              computedoptionalrequired: computed
+      description: The user that last updated the atlas resource policy.
+      name: last_updated_by_user
+      computedoptionalrequired: computed
+    - string:
+      description: Date and time in UTC when the atlas resource policy was last updated.
+      name: last_updated_date
+      computedoptionalrequired: computed
+    - string:
+      description: Human-readable label that describes the atlas resource policy.
+      name: name
+      computedoptionalrequired: required
+    - string:
+      description: Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.
+      name: org_id
+      computedoptionalrequired: required
+    - listnested:
+        nestedobject:
+          attributes:
+            - string:
+              description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
+              name: body
+              computedoptionalrequired: required
+            - string:
+              description: Unique 24-hexadecimal character string that identifies the policy.
+              name: id
+              computedoptionalrequired: computed
+      description: List of policies that make up the atlas resource policy.
+      name: policies
+      computedoptionalrequired: required
+    - string:
+      description: A string that identifies the version of the atlas resource policy.
+      name: version
+      computedoptionalrequired: computed
 name: resource_policy
