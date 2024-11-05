@@ -1,20 +1,11 @@
 import logging
-from pathlib import Path
-from model_lib import dump, parse_model, parse_payload
+from model_lib import dump, parse_payload
 import pytest
+from test_atlas_init.test_cli_tf.conftest import parse_resource_v3
 from zero_3rdparty.dict_nested import iter_nested_key_values, pop_nested
-from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
 
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture()
-def spec_resources(tf_test_data_dir) -> dict[str, Path]:
-    resources: dict[str, Path] = {}
-    for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml"):
-        resources[yml_path.stem] = yml_path
-    return resources
 
 
 def test_remove_nulls(tf_test_data_dir):
@@ -37,11 +28,12 @@ def test_remove_nulls(tf_test_data_dir):
         yaml_path.write_text(new_yaml)
 
 
-@pytest.mark.parametrize("resource_name", ["searchdeployment", "pushbasedlogexport"])
-def test_parse_resource_schema_v3(spec_resources, resource_name):
-    assert resource_name in spec_resources
-    spec_path = spec_resources[resource_name]
-    model = parse_model(spec_path, t=ResourceSchemaV3)
+@pytest.mark.parametrize(
+    "resource_name", ["searchdeployment", "pushbasedlogexport", "resourcepolicy"]
+)
+def test_parse_resource_schema_v3(spec_resources_v3_paths, resource_name):
+    assert resource_name in spec_resources_v3_paths
+    model = parse_resource_v3(spec_resources_v3_paths, resource_name)
     assert model
     assert model.schema
     assert model.schema.attributes

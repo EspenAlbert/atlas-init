@@ -1,16 +1,22 @@
 from __future__ import annotations
-from typing import List, Optional, Union
-from pydantic import BaseModel, ConfigDict, Field
+
 from enum import Enum, StrEnum
+from typing import TypeAlias
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 def lowercase_no_snake(name: str) -> str:
     return name.lower().replace("_", "")
 
+
 def default_config_dict() -> ConfigDict:
     return ConfigDict(populate_by_name=True, alias_generator=lowercase_no_snake)
 
+
 class BaseModelLocal(BaseModel):
     model_config = default_config_dict()
+
 
 class ElemType(int, Enum):
     BOOL = 0
@@ -20,11 +26,14 @@ class ElemType(int, Enum):
     STRING = 4
     UNKNOWN = 5
 
+
 class CustomDefault(BaseModelLocal):
     definition: str
-    imports: List[str]
+    imports: list[str]
+
 
 SnakeCaseString = str
+
 
 class ComputedOptionalRequired(StrEnum):
     computed = "computed"
@@ -33,51 +42,65 @@ class ComputedOptionalRequired(StrEnum):
     required = "required"
     unset = ""
 
+
 class BoolAttribute(BaseModelLocal):
-    default: Optional[bool] = None
+    default: bool | None = None
+
 
 class Float64Attribute(BaseModelLocal):
-    default: Optional[float] = None
+    default: float | None = None
+
 
 class Int64Attribute(BaseModelLocal):
-    default: Optional[int] = None
+    default: int | None = None
+
 
 class MapAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     element_type: ElemType
+
 
 class NestedAttributeObject(BaseModelLocal):
-    attributes: List[Attribute]
+    attributes: list[Attribute]
+
 
 class MapNestedAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     nested_object: NestedAttributeObject
+
 
 class NumberAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
+
 
 class SetAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     element_type: ElemType
+
 
 class SetNestedAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     nested_object: NestedAttributeObject
+
 
 class SingleNestedAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     nested_object: NestedAttributeObject
+
 
 class StringAttribute(BaseModelLocal):
-    default: Optional[str] = None
+    default: str | None = None
+
 
 class ListAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     element_type: ElemType
 
+
 class ListNestedAttribute(BaseModelLocal):
-    default: Optional[CustomDefault] = None
+    default: CustomDefault | None = None
     nested_object: NestedAttributeObject
+
 
 class Operation(int, Enum):
     CREATE = 0
@@ -85,47 +108,64 @@ class Operation(int, Enum):
     READ = 2
     DELETE = 3
 
+
 class TimeoutsAttribute(BaseModelLocal):
-    configurable_timeouts: List[Operation] = Field(default_factory=list, alias="configurabletimeouts")
+    configurable_timeouts: list[Operation] = Field(default_factory=list, alias="configurabletimeouts")
+
+
+NestedModelT: TypeAlias = SetNestedAttribute | ListNestedAttribute | MapNestedAttribute | SingleNestedAttribute
+
 
 class Attribute(BaseModelLocal):
-    list: Optional[ListAttribute] = None
-    float64: Optional[Float64Attribute] = None
-    string: Optional[StringAttribute] = None
-    bool: Optional[BoolAttribute] = None
-    map: Optional[MapAttribute] = None
-    number: Optional[NumberAttribute] = None
-    set: Optional[SetAttribute] = None
-    int64: Optional[Int64Attribute] = None
-    
-    set_nested: Optional[SetNestedAttribute] = None
-    list_nested: Optional[ListNestedAttribute] = None
-    map_nested: Optional[MapNestedAttribute] = None
-    single_nested: Optional[SingleNestedAttribute] = None
-    
-    timeouts: Optional[TimeoutsAttribute] = None
-    description: Optional[str] = None
+    list: ListAttribute | None = None
+    float64: Float64Attribute | None = None
+    string: StringAttribute | None = None
+    bool: BoolAttribute | None = None
+    map: MapAttribute | None = None
+    number: NumberAttribute | None = None
+    set: SetAttribute | None = None
+    int64: Int64Attribute | None = None
+
+    set_nested: SetNestedAttribute | None = None
+    list_nested: ListNestedAttribute | None = None
+    map_nested: MapNestedAttribute | None = None
+    single_nested: SingleNestedAttribute | None = None
+
+    timeouts: TimeoutsAttribute | None = None
+    description: str | None = None
     name: SnakeCaseString
-    deprecation_message: Optional[str] = None
-    sensitive: Optional[bool] = None
-    
-    computed_optional_required: Optional[ComputedOptionalRequired] = Field(default=None, alias="computedoptionalrequired")
+    deprecation_message: str | None = None
+    sensitive: bool = False
+
+    computed_optional_required: ComputedOptionalRequired | None = Field(default=None, alias="computedoptionalrequired")
 
     @property
     def is_nested(self) -> bool:
         return any([self.single_nested, self.list_nested, self.map_nested, self.set_nested])
 
     @property
+    def nested_model(self) -> NestedModelT:
+        assert self.is_nested
+        return self.single_nested or self.list_nested or self.map_nested or self.set_nested  # type: ignore
+
+    @property
     def is_attribute(self) -> bool:
         return self.computed_optional_required != ComputedOptionalRequired.unset
 
+    @property
+    def nested_attributes(self) -> list[Attribute]:
+        return self.nested_model.nested_object.attributes
+
+
 class Schema(BaseModelLocal):
-    description: Optional[str] = None
-    deprecation_message: Optional[str] = None
-    attributes: List[Attribute]
+    description: str | None = None
+    deprecation_message: str | None = None
+    attributes: list[Attribute]
+
 
 class Resource(BaseModelLocal):
     schema: Schema
     name: SnakeCaseString
+
 
 ResourceSchemaV3 = Resource

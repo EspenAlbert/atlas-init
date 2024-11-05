@@ -60,12 +60,12 @@ def trigger_app():
     }
     dump_dotenv(settings.env_vars_trigger, extra_env_vars)
     logger.info(f"done {settings.env_vars_trigger} created with trigger env-vars ✅")
-    
+
     generated_env_vars = settings.load_env_vars_generated()
     generated_env_vars.update(extra_env_vars)
     dump_dotenv(settings.env_vars_generated, generated_env_vars)
     logger.info(f"done {settings.env_vars_generated} updated  with trigger env-vars ✅")
-    
+
     dump_vscode_dotenv(settings.env_vars_generated, settings.env_vars_vs_code, **extra_env_vars)
     logger.info(f"done {settings.env_vars_vs_code} updated with trigger env-vars ✅")
 

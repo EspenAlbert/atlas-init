@@ -314,7 +314,9 @@ def publish_cfn_type(region: str):
     client.publish_type()
 
 
-def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = False, force_version: str = "") -> None | CfnTypeDetails:
+def get_last_cfn_type(
+    type_name: str, region: str, *, is_third_party: bool = False, force_version: str = ""
+) -> None | CfnTypeDetails:
     client: CloudFormationClient = cloud_formation_client(region)
     prefix = type_name
     logger.info(f"finding public 3rd party for '{prefix}' in {region}")
@@ -417,10 +419,14 @@ def ensure_resource_type_activated(
     # )
     # logger.info(f"activate response: {response}")
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
-    if not force_version and cfn_type_details is None and confirm(
-        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
-        is_interactive=is_interactive,
-        default=True,
+    if (
+        not force_version
+        and cfn_type_details is None
+        and confirm(
+            f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
+            is_interactive=is_interactive,
+            default=True,
+        )
     ):
         assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
         cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)

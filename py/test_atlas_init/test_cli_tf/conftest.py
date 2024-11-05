@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
 import pytest
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
@@ -39,6 +41,7 @@ def tf_test_data_dir() -> Path:
 def github_ci_logs_dir(tf_test_data_dir) -> Path:
     return tf_test_data_dir / "github_ci_logs"
 
+
 @pytest.fixture
 def schema_v2(tf_test_data_dir) -> SchemaV2:
     return parse_schema(tf_test_data_dir / "schema_v2.yaml")
@@ -58,3 +61,24 @@ def openapi_schema(api_spec_path) -> OpenapiSchema:
 def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
     add_api_spec_info(schema_v2, api_spec_path)
     return schema_v2
+
+
+@pytest.fixture()
+def sdk_repo_path() -> Path:
+    repo_path_str = os.environ.get("SDK_REPO_PATH", "")
+    if not repo_path_str:
+        pytest.skip("needs os.environ[SDK_REPO_PATH]")
+    return Path(repo_path_str)
+
+
+def parse_resource_v3(spec_resources: dict[str, Path], resource_name: str):
+    spec_path = spec_resources[resource_name]
+    return parse_model(spec_path, t=ResourceSchemaV3)
+
+
+@pytest.fixture()
+def spec_resources_v3_paths(tf_test_data_dir) -> dict[str, Path]:
+    resources: dict[str, Path] = {}
+    for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml"):
+        resources[yml_path.stem] = yml_path
+    return resources

@@ -1,17 +1,7 @@
-import os
-from pathlib import Path
 import pytest
 
 from atlas_init.cli_tf.schema_v2 import SDKModelExample, SchemaV2
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
-
-
-@pytest.fixture()
-def sdk_repo_path() -> Path:
-    repo_path_str = os.environ.get("SDK_REPO_PATH", "")
-    if not repo_path_str:
-        pytest.skip("needs os.environ[SDK_REPO_PATH]")
-    return Path(repo_path_str)
 
 
 def test_parse_sdk_model(sdk_repo_path):

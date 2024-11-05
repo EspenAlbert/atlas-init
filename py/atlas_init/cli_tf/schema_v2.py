@@ -356,12 +356,12 @@ def generate_go_resource_schema(schema: SchemaV2, resource: SchemaResource) -> s
             *object_type_lines,
         ]
     )
-    return go_fmt(resource, unformatted)
+    return go_fmt(resource.name, unformatted)
 
 
-def go_fmt(resource: SchemaResource, unformatted: str) -> str:
+def go_fmt(name: str, unformatted: str) -> str:
     with TemporaryDirectory() as temp_dir:
-        filename = f"{resource.name}.go"
+        filename = f"{name}.go"
         result_file = Path(temp_dir) / filename
         result_file.write_text(unformatted)
         if not run_binary_command_is_ok("go", f"fmt {filename}", cwd=Path(temp_dir), logger=logger):

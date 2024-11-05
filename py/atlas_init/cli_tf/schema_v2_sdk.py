@@ -149,7 +149,7 @@ def generate_model_go(schema: SchemaV2, resource: SchemaResource, sdk_model: SDK
             *func_lines,
         ]
     )
-    return go_fmt(resource, unformatted)
+    return go_fmt(resource.name, unformatted)
 
 
 def find_schema_attribute(schema: SchemaV2, parent: SchemaResource, sdk_attribute: SDKAttribute) -> SchemaAttribute:
