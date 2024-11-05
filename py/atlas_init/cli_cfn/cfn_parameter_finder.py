@@ -31,7 +31,9 @@ def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> st
     actions_found = parse_payload(DEFAULT_TF_PATH / "modules/cfn/resource_actions.yaml")
     if diff := set(actions_expected) ^ set(actions_found):
         raise ValueError(f"non-matching execution role actions: {sorted(diff)}")
-    services_found = parse_payload(DEFAULT_TF_PATH / "modules/cfn/assume_role_services.yaml")
+    services_found = parse_payload(
+        DEFAULT_TF_PATH / "modules/cfn/assume_role_services.yaml"
+    )
     services_expected = read_nested(
         execution_raw,
         "Resources.ExecutionRole.Properties.AssumeRolePolicyDocument.Statement.[0].Principal.Service",
@@ -48,7 +50,9 @@ class TemplatePathNotFoundError(Exception):
         self.examples_dir = examples_dir
 
 
-def infer_template_path(repo_path: Path, type_name: str, stack_name: str, example_name: str = "") -> Path:
+def infer_template_path(
+    repo_path: Path, type_name: str, stack_name: str, example_name: str = ""
+) -> Path:
     examples_dir = cfn_examples_dir(repo_path)
     template_paths: list[Path] = []
     type_setting = f'"Type": "{type_name}"'
@@ -62,16 +66,22 @@ def infer_template_path(repo_path: Path, type_name: str, stack_name: str, exampl
         raise TemplatePathNotFoundError(type_name, examples_dir)
     if len(template_paths) > 1:
         expected_folder = cfn_type_normalized(type_name)
-        if (expected_folders := [p for p in template_paths if p.parent.name == expected_folder]) and len(
-            expected_folders
-        ) == 1:
+        if (
+            expected_folders := [
+                p for p in template_paths if p.parent.name == expected_folder
+            ]
+        ) and len(expected_folders) == 1:
             logger.info(f"using template: {expected_folders[0]}")
             return expected_folders[0]
         choices = {p.stem: p for p in template_paths}
         if stack_path := choices.get(stack_name):
-            logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
+            logger.info(
+                f"using template @ {stack_path} based on stack name: {stack_name}"
+            )
             return stack_path
-        selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
+        selected_path = prompt.Prompt(
+            "Choose example template: ", choices=list(choices)
+        )()
         return choices[selected_path]
     return template_paths[0]
 
@@ -82,6 +92,14 @@ parameters_exported_env_vars = {
     "KeyId": "MONGODB_ATLAS_ORG_API_KEY_ID",
     "TeamId": "MONGODB_ATLAS_TEAM_ID",
     "ProjectId": "MONGODB_ATLAS_PROJECT_ID",
+    "AWSVpcId": "AWS_VPC_ID",
+    "MongoDBAtlasProjectId": "MONGODB_ATLAS_PROJECT_ID",
+    "AWSSubnetId": "AWS_SUBNET_ID",
+    "AWSRegion": "AWS_REGION",
+    "AppId": "MONGODB_REALM_APP_ID",
+    "FunctionId": "MONGODB_REALM_FUNCTION_ID",
+    "FunctionName": "MONGODB_REALM_FUNCTION_NAME",
+    "ServiceId": "MONGODB_REALM_SERVICE_ID",
 }
 
 STACK_NAME_PARAM = "$STACK_NAME_PARAM$"
@@ -98,6 +116,9 @@ type_names_defaults: dict[str, dict[str, str]] = {
     "resourcepolicy": {
         STACK_NAME_PARAM: "Name",
         "Policies": 'forbid (principal, action == cloud::Action::"project.edit",resource) when {context.project.ipAccessList.contains(ip("0.0.0.0/0"))};',
+    },
+    "trigger": {
+        STACK_NAME_PARAM: "TriggerName",
     },
 }
 
@@ -136,14 +157,16 @@ class CfnTemplate(Entity):
         resource = self.find_resource(type_name)
         resource.properties.update(resources)
 
-    def get_resource_properties(self, type_name: str, parameters: list[ParameterTypeDef]) -> dict:
+    def get_resource_properties(
+        self, type_name: str, parameters: list[ParameterTypeDef]
+    ) -> dict:
         resource = self.find_resource(type_name)
         properties = resource.properties
         for param in parameters:
             key = param.get("ParameterKey")
             assert key
             if key not in properties:
-                key = next(
+                key_found = next(
                     (
                         maybe_key
                         for maybe_key, value in properties.items()
@@ -151,8 +174,11 @@ class CfnTemplate(Entity):
                     ),
                     None,
                 )
-                err_msg = f"unable to find parameter {key} in resource {type_name}"
-                assert key, err_msg
+                err_msg = f"unable to find parameter {key} in resource {type_name}, can happen if there are template parameters not used for {type_name}"
+                if key_found is None:
+                    logger.warning(err_msg)
+                    continue
+                key = key_found
             param_value = param.get("ParameterValue", "")
             assert param_value
             properties[key] = param_value
@@ -184,7 +210,9 @@ def decode_parameters(
         template_str = dump(raw_dict, format=dump_format)
         template_path.write_text(template_str)
     parameters_dict: dict[str, Any] = {}
-    type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
+    type_defaults = type_names_defaults.get(
+        cfn_template.normalized_type_name(type_name), {}
+    )
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
         type_defaults[stack_name_param] = stack_name
 
@@ -211,9 +239,12 @@ def decode_parameters(
     if force_params:
         logger.warning(f"overiding params: {force_params} for {stack_name}")
         parameters_dict |= force_params
-    unknown_params = {key for key, value in parameters_dict.items() if value == "UNKNOWN"}
+    unknown_params = {
+        key for key, value in parameters_dict.items() if value == "UNKNOWN"
+    }
     parameters: list[ParameterTypeDef] = [
-        {"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()
+        {"ParameterKey": key, "ParameterValue": value}
+        for key, value in parameters_dict.items()
     ]
     return template_path, parameters, unknown_params
 

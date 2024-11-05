@@ -4,7 +4,7 @@ import requests
 from zero_3rdparty.id_creator import simple_id
 
 from atlas_init.settings.env_vars import init_settings
-from atlas_init.settings.path import dump_vscode_dotenv
+from atlas_init.settings.path import dump_dotenv, dump_vscode_dotenv
 from atlas_init.typer_app import app_command
 
 logger = logging.getLogger(__name__)
@@ -49,13 +49,23 @@ def trigger_app():
     func_response = create_function(auth_headers, project_id, app_id, suffix)
     logger.info(f"new function: {func_response}")
     func_id = func_response["_id"]
+    func_name = func_response["name"]
     logger.info(f"using func_id: {func_id}")
     extra_env_vars = {
         "MONGODB_REALM_APP_ID": app_id,
         "MONGODB_REALM_SERVICE_ID": service_id,
         "MONGODB_REALM_FUNCTION_ID": func_id,
+        "MONGODB_REALM_FUNCTION_NAME": func_name,
         "MONGODB_REALM_BASE_URL": "https://realm-dev.mongodb.com/",
     }
+    dump_dotenv(settings.env_vars_trigger, extra_env_vars)
+    logger.info(f"done {settings.env_vars_trigger} created with trigger env-vars ✅")
+    
+    generated_env_vars = settings.load_env_vars_generated()
+    generated_env_vars.update(extra_env_vars)
+    dump_dotenv(settings.env_vars_generated, generated_env_vars)
+    logger.info(f"done {settings.env_vars_generated} updated  with trigger env-vars ✅")
+    
     dump_vscode_dotenv(settings.env_vars_generated, settings.env_vars_vs_code, **extra_env_vars)
     logger.info(f"done {settings.env_vars_vs_code} updated with trigger env-vars ✅")
 
