@@ -82,6 +82,14 @@ parameters_exported_env_vars = {
     "KeyId": "MONGODB_ATLAS_ORG_API_KEY_ID",
     "TeamId": "MONGODB_ATLAS_TEAM_ID",
     "ProjectId": "MONGODB_ATLAS_PROJECT_ID",
+    "AWSVpcId": "AWS_VPC_ID",
+    "MongoDBAtlasProjectId": "MONGODB_ATLAS_PROJECT_ID",
+    "AWSSubnetId": "AWS_SUBNET_ID",
+    "AWSRegion": "AWS_REGION",
+    "AppId": "MONGODB_REALM_APP_ID",
+    "FunctionId": "MONGODB_REALM_FUNCTION_ID",
+    "FunctionName": "MONGODB_REALM_FUNCTION_NAME",
+    "ServiceId": "MONGODB_REALM_SERVICE_ID",
 }
 
 STACK_NAME_PARAM = "$STACK_NAME_PARAM$"
@@ -98,6 +106,9 @@ type_names_defaults: dict[str, dict[str, str]] = {
     "resourcepolicy": {
         STACK_NAME_PARAM: "Name",
         "Policies": 'forbid (principal, action == cloud::Action::"project.edit",resource) when {context.project.ipAccessList.contains(ip("0.0.0.0/0"))};',
+    },
+    "trigger": {
+        STACK_NAME_PARAM: "TriggerName",
     },
 }
 
@@ -143,7 +154,7 @@ class CfnTemplate(Entity):
             key = param.get("ParameterKey")
             assert key
             if key not in properties:
-                key = next(
+                key_found = next(
                     (
                         maybe_key
                         for maybe_key, value in properties.items()
@@ -151,8 +162,11 @@ class CfnTemplate(Entity):
                     ),
                     None,
                 )
-                err_msg = f"unable to find parameter {key} in resource {type_name}"
-                assert key, err_msg
+                err_msg = f"unable to find parameter {key} in resource {type_name}, can happen if there are template parameters not used for {type_name}"
+                if key_found is None:
+                    logger.warning(err_msg)
+                    continue
+                key = key_found
             param_value = param.get("ParameterValue", "")
             assert param_value
             properties[key] = param_value

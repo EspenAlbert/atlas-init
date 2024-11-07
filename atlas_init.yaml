@@ -37,6 +37,8 @@ test_suites:
     use_aws_vars: true
 - name: privatelink
   repo_go_packages:
+    cfn:
+    - cfn-private-endpoint-aws
     tf:
     - internal/service/privatelinkendpointservice
   vars:

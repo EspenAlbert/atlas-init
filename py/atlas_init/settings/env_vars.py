@@ -142,6 +142,10 @@ class AtlasInitPaths(BaseSettings):
         return self.profile_dir / ".env-vscode"
 
     @property
+    def env_vars_trigger(self) -> Path:
+        return self.profile_dir / ".env-trigger"
+
+    @property
     def tf_data_dir(self) -> Path:
         return self.profile_dir / ".terraform"
 

@@ -25,3 +25,4 @@ tf_bug_files
 github_ci_summary
 *.pyc
 demo/
+py/.env*

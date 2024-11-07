@@ -31,7 +31,18 @@ logger = logging.getLogger(__name__)
 class GoStdlibType(StrEnum):
     STRING = "string"
     STRING_POINTER = "*string"
+    TIME = "time.Time"
     TIME_POINTER = "*time.Time"
+    BOOL = "bool"
+    BOOL_POINTER = "*bool"
+    INT = "int"
+    INT_POINTER = "*int"
+    INT64 = "int64"
+    INT64_POINTER = "*int64"
+    FLOAT64 = "float64"
+    FLOAT64_POINTER = "*float64"
+    MAP_STRING = "map[string]string"
+    MAP_STRING_POINTER = "*map[string]string"
 
 
 _go_types = set(GoStdlibType)
@@ -45,6 +56,7 @@ class GoVarName(StrEnum):
     INPUT = "input"
     ITEM = "item"
     DIAGS = "diags"
+    CTX = "ctx"
 
 
 add_go_variable_names(list(GoVarName))
@@ -58,6 +70,13 @@ _sdk_to_tf_funcs = {
         "string",
     ): lambda sdk_ref: f"types.StringPointerValue(conversion.TimePtrToStringPtr({sdk_ref}))",
 }
+# sdk_name -> tf_name
+_sdk_attribute_aliases = {
+    "group_id": "project_id",
+    "mongo_dbemployee_access_grant": "mongo_db_employee_access_grant",
+    "mongo_dbmajor_version": "mongo_db_major_version",
+    "mongo_dbversion": "mongo_db_version",
+}
 
 
 @total_ordering
@@ -69,7 +88,10 @@ class SDKAttribute(Entity):
 
     @property
     def tf_name(self) -> str:
-        return decamelize(self.json_name)
+        default = decamelize(self.json_name)
+        if override := _sdk_attribute_aliases.get(default):
+            return override
+        return default
 
     @property
     def is_nested(self) -> bool:
@@ -119,6 +141,8 @@ json_attribute_line = re.compile(
     re.M,
 )
 
+_ignored_sdk_attributes = {"href", "links"}
+
 
 def parse_sdk_model(repo_path: Path, model_name: str) -> SDKModel:
     model_path = repo_path / "admin" / f"model_{decamelize(model_name)}.go"
@@ -127,6 +151,8 @@ def parse_sdk_model(repo_path: Path, model_name: str) -> SDKModel:
         struct_name = match.group("struct_name")
         go_type = match.group("go_type")
         json_name = match.group("json_name")
+        if json_name in _ignored_sdk_attributes:
+            continue
         sdk_attribute = model.attributes[struct_name] = SDKAttribute(
             go_type=go_type, json_name=json_name, struct_name=struct_name
         )
@@ -149,7 +175,7 @@ def generate_model_go(schema: SchemaV2, resource: SchemaResource, sdk_model: SDK
             *func_lines,
         ]
     )
-    return go_fmt(resource, unformatted)
+    return go_fmt(resource.name, unformatted)
 
 
 def find_schema_attribute(schema: SchemaV2, parent: SchemaResource, sdk_attribute: SDKAttribute) -> SchemaAttribute:

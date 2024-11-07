@@ -34,6 +34,7 @@ class CfnExampleInputs(CfnType):
     resource_params: dict[str, Any] | None = None
     stack_timeout_s: int
     delete_stack_first: bool
+    reg_version: str = ""
     force_deregister: bool
     force_keep: bool
     execution_role: str
@@ -75,6 +76,7 @@ def example_cmd(
     resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
     stack_timeout_s: int = typer.Option(3600, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
+    reg_version: str = typer.Option("", "--reg-version", help="Register a specific version"),
     force_deregister: bool = typer.Option(False, "--dereg", help="Force deregister CFN Type"),
     force_keep: bool = typer.Option(False, "--noreg", help="Force keep CFN Type (do not prompt)"),
     execution_role: str = typer.Option("", "--execution-role", help="Execution role to use, otherwise inferred"),
@@ -99,6 +101,7 @@ def example_cmd(
         resource_params=resource_params,  # type: ignore
         stack_timeout_s=stack_timeout_s,
         force_deregister=force_deregister,
+        reg_version=reg_version,
         force_keep=force_keep,
         execution_role=execution_role or check_execution_role(repo_path, env_vars_generated),
         export_example_to_inputs=export_example_to_inputs,
@@ -129,6 +132,7 @@ def example_handler(inputs: CfnExampleInputs, repo_path: Path, resource_path: Pa
             settings.is_interactive,
             resource_path,
             execution_role,
+            force_version=inputs.reg_version,
         )
     if not inputs.is_export and (operation == Operation.DELETE or delete_first):
         delete_stack_aws(region, stack_name, execution_role)

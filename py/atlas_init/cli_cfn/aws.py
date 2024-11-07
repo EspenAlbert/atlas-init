@@ -314,7 +314,9 @@ def publish_cfn_type(region: str):
     client.publish_type()
 
 
-def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = False) -> None | CfnTypeDetails:
+def get_last_cfn_type(
+    type_name: str, region: str, *, is_third_party: bool = False, force_version: str = ""
+) -> None | CfnTypeDetails:
     client: CloudFormationClient = cloud_formation_client(region)
     prefix = type_name
     logger.info(f"finding public 3rd party for '{prefix}' in {region}")
@@ -351,6 +353,12 @@ def get_last_cfn_type(type_name: str, region: str, *, is_third_party: bool = Fal
     if not type_details:
         logger.warning(f"no version for {type_name} in region {region}")
         return None
+    if force_version:
+        for detail in type_details:
+            if detail.version == force_version:
+                return detail
+        versions = [d.version for d in type_details]
+        raise ValueError(f"unable to find version {force_version} for {type_name}, got {versions}")
     return sorted(type_details)[-1]
 
 
@@ -371,6 +379,7 @@ def ensure_resource_type_activated(
     is_interactive: bool,
     resource_path: Path,
     cfn_execution_role: str,
+    force_version: str = "",
 ) -> None:
     cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     logger.info(f"found cfn_type_details {cfn_type_details} for {type_name}")
@@ -380,6 +389,11 @@ def ensure_resource_type_activated(
         if cfn_type_details:
             is_third_party = True
             logger.warning(f"found 3rd party extension for cfn type {type_name} active")
+    if force_version:
+        if cfn_type_details and cfn_type_details.version == force_version:
+            logger.info(f"version {force_version} already active")
+            return
+        force_deregister = True
     if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
         outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name} {cfn_type_details.version}"
         logger.warning(outdated_warning)
@@ -405,15 +419,19 @@ def ensure_resource_type_activated(
     # )
     # logger.info(f"activate response: {response}")
     submit_cmd = f"cfn submit --verbose --set-default --region {region} --role-arn {cfn_execution_role}"
-    if cfn_type_details is None and confirm(
-        f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
-        is_interactive=is_interactive,
-        default=True,
+    if (
+        not force_version
+        and cfn_type_details is None
+        and confirm(
+            f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
+            is_interactive=is_interactive,
+            default=True,
+        )
     ):
         assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
         cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     if cfn_type_details is None:
-        third_party = get_last_cfn_type(type_name, region, is_third_party=True)
+        third_party = get_last_cfn_type(type_name, region, is_third_party=True, force_version=force_version)
         assert third_party, f"unable to find 3rd party type for {type_name}"
         last_updated = third_party.last_updated
         if confirm(
