@@ -276,7 +276,7 @@ def indent(level: int, line: str) -> str:
     return INDENT * level + line
 
 
-admin_version = os.getenv("ATLAS_SDK_VERSION", "v20240805004")
+admin_version = os.getenv("ATLAS_SDK_VERSION", "v20241023001")
 
 _import_urls = [
     "context",
@@ -287,6 +287,7 @@ _import_urls = [
     "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier",
     "github.com/hashicorp/terraform-plugin-framework/schema/validator",
     "github.com/hashicorp/terraform-plugin-framework/types",
+    "github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/conversion",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/schemafunc",
     "github.com/mongodb/terraform-provider-mongodbatlas/internal/common/validate",
@@ -306,6 +307,7 @@ def add_go_variable_names(names: Iterable[str]) -> None:
 _variable_suffixes = (
     "Model",
     "ObjectType",
+    "ObjType",
 )
 
 

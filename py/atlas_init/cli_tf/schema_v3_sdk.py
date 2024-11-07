@@ -40,16 +40,18 @@ def generate_model_go(resource: Resource, sdk_model: SDKModel) -> str:
 
 def sdk_to_tf_func(resource: Resource, sdk_model: SDKModel) -> list[str]:
     lines = []
+    timeouts_signature = ", timeout timeouts.Value" if resource.use_timeout else ""
     lines.append(
-        f"func New{TF_MODEL_NAME}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_model.name}) (*{TF_MODEL_NAME}, diag.Diagnostics) {{"
+        f"func New{TF_MODEL_NAME}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_model.name}{timeouts_signature}) (*{TF_MODEL_NAME}, diag.Diagnostics) {{"
     )
     nested_attributes, call_lines = call_nested_functions(resource, sdk_model.list_nested_attributes())
     lines.extend(call_lines)
-    # TODO: add timeouts attribute if it exists
+    timeouts_set = ["    Timeouts: timeout,"] if resource.use_timeout else []
     lines.extend(
         [
             f"  return &{TF_MODEL_NAME}{{",
             *tf_struct_create(resource, sdk_model),
+            *timeouts_set,
             "  }, nil",  # close return
             "}\n",  # close function
         ]
@@ -90,7 +92,11 @@ class SDKAndSchemaAttribute(NamedTuple):
 
 
 def call_nested_functions(
-    root: Resource | Attribute, nested_attributes: list[SDKAttribute]
+    root: Resource | Attribute,
+    nested_attributes: list[SDKAttribute],
+    *,
+    return_on_error: bool = True,
+    sdk_var_name: GoVarName = GoVarName.INPUT,
 ) -> tuple[list[SDKAndSchemaAttribute], list[str]]:
     lines = []
     schema_nested_attributes = schema_attributes(root)
@@ -99,10 +105,10 @@ def call_nested_functions(
         schema_attribute = find_attribute(schema_nested_attributes, sdk_attribute.tf_name, root.name)
         var_name = as_var_name(sdk_attribute)
         lines.append(
-            f"{var_name} := New{sdk_attribute.struct_name}(ctx, input.{sdk_attribute.struct_name}, {GoVarName.DIAGS})"
+            f"{var_name} := New{_name_custom_object_type(schema_attribute.name)}(ctx, {sdk_var_name}.{sdk_attribute.struct_name}, {GoVarName.DIAGS})"
         )
         nested_generations.append(SDKAndSchemaAttribute(sdk_attribute, schema_attribute))
-    if lines:
+    if lines and return_on_error:
         lines.insert(0, "diags := &diag.Diagnostics{}")
         lines.extend(
             [
@@ -115,19 +121,62 @@ def call_nested_functions(
     return nested_generations, lines
 
 
+_sdk_to_tf_funcs = {
+    ("*string", "string"): lambda sdk_ref: f"types.StringPointerValue({sdk_ref})",
+    ("string", "string"): lambda sdk_ref: f"types.StringValue({sdk_ref})",
+    ("*int64", "int64"): lambda sdk_ref: f"types.Int64PointerValue({sdk_ref})",
+    ("int64", "int64"): lambda sdk_ref: f"types.Int64Value({sdk_ref})",
+    ("*int", "int64"): lambda sdk_ref: f"types.Int64PointerValue(conversion.IntPtrToInt64Ptr({sdk_ref}))",
+    ("*float64", "float64"): lambda sdk_ref: f"types.Float64PointerValue({sdk_ref})",
+    ("float64", "float64"): lambda sdk_ref: f"types.Float64Value({sdk_ref})",
+    ("*bool", "bool"): lambda sdk_ref: f"types.BoolPointerValue({sdk_ref})",
+    ("bool", "bool"): lambda sdk_ref: f"types.BoolValue({sdk_ref})",
+    (
+        "*map[string]string",
+        "map[string]string",
+    ): lambda sdk_ref: f"conversion.ToTFMapOfString({GoVarName.CTX}, {GoVarName.DIAGS}, {sdk_ref})",
+    (
+        "map[string]string",
+        "map[string]string",
+    ): lambda sdk_ref: f"conversion.ToTFMapOfString({GoVarName.CTX}, {GoVarName.DIAGS}, &{sdk_ref})",
+    (
+        "*time.Time",
+        "string",
+    ): lambda sdk_ref: f"types.StringPointerValue(conversion.TimePtrToStringPtr({sdk_ref}))",
+    (
+        "time.Time",
+        "string",
+    ): lambda sdk_ref: f"types.StringValue(conversion.TimeToString({sdk_ref}))",
+}
+
+
+def sdk_to_tf_attribute_value(
+    schema_attribute: Attribute,
+    sdk_attribute: SDKAttribute,
+    variable_name: GoVarName = GoVarName.INPUT,
+) -> str:
+    key = (sdk_attribute.go_type, schema_attribute.go_type)
+    if key in _sdk_to_tf_funcs:
+        return _sdk_to_tf_funcs[key](f"{variable_name}.{sdk_attribute.struct_name}")
+    raise ValueError(f"Could not find conversion function for {key}")
+
+
+# sdk_to_tf_attribute_value(schema_attribute, sdk_attribute, sdk_var_name)
 def tf_struct_create(
     root: Resource | Attribute,
     sdk_model: SDKModel,
-    sdk_var_name: str = GoVarName.INPUT,
+    sdk_var_name: GoVarName = GoVarName.INPUT,
 ) -> list[str]:
     lines = []
     for attr in schema_attributes(root):
         if attr.is_nested:
             local_var = sdk_model.lookup_tf_name(attr.name)
-            lines.append(f"{camelize(attr.name)}: {as_var_name(local_var)},")
+            lines.append(f"{_name_struct_attribute(attr.name)}: {as_var_name(local_var)},")
         elif attr.is_attribute:
             local_var = sdk_model.lookup_tf_name(attr.name)
-            lines.append(f"{camelize(attr.name)}: {sdk_var_name}.{local_var.struct_name},")
+            lines.append(
+                f"{_name_struct_attribute(attr.name)}: {sdk_to_tf_attribute_value(attr, local_var, sdk_var_name)},"
+            )
     return lines
 
 
@@ -153,12 +202,27 @@ def process_nested_attributes(
     return lines
 
 
-def _custom_object_type_name(name: str) -> str:
-    return f"{pascalize(name)}ObjectType"
+_name_attribute_overrides = {}
 
 
-def _schema_struct_name(name: str) -> str:
-    return f"TF{pascalize(name)}"
+def set_name_attribute_overrides(overrides: dict[str, str]):
+    global _name_attribute_overrides  # noqa: PLW0603 `Using the global statement to update `_name_attribute_overrides` is discouraged`
+    _name_attribute_overrides = overrides
+
+
+def _name_struct_attribute(name: str) -> str:
+    default = pascalize(name)
+    if override := _name_attribute_overrides.get(default):
+        return override
+    return default
+
+
+def _name_custom_object_type(name: str) -> str:
+    return f"{pascalize(name)}ObjType"
+
+
+def _name_schema_struct(name: str) -> str:
+    return f"TF{pascalize(name)}Model"
 
 
 @singledispatch
@@ -174,7 +238,7 @@ def _convert_single_nested_attribute(
     schema_attribute: Attribute,
     sdk_attribute: SDKAttribute,
 ) -> tuple[list[SDKAndSchemaAttribute], list[str]]:
-    object_type_name = _custom_object_type_name(schema_attribute.name)
+    object_type_name = _name_custom_object_type(schema_attribute.name)
     lines: list[str] = [
         f"func New{object_type_name}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_attribute.struct_type_name}, diags *diag.Diagnostics) types.Object {{",
         f"  if {GoVarName.INPUT} == nil {{",
@@ -182,9 +246,11 @@ def _convert_single_nested_attribute(
         "  }",
     ]
 
-    nested_attributes, call_lines = call_nested_functions(schema_attribute, sdk_attribute.list_nested_attributes())
+    nested_attributes, call_lines = call_nested_functions(
+        schema_attribute, sdk_attribute.list_nested_attributes(), return_on_error=False
+    )
     lines.extend(call_lines)
-    struct_name = _schema_struct_name(schema_attribute.name)
+    struct_name = _name_schema_struct(schema_attribute.name)
     lines.extend(
         [
             f"  tfModel := {struct_name}{{",
@@ -205,21 +271,23 @@ def _convert_list_nested_attriute(
     schema_attribute: Attribute,
     sdk_attribute: SDKAttribute,
 ) -> tuple[list[SDKAndSchemaAttribute], list[str]]:
-    object_type_name = _custom_object_type_name(schema_attribute.name)
+    object_type_name = _name_custom_object_type(schema_attribute.name)
     lines: list[str] = [
-        f"func New{object_type_name}(ctx context.Context, {GoVarName.INPUT} *admin.{sdk_attribute.struct_type_name}, diags *diag.Diagnostics) types.List {{",
+        f"func New{object_type_name}(ctx context.Context, {GoVarName.INPUT} *[]admin.{sdk_attribute.struct_type_name}, diags *diag.Diagnostics) types.List {{",
         f"  if {GoVarName.INPUT} == nil {{",
-        f"    return types.ObjectNull({object_type_name}.AttrTypes)",
+        f"    return types.ListNull({object_type_name})",
         "  }",
     ]
-    struct_name = _schema_struct_name(schema_attribute.name)
+    struct_name = _name_schema_struct(schema_attribute.name)
     lines.extend(
         [
             f"  tfModels := make([]{struct_name}, len(*{GoVarName.INPUT}))",
             f"  for i, item := range *{GoVarName.INPUT} {{",
         ]
     )
-    nested_attributes, call_lines = call_nested_functions(schema_attribute, sdk_attribute.list_nested_attributes())
+    nested_attributes, call_lines = call_nested_functions(
+        schema_attribute, sdk_attribute.list_nested_attributes(), return_on_error=False, sdk_var_name=GoVarName.ITEM
+    )
     lines.extend([f"  {line}" for line in call_lines])
     lines.extend(
         [

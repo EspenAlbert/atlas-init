@@ -1,0 +1,69 @@
+schema:
+  description: 'Updates the advanced configuration details for one cluster in the specified project. Clusters contain a group of hosts that maintain the same data set. Advanced configuration details include the read/write concern, index and oplog limits, and other database settings. To use this resource, the requesting API Key must have the Project Cluster Manager role. This feature isn''t available for `M0` free clusters, `M2` and `M5` shared-tier clusters, or serverless clusters. Deprecated versions: v2-{2023-01-01}'
+  attributes:
+  - int64:
+      default: -1
+    description: The minimum pre- and post-image retention time in seconds.
+    name: change_stream_options_pre_and_post_images_expire_after_seconds
+    computedoptionalrequired: computed_optional
+  - int64: {}
+    description: Number of threads on the source shard and the receiving shard for chunk migration. The number of threads should not exceed the half the total number of CPU cores in the sharded cluster.
+    name: chunk_migration_concurrency
+    computedoptionalrequired: optional
+  # - string: {}
+  #   description: Human-readable label that identifies the cluster.
+  #   name: cluster_name
+  #   computedoptionalrequired: required
+  - int64: {}
+    description: Default time limit in milliseconds for individual read operations to complete.
+    name: default_max_time_ms
+    computedoptionalrequired: optional
+  - string: {}
+    description: Default level of acknowledgment requested from MongoDB for write operations when none is specified by the driver.
+    name: default_write_concern
+    computedoptionalrequired: optional
+  # - string: {}
+  #   description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+  #     **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+  #   name: project_id
+  #   computedoptionalrequired: required
+  - bool: {}
+    description: Flag that indicates whether the cluster allows execution of operations that perform server-side executions of JavaScript. When using 8.0+, we recommend disabling server-side JavaScript and using operators of aggregation pipeline as more performant alternative.
+    name: javascript_enabled
+    computedoptionalrequired: optional
+  - string: {}
+    description: Minimum Transport Layer Security (TLS) version that the cluster accepts for incoming connections. Clusters using TLS 1.0 or 1.1 should consider setting TLS 1.2 as the minimum TLS protocol version.
+    name: minimum_enabled_tls_protocol
+    computedoptionalrequired: optional
+  - bool: {}
+    description: Flag that indicates whether the cluster disables executing any query that requires a collection scan to return results.
+    name: no_table_scan
+    computedoptionalrequired: optional
+  - float64: {}
+    description: Minimum retention window for cluster's oplog expressed in hours. A value of null indicates that the cluster uses the default minimum oplog window that MongoDB Cloud calculates.
+    name: oplog_min_retention_hours
+    computedoptionalrequired: optional
+  - int64: {}
+    description: Storage limit of cluster's oplog expressed in megabytes. A value of null indicates that the cluster uses the default oplog size that MongoDB Cloud calculates.
+    name: oplog_size_mb
+    computedoptionalrequired: optional
+  - int64: {}
+    description: May be set to 1 (disabled) or 3 (enabled). When set to 3, Atlas will include redacted and anonymized $queryStats output in MongoDB logs. $queryStats output does not contain literals or field values. Enabling this setting might impact the performance of your cluster.
+    name: query_stats_log_verbosity
+    computedoptionalrequired: optional
+  # - int64:
+  #     default: 0
+  #   description: Interval in seconds at which the mongosqld process re-samples data to create its relational schema.
+  #   name: sample_refresh_interval_biconnector
+  #   computedoptionalrequired: computed_optional
+  # - int64: {}
+  #   description: Number of documents per database to sample when gathering schema information.
+  #   name: sample_size_biconnector
+  #   computedoptionalrequired: optional
+  - int64: {}
+    description: Lifetime, in seconds, of multi-document transactions. Atlas considers the transactions that exceed this limit as expired and so aborts them through a periodic cleanup process.
+    name: transaction_lifetime_limit_seconds
+    computedoptionalrequired: optional
+name: advanced_cluster_process_args

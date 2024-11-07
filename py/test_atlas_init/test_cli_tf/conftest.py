@@ -71,9 +71,13 @@ def sdk_repo_path() -> Path:
     return Path(repo_path_str)
 
 
-def parse_resource_v3(spec_resources: dict[str, Path], resource_name: str):
-    spec_path = spec_resources[resource_name]
-    return parse_model(spec_path, t=ResourceSchemaV3)
+@pytest.fixture()
+def parse_resource_v3(spec_resources_v3_paths):
+    def parse_resource(resource_name: str) -> ResourceSchemaV3:
+        assert resource_name in spec_resources_v3_paths
+        spec_path = spec_resources_v3_paths[resource_name]
+        return parse_model(spec_path, t=ResourceSchemaV3)
+    return parse_resource
 
 
 @pytest.fixture()
