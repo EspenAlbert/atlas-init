@@ -82,7 +82,8 @@ def parse_resource_v3(spec_resources_v3_paths):
 
 @pytest.fixture()
 def spec_resources_v3_paths(tf_test_data_dir) -> dict[str, Path]:
-    resources: dict[str, Path] = {}
-    for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml"):
-        resources[yml_path.stem] = yml_path
+    resources: dict[str, Path] = {
+        yml_path.stem: yml_path
+        for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml")
+    }
     return resources
