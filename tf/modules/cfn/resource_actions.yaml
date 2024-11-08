@@ -2,6 +2,7 @@
 - "secretsmanager:PutSecretValue"
 - "ec2:CreateVpcEndpoint"
 - "ec2:DeleteVpcEndpoints"
+- "ec2:DescribeVpcEndpoints"
 - "cloudformation:CreateResource"
 - "cloudformation:DeleteResource"
 - "cloudformation:GetResource"
