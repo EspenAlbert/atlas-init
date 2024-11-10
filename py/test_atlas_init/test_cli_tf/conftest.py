@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
+from typing import Callable
 from unittest.mock import MagicMock
 
-from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
 import pytest
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
@@ -10,6 +10,7 @@ from model_lib import parse_model
 
 from atlas_init.cli_tf.schema_v2 import SchemaV2, parse_schema
 from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, add_api_spec_info
+from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
 
 
 def as_step(name: str) -> WorkflowStep:
@@ -37,7 +38,7 @@ def tf_test_data_dir() -> Path:
     return Path(__file__).parent / "test_data"
 
 
-@pytest.fixture()
+@pytest.fixture
 def github_ci_logs_dir(tf_test_data_dir) -> Path:
     return tf_test_data_dir / "github_ci_logs"
 
@@ -63,7 +64,7 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
     return schema_v2
 
 
-@pytest.fixture()
+@pytest.fixture
 def sdk_repo_path() -> Path:
     repo_path_str = os.environ.get("SDK_REPO_PATH", "")
     if not repo_path_str:
@@ -71,7 +72,7 @@ def sdk_repo_path() -> Path:
     return Path(repo_path_str)
 
 
-@pytest.fixture()
+@pytest.fixture
 def parse_resource_v3(spec_resources_v3_paths):
     def parse_resource(resource_name: str) -> ResourceSchemaV3:
         assert resource_name in spec_resources_v3_paths
@@ -80,10 +81,20 @@ def parse_resource_v3(spec_resources_v3_paths):
     return parse_resource
 
 
-@pytest.fixture()
+@pytest.fixture
 def spec_resources_v3_paths(tf_test_data_dir) -> dict[str, Path]:
     resources: dict[str, Path] = {
         yml_path.stem: yml_path
         for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml")
     }
     return resources
+
+
+@pytest.fixture
+def go_file_path() -> Callable[[], Path]:
+    def _go_file_path() -> Path:
+        path_str = os.environ.get("GO_FILE_PATH", "")
+        if path_str == "":
+            pytest.skip("needs os.environ[GO_FILE_PATH]")
+        return Path(path_str)
+    return _go_file_path

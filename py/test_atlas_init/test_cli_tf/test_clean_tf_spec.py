@@ -1,9 +1,9 @@
 import logging
 from pathlib import Path
-from model_lib import dump, parse_payload
-import pytest
-from zero_3rdparty.dict_nested import iter_nested_key_values, pop_nested
 
+import pytest
+from model_lib import dump, parse_payload
+from zero_3rdparty.dict_nested import iter_nested_key_values, pop_nested
 
 logger = logging.getLogger(__name__)
 

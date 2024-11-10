@@ -1,6 +1,7 @@
+import pytest
+
 from atlas_init.cli_tf.schema_v2_sdk import parse_sdk_model
 from atlas_init.cli_tf.schema_v3_sdk import generate_model_go, set_name_attribute_overrides
-import pytest
 
 adv_cluster_attr_overrides = {
     "ProjectId": "ProjectID",
