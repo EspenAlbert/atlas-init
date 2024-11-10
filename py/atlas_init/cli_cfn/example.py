@@ -75,7 +75,9 @@ def example_cmd(
     ),
     operation: str = typer.Argument(...),
     example_name: str = typer.Option("", "-e", "--example-name", help="example filestem"),
-    resource_params: list[str] = typer.Option(..., "-r", "--resource-param", default_factory=list, help="key=value, can be set many times"),
+    resource_params: list[str] = typer.Option(
+        ..., "-r", "--resource-param", default_factory=list, help="key=value, can be set many times"
+    ),
     stack_timeout_s: int = typer.Option(3600, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
     reg_version: str = typer.Option("", "--reg-version", help="Register a specific version"),

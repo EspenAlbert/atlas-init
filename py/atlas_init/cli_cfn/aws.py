@@ -262,8 +262,8 @@ def wait_on_stack_ok(
     try:
         return _wait_on_stack_ok()
     except StackError as e:
-        logger.error(f"stack error {stack_name} {e.status} {e.status_reason}\n{e.reasons}")
-        raise typer.Exit(1)
+        logger.warning(f"stack error {stack_name} {e.status} {e.status_reason}\n{e.reasons}")
+        raise typer.Exit(1) from None
 
 
 def print_version_regions(type_name: str) -> None:
