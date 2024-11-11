@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+import logging
 import re
 from collections import defaultdict
 from contextlib import suppress
 from typing import NamedTuple
 
 from model_lib import Entity
-from pydantic import Field, ValidationError, model_validator
+from pydantic import Field, ValidationError
 
 from atlas_init.cli_tf.schema_table_models import (
+    AttrRefLine,
     FuncCallLine,
     TFSchemaAttribute,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class MaybeSchemaAttributeLine(Entity):
@@ -26,20 +30,43 @@ class MaybeSchemaAttributeLine(Entity):
     def is_function_call(self) -> bool:
         return self.rest.endswith("),")
 
-    def as_func_call_line(self, line_nr: int) -> FuncCallLine:
-        assert self.is_function_call, f"{self} is not a function call"
+    def attr_ref(self, go_code: str, code_lines: list[str], ref_line_nr: int) -> TFSchemaAttribute | None:
+        attr_ref = self.rest.lstrip("&").rstrip(",").strip()
+        if not attr_ref.isidentifier():
+            return None
+        if attr_ref == "RSTagsSchema":
+            pass
+        try:
+            _instantiate_regex = re.compile(rf"{attr_ref}\s=\sschema\.\w+\{{$", re.M)
+        except re.error:
+            return None
+        instantiate_match = _instantiate_regex.search(go_code)
+        if not instantiate_match:
+            return None
+        line_start_nr = go_code[: instantiate_match.start()].count("\n") + 1
+        line_start = code_lines[line_start_nr]
+        attribute = parse_attribute_lines(code_lines, line_start_nr, line_start, self, is_attr_ref=True)
+        attribute.attr_ref_line = AttrRefLine(line_nr=ref_line_nr, attr_ref=attr_ref)
+        return attribute
+
+    def func_call_line(self, lines: list[str], go_code: str, call_line_nr: int) -> FuncCallLine | None:
+        if not self.is_function_call:
+            return None
+        func_def_line = self._function_line(go_code)
+        if not func_def_line:
+            return None
         func_name, args = self.rest.split("(", maxsplit=1)
+        func_start, func_end = self._func_lines(lines, func_def_line)
         return FuncCallLine(
-            line_nr=line_nr,
+            call_line_nr=call_line_nr,
             func_name=func_name.strip(),
             args=args.removesuffix("),").strip(),
+            func_line_start=func_start,
+            func_line_end=func_end,
         )
 
-    def func_lines(self, go_code: str) -> tuple[int, int]:
-        start_line = self._function_line(go_code)
-        assert start_line, f"Function {self.rest} not found in go_code"
-        lines = ["", *go_code.splitlines()]  # support line_nr indexing
-        start_line = lines.index(start_line)
+    def _func_lines(self, lines: list[str], func_def_line: str) -> tuple[int, int]:
+        start_line = lines.index(func_def_line)
         for line_nr, line in enumerate(lines[start_line + 1 :], start=start_line + 1):
             if line.rstrip() == "}":
                 return start_line, line_nr
@@ -47,7 +74,7 @@ class MaybeSchemaAttributeLine(Entity):
 
     def _function_line(self, go_code: str) -> str:
         function_name = self.rest.split("(")[0].strip()
-        pattern = re.compile(rf"func {function_name}\(.*\) schema\.\w+ \{{$", re.M)
+        pattern = re.compile(rf"func {function_name}\(.*\) \*?schema\.\w+ \{{$", re.M)
         match = pattern.search(go_code)
         if not match:
             return ""
@@ -56,21 +83,18 @@ class MaybeSchemaAttributeLine(Entity):
     def is_schema_func(self, go_code: str) -> bool:
         return bool(self._function_line(go_code))
 
-    @model_validator(mode="after")
-    def ensure_is_schema_attribute(self):
-        if self.is_schema_attribute:
-            return self
-        if self.is_function_call:
-            return self
-        raise ValueError(f"not a schema attribute: {self.rest}")
-
 
 def parse_attribute_lines(
-    lines: list[str], line_nr: int, line: str, attr_line: MaybeSchemaAttributeLine
+    lines: list[str],
+    line_nr: int,
+    line: str,
+    attr_line: MaybeSchemaAttributeLine,
+    *,
+    is_attr_ref: bool = False,
 ) -> TFSchemaAttribute:
     indents = len(line) - len(line.lstrip())
     indent = indents * "\t"
-    end_line = f"{indent}}},"
+    end_line = f"{indent}}}" if is_attr_ref else f"{indent}}},"
     for extra_lines, next_line in enumerate(lines[line_nr + 1 :], start=1):
         if next_line == end_line:
             return TFSchemaAttribute(
@@ -98,21 +122,25 @@ def find_attributes(go_code: str) -> list[TFSchemaAttribute]:
                     name=match.group("name"),
                     rest=match.group("rest"),
                 )
-                # TODO: add support for attribute ref
-                if maybe_attribute.is_function_call:
-                    if not maybe_attribute.is_schema_func(go_code):
-                        continue
-                    line_start, line_end = maybe_attribute.func_lines(go_code)
+                if func_call := maybe_attribute.func_call_line(lines, go_code, line_nr):
+                    line_start = func_call.func_line_start
+                    line_end = func_call.func_line_end
                     attribute = TFSchemaAttribute(
                         name=maybe_attribute.name,
                         lines=lines[line_start:line_end],
                         line_start=line_start,
                         line_end=line_end,
-                        func_call_line=maybe_attribute.as_func_call_line(line_nr),
+                        func_call=func_call,
                         indent="\t",
                     )
+                elif attribute := maybe_attribute.attr_ref(go_code, lines, line_nr):
+                    logger.info(f"attr_ref: {attribute}")
                 else:
-                    attribute = parse_attribute_lines(lines, line_nr, line, maybe_attribute)
+                    try:
+                        attribute = parse_attribute_lines(lines, line_nr, line, maybe_attribute)
+                    except ValueError as e:
+                        logger.warning(e)
+                        continue
                     if not attribute.type:
                         continue
                 attributes.append(attribute)
@@ -130,13 +158,13 @@ class StartEnd(NamedTuple):
         if self.name == other.name:
             return False
         if func_call := self.func_call_line:
-            func_call_line = func_call.line_nr
+            func_call_line = func_call.call_line_nr
             return other.start < func_call_line < other.end
         return self.start > other.start and self.end < other.end
 
 
 def set_attribute_paths(attributes: list[TFSchemaAttribute]) -> list[TFSchemaAttribute]:
-    start_stops = [StartEnd(a.line_start, a.line_end, a.name, a.func_call_line) for a in attributes]
+    start_stops = [StartEnd(a.line_start, a.line_end, a.name, a.func_call) for a in attributes]
     overlaps = [
         (attribute, [other for other in start_stops if start_stop.has_parent(other)])
         for attribute, start_stop in zip(attributes, start_stops, strict=False)
@@ -176,9 +204,7 @@ class GoSchemaFunc(Entity):
         for a in self.call_attributes:
             path = ".".join(a.parent_attribute_names())
             paths.add(path)
-        if len(paths) > 1:
-            return f"({'|'.join(paths)})"
-        return paths.pop()
+        return f"({'|'.join(paths)})" if len(paths) > 1 else paths.pop()
 
     def contains_attribute(self, attribute: TFSchemaAttribute) -> bool:
         names = self.attribute_names
@@ -189,20 +215,19 @@ def find_schema_functions(attributes: list[TFSchemaAttribute]) -> list[GoSchemaF
     function_call_attributes = defaultdict(list)
     for a in attributes:
         if a.is_function_call:
-            call = a.func_call_line
+            call = a.func_call
             assert call
             function_call_attributes[call.func_name].append(a)
     root_function = GoSchemaFunc(name="", line_start=0, line_end=0)
-    functions: list[GoSchemaFunc] = []
-    for name, func_attributes in function_call_attributes.items():
-        functions.append(
-            GoSchemaFunc(
-                name=name,
-                line_start=func_attributes[0].line_start,
-                line_end=func_attributes[0].line_end,
-                call_attributes=func_attributes,
-            )
+    functions: list[GoSchemaFunc] = [
+        GoSchemaFunc(
+            name=name,
+            line_start=func_attributes[0].line_start,
+            line_end=func_attributes[0].line_end,
+            call_attributes=func_attributes,
         )
+        for name, func_attributes in function_call_attributes.items()
+    ]
     for attribute in attributes:
         if match_functions := [func for func in functions if func.contains_attribute(attribute)]:
             func_names = [func.name for func in match_functions]

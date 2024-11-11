@@ -9,6 +9,7 @@ from typing import Literal, TypeAlias
 
 from model_lib import Entity, Event
 from pydantic import Field, model_validator
+from zero_3rdparty import iter_utils
 
 from atlas_init.cli_tf.schema_go_parser import parse_schema_functions
 from atlas_init.cli_tf.schema_table_models import TFSchemaAttribute, TFSchemaTableColumn
@@ -59,6 +60,7 @@ class TFSchemaTableInput(Entity):
     output_format: TableOutputFormats = "md"
     output_path: Path = Field(default_factory=default_factory_cwd("schema_table.md"))
     columns: list[TFSchemaTableColumn] = Field(default_factory=default_table_columns)
+    explode_rows: bool = False
 
     @model_validator(mode="after")
     def validate(self):
@@ -115,12 +117,12 @@ def merge_tables(config: TFSchemaTableInput, schema_path: str, tables: list[TFSc
 
 
 def format_table(table: RawTable, table_format: TableOutputFormats) -> list[str]:
+    # sourcery skip: merge-list-append
     assert table_format == "md", "only markdown format supported"
     lines = []
     lines.append("|".join(table.columns))
     lines.append("|".join(["---"] * len(table.columns)))
-    for row in table.rows:
-        lines.append("|".join(row))
+    lines.extend("|".join(row) for row in table.rows)
     return lines
 
 
@@ -129,6 +131,8 @@ def schema_table(config: TFSchemaTableInput) -> str:
     for source in config.sources:
         go_code = source.go_code()
         attributes, functions = parse_schema_functions(go_code)
+        if config.explode_rows:
+            attributes = sorted(iter_utils.flat_map(attr.explode() for attr in attributes))
         schema_path = ""  # using only root for now
         path_tables[schema_path].append(
             TFSchemaTableData(source=source, attributes=attributes, schema_path=schema_path)

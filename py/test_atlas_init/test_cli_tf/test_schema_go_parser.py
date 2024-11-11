@@ -1,10 +1,11 @@
 from collections import Counter
+import re
 
 from atlas_init.cli_tf.schema_go_parser import parse_schema_functions
 
 
-def test_go_parser(go_file_path):
-    program = go_file_path().read_text()
+def test_go_parser(go_schema_paths):
+    program = go_schema_paths()["TPF"].read_text()
     attributes, _ = parse_schema_functions(program)
     attribute_names = {a.name for a in attributes}
     expected_names = {

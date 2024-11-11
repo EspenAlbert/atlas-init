@@ -1,7 +1,7 @@
 
 ## Root
 
-Attribute Name|advancedclustertpf_r-Computability
+Attribute Name|TPF-Computability
 ---|---
 accept_data_risks_and_force_replica_set_reconfig|optional
 advanced_configuration|computed_optional

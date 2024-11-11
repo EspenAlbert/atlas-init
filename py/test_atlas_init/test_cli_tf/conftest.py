@@ -91,10 +91,23 @@ def spec_resources_v3_paths(tf_test_data_dir) -> dict[str, Path]:
 
 
 @pytest.fixture
-def go_file_path() -> Callable[[], Path]:
-    def _go_file_path() -> Path:
-        path_str = os.environ.get("GO_FILE_PATH", "")
-        if path_str == "":
-            pytest.skip("needs os.environ[GO_FILE_PATH]")
-        return Path(path_str)
+def go_schema_paths() -> Callable[[], dict[str, Path]]:
+    def _go_file_path() -> dict[str, Path]:
+        env_var_names = [
+            "GO_SCHEMA_SDKv2_PATH",
+            "GO_SCHEMA_TPF_PATH",
+        ]
+        paths = {
+            name.removeprefix("GO_SCHEMA_").removesuffix("_PATH"): os.environ.get(
+                name, ""
+            )
+            for name in env_var_names
+        }
+        missing_paths = {name: path for name, path in paths.items() if path == ""}
+        if missing_paths:
+            pytest.skip(
+                f"needs os.environ[{', '.join(missing_paths.keys())}] {env_var_names}"
+            )
+        return {name: Path(path) for name, path in paths.items()}
+
     return _go_file_path

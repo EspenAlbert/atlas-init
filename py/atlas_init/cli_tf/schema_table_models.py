@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from enum import StrEnum
 from functools import total_ordering
@@ -16,9 +18,16 @@ class TFSchemaTableColumn(StrEnum):
 
 
 class FuncCallLine(Event):
-    line_nr: int
+    call_line_nr: int
     func_name: str
     args: str
+    func_line_start: int
+    func_line_end: int
+
+
+class AttrRefLine(Event):
+    line_nr: int
+    attr_ref: str
 
 
 _schema_type_regex = re.compile(r"schema\.\w+")
@@ -35,7 +44,8 @@ class TFSchemaAttribute(Entity):
     indent: str = ""
     lines: list[str] = Field(default_factory=list)
 
-    func_call_line: FuncCallLine | None = None
+    func_call: FuncCallLine | None = None
+    attr_ref_line: AttrRefLine | None = None
     attribute_path: str = ""
     absolute_attribute_path: str = ""
 
@@ -67,7 +77,7 @@ class TFSchemaAttribute(Entity):
 
     @property
     def is_function_call(self) -> bool:
-        return self.func_call_line is not None
+        return self.func_call is not None
 
     @property
     def is_required(self) -> bool:
@@ -112,6 +122,18 @@ class TFSchemaAttribute(Entity):
                 parents.append(parent)
 
         return parents
+
+    def explode(self) -> list[TFSchemaAttribute]:
+        exploded = []
+        if "|" not in self.absolute_attribute_path:
+            return [self]
+        part_before, part_after = self.absolute_attribute_path.split("(", maxsplit=1)
+        pipe_separated_values, rest = part_after.split(")", maxsplit=1)
+        for value in pipe_separated_values.split("|"):
+            new_attr = self.model_copy(update={"absolute_attribute_path": f"{part_before}{value}{rest}"})
+            new_attr.absolute_attribute_path = f"{part_before}{value}{rest}"
+            exploded.append(new_attr)
+        return exploded
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, TFSchemaAttribute):
