@@ -57,6 +57,8 @@ class GoVarName(StrEnum):
     ITEM = "item"
     DIAGS = "diags"
     CTX = "ctx"
+    ELEMENTS = "elements"
+    RESP = "resp"
 
 
 add_go_variable_names(list(GoVarName))

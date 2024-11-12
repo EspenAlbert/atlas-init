@@ -185,6 +185,11 @@ class Attribute(BaseModelLocal):
             raise NotImplementedError(f"set {self.name}")
         raise NotImplementedError(f"unknown type: {self.name}")
 
+    @property
+    def go_type_optional(self) -> str:
+        assert not self.is_nested
+        return f"*{self.go_type}"
+
 
 class Schema(BaseModelLocal):
     description: str | None = None
@@ -202,3 +207,4 @@ class Resource(BaseModelLocal):
 
 
 ResourceSchemaV3 = Resource
+TF_MODEL_NAME = "TFModel"

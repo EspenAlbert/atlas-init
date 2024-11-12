@@ -1,7 +1,6 @@
 import logging
 from functools import singledispatch
 from queue import Queue
-from typing import NamedTuple
 
 from atlas_init.cli_tf.schema_v2 import (
     extend_import_urls,
@@ -11,14 +10,21 @@ from atlas_init.cli_tf.schema_v2 import (
 )
 from atlas_init.cli_tf.schema_v2_sdk import GoVarName, SDKAttribute, SDKModel
 from atlas_init.cli_tf.schema_v3 import (
+    TF_MODEL_NAME,
     Attribute,
     ListNestedAttribute,
     Resource,
     SingleNestedAttribute,
 )
+from atlas_init.cli_tf.schema_v3_sdk_base import (
+    SDKAndSchemaAttribute,
+    find_attribute,
+    name_schema_struct,
+    name_struct_attribute,
+    schema_attributes,
+)
 from atlas_init.humps import camelize, pascalize
 
-TF_MODEL_NAME = "TFModel"
 logger = logging.getLogger(__name__)
 
 
@@ -60,35 +66,8 @@ def sdk_to_tf_func(resource: Resource, sdk_model: SDKModel) -> list[str]:
     return lines
 
 
-@singledispatch
-def schema_attributes(root: object) -> list[Attribute]:
-    raise NotImplementedError(f"unsupported root type: {type(root)} to find schema attributes")
-
-
-@schema_attributes.register
-def _resource_attributes(root: Resource) -> list[Attribute]:
-    return root.schema.attributes
-
-
-@schema_attributes.register
-def _attribute_nested(root: Attribute) -> list[Attribute]:
-    return root.nested_attributes
-
-
-def find_attribute(attributes: list[Attribute], name: str, root_name: str) -> Attribute:
-    for schema_attribute in attributes:
-        if name == schema_attribute.name:
-            return schema_attribute
-    raise ValueError(f"could not find schema attribute for {name} on resource: {root_name}")
-
-
 def as_var_name(attr: SDKAttribute) -> str:
     return camelize(attr.json_name)
-
-
-class SDKAndSchemaAttribute(NamedTuple):
-    sdk_attribute: SDKAttribute
-    schema_attribute: Attribute
 
 
 def call_nested_functions(
@@ -126,7 +105,10 @@ _sdk_to_tf_funcs = {
     ("string", "string"): lambda sdk_ref: f"types.StringValue({sdk_ref})",
     ("*int64", "int64"): lambda sdk_ref: f"types.Int64PointerValue({sdk_ref})",
     ("int64", "int64"): lambda sdk_ref: f"types.Int64Value({sdk_ref})",
-    ("*int", "int64"): lambda sdk_ref: f"types.Int64PointerValue(conversion.IntPtrToInt64Ptr({sdk_ref}))",
+    (
+        "*int",
+        "int64",
+    ): lambda sdk_ref: f"types.Int64PointerValue(conversion.IntPtrToInt64Ptr({sdk_ref}))",
     ("*float64", "float64"): lambda sdk_ref: f"types.Float64PointerValue({sdk_ref})",
     ("float64", "float64"): lambda sdk_ref: f"types.Float64Value({sdk_ref})",
     ("*bool", "bool"): lambda sdk_ref: f"types.BoolPointerValue({sdk_ref})",
@@ -171,11 +153,11 @@ def tf_struct_create(
     for attr in schema_attributes(root):
         if attr.is_nested:
             local_var = sdk_model.lookup_tf_name(attr.name)
-            lines.append(f"{_name_struct_attribute(attr.name)}: {as_var_name(local_var)},")
+            lines.append(f"{name_struct_attribute(attr.name)}: {as_var_name(local_var)},")
         elif attr.is_attribute:
             local_var = sdk_model.lookup_tf_name(attr.name)
             lines.append(
-                f"{_name_struct_attribute(attr.name)}: {sdk_to_tf_attribute_value(attr, local_var, sdk_var_name)},"
+                f"{name_struct_attribute(attr.name)}: {sdk_to_tf_attribute_value(attr, local_var, sdk_var_name)},"
             )
     return lines
 
@@ -202,27 +184,8 @@ def process_nested_attributes(
     return lines
 
 
-_name_attribute_overrides = {}
-
-
-def set_name_attribute_overrides(overrides: dict[str, str]):
-    global _name_attribute_overrides  # noqa: PLW0603 `Using the global statement to update `_name_attribute_overrides` is discouraged`
-    _name_attribute_overrides = overrides
-
-
-def _name_struct_attribute(name: str) -> str:
-    default = pascalize(name)
-    if override := _name_attribute_overrides.get(default):
-        return override
-    return default
-
-
 def _name_custom_object_type(name: str) -> str:
     return f"{pascalize(name)}ObjType"
-
-
-def _name_schema_struct(name: str) -> str:
-    return f"TF{pascalize(name)}Model"
 
 
 @singledispatch
@@ -250,7 +213,7 @@ def _convert_single_nested_attribute(
         schema_attribute, sdk_attribute.list_nested_attributes(), return_on_error=False
     )
     lines.extend(call_lines)
-    struct_name = _name_schema_struct(schema_attribute.name)
+    struct_name = name_schema_struct(schema_attribute.name)
     lines.extend(
         [
             f"  tfModel := {struct_name}{{",
@@ -278,7 +241,7 @@ def _convert_list_nested_attriute(
         f"    return types.ListNull({object_type_name})",
         "  }",
     ]
-    struct_name = _name_schema_struct(schema_attribute.name)
+    struct_name = name_schema_struct(schema_attribute.name)
     lines.extend(
         [
             f"  tfModels := make([]{struct_name}, len(*{GoVarName.INPUT}))",
@@ -286,7 +249,10 @@ def _convert_list_nested_attriute(
         ]
     )
     nested_attributes, call_lines = call_nested_functions(
-        schema_attribute, sdk_attribute.list_nested_attributes(), return_on_error=False, sdk_var_name=GoVarName.ITEM
+        schema_attribute,
+        sdk_attribute.list_nested_attributes(),
+        return_on_error=False,
+        sdk_var_name=GoVarName.ITEM,
     )
     lines.extend([f"  {line}" for line in call_lines])
     lines.extend(
