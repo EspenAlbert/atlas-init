@@ -55,6 +55,7 @@ def test_model_create(
 ):
     set_name_attribute_overrides(attr_name_overrides)
     resource = parse_resource_v3(resource_name)
+    
     parsed_sdk_model = parse_sdk_model(sdk_repo_path, sdk_model)
     actual = generate_model_create(resource, parsed_sdk_model)
     file_regression.check(actual, basename=f"model_create_{sdk_model}", extension=".go")

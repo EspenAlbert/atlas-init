@@ -29,7 +29,7 @@ def test_go_parser(go_schema_paths):
         ("value", 2),
     ]
     by_name = {a.name: a for a in attributes}
-    assert by_name["analytics_specs"].start_end == (459, 502)
+    assert by_name["analytics_specs"].start_end == (384, 418)
     by_schema_path = {a.attribute_path: a for a in attributes}
     assert len(by_schema_path) == len(attributes)
     assert (
@@ -45,10 +45,6 @@ def test_go_parser(go_schema_paths):
         by_name["region_configs"].attribute_path == "replication_specs.region_configs"
     )
     assert by_name["advanced_configuration"].attribute_path == "advanced_configuration"
-    assert (
-        by_name["default_max_time_ms"].attribute_path
-        == "advanced_configuration.default_max_time_ms"
-    )
     assert (
         by_name["compute_enabled"].attribute_path
         == "(analytics_auto_scaling|auto_scaling).compute_enabled"

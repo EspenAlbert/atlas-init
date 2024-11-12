@@ -3,11 +3,10 @@ from __future__ import annotations
 import logging
 import re
 from collections import defaultdict
-from contextlib import suppress
 from typing import NamedTuple
 
 from model_lib import Entity
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 from atlas_init.cli_tf.schema_table_models import (
     AttrRefLine,
@@ -18,77 +17,73 @@ from atlas_init.cli_tf.schema_table_models import (
 logger = logging.getLogger(__name__)
 
 
-class MaybeSchemaAttributeLine(Entity):
-    name: str
-    rest: str
+def parse_attribute_ref(
+    name: str, rest: str, go_code: str, code_lines: list[str], ref_line_nr: int
+) -> TFSchemaAttribute | None:
+    attr_ref = rest.lstrip("&").rstrip(",").strip()
+    if not attr_ref.isidentifier():
+        return None
+    try:
+        _instantiate_regex = re.compile(rf"{attr_ref}\s=\sschema\.\w+\{{$", re.M)
+    except re.error:
+        return None
+    instantiate_match = _instantiate_regex.search(go_code)
+    if not instantiate_match:
+        return None
+    line_start_nr = go_code[: instantiate_match.start()].count("\n") + 1
+    line_start = code_lines[line_start_nr]
+    attribute = parse_attribute_lines(code_lines, line_start_nr, line_start, name, is_attr_ref=True)
+    attribute.attr_ref_line = AttrRefLine(line_nr=ref_line_nr, attr_ref=attr_ref)
+    return attribute
 
-    @property
-    def is_schema_attribute(self) -> bool:
-        return self.rest.startswith("schema.")
 
-    @property
-    def is_function_call(self) -> bool:
-        return self.rest.endswith("),")
+def parse_func_call_line(
+    name: str, rest: str, lines: list[str], go_code: str, call_line_nr: int
+) -> TFSchemaAttribute | None:
+    func_def_line = _function_line(rest, go_code)
+    if not func_def_line:
+        return None
+    func_name, args = rest.split("(", maxsplit=1)
+    func_start, func_end = _func_lines(name, lines, func_def_line)
+    call = FuncCallLine(
+        call_line_nr=call_line_nr,
+        func_name=func_name.strip(),
+        args=args.removesuffix("),").strip(),
+        func_line_start=func_start,
+        func_line_end=func_end,
+    )
+    return TFSchemaAttribute(
+        name=name,
+        lines=lines[func_start:func_end],
+        line_start=func_start,
+        line_end=func_end,
+        func_call=call,
+        indent="\t",
+    )
 
-    def attr_ref(self, go_code: str, code_lines: list[str], ref_line_nr: int) -> TFSchemaAttribute | None:
-        attr_ref = self.rest.lstrip("&").rstrip(",").strip()
-        if not attr_ref.isidentifier():
-            return None
-        if attr_ref == "RSTagsSchema":
-            pass
-        try:
-            _instantiate_regex = re.compile(rf"{attr_ref}\s=\sschema\.\w+\{{$", re.M)
-        except re.error:
-            return None
-        instantiate_match = _instantiate_regex.search(go_code)
-        if not instantiate_match:
-            return None
-        line_start_nr = go_code[: instantiate_match.start()].count("\n") + 1
-        line_start = code_lines[line_start_nr]
-        attribute = parse_attribute_lines(code_lines, line_start_nr, line_start, self, is_attr_ref=True)
-        attribute.attr_ref_line = AttrRefLine(line_nr=ref_line_nr, attr_ref=attr_ref)
-        return attribute
 
-    def func_call_line(self, lines: list[str], go_code: str, call_line_nr: int) -> FuncCallLine | None:
-        if not self.is_function_call:
-            return None
-        func_def_line = self._function_line(go_code)
-        if not func_def_line:
-            return None
-        func_name, args = self.rest.split("(", maxsplit=1)
-        func_start, func_end = self._func_lines(lines, func_def_line)
-        return FuncCallLine(
-            call_line_nr=call_line_nr,
-            func_name=func_name.strip(),
-            args=args.removesuffix("),").strip(),
-            func_line_start=func_start,
-            func_line_end=func_end,
-        )
+def _func_lines(name: str, lines: list[str], func_def_line: str) -> tuple[int, int]:
+    start_line = lines.index(func_def_line)
+    for line_nr, line in enumerate(lines[start_line + 1 :], start=start_line + 1):
+        if line.rstrip() == "}":
+            return start_line, line_nr
+    raise ValueError(f"no end line found for {name} on line {start_line}: {func_def_line}")
 
-    def _func_lines(self, lines: list[str], func_def_line: str) -> tuple[int, int]:
-        start_line = lines.index(func_def_line)
-        for line_nr, line in enumerate(lines[start_line + 1 :], start=start_line + 1):
-            if line.rstrip() == "}":
-                return start_line, line_nr
-        raise ValueError(f"no end line found for {self}")
 
-    def _function_line(self, go_code: str) -> str:
-        function_name = self.rest.split("(")[0].strip()
-        pattern = re.compile(rf"func {function_name}\(.*\) \*?schema\.\w+ \{{$", re.M)
-        match = pattern.search(go_code)
-        if not match:
-            return ""
-        return go_code[match.start() : match.end()]
-
-    def is_schema_func(self, go_code: str) -> bool:
-        return bool(self._function_line(go_code))
+def _function_line(rest: str, go_code: str) -> str:
+    function_name = rest.split("(")[0].strip()
+    pattern = re.compile(rf"func {function_name}\(.*\) \*?schema\.\w+ \{{$", re.M)
+    match = pattern.search(go_code)
+    if not match:
+        return ""
+    return go_code[match.start() : match.end()]
 
 
 def parse_attribute_lines(
     lines: list[str],
     line_nr: int,
     line: str,
-    attr_line: MaybeSchemaAttributeLine,
+    name: str,
     *,
     is_attr_ref: bool = False,
 ) -> TFSchemaAttribute:
@@ -98,13 +93,13 @@ def parse_attribute_lines(
     for extra_lines, next_line in enumerate(lines[line_nr + 1 :], start=1):
         if next_line == end_line:
             return TFSchemaAttribute(
-                name=attr_line.name,
+                name=name,
                 lines=lines[line_nr : line_nr + extra_lines],
                 line_start=line_nr,
                 line_end=line_nr + extra_lines,
                 indent=indent,
             )
-    raise ValueError(f"no end line found for {attr_line.name}, starting on line {line_nr}")
+    raise ValueError(f"no end line found for {name}, starting on line {line_nr}")
 
 
 _schema_attribute_go_regex = re.compile(
@@ -116,34 +111,25 @@ def find_attributes(go_code: str) -> list[TFSchemaAttribute]:
     lines = ["", *go_code.splitlines()]  # support line_nr indexing
     attributes = []
     for line_nr, line in enumerate(lines):
-        if match := _schema_attribute_go_regex.match(line):
-            with suppress(ValidationError):
-                maybe_attribute = MaybeSchemaAttributeLine(
-                    name=match.group("name"),
-                    rest=match.group("rest"),
-                )
-                if func_call := maybe_attribute.func_call_line(lines, go_code, line_nr):
-                    line_start = func_call.func_line_start
-                    line_end = func_call.func_line_end
-                    attribute = TFSchemaAttribute(
-                        name=maybe_attribute.name,
-                        lines=lines[line_start:line_end],
-                        line_start=line_start,
-                        line_end=line_end,
-                        func_call=func_call,
-                        indent="\t",
-                    )
-                elif attribute := maybe_attribute.attr_ref(go_code, lines, line_nr):
-                    logger.info(f"attr_ref: {attribute}")
-                else:
-                    try:
-                        attribute = parse_attribute_lines(lines, line_nr, line, maybe_attribute)
-                    except ValueError as e:
-                        logger.warning(e)
-                        continue
-                    if not attribute.type:
-                        continue
-                attributes.append(attribute)
+        match = _schema_attribute_go_regex.match(line)
+        if not match:
+            continue
+        name = match.group("name")
+        rest = match.group("rest")
+        if rest.endswith("),"):
+            if attr := parse_func_call_line(name, rest, lines, go_code, line_nr):
+                attributes.append(attr)
+        elif attr := parse_attribute_ref(name, rest, go_code, lines, line_nr):
+            attributes.append(attr)
+        else:
+            try:
+                attr = parse_attribute_lines(lines, line_nr, line, name)
+            except ValueError as e:
+                logger.warning(e)
+                continue
+            if not attr.type:
+                continue
+            attributes.append(attr)
     set_attribute_paths(attributes)
     return attributes
 
