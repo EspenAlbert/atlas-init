@@ -1,3 +1,4 @@
+import logging
 import difflib
 from pathlib import Path
 from random import shuffle
@@ -11,6 +12,7 @@ from atlas_init.cli_tf.schema_table import (
 from atlas_init.cli_tf.schema_table_models import TFSchemaTableColumn
 import pytest
 
+logger = logging.getLogger(__name__)
 
 def test_sorted_schema_paths():
     paths = ["", "a", "d", "a.b"]
@@ -56,4 +58,6 @@ def test_create_html_diff(go_schema_paths):
         "tpf",
         "sdk_v2",
     )
-    (output_dir / f"diff-{columns[0]}.html").write_text(html_text)
+    output_path = output_dir / f"diff-{columns[0]}.html"
+    output_path.write_text(html_text)
+    logger.info(f"'chrome {output_path}' to see diff")
