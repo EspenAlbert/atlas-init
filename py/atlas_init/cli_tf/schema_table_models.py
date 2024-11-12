@@ -15,6 +15,7 @@ class TFSchemaTableColumn(StrEnum):
     Type = "Type"
     Default = "Default"
     PlanModifiers = "PlanModifiers"
+    Deprecated = "Deprecated"
 
 
 class FuncCallLine(Event):
@@ -98,12 +99,25 @@ class TFSchemaAttribute(Entity):
     def start_end(self) -> tuple[int, int]:
         return self.line_start, self.line_end
 
+    @property
+    def deprecated(self) -> str:
+        deprecation_attributes = ["Deprecated", "DeprecationMessage"]
+        for attr in deprecation_attributes:
+            prefix = f"{self.indent}\t{attr}:"
+            if found := next(
+                (line[len(prefix) :].strip() for line in self.lines if line.startswith(prefix)),
+                "",
+            ):
+                return found
+        return ""
+
     def as_dict(self) -> dict[TFSchemaTableColumn, str]:
         return {
             TFSchemaTableColumn.Computability: self.computability,
             TFSchemaTableColumn.Type: self.type,
             TFSchemaTableColumn.Default: self.default,
             TFSchemaTableColumn.PlanModifiers: ", ".join(self.plan_modifiers),
+            TFSchemaTableColumn.Deprecated: self.deprecated,
         }
 
     def row(self, columns: list[TFSchemaTableColumn]) -> list[str]:

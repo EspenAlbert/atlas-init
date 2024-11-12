@@ -33,6 +33,7 @@ def test_create_html_diff(go_schema_paths):
     output_dir = Path(__file__).parent / test_schema_table.__name__
     columns = [
         TFSchemaTableColumn.Computability,
+        # TFSchemaTableColumn.Deprecated,
         # TFSchemaTableColumn.Type,
     ]
     table_tpf = schema_table(
@@ -55,4 +56,4 @@ def test_create_html_diff(go_schema_paths):
         "tpf",
         "sdk_v2",
     )
-    (output_dir / "diff.html").write_text(html_text)
+    (output_dir / f"diff-{columns[0]}.html").write_text(html_text)
