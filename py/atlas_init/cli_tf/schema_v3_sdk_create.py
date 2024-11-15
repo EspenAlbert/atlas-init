@@ -12,6 +12,7 @@ from atlas_init.cli_tf.schema_v2_sdk import GoVarName, SDKAttribute, SDKModel
 from atlas_init.cli_tf.schema_v3 import (
     TF_MODEL_NAME,
     Attribute,
+    ComputedOptionalRequired,
     ListNestedAttribute,
     Resource,
     SingleNestedAttribute,
@@ -28,7 +29,7 @@ from atlas_init.humps import pascalize
 logger = logging.getLogger(__name__)
 
 
-def generate_model_create(resource: Resource, sdk_model: SDKModel) -> str:
+def generate_schema_to_model(resource: Resource, sdk_model: SDKModel) -> str:
     func_lines = tf_to_sdk_create_func(resource, sdk_model)
     import_urls = set()
     extend_import_urls(import_urls, func_lines)
@@ -46,7 +47,7 @@ def generate_model_create(resource: Resource, sdk_model: SDKModel) -> str:
 
 def tf_to_sdk_create_func(resource: Resource, sdk_model: SDKModel) -> list[str]:
     lines = [
-        f"func NewAtlasReq({GoVarName.CTX} context.Context, {GoVarName.INPUT} {GoVarName.INPUT} *{TF_MODEL_NAME}, {GoVarName.DIAGS} *diag.Diagnostics) *admin.{sdk_model.name} {{"
+        f"func NewAtlasReq({GoVarName.CTX} context.Context, {GoVarName.INPUT} *{TF_MODEL_NAME}, {GoVarName.DIAGS} *diag.Diagnostics) *admin.{sdk_model.name} {{"
         f"  return &admin.{sdk_model.name}{{"
     ]
     nested_attributes, call_lines = convert_or_call_lines(resource, sdk_model)
@@ -63,9 +64,22 @@ def tf_to_sdk_create_func(resource: Resource, sdk_model: SDKModel) -> list[str]:
 
 _tf_to_sdk_funcs = {
     ("string", "string"): lambda tf_ref: f"{tf_ref}.ValueString()",
+    ("string", "*string"): lambda tf_ref: f"{tf_ref}.ValueStringPointer()",
     ("*string", "*string"): lambda tf_ref: f"{tf_ref}.ValueStringPointer()",
-    ("*string", "*time.Time"): lambda tf_ref: f"conversion.StringPtrToTimePtr({tf_ref}.ValueStringPointer())",
+    (
+        "*string",
+        "*time.Time",
+    ): lambda tf_ref: f"conversion.StringPtrToTimePtr({tf_ref}.ValueStringPointer())",
     ("*bool", "*bool"): lambda tf_ref: f"{tf_ref}.ValueBoolPointer()",
+    (
+        "int64",
+        "*int",
+    ): lambda tf_ref: f"conversion.Int64PtrToIntPtr({tf_ref}.ValueInt64Pointer())",
+    (
+        "*int64",
+        "*int",
+    ): lambda tf_ref: f"conversion.Int64PtrToIntPtr({tf_ref}.ValueInt64Pointer())",
+    ("*float64", "*float64"): lambda tf_ref: f"{tf_ref}.ValueFloat64Pointer()",
 }
 
 
@@ -89,15 +103,25 @@ def convert_or_call_lines(
     nested_attributes: list[SDKAndSchemaAttribute] = []
     tf_attributes = schema_attributes(root)
     for sdk_attr in sorted(sdk_model.attributes.values()):
-        tf_attribute = find_attribute(tf_attributes, sdk_attr.tf_name, root.name)
+        try:
+            tf_attribute = find_attribute(tf_attributes, sdk_attr.tf_name, root.name)
+        except ValueError as e:
+            logger.warning(e)
+            continue
+        if tf_attribute.computed_optional_required == ComputedOptionalRequired.computed:
+            continue
         if sdk_attr.is_nested:
             call_lines.append(
-                f"  {sdk_attr.struct_name}: new{sdk_attr.struct_type_name}({GoVarName.CTX}, ({variable_name}.{name_struct_attribute(tf_attribute.name)}, {GoVarName.DIAGS}),"
+                f"  {sdk_attr.struct_name}: new{sdk_attr.struct_type_name}({GoVarName.CTX}, {variable_name}.{name_struct_attribute(tf_attribute.name)}, {GoVarName.DIAGS}),"
             )
             nested_attributes.append(SDKAndSchemaAttribute(sdk_attribute=sdk_attr, schema_attribute=tf_attribute))
-        else:
+        elif tf_attribute.is_required:
             call_lines.append(
                 f"  {sdk_attr.struct_name}: {tf_to_sdk_attribute_value(tf_attribute, sdk_attr, variable_name)},"
+            )
+        else:
+            call_lines.append(
+                f"  {sdk_attr.struct_name}: conversion.NilForUnknown({variable_name}.{tf_attribute.name_pascal}, {tf_to_sdk_attribute_value(tf_attribute, sdk_attr, variable_name)}),"
             )
     return nested_attributes, call_lines
 
@@ -138,19 +162,18 @@ def _convert_single_nested_attribute(
     sdk_attribute: SDKAttribute,
 ) -> tuple[list[SDKAndSchemaAttribute], list[str]]:
     sdk_model = sdk_attribute.as_sdk_model()
-    attr_name = schema_attribute.name
     lines: list[str] = [
-        f"func New{sdk_model.name}(ctx context.Context, {GoVarName.INPUT} types.Object, diags *diag.Diagnostics) *admin.{sdk_model.name} {{",
-        f"  resp := &admin.{sdk_model.name}{{}}",
+        f"func new{sdk_model.name}(ctx context.Context, {GoVarName.INPUT} types.Object, diags *diag.Diagnostics) *admin.{sdk_model.name} {{",
+        f"  var resp *admin.{sdk_model.name}",
         f"  if {GoVarName.INPUT}.IsUnknown() || {GoVarName.INPUT}.IsNull() {{",
         "    return resp",
         "  }",
-        f"  {GoVarName.ITEM} := &{name_schema_struct(schema_attribute.name)}{{}}"
-        f"  if localDiags := {GoVarName.INPUT}.{name_struct_attribute(attr_name)}.As({GoVarName.CTX}, {GoVarName.ITEM}, basetypes.ObjectAsOptions{{}}); len(localDiags) > 0 {{",
+        f"  {GoVarName.ITEM} := &{name_schema_struct(schema_attribute.name)}{{}}",
+        f"  if localDiags := {GoVarName.INPUT}.As({GoVarName.CTX}, {GoVarName.ITEM}, basetypes.ObjectAsOptions{{}}); len(localDiags) > 0 {{",
         f"    {GoVarName.DIAGS}.Append(localDiags...)",
         "    return resp",
         "  }",
-        "  return &admin.{sdk_model.name}{{",
+        f"  return &admin.{sdk_model.name}{{",
     ]
     nested_attributes, call_lines = convert_or_call_lines(schema_attribute, sdk_model, GoVarName.ITEM)
     lines.extend([*call_lines, "  }", "}"])  # end struct  # end function
@@ -164,27 +187,28 @@ def _convert_list_nested_attriute(
     sdk_attribute: SDKAttribute,
 ) -> tuple[list[SDKAndSchemaAttribute], list[str]]:
     sdk_model = sdk_attribute.as_sdk_model()
-    attr_name = schema_attribute.name
     lines: list[str] = [
-        f"func New{sdk_model.name}(ctx context.Context, {GoVarName.INPUT} types.List, diags *diag.Diagnostics) *admin.{sdk_model.name} {{",
-        f"  resp := &[]admin.{sdk_model.name}{{}}",
+        f"func new{sdk_model.name}(ctx context.Context, {GoVarName.INPUT} types.List, diags *diag.Diagnostics) *[]admin.{sdk_model.name} {{",
         f"  if {GoVarName.INPUT}.IsUnknown() || {GoVarName.INPUT}.IsNull() {{",
-        "    return resp",
+        "    return nil",
         "  }",
-        f"  {GoVarName.ELEMENTS} := make([]{name_schema_struct(schema_attribute.name)}, 0, len({GoVarName.INPUT}.Elements())"
-        f"  if localDiags := {GoVarName.INPUT}.{name_struct_attribute(attr_name)}.ElementsAs({GoVarName.CTX}, &{GoVarName.ELEMENTS}, {GoVarName.ITEM}, false); len(localDiags) > 0 {{",
+        f"  {GoVarName.ELEMENTS} := make([]{name_schema_struct(schema_attribute.name)}, len({GoVarName.INPUT}.Elements()))",
+        f"  if localDiags := {GoVarName.INPUT}.ElementsAs({GoVarName.CTX}, &{GoVarName.ELEMENTS}, false); len(localDiags) > 0 {{",
         f"    {GoVarName.DIAGS}.Append(localDiags...)",
-        "    return resp",
+        "    return nil",
         "  }",
-        "  for _, item := range {GoVarName.ELEMENTS} {",
-        "    resp = append(resp, &admin.{sdk_model.name}{{",
+        f"  {GoVarName.RESP} := make([]admin.{sdk_model.name}, len({GoVarName.INPUT}.Elements()))",
+        f"  for i := range {GoVarName.ELEMENTS} {{",
+        f"    {GoVarName.ITEM} := &{GoVarName.ELEMENTS}[i]",
+        f"    resp[i] = admin.{sdk_model.name}{{",
     ]
     nested_attributes, call_lines = convert_or_call_lines(schema_attribute, sdk_model, GoVarName.ITEM)
     lines.extend(
         [
-            *[f"  {line}" for line in call_lines],
+            *[f"    {line}" for line in call_lines],
+            "    }",  # end struct
             "  }",  # end loop
-            "  }",  # end loop
+            "  return &resp",
             "}",  # end function
         ]
     )

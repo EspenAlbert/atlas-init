@@ -29,7 +29,7 @@ def test_go_parser(go_schema_paths):
         ("value", 2),
     ]
     by_name = {a.name: a for a in attributes}
-    assert by_name["analytics_specs"].start_end == (384, 418)
+    assert by_name["analytics_specs"].start_end == (386, 420)
     by_schema_path = {a.attribute_path: a for a in attributes}
     assert len(by_schema_path) == len(attributes)
     assert (
@@ -63,6 +63,7 @@ def test_go_parser(go_schema_paths):
     assert required_attributes == [
         "cluster_type",
         "key",
+        "key",
         "name",
         "priority",
         "project_id",
@@ -70,6 +71,7 @@ def test_go_parser(go_schema_paths):
         "region_configs",
         "region_name",
         "replication_specs",
+        "value",
         "value",
     ]
     absolute_paths = [a.absolute_attribute_path for a in sorted(attributes)]

@@ -46,16 +46,6 @@ schema:
   - singlenested:
       nestedobject:
         attributes:
-        - map:
-            elementtype: 4
-          description: Private endpoint-aware connection strings that use AWS-hosted clusters with Amazon Web Services (AWS) PrivateLink. Each key identifies an Amazon Web Services (AWS) interface endpoint. Each value identifies the related `mongodb://` connection string that you use to connect to MongoDB Cloud through the interface endpoint that the key names.
-          name: aws_private_link
-          computedoptionalrequired: optional
-        - map:
-            elementtype: 4
-          description: Private endpoint-aware connection strings that use AWS-hosted clusters with Amazon Web Services (AWS) PrivateLink. Each key identifies an Amazon Web Services (AWS) interface endpoint. Each value identifies the related `mongodb://` connection string that you use to connect to Atlas through the interface endpoint that the key names. If the cluster uses an optimized connection string, `awsPrivateLinkSrv` contains the optimized connection string. If the cluster has the non-optimized (legacy) connection string, `awsPrivateLinkSrv` contains the non-optimized connection string even if an optimized connection string is also present.
-          name: aws_private_link_srv
-          computedoptionalrequired: optional
         - string: {}
           description: Network peering connection strings for each interface Virtual Private Cloud (VPC) endpoint that you configured to connect to this cluster. This connection string uses the `mongodb+srv://` protocol. The resource returns this parameter once someone creates a network peering connection to this cluster. This protocol tells the application to look up the host seed list in the Domain Name System (DNS). This list synchronizes with the nodes in a cluster. If the connection string uses this Uniform Resource Identifier (URI) format, you don't need to append the seed list or change the URI if the nodes change. Use this URI format if your driver supports it. If it doesn't, use connectionStrings.private. For Amazon Web Services (AWS) clusters, this resource returns this parameter only if you enable custom DNS.
           name: private
@@ -119,22 +109,9 @@ schema:
     description: Date and time when MongoDB Cloud created this cluster. This parameter expresses its value in ISO 8601 format in UTC.
     name: create_date
     computedoptionalrequired: optional
-  - string:
-      default: FULLY_WARMED
-    description: Disk warming mode selection.
-    name: disk_warming_mode
-    computedoptionalrequired: computed_optional
   - string: {}
     description: 'Cloud service provider that manages your customer keys to provide an additional layer of encryption at rest for the cluster. To enable customer key management for encryption at rest, the cluster **replicationSpecs[n].regionConfigs[m].{type}Specs.instanceSize** setting must be `M10` or higher and `"backupEnabled" : false` or omitted entirely.'
     name: encryption_at_rest_provider
-    computedoptionalrequired: optional
-  - string: {}
-    description: Feature compatibility version of the cluster.
-    name: feature_compatibility_version
-    computedoptionalrequired: optional
-  - string: {}
-    description: Feature compatibility version expiration date.
-    name: feature_compatibility_version_expiration_date
     computedoptionalrequired: optional
   - bool: {}
     description: 'Set this field to configure the Sharding Management Mode when creating a new Global Cluster.
@@ -159,7 +136,7 @@ schema:
   - string: {}
     description: Unique 24-hexadecimal digit string that identifies the cluster.
     name: id
-    computedoptionalrequired: optional
+    computedoptionalrequired: computed
   - listnested:
       nestedobject:
         attributes:
@@ -177,20 +154,6 @@ schema:
       Cluster labels are deprecated and will be removed in a future release. We strongly recommend that you use [resource tags](https://dochub.mongodb.org/core/add-cluster-tag-atlas) instead.'
     name: labels
     deprecationmessage: This attribute has been deprecated
-    computedoptionalrequired: optional
-  - singlenested:
-      nestedobject:
-        attributes:
-        - string: {}
-          description: Expiration date for the employee access grant.
-          name: expiration_time
-          computedoptionalrequired: required
-        - string: {}
-          description: Level of access to grant to MongoDB Employees.
-          name: grant_type
-          computedoptionalrequired: required
-    description: MongoDB employee granted access level and expiration for a cluster.
-    name: mongo_db_employee_access_grant
     computedoptionalrequired: optional
   - string: {}
     description: "MongoDB major version of the cluster.\n\nOn creation: Choose from the available versions of MongoDB, or leave unspecified for the current recommended default in the MongoDB Cloud platform. The recommended version is a recent Long Term Support version. The default is not guaranteed to be the most recently released version throughout the entire release cycle. For versions available in a specific project, see the linked documentation or use the API endpoint for [project LTS versions endpoint](#tag/Projects/operation/getProjectLTSVersions).\n\n On update: Increase version only by 1 major version at a time. If the cluster is pinned to a MongoDB feature compatibility version exactly one major version below the current MongoDB version, the MongoDB version can be downgraded to the previous major version."

@@ -17,6 +17,7 @@ from atlas_init.cli_tf.schema_v3 import (
     SingleNestedAttribute,
 )
 from atlas_init.cli_tf.schema_v3_sdk_base import (
+    AllowedMissingAttributeError,
     SDKAndSchemaAttribute,
     find_attribute,
     name_schema_struct,
@@ -81,7 +82,11 @@ def call_nested_functions(
     schema_nested_attributes = schema_attributes(root)
     nested_generations = []
     for sdk_attribute in nested_attributes:
-        schema_attribute = find_attribute(schema_nested_attributes, sdk_attribute.tf_name, root.name)
+        try:
+            schema_attribute = find_attribute(schema_nested_attributes, sdk_attribute.tf_name, root.name)
+        except AllowedMissingAttributeError as e:
+            logger.info(f"skipping {e!r}")
+            continue
         var_name = as_var_name(sdk_attribute)
         lines.append(
             f"{var_name} := New{_name_custom_object_type(schema_attribute.name)}(ctx, {sdk_var_name}.{sdk_attribute.struct_name}, {GoVarName.DIAGS})"

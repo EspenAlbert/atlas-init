@@ -126,13 +126,17 @@ def format_table(table: RawTable, table_format: TableOutputFormats) -> list[str]
     return lines
 
 
+def explode_attributes(attributes: list[TFSchemaAttribute]) -> list[TFSchemaAttribute]:
+    return sorted(iter_utils.flat_map(attr.explode() for attr in attributes))
+
+
 def schema_table(config: TFSchemaTableInput) -> str:
     path_tables: dict[str, list[TFSchemaTableData]] = defaultdict(list)
     for source in config.sources:
         go_code = source.go_code()
         attributes, functions = parse_schema_functions(go_code)
         if config.explode_rows:
-            attributes = sorted(iter_utils.flat_map(attr.explode() for attr in attributes))
+            attributes = explode_attributes(attributes)
         schema_path = ""  # using only root for now
         path_tables[schema_path].append(
             TFSchemaTableData(source=source, attributes=attributes, schema_path=schema_path)

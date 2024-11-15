@@ -44,8 +44,8 @@ disk_size_gb|computed_optional
 encryption_at_rest_provider|computed_optional
 global_cluster_self_managed_sharding|computed_optional
 labels|computed_optional
-labels.key|computed_optional
-labels.value|computed_optional
+labels.key|required
+labels.value|required
 mongo_db_major_version|computed_optional
 mongo_db_version|computed
 name|required
@@ -84,7 +84,7 @@ replication_specs.zone_name|computed_optional
 retain_backups_enabled|optional
 root_cert_type|computed_optional
 state_name|computed
-tags|optional
+tags|computed_optional
 tags.key|required
 tags.value|required
 termination_protection_enabled|computed_optional
