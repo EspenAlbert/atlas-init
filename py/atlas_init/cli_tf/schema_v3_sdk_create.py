@@ -80,6 +80,7 @@ _tf_to_sdk_funcs = {
         "*int",
     ): lambda tf_ref: f"conversion.Int64PtrToIntPtr({tf_ref}.ValueInt64Pointer())",
     ("*float64", "*float64"): lambda tf_ref: f"{tf_ref}.ValueFloat64Pointer()",
+    ("*int64", "*int64"): lambda tf_ref: f"{tf_ref}.ValueInt64Pointer()",
 }
 
 

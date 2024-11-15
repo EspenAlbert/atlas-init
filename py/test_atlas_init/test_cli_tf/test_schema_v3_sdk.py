@@ -100,7 +100,7 @@ def update_compuatbility(resource: Resource, live_attributes: list[TFSchemaAttri
     [
         # ("resourcepolicy", "ApiAtlasResourcePolicy", {}),
         ("advancedcluster", "ClusterDescription20240805", adv_cluster_attr_overrides),
-        # ("advancedclusterprocessargs", "ClusterDescriptionProcessArgs20240805", {}),
+        ("advancedclusterprocessargs", "ClusterDescriptionProcessArgs20240805", {}),
     ],
 )
 def test_schema_to_sdk(
