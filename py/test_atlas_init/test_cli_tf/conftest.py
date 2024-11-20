@@ -64,7 +64,7 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
     return schema_v2
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sdk_repo_path() -> Path:
     repo_path_str = os.environ.get("SDK_REPO_PATH", "")
     if not repo_path_str:

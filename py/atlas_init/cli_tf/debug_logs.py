@@ -90,8 +90,17 @@ class SDKRoundtrip(Entity):
     step_number: int
 
     @property
+    def id(self) -> str:
+        return f"{self.request.method}_{self.request.path}_{self.version}"
+
+    @property
     def version(self) -> str:
         content_type = self.response.headers.get("Content-Type", "v1")
+        try:
+            return extract_version(content_type)
+        except ValueError:
+            logger.warning(f"failed to extract version from response header ({content_type}), trying request")
+        content_type = self.request.headers.get("Accept", "v1")
         return extract_version(content_type)
 
     @model_validator(mode="after")
@@ -108,6 +117,7 @@ MARKER_END = "-----------------------------------"
 MARKER_REQUEST_START = "---[ REQUEST ]"
 MARKER_RESPONSE_START = "---[ RESPONSE ]----"
 MARKER_START_STEP = "Starting TestStep: "
+MARKER_TEST = "Starting TestSteps: "
 
 
 class FileRef(NamedTuple):
@@ -120,13 +130,16 @@ def parse_http_requests(logs: str) -> list[SDKRoundtrip]:
     """
     Problem: With requests that are done in parallel.
     An alternative is to use parallel 1 but it will be slow
-    Methods:
+    Methods: (rejected)
     1. Look for match from `path` to the something in the payload
     2. Use the X-Java-Method header to match the response with the path
     3. X-Envoy-Upstream-Service-Time to match it
 
+    Method: (accepted)
     Can say that expected payload is either a list or a dict and if it ends with an identifier it is higher chance for a dict
     """
+    test_count = logs.count(MARKER_TEST)
+    assert test_count == 1, f"Only one test is supported, found {test_count}"
     requests, responses = parse_raw_req_responses(logs)
     tf_step_starts = [i for i, line in enumerate(logs.splitlines()) if MARKER_START_STEP in line]
     used_responses: set[int] = set()

@@ -27,7 +27,9 @@ class RequestInfo(Entity):
 
     @property
     def id(self):
-        return "__".join([self.method, self.path, self.version, self.text])  # noqa: FLY002
+        return "__".join(  # noqa: FLY002
+            [self.method, self.path, self.version, self.text]
+        )
 
 
 class StepRequests(Entity):
@@ -38,10 +40,23 @@ class StepRequests(Entity):
         return next((r for r in self.request_responses if r.id == info.id), None)
 
     def add_request(
-        self, path: str, method: str, version: str, status: int, text: str, text_response: str, is_diff: bool
+        self,
+        path: str,
+        method: str,
+        version: str,
+        status: int,
+        text: str,
+        text_response: str,
+        is_diff: bool,
     ):
         status_text = StatusText(status=status, text=text_response)
-        info = RequestInfo(path=path, method=method, version=version, text=text, responses=[status_text])
+        info = RequestInfo(
+            path=path,
+            method=method,
+            version=version,
+            text=text,
+            responses=[status_text],
+        )
         if is_diff:
             self.diff_requests.append(info)
         if existing := self.existing_request(info):
@@ -50,7 +65,17 @@ class StepRequests(Entity):
             self.request_responses.append(info)
 
 
-class TestData(Entity):
+class RTModifier(Entity):
+    version: str
+    method: str
+    path: str
+    modification: Callable[[SDKRoundtrip], None]
+
+    def match(self, rt: SDKRoundtrip, normalized_path: str) -> bool:
+        return rt.request.method == self.method and normalized_path == self.path and rt.version == self.version
+
+
+class MockRequestData(Entity):
     step_count: int
     steps: list[StepRequests] = Field(default_factory=list, init=False)
     variables: dict[str, str] = Field(default_factory=dict)
@@ -61,7 +86,12 @@ class TestData(Entity):
         return self
 
     def add_roundtrip(
-        self, rt: SDKRoundtrip, normalized_path: str, normalized_text: str, normalized_response_text: str, is_diff: bool
+        self,
+        rt: SDKRoundtrip,
+        normalized_path: str,
+        normalized_text: str,
+        normalized_response_text: str,
+        is_diff: bool,
     ):
         step = self.steps[rt.step_number - 1]
         if rt.request.method == "PATCH":
@@ -118,6 +148,8 @@ class ApiSpecPath(Entity):
 
 
 def find_normalized_path(path: str, api_spec_paths: list[ApiSpecPath]) -> ApiSpecPath:
+    if "?" in path:
+        path = path.split("?")[0]
     for api_spec_path in api_spec_paths:
         if api_spec_path.match(path):
             return api_spec_path
@@ -130,14 +162,20 @@ def normalize_text(text: str, variables: dict[str, str]) -> str:
     return text
 
 
-def create_test_data(
+def default_is_diff(rt: SDKRoundtrip) -> bool:
+    return rt.request.method not in {"DELETE", "GET"}
+
+
+def create_mock_data(
     roundtrips: list[SDKRoundtrip],
     api_spec_paths: dict[str, list[ApiSpecPath]],
     is_diff: Callable[[SDKRoundtrip], bool] | None = None,
-) -> TestData:
+    modifiers: list[RTModifier] | None = None,
+) -> MockRequestData:
     steps = max(rt.step_number for rt in roundtrips)
-    requests = TestData(step_count=steps)
-    is_diff = is_diff or (lambda rt: rt.request.method != "GET")
+    requests = MockRequestData(step_count=steps)
+    is_diff = is_diff or default_is_diff
+    modifiers = modifiers or []
     for rt in roundtrips:
         request_path = rt.request.path
         method = rt.request.method
@@ -145,8 +183,10 @@ def create_test_data(
         rt_variables = spec_path.variables(request_path)
         normalized_path = spec_path.path
         normalized_text = normalize_text(rt.request.text, rt_variables)
+        for modifier in modifiers:
+            if modifier.match(rt, normalized_path):
+                modifier.modification(rt)
         normalized_response_text = normalize_text(rt.response.text, rt_variables)
-
         requests.variables.update(rt_variables)
         requests.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
     requests.prune_duplicate_responses()
