@@ -28,7 +28,7 @@ class RequestInfo(Entity):
     @property
     def id(self):
         return "__".join(  # noqa: FLY002
-            [self.method, self.path, self.version, self.text]
+            [self.method, self.path, self.version]
         )
 
 
@@ -182,12 +182,12 @@ def create_mock_data(
         spec_path = find_normalized_path(request_path, api_spec_paths[method])
         rt_variables = spec_path.variables(request_path)
         normalized_path = spec_path.path
-        normalized_text = normalize_text(rt.request.text, rt_variables)
         for modifier in modifiers:
             if modifier.match(rt, normalized_path):
                 modifier.modification(rt)
+        normalized_text = normalize_text(rt.request.text, rt_variables)
         normalized_response_text = normalize_text(rt.response.text, rt_variables)
         requests.variables.update(rt_variables)
         requests.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
-    requests.prune_duplicate_responses()
+    # requests.prune_duplicate_responses() better to keep duplicates to stay KISS
     return requests

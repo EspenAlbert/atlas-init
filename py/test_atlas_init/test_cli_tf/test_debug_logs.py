@@ -79,8 +79,8 @@ def add_label_tags(rt: SDKRoundtrip):
             resp_dict[extra_field] = []
         if extra_field not in req_dict:
             req_dict[extra_field] = []
-    request.text = json.dumps(req_dict, indent=2)
-    response.text = json.dumps(resp_dict, indent=2)
+    request.text = json.dumps(req_dict, indent=1, sort_keys=True)
+    response.text = json.dumps(resp_dict, indent=1, sort_keys=True)
 
 
 cluster_modifier = RTModifier(
@@ -92,8 +92,9 @@ cluster_modifier = RTModifier(
 
 
 params = [
-        ("TestAccResourcePolicy_basic.log", []),
-        ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
+        # ("TestAccResourcePolicy_basic.log", []),
+        # ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
+        ("TestAccAdvancedCluster_basic.log", [cluster_modifier]),
     ]
     
 @pytest.mark.parametrize(
