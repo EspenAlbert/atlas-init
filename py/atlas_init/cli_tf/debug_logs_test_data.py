@@ -1,5 +1,7 @@
+import json
 import logging
 from collections.abc import Callable
+from typing import NamedTuple
 
 from model_lib import Entity
 from pydantic import Field, model_validator
@@ -111,6 +113,32 @@ class MockRequestData(Entity):
             is_diff,
         )
 
+    def update_variables(self, variables: dict[str, str]) -> None:
+        if missing_value := sorted(name for name, value in variables.items() if not value):
+            err_msg = f"Missing values for variables: {missing_value}"
+            raise ValueError(err_msg)
+        changes: list[VariableChange] = []
+        for name, value in variables.items():
+            old_value = self.variables.get(name)
+            if old_value and old_value != value:
+                for suffix in range(2, 10):
+                    new_name = f"{name}{suffix}"
+                    old_value2 = self.variables.get(new_name, "")
+                    if old_value2 and old_value2 != value:
+                        continue
+                    if not old_value2:
+                        logger.warning(f"Adding variable {name} to {new_name}={value}")
+                    change = VariableChange(name, new_name, old_value, value)
+                    changes.append(change)
+                    self.variables[new_name] = value
+                    break
+                else:
+                    raise ValueError(f"Too many variables with the same name and different values: {name}")
+            else:
+                self.variables[name] = value
+        if changes:
+            raise VariablesChangedError(changes)
+
     def prune_duplicate_responses(self):
         for step in self.steps:
             for request in step.request_responses:
@@ -155,6 +183,7 @@ class ApiSpecPath(Entity):
 def find_normalized_path(path: str, api_spec_paths: list[ApiSpecPath]) -> ApiSpecPath:
     if "?" in path:
         path = path.split("?")[0]
+    path = path.rstrip("/")  # remove trailing slash
     for api_spec_path in api_spec_paths:
         if api_spec_path.match(path):
             return api_spec_path
@@ -164,11 +193,31 @@ def find_normalized_path(path: str, api_spec_paths: list[ApiSpecPath]) -> ApiSpe
 def normalize_text(text: str, variables: dict[str, str]) -> str:
     for var, value in variables.items():
         text = text.replace(value, f"{{{var}}}")
-    return text
+    if not text:
+        return text
+    try:
+        parsed_text = json.loads(text)
+        return json.dumps(parsed_text, indent=1, sort_keys=True)
+    except json.JSONDecodeError:
+        logger.warning(f"Could not parse text: {text}")
+        return text
 
 
 def default_is_diff(rt: SDKRoundtrip) -> bool:
     return rt.request.method not in {"DELETE", "GET"}
+
+
+class VariableChange(NamedTuple):
+    var_name: str
+    new_var_name: str
+    old: str
+    new: str
+
+
+class VariablesChangedError(Exception):
+    def __init__(self, changes: list[VariableChange]) -> None:
+        super().__init__(f"Variables changed: {changes}")
+        self.changes = changes
 
 
 def create_mock_data(
@@ -178,7 +227,7 @@ def create_mock_data(
     modifiers: list[RTModifier] | None = None,
 ) -> MockRequestData:
     steps = max(rt.step_number for rt in roundtrips)
-    requests = MockRequestData(step_count=steps)
+    mock_data = MockRequestData(step_count=steps)
     is_diff = is_diff or default_is_diff
     modifiers = modifiers or []
     for rt in roundtrips:
@@ -187,12 +236,18 @@ def create_mock_data(
         spec_path = find_normalized_path(request_path, api_spec_paths[method])
         rt_variables = spec_path.variables(request_path)
         normalized_path = spec_path.path
+        try:
+            mock_data.update_variables(rt_variables)
+        except VariablesChangedError as e:
+            for change in e.changes:
+                rt_variables.pop(change.var_name)
+                rt_variables[change.new_var_name] = change.new
+            normalized_path = normalize_text(request_path, rt_variables)
         for modifier in modifiers:
             if modifier.match(rt, normalized_path):
                 modifier.modification(rt)
         normalized_text = normalize_text(rt.request.text, rt_variables)
         normalized_response_text = normalize_text(rt.response.text, rt_variables)
-        requests.variables.update(rt_variables)
-        requests.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
+        mock_data.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
     # requests.prune_duplicate_responses() better to keep duplicates to stay KISS
-    return requests
+    return mock_data

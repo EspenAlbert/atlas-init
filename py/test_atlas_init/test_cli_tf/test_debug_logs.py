@@ -92,8 +92,9 @@ cluster_modifier = RTModifier(
 
 
 params = [
-        # ("TestAccResourcePolicy_basic.log", []),
-        # ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
+        ("TestAccResourcePolicy_basic.log", []),
+        ("TestAccClusterAdvancedCluster_basicTenant.log", []),
+        ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
         ("TestAccAdvancedCluster_basic.log", [cluster_modifier]),
     ]
     
