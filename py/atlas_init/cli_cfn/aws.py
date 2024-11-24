@@ -10,6 +10,7 @@ from pathlib import Path
 
 import botocore.exceptions
 import humanize
+import typer
 from boto3.session import Session
 from model_lib import Event
 from mypy_boto3_cloudformation import CloudFormationClient
@@ -153,7 +154,9 @@ class StackInProgressError(StackBaseError):
 
 
 class StackError(StackBaseError):
-    pass
+    def __init__(self, status: str, timestamp: datetime, status_reason: str, reasons: str) -> None:
+        super().__init__(status, timestamp, status_reason)
+        self.reasons = reasons
 
 
 @total_ordering
@@ -246,6 +249,7 @@ def wait_on_stack_ok(
                 current_event.resource_status,
                 current_event.timestamp,
                 current_event.resource_status_reason,
+                reasons=parsed.multiple_reasons(),
             )
         status = current_event.resource_status
         logger.info(f"stack is ready {stack_name} {status} ✅")
@@ -255,7 +259,11 @@ def wait_on_stack_ok(
 
         return None
 
-    return _wait_on_stack_ok()
+    try:
+        return _wait_on_stack_ok()
+    except StackError as e:
+        logger.warning(f"stack error {stack_name} {e.status} {e.status_reason}\n{e.reasons}")
+        raise typer.Exit(1) from None
 
 
 def print_version_regions(type_name: str) -> None:

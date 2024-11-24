@@ -1,0 +1,35 @@
+name: 'New Version Tag'
+run-name: 'Create a new tag for the release'
+
+on:
+  push:
+    branches: 
+    - "main"
+    paths:
+    - "py/atlas_init/__init__.py"
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps: 
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - uses: yezz123/setup-uv@v4
+        with:
+            uv-version: "0.1.12"
+      - name: hatch-install
+        run: |
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      - name: Get the tag
+        id: get_tag
+        run: echo "tag=v$(cd py && hatch version)" >> "$GITHUB_OUTPUT"
+      - name: Create release tag
+        uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72
+        with:
+          tag: ${{ steps.get_tag.outputs.tag }}
+          tag_exists_error: false

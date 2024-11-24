@@ -1,0 +1,2057 @@
+2024-11-20T07:15:02.127Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:02.129Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:02.129Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:02.130Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:02.449Z [DEBUG] sdk.helper_resource: Stopping providers: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:02.450Z [DEBUG] sdk.helper_resource: Starting TestSteps: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:02.450Z [DEBUG] sdk.helper_resource: Starting TestStep: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:02.451Z [DEBUG] sdk.helper_resource: Running Terraform CLI plan and apply: test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:02.451Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:02.452Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:02.452Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:02.453Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors: tf_resource_type=mongodbatlas_resource_policy tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"version\")"
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"last_updated_by_user\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"policies\").ElementKeyInt(0).AttributeName(\"id\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_by_user\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_date\")"
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"last_updated_date\")"
+2024-11-20T07:15:02.841Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"id\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=efdbc07a-44d3-d02e-3ca5-97ba8eec8929 tf_mux_provider="*proto6server.Server" tf_rpc=PlanResourceChange
+2024/11/20 07:15:02 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 243
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "test-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:03 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:03 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 86
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:03Z",
+ "id": "673d8c776b13675d681aaf84",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:03Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c776b13675d681aaf83"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:04.206Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:04.206Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:04.207Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:04.207Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:04.208Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:04.555Z [DEBUG] sdk.framework: Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors: tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"policies\").ElementKeyInt(0).AttributeName(\"id\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"created_date\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"last_updated_by_user\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"last_updated_date\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"version\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"created_by_user\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:04.556Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_mux_provider="*proto6server.Server" tf_attribute_path="AttributeName(\"id\")" tf_req_id=c6ea0169-2595-9894-b8a0-e5ef418a26bd tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024/11/20 07:15:04 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 243
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "test-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:05 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:04 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 75
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c79b6145f2e523c71f7",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c79b6145f2e523c71f6"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:05 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 243
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "test-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:05 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 201 Created
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:05 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 101
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::createResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:05.617Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_req_id=d07c27de-4480-f04b-e9b0-80f6ee3061e3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_attribute_path=name tf_rpc=ApplyResourceChange
+2024-11-20T07:15:05.617Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_attribute_path=org_id tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_resource_policy tf_req_id=d07c27de-4480-f04b-e9b0-80f6ee3061e3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:05.617Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=d07c27de-4480-f04b-e9b0-80f6ee3061e3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_attribute_path=policies[0].body tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024/11/20 07:15:05 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:05 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:06 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:06 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 71
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:05Z",
+  "name": "test-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c796b13675d681aaf85"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:06.253Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policies tf_mux_provider="*proto6server.Server" tf_attribute_path=org_id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=f101c8bc-bd61-10fc-a206-4e83a4d50a53
+2024/11/20 07:15:06 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:06 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 69
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:06.269Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=d5b1a3fb-01ca-0291-69fc-0fcc5713c6cf tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_attribute_path=id tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:06.269Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_data_source_type=mongodbatlas_resource_policy tf_attribute_path=org_id tf_mux_provider="*proto6server.Server" tf_req_id=d5b1a3fb-01ca-0291-69fc-0fcc5713c6cf tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource
+2024-11-20T07:15:06.281Z [DEBUG] sdk.helper_resource: Stopping providers: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:06.282Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:06.282Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:06.282Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:06.283Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:06.671Z [DEBUG] sdk.helper_resource: Stopping providers: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024/11/20 07:15:06 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:07 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:07 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 61
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:07 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:07 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:07 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 61
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:07.648Z [DEBUG] sdk.helper_resource: Running Terraform CLI plan to check for perpetual differences: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:07.648Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:07.650Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:07.650Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:07.651Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024/11/20 07:15:08 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 243
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "test-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:08 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:08 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 71
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:08Z",
+ "id": "673d8c7cb6145f2e523c71fa",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:08Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c7cb6145f2e523c71f9"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:08 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:08 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:08 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:08 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 70
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:08.991Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=c2a2d66e-9fea-55c7-1a10-0a9be21f3fb5 tf_attribute_path=id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:08.991Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_attribute_path=org_id tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=c2a2d66e-9fea-55c7-1a10-0a9be21f3fb5
+2024/11/20 07:15:09 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:09 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 64
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:05Z",
+  "name": "test-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c796b13675d681aaf85"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:09.107Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policies tf_req_id=98df4658-db96-8315-a916-786e60e11f4d tf_attribute_path=org_id
+2024-11-20T07:15:09.118Z [DEBUG] sdk.helper_resource: Stopping providers: test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:09.118Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:09.119Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:09.119Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:09.120Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:09.493Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:09.494Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:09.494Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:09.494Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:09.495Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024/11/20 07:15:09 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:10 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:10 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 72
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:10.271Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_attribute_path=created_date tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:10.271Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=last_updated_by_user.id tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:10.271Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_attribute_path=last_updated_by_user.name tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:10.271Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=last_updated_by_user tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource
+2024-11-20T07:15:10.271Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=org_id tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=policies[0].id tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=policies[0].body tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=policies[0]
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=policies tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_attribute_path=version
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_attribute_path=id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_attribute_path=last_updated_date tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=name
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=created_by_user.name
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=created_by_user.id tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:10.272Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_resource_type=mongodbatlas_resource_policy tf_rpc=ReadResource tf_attribute_path=created_by_user tf_req_id=39720f8a-e01e-d9da-c109-adadd9377183 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024/11/20 07:15:10 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 243
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "test-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:10 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:10 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 87
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:10Z",
+ "id": "673d8c7e6b13675d681aaf8a",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:10Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c7e6b13675d681aaf89"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:10 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:10 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:11 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:11 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 58
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:05Z",
+  "name": "test-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c796b13675d681aaf85"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024/11/20 07:15:11 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:11 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 56
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:11.236Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_req_id=716fff8e-70c1-9a90-85f5-bfd261bc9c15 tf_attribute_path=id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:11.236Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=716fff8e-70c1-9a90-85f5-bfd261bc9c15 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_attribute_path=org_id
+2024-11-20T07:15:11.236Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policies tf_mux_provider="*proto6server.Server" tf_attribute_path=org_id tf_req_id=c7fc0fdb-36e9-1824-1fb5-8ffe44bb4aa0 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:11.244Z [DEBUG] sdk.helper_resource: Stopping providers: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:11.245Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:11.246Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=1
+2024-11-20T07:15:11.246Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:11.248Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:11.601Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1
+2024-11-20T07:15:11.601Z [DEBUG] sdk.helper_resource: Finished TestStep: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=1 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:11.601Z [DEBUG] sdk.helper_resource: Starting TestStep: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2
+2024-11-20T07:15:11.602Z [DEBUG] sdk.helper_resource: Running Terraform CLI plan and apply: test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:11.602Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2
+2024-11-20T07:15:11.603Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:11.603Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:11.604Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024/11/20 07:15:11 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:12 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:12 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 57
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:05Z",
+ "name": "test-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c796b13675d681aaf85"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_attribute_path=name
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=version tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=id
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=org_id tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=policies[0].body tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=policies[0].id tf_rpc=ReadResource
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=policies[0]
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=policies tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=created_by_user.name tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=created_by_user.id
+2024-11-20T07:15:12.457Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=created_by_user tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:12.458Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=last_updated_date tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:12.458Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=last_updated_by_user.name tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1
+2024-11-20T07:15:12.458Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1 tf_attribute_path=last_updated_by_user.id tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:12.458Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=last_updated_by_user tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1
+2024-11-20T07:15:12.458Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_attribute_path=created_date tf_req_id=4531bced-7e59-a502-7d0c-83d24dea57e1
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: Detected value change between proposed new state and prior state: tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=name tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"version\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"policies\").ElementKeyInt(0).AttributeName(\"id\")"
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"created_date\")"
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"last_updated_by_user\").AttributeName(\"name\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"last_updated_by_user\").AttributeName(\"id\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"last_updated_by_user\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"last_updated_date\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652 tf_attribute_path="AttributeName(\"id\")"
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"created_by_user\").AttributeName(\"name\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"created_by_user\").AttributeName(\"id\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652
+2024-11-20T07:15:12.461Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"created_by_user\")" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=010413ac-838f-89fe-b7d4-6f5ad9d8e652
+2024/11/20 07:15:12 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 246
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "updated-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:13 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:12 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 85
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:13Z",
+ "id": "673d8c816b13675d681aaf8c",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:13Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c816b13675d681aaf8b"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:13.392Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2
+2024-11-20T07:15:13.393Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:13.393Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:13.393Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:13.394Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: Detected value change between proposed new state and prior state: tf_attribute_path=name tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"version\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"last_updated_by_user\").AttributeName(\"id\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"last_updated_by_user\").AttributeName(\"name\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"last_updated_by_user\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"policies\").ElementKeyInt(0).AttributeName(\"id\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"last_updated_date\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_attribute_path="AttributeName(\"id\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_by_user\").AttributeName(\"name\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_by_user\").AttributeName(\"id\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_by_user\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf
+2024-11-20T07:15:13.769Z [DEBUG] sdk.framework: marking computed attribute that is null in the config as unknown: tf_req_id=268cc35f-e09e-0ae9-26f0-cee5d4a15dcf tf_resource_type=mongodbatlas_resource_policy tf_attribute_path="AttributeName(\"created_date\")" tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=PlanResourceChange
+2024/11/20 07:15:13 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 246
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "updated-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:14 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:14 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 76
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:14Z",
+ "id": "673d8c82b6145f2e523c71fc",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fb"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:14 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+PATCH /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 246
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "updated-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:14 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Length: 577
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:14 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 83
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::editResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:14.838Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=policies[0].body tf_req_id=f66d7c31-bd47-e582-b690-71024e6fb0f6 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange
+2024-11-20T07:15:14.838Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=id tf_req_id=f66d7c31-bd47-e582-b690-71024e6fb0f6 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange
+2024-11-20T07:15:14.838Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=version tf_req_id=f66d7c31-bd47-e582-b690-71024e6fb0f6
+2024-11-20T07:15:14.838Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=name tf_req_id=f66d7c31-bd47-e582-b690-71024e6fb0f6 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange
+2024-11-20T07:15:14.838Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_attribute_path=org_id tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=f66d7c31-bd47-e582-b690-71024e6fb0f6
+2024/11/20 07:15:14 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:14 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:15 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:15 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 63
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:15.295Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=c6dee674-30dc-50cb-38fd-fc671c62a37b tf_attribute_path=id tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:15.295Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=c6dee674-30dc-50cb-38fd-fc671c62a37b tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_attribute_path=org_id
+2024/11/20 07:15:15 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:15 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 67
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:14Z",
+  "name": "updated-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c82b6145f2e523c71fd"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:15.354Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_attribute_path=org_id tf_data_source_type=mongodbatlas_resource_policies tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_req_id=fae6558f-2dc7-5c15-dd46-3fba702e9496
+2024-11-20T07:15:15.372Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2
+2024-11-20T07:15:15.372Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:15.373Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:15.373Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:15.373Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:15.735Z [DEBUG] sdk.helper_resource: Stopping providers: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024/11/20 07:15:15 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:16 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:16 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 60
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:16 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:16 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:16 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 72
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:16.589Z [DEBUG] sdk.helper_resource: Running Terraform CLI plan to check for perpetual differences: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:16.589Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:16.591Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:16.591Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=2
+2024-11-20T07:15:16.593Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024/11/20 07:15:17 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 246
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "updated-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:17 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:17 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 71
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:17Z",
+ "id": "673d8c85b6145f2e523c7200",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:17Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c85b6145f2e523c71ff"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:17 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:17 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:18 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:17 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 69
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:14Z",
+  "name": "updated-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c82b6145f2e523c71fd"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:18.017Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=9d2fa81b-2f31-5939-07fd-5d807be0192d tf_data_source_type=mongodbatlas_resource_policies tf_attribute_path=org_id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_mux_provider="*proto6server.Server" tf_rpc=ReadDataSource
+2024/11/20 07:15:18 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:18 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 59
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:18.148Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadDataSource tf_attribute_path=org_id tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=07bf61db-b290-bec5-aa3f-e721ce5fd131 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:18.148Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=id tf_req_id=07bf61db-b290-bec5-aa3f-e721ce5fd131 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:18.153Z [DEBUG] sdk.helper_resource: Stopping providers: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:18.153Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2
+2024-11-20T07:15:18.153Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:18.154Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:18.154Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:18.528Z [DEBUG] sdk.helper_resource: Stopping providers: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:18.529Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:18.530Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:18.530Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:18.531Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024/11/20 07:15:18 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:19 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:19 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 68
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_mux_provider="*proto6server.Server" tf_attribute_path=last_updated_by_user.id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_mux_provider="*proto6server.Server" tf_attribute_path=last_updated_by_user.name tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_mux_provider="*proto6server.Server" tf_attribute_path=last_updated_by_user
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=last_updated_date
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=org_id tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=policies[0].id
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=policies[0].body tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=policies[0] tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=policies tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=version tf_mux_provider="*proto6server.Server"
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_attribute_path=created_date tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_mux_provider="*proto6server.Server" tf_attribute_path=id
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=created_by_user.id tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=created_by_user.name
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=created_by_user
+2024-11-20T07:15:19.386Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_resource_type=mongodbatlas_resource_policy tf_req_id=7c74c166-c64e-209b-637c-6a136c403ff6 tf_attribute_path=name tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadResource
+2024/11/20 07:15:19 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+POST /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies:validate HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Content-Length: 246
+Accept: application/vnd.atlas.2024-08-05+json
+Content-Type: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+{
+ "name": "updated-policy",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n"
+  }
+ ]
+}
+
+-----------------------------------------------------
+2024/11/20 07:15:19 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:19 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 87
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::validateResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:19Z",
+ "id": "673d8c876b13675d681aaf8f",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:19Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c876b13675d681aaf8e"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024/11/20 07:15:19 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:19 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:20 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:20 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 71
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:14Z",
+  "name": "updated-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c82b6145f2e523c71fd"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:20.257Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=d0752ed5-cb0f-a2a7-da08-cce138307c65 tf_attribute_path=org_id tf_mux_provider="*proto6server.Server" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policies
+2024/11/20 07:15:20 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:20 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 62
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:20.373Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_mux_provider="*proto6server.Server" tf_attribute_path=id tf_data_source_type=mongodbatlas_resource_policy tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_req_id=846d665c-74a2-1a5f-bf61-c7c9de992bdb
+2024-11-20T07:15:20.373Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_req_id=846d665c-74a2-1a5f-bf61-c7c9de992bdb tf_mux_provider="*proto6server.Server" tf_attribute_path=org_id tf_data_source_type=mongodbatlas_resource_policy tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource
+2024-11-20T07:15:20.378Z [DEBUG] sdk.helper_resource: Stopping providers: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:20.379Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.380Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:20.381Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.382Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.761Z [DEBUG] sdk.helper_resource: Stopping providers: test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:20.762Z [DEBUG] sdk.helper_resource: Finished TestStep: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=2 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:20.762Z [DEBUG] sdk.helper_resource: Starting TestStep: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:20.762Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.763Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.763Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:20.764Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:21.126Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:21.127Z [DEBUG] sdk.helper_resource: Calling TestStep ImportStateIdFunc: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:21.127Z [DEBUG] sdk.helper_resource: Called TestStep ImportStateIdFunc: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:21.471Z [DEBUG] sdk.helper_resource: Running Terraform CLI init and import: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:21.471Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:21.472Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:21.472Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:21.472Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:21.806Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:21.806Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:21.807Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:21.807Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:21.808Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024/11/20 07:15:22 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:22 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:22 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 62
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:22.583Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=0ba6edc8-5e6e-7245-521d-11fa95605576 tf_attribute_path=org_id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:22.583Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_rpc=ReadResource tf_resource_type=mongodbatlas_resource_policy tf_mux_provider="*proto6server.Server" tf_req_id=0ba6edc8-5e6e-7245-521d-11fa95605576 tf_attribute_path=id tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024/11/20 07:15:22 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:22 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:23 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:23 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 70
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicies
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+[
+ {
+  "createdByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "createdDate": "2024-11-20T07:15:05Z",
+  "id": "673d8c796b13675d681aaf86",
+  "lastUpdatedByUser": {
+   "id": "65def6f00f722a1507105ad8",
+   "name": "mvccpeou"
+  },
+  "lastUpdatedDate": "2024-11-20T07:15:14Z",
+  "name": "updated-policy",
+  "orgId": "65def6ce0f722a1507105aa5",
+  "policies": [
+   {
+    "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+    "id": "673d8c82b6145f2e523c71fd"
+   }
+  ],
+  "version": "v1"
+ }
+]
+-----------------------------------------------------
+2024-11-20T07:15:23.059Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_resource_policies tf_mux_provider="*proto6server.Server" tf_req_id=0bfb6c47-cd3d-c845-22f6-d827fb993abd tf_attribute_path=org_id
+2024/11/20 07:15:23 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:23 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 60
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "createdByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "createdDate": "2024-11-20T07:15:05Z",
+ "id": "673d8c796b13675d681aaf86",
+ "lastUpdatedByUser": {
+  "id": "65def6f00f722a1507105ad8",
+  "name": "mvccpeou"
+ },
+ "lastUpdatedDate": "2024-11-20T07:15:14Z",
+ "name": "updated-policy",
+ "orgId": "65def6ce0f722a1507105aa5",
+ "policies": [
+  {
+   "body": "\t\t\t\n\tforbid (\n\tprincipal,\n\taction == cloud::Action::\"cluster.createEdit\",\n\tresource\n\t) when {\n\tcontext.cluster.cloudProviders.containsAny([cloud::cloudProvider::\"aws\"])\n\t};\n",
+   "id": "673d8c82b6145f2e523c71fd"
+  }
+ ],
+ "version": "v1"
+}
+-----------------------------------------------------
+2024-11-20T07:15:23.143Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_attribute_path=org_id tf_req_id=f2323233-9dae-7b43-cbc2-769b858b87e0 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_mux_provider="*proto6server.Server" tf_data_source_type=mongodbatlas_resource_policy
+2024-11-20T07:15:23.143Z [DEBUG] sdk.framework: Value switched to prior value due to semantic equality logic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ReadDataSource tf_mux_provider="*proto6server.Server" tf_data_source_type=mongodbatlas_resource_policy tf_attribute_path=id tf_req_id=f2323233-9dae-7b43-cbc2-769b858b87e0
+2024-11-20T07:15:23.155Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:23.155Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.157Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:23.157Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:23.158Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.532Z [DEBUG] sdk.helper_resource: Stopping providers: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:23.533Z [DEBUG] sdk.helper_resource: Finished TestStep: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:23.533Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_step_number=3
+2024-11-20T07:15:23.534Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.535Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.535Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_name=TestAccResourcePolicy_basic tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106
+2024-11-20T07:15:23.867Z [DEBUG] sdk.helper_resource: Stopping providers: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:23.867Z [DEBUG] sdk.helper_resource: Creating tfprotov6 provider instance: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:23.868Z [DEBUG] sdk.helper_resource: Created tfprotov6 provider instance: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.868Z [DEBUG] sdk.helper_resource: Starting tfprotov6 provider instance server: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2024-11-20T07:15:23.869Z [DEBUG] sdk.helper_resource: Started tfprotov6 provider instance server: test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform
+2024-11-20T07:15:24.229Z [WARN]  sdk.helper_schema: Previously configured provider being re-configured. This can cause issues in concurrent testing if the configurations are not equal.: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=7a15f7d3-cfd5-dadc-bf1e-af43d9161eb1 tf_rpc=ConfigureProvider tf_mux_provider=tf5to6server.v5tov6Server
+2024/11/20 07:15:24 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+DELETE /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/1.9.6
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:24 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 200 OK
+Content-Length: 2
+Content-Type: application/vnd.atlas.2024-08-05+json;charset=utf-8
+Date: Wed, 20 Nov 2024 07:15:24 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 78
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::deleteResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{}
+-----------------------------------------------------
+2024-11-20T07:15:24.641Z [DEBUG] sdk.helper_resource: Stopping providers: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024-11-20T07:15:24.642Z [DEBUG] sdk.helper_resource: Calling TestCase CheckDestroy: test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3 test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic
+2024/11/20 07:15:24 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:25 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 404 Not Found
+Content-Length: 147
+Content-Type: application/vnd.atlas.2024-08-05+json
+Date: Wed, 20 Nov 2024 07:15:24 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 68
+X-Error-Code: RESOURCE_POLICY_NOT_FOUND
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "errorCode": "RESOURCE_POLICY_NOT_FOUND",
+ "message": "Resource Policy with id \"673d8c796b13675d681aaf86\" not found",
+ "version": "1",
+ "status": "ERROR"
+}
+-----------------------------------------------------
+2024/11/20 07:15:25 [DEBUG] MongoDB Atlas API Request Details:
+---[ REQUEST ]---------------------------------------
+GET /api/atlas/v2/orgs/65def6ce0f722a1507105aa5/resourcePolicies/673d8c796b13675d681aaf86 HTTP/1.1
+Host: cloud-dev.mongodb.com
+User-Agent: terraform-provider-mongodbatlas/devel Terraform/
+Accept: application/vnd.atlas.2024-08-05+json
+Accept-Encoding: gzip
+
+
+-----------------------------------------------------
+2024/11/20 07:15:25 [DEBUG] MongoDB Atlas API Response Details:
+---[ RESPONSE ]--------------------------------------
+HTTP/2.0 404 Not Found
+Content-Length: 147
+Content-Type: application/vnd.atlas.2024-08-05+json
+Date: Wed, 20 Nov 2024 07:15:25 GMT
+Referrer-Policy: strict-origin-when-cross-origin
+Server: mdbws
+Strict-Transport-Security: max-age=31536000; includeSubdomains;
+X-Content-Type-Options: nosniff
+X-Envoy-Upstream-Service-Time: 62
+X-Error-Code: RESOURCE_POLICY_NOT_FOUND
+X-Frame-Options: DENY
+X-Java-Method: ApiAtlasResourcePolicyResource::getResourcePolicy
+X-Java-Version: 17.0.12+7
+X-Mongodb-Service-Version: gitHash=6090632368e140826bcaf0377c7f84ac64a5eac6; versionString=master
+X-Permitted-Cross-Domain-Policies: none
+
+{
+ "errorCode": "RESOURCE_POLICY_NOT_FOUND",
+ "message": "Resource Policy with id \"673d8c796b13675d681aaf86\" not found",
+ "version": "1",
+ "status": "ERROR"
+}
+-----------------------------------------------------
+2024-11-20T07:15:25.477Z [DEBUG] sdk.helper_resource: Called TestCase CheckDestroy: test_working_directory=/var/folders/vz/xd9kxc6j17z3ys_mg65s9k0m0000gp/T/plugintest2155276106 test_name=TestAccResourcePolicy_basic test_terraform_path=/Users/espen.albert/.asdf/shims/terraform test_step_number=3
+2024-11-20T07:15:25.479Z [DEBUG] sdk.helper_resource: Finished TestCase: test_name=TestAccResourcePolicy_basic

@@ -14,6 +14,7 @@ from atlas_init.cli_cfn.aws import (
 )
 from atlas_init.cli_cfn.aws import delete_stack as delete_stack_aws
 from atlas_init.cli_cfn.cfn_parameter_finder import (
+    CfnTemplate,
     check_execution_role,
     decode_parameters,
     dump_resource_to_file,
@@ -40,6 +41,7 @@ class CfnExampleInputs(CfnType):
     execution_role: str
     export_example_to_inputs: bool
     export_example_to_samples: bool
+    register_all_types_in_example: bool
 
     @field_validator("resource_params", mode="before")
     @classmethod
@@ -73,7 +75,9 @@ def example_cmd(
     ),
     operation: str = typer.Argument(...),
     example_name: str = typer.Option("", "-e", "--example-name", help="example filestem"),
-    resource_params: list[str] = typer.Option(..., "-r", default_factory=list),
+    resource_params: list[str] = typer.Option(
+        ..., "-r", "--resource-param", default_factory=list, help="key=value, can be set many times"
+    ),
     stack_timeout_s: int = typer.Option(3600, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
     reg_version: str = typer.Option("", "--reg-version", help="Register a specific version"),
@@ -86,6 +90,7 @@ def example_cmd(
     export_example_to_samples: bool = typer.Option(
         False, "-s", "--export-example-to-samples", help="Export example to samples"
     ),
+    register_all_types_in_example: bool = typer.Option(False, "--reg-all", help="Check all types"),
 ):
     settings = init_settings()
     assert settings.cfn_config, "no cfn config found, re-run atlas_init apply with CFN flags"
@@ -106,6 +111,7 @@ def example_cmd(
         execution_role=execution_role or check_execution_role(repo_path, env_vars_generated),
         export_example_to_inputs=export_example_to_inputs,
         export_example_to_samples=export_example_to_samples,
+        register_all_types_in_example=register_all_types_in_example,
     )
     example_handler(inputs, repo_path, resource_path, settings)
 
@@ -147,6 +153,18 @@ def example_handler(inputs: CfnExampleInputs, repo_path: Path, resource_path: Pa
         resource_params=inputs.resource_params,
         type_name=type_name,
     )
+    if inputs.register_all_types_in_example:
+        extra_example_types = [t for t in CfnTemplate.read_template_types(template_path) if t != type_name]
+        for extra_type in extra_example_types:
+            logger.info(f"extra type {extra_type} in example {template_path}")
+            ensure_resource_type_activated(
+                extra_type,
+                region,
+                force_deregister,
+                settings.is_interactive,
+                resource_path,
+                execution_role,
+            )
     logger.info(f"parameters: {parameters}")
     if not_found:
         # TODO: support specifying these extra

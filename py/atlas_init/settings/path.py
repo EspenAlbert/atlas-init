@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 import dotenv
@@ -44,6 +45,13 @@ def dump_dotenv(path: Path, env_vars: dict[str, str]):
 
 def current_dir():
     return Path(os.path.curdir).absolute()
+
+
+def default_factory_cwd(rel_path: str) -> Callable[[], Path]:
+    def default_factory():
+        return current_dir() / rel_path
+
+    return default_factory
 
 
 def repo_path_rel_path() -> tuple[Path, str]:

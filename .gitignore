@@ -9,10 +9,7 @@ profiles/
 tf/modules/playground/
 tf/playground_caller.tf
 schema/
-tf2
-tf3
-tf4
-tf5
+tf_debug/
 dist
 .ruff_cache
 py/.coverage
@@ -26,3 +23,4 @@ github_ci_summary
 *.pyc
 demo/
 py/.env*
+tf_log/

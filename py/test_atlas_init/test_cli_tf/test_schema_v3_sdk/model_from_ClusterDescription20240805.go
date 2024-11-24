@@ -15,7 +15,6 @@ func NewTFModel(ctx context.Context, input *admin.ClusterDescription20240805, ti
 	biConnector := NewBiConnectorObjType(ctx, input.BiConnector, diags)
 	connectionStrings := NewConnectionStringsObjType(ctx, input.ConnectionStrings, diags)
 	labels := NewLabelsObjType(ctx, input.Labels, diags)
-	mongoDBEmployeeAccessGrant := NewMongoDbEmployeeAccessGrantObjType(ctx, input.MongoDBEmployeeAccessGrant, diags)
 	replicationSpecs := NewReplicationSpecsObjType(ctx, input.ReplicationSpecs, diags)
 	tags := NewTagsObjType(ctx, input.Tags, diags)
 	if diags.HasError() {
@@ -23,36 +22,32 @@ func NewTFModel(ctx context.Context, input *admin.ClusterDescription20240805, ti
 	}
 	return &TFModel{
 		AcceptDataRisksAndForceReplicaSetReconfig: types.StringPointerValue(conversion.TimePtrToStringPtr(input.AcceptDataRisksAndForceReplicaSetReconfig)),
-		BackupEnabled:               types.BoolPointerValue(input.BackupEnabled),
-		BiConnector:                 biConnector,
-		ClusterType:                 types.StringPointerValue(input.ClusterType),
-		ConfigServerManagementMode:  types.StringPointerValue(input.ConfigServerManagementMode),
-		ConfigServerType:            types.StringPointerValue(input.ConfigServerType),
-		ConnectionStrings:           connectionStrings,
-		CreateDate:                  types.StringPointerValue(conversion.TimePtrToStringPtr(input.CreateDate)),
-		DiskWarmingMode:             types.StringPointerValue(input.DiskWarmingMode),
-		EncryptionAtRestProvider:    types.StringPointerValue(input.EncryptionAtRestProvider),
-		FeatureCompatibilityVersion: types.StringPointerValue(input.FeatureCompatibilityVersion),
-		FeatureCompatibilityVersionExpirationDate: types.StringPointerValue(conversion.TimePtrToStringPtr(input.FeatureCompatibilityVersionExpirationDate)),
-		GlobalClusterSelfManagedSharding:          types.BoolPointerValue(input.GlobalClusterSelfManagedSharding),
-		ProjectID:                                 types.StringPointerValue(input.GroupId),
-		ClusterID:                                 types.StringPointerValue(input.Id),
-		Labels:                                    labels,
-		MongoDBEmployeeAccessGrant:                mongoDBEmployeeAccessGrant,
-		MongoDBMajorVersion:                       types.StringPointerValue(input.MongoDBMajorVersion),
-		MongoDBVersion:                            types.StringPointerValue(input.MongoDBVersion),
-		Name:                                      types.StringPointerValue(input.Name),
-		Paused:                                    types.BoolPointerValue(input.Paused),
-		PitEnabled:                                types.BoolPointerValue(input.PitEnabled),
-		RedactClientLogData:                       types.BoolPointerValue(input.RedactClientLogData),
-		ReplicaSetScalingStrategy:                 types.StringPointerValue(input.ReplicaSetScalingStrategy),
-		ReplicationSpecs:                          replicationSpecs,
-		RootCertType:                              types.StringPointerValue(input.RootCertType),
-		StateName:                                 types.StringPointerValue(input.StateName),
-		Tags:                                      tags,
-		TerminationProtectionEnabled:              types.BoolPointerValue(input.TerminationProtectionEnabled),
-		VersionReleaseSystem:                      types.StringPointerValue(input.VersionReleaseSystem),
-		Timeouts:                                  timeout,
+		BackupEnabled:                    types.BoolPointerValue(input.BackupEnabled),
+		BiConnector:                      biConnector,
+		ClusterType:                      types.StringPointerValue(input.ClusterType),
+		ConfigServerManagementMode:       types.StringPointerValue(input.ConfigServerManagementMode),
+		ConfigServerType:                 types.StringPointerValue(input.ConfigServerType),
+		ConnectionStrings:                connectionStrings,
+		CreateDate:                       types.StringPointerValue(conversion.TimePtrToStringPtr(input.CreateDate)),
+		EncryptionAtRestProvider:         types.StringPointerValue(input.EncryptionAtRestProvider),
+		GlobalClusterSelfManagedSharding: types.BoolPointerValue(input.GlobalClusterSelfManagedSharding),
+		ProjectID:                        types.StringPointerValue(input.GroupId),
+		ClusterID:                        types.StringPointerValue(input.Id),
+		Labels:                           labels,
+		MongoDBMajorVersion:              types.StringPointerValue(input.MongoDBMajorVersion),
+		MongoDBVersion:                   types.StringPointerValue(input.MongoDBVersion),
+		Name:                             types.StringPointerValue(input.Name),
+		Paused:                           types.BoolPointerValue(input.Paused),
+		PitEnabled:                       types.BoolPointerValue(input.PitEnabled),
+		RedactClientLogData:              types.BoolPointerValue(input.RedactClientLogData),
+		ReplicaSetScalingStrategy:        types.StringPointerValue(input.ReplicaSetScalingStrategy),
+		ReplicationSpecs:                 replicationSpecs,
+		RootCertType:                     types.StringPointerValue(input.RootCertType),
+		StateName:                        types.StringPointerValue(input.StateName),
+		Tags:                             tags,
+		TerminationProtectionEnabled:     types.BoolPointerValue(input.TerminationProtectionEnabled),
+		VersionReleaseSystem:             types.StringPointerValue(input.VersionReleaseSystem),
+		Timeouts:                         timeout,
 	}, nil
 }
 
@@ -75,13 +70,11 @@ func NewConnectionStringsObjType(ctx context.Context, input *admin.ClusterConnec
 	}
 	privateEndpoint := NewPrivateEndpointObjType(ctx, input.PrivateEndpoint, diags)
 	tfModel := TFConnectionStringsModel{
-		AwsPrivateLink:    conversion.ToTFMapOfString(ctx, diags, input.AwsPrivateLink),
-		AwsPrivateLinkSrv: conversion.ToTFMapOfString(ctx, diags, input.AwsPrivateLinkSrv),
-		Private:           types.StringPointerValue(input.Private),
-		PrivateEndpoint:   privateEndpoint,
-		PrivateSrv:        types.StringPointerValue(input.PrivateSrv),
-		Standard:          types.StringPointerValue(input.Standard),
-		StandardSrv:       types.StringPointerValue(input.StandardSrv),
+		Private:         types.StringPointerValue(input.Private),
+		PrivateEndpoint: privateEndpoint,
+		PrivateSrv:      types.StringPointerValue(input.PrivateSrv),
+		Standard:        types.StringPointerValue(input.Standard),
+		StandardSrv:     types.StringPointerValue(input.StandardSrv),
 	}
 	objType, diagsLocal := types.ObjectValueFrom(ctx, ConnectionStringsObjType.AttrTypes, tfModel)
 	diags.Append(diagsLocal...)
@@ -102,19 +95,6 @@ func NewLabelsObjType(ctx context.Context, input *[]admin.ComponentLabel, diags 
 	listType, diagsLocal := types.ListValueFrom(ctx, LabelsObjType, tfModels)
 	diags.Append(diagsLocal...)
 	return listType
-}
-
-func NewMongoDbEmployeeAccessGrantObjType(ctx context.Context, input *admin.EmployeeAccessGrant, diags *diag.Diagnostics) types.Object {
-	if input == nil {
-		return types.ObjectNull(MongoDbEmployeeAccessGrantObjType.AttrTypes)
-	}
-	tfModel := TFMongoDbEmployeeAccessGrantModel{
-		ExpirationTime: types.StringValue(conversion.TimeToString(input.ExpirationTime)),
-		GrantType:      types.StringValue(input.GrantType),
-	}
-	objType, diagsLocal := types.ObjectValueFrom(ctx, MongoDbEmployeeAccessGrantObjType.AttrTypes, tfModel)
-	diags.Append(diagsLocal...)
-	return objType
 }
 
 func NewReplicationSpecsObjType(ctx context.Context, input *[]admin.ReplicationSpec20240805, diags *diag.Diagnostics) types.List {

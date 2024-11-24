@@ -163,6 +163,18 @@ class Attribute(BaseModelLocal):
         return self.nested_model.nested_object.attributes
 
     @property
+    def is_optional(self) -> bool:
+        return self.computed_optional_required in {
+            ComputedOptionalRequired.optional,
+            ComputedOptionalRequired.computed_optional,
+            ComputedOptionalRequired.computed,
+        }
+
+    @property
+    def is_required(self) -> bool:
+        return self.computed_optional_required == ComputedOptionalRequired.required
+
+    @property
     def go_type(self) -> str:
         assert not self.is_nested
         if self.bool:
@@ -185,6 +197,11 @@ class Attribute(BaseModelLocal):
             raise NotImplementedError(f"set {self.name}")
         raise NotImplementedError(f"unknown type: {self.name}")
 
+    @property
+    def go_type_optional(self) -> str:
+        assert not self.is_nested, "should find go_type_optional for a nested attribute"
+        return f"*{self.go_type}" if self.is_optional else self.go_type
+
 
 class Schema(BaseModelLocal):
     description: str | None = None
@@ -202,3 +219,4 @@ class Resource(BaseModelLocal):
 
 
 ResourceSchemaV3 = Resource
+TF_MODEL_NAME = "TFModel"

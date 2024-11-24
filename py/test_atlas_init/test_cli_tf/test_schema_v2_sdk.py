@@ -1,6 +1,6 @@
 import pytest
 
-from atlas_init.cli_tf.schema_v2 import SDKModelExample, SchemaV2
+from atlas_init.cli_tf.schema_v2 import SchemaV2, SDKModelExample
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
 
 
