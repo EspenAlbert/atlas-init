@@ -29,7 +29,13 @@ jobs:
         id: get_tag
         run: echo "tag=v$(cd py && hatch version)" >> "$GITHUB_OUTPUT"
       - name: Create release tag
+        id: tag_create
         uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72
         with:
           tag: ${{ steps.get_tag.outputs.tag }}
           tag_exists_error: false
+      # https://stackoverflow.com/questions/72110432/github-workflow-is-not-triggered-after-pushing-tags
+      - name: TriggerRelease
+        if: ${{ steps.tag_create.outputs.tag_exists != 'true' }}"
+        run: |
+          gh workflow run release.yml --ref  ${{ steps.get_tag.outputs.tag }}
