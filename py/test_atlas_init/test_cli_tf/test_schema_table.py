@@ -53,10 +53,10 @@ def test_create_html_diff(go_schema_paths):
         )
     )
     html_text = difflib.HtmlDiff().make_file(
-        table_tpf.splitlines(),
         table_sdk_v2.splitlines(),
-        "tpf",
+        table_tpf.splitlines(),
         "sdk_v2",
+        "tpf",
     )
     output_path = output_dir / f"diff-{columns[0]}.html"
     output_path.write_text(html_text)
