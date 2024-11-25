@@ -1,18 +1,15 @@
-from collections import defaultdict
 import json
 import logging
 from os import getenv
-from pathlib import Path
 from typing import Callable
 from atlas_init.cli_tf.debug_logs import SDKRoundtrip, parse_http_requests, parsed
 from atlas_init.cli_tf.debug_logs_test_data import (
-    ApiSpecPath,
     create_mock_data,
     default_is_diff,
 )
 from atlas_init.cli_tf.debug_logs_test_data import RTModifier
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema
-from model_lib import dump, parse_model
+from atlas_init.repos.go_sdk import parse_api_spec_paths
+from model_lib import dump
 import pytest
 
 logger = logging.getLogger(__name__)
@@ -48,13 +45,7 @@ def log_roundtrips(
 
 @pytest.fixture(scope="session")
 def api_spec_paths(sdk_repo_path):
-    api_spec_path = sdk_repo_path / "openapi/atlas-api-transformed.yaml"
-    model = parse_model(api_spec_path, t=OpenapiSchema)
-    paths: dict[str, list[ApiSpecPath]] = defaultdict(list)
-    for path, path_dict in model.paths.items():
-        for method in path_dict:
-            paths[method.upper()].append(ApiSpecPath(path=path))
-    return paths
+    return parse_api_spec_paths(sdk_repo_path)
 
 
 _resource_policy_log = "TestAccResourcePolicy_basic.log"
@@ -92,12 +83,13 @@ cluster_modifier = RTModifier(
 
 
 params = [
-        ("TestAccResourcePolicy_basic.log", []),
-        ("TestAccClusterAdvancedCluster_basicTenant.log", []),
-        ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
-        ("TestAccAdvancedCluster_basic.log", [cluster_modifier]),
-    ]
-    
+    ("TestAccResourcePolicy_basic.log", []),
+    ("TestAccClusterAdvancedCluster_basicTenant.log", []),
+    ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
+    ("TestAccAdvancedCluster_basic.log", [cluster_modifier]),
+]
+
+
 @pytest.mark.parametrize(
     "log_filename,modifiers",
     params,

@@ -9,6 +9,7 @@ import typer
 from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.file_utils import clean_dir
 
+from atlas_init.cli_args import option_sdk_repo_path
 from atlas_init.cli_helper.run import (
     add_to_clipboard,
     run_binary_command_is_ok,
@@ -27,6 +28,7 @@ from atlas_init.cli_tf.go_test_summary import (
     create_detailed_summary,
     create_short_summary,
 )
+from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
 from atlas_init.cli_tf.schema import (
     download_admin_api,
     dump_generator_config,
@@ -45,6 +47,7 @@ from atlas_init.settings.env_vars import init_settings
 from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
+app.command(name="mock-tf-log")(mock_tf_log_cmd)
 logger = logging.getLogger(__name__)
 
 
@@ -224,7 +227,7 @@ def schema2(
     ),
     config_path: Path = typer.Option("", "-c", "--config", help="the path to the SchemaV2 config"),
     replace: bool = typer.Option(False, "-r", "--replace", help="replace the existing schema file"),
-    sdk_repo_path_str: str = typer.Option("", "-sdk", "--sdk-repo-path", help="the path to the sdk repo"),
+    sdk_repo_path_str: str = option_sdk_repo_path,
 ):
     repo_path = current_repo_path(Repo.TF)
     config_path = config_path or repo_path / "schema_v2.yaml"

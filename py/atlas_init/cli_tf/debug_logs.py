@@ -126,6 +126,19 @@ class FileRef(NamedTuple):
     line_end: int
 
 
+_name_extract = re.compile(r"test_name=(\S+)")
+
+
+def parse_test_name(logs: str) -> str:
+    test_count = logs.count(MARKER_TEST)
+    assert test_count == 1, f"Only one test is supported, found {test_count}"
+    test_start = logs.index(MARKER_TEST)
+    full_line = logs[test_start:].split("\n", maxsplit=1)[0]
+    if match := _name_extract.search(full_line):
+        return match.group(1)
+    raise ValueError(f"Could not extract test name from {full_line}")
+
+
 def parse_http_requests(logs: str) -> list[SDKRoundtrip]:
     """
     Problem: With requests that are done in parallel.
@@ -138,8 +151,8 @@ def parse_http_requests(logs: str) -> list[SDKRoundtrip]:
     Method: (accepted)
     Can say that expected payload is either a list or a dict and if it ends with an identifier it is higher chance for a dict
     """
-    test_count = logs.count(MARKER_TEST)
-    assert test_count == 1, f"Only one test is supported, found {test_count}"
+    test_name = parse_test_name(logs)
+    logger.info(f"Finding http requests for test name: {test_name}")
     requests, responses = parse_raw_req_responses(logs)
     tf_step_starts = [i for i, line in enumerate(logs.splitlines()) if MARKER_START_STEP in line]
     used_responses: set[int] = set()
@@ -172,7 +185,12 @@ def match_request(
             continue
         with suppress(ValidationError):
             step_number = find_step_number(ref, step_starts)
-            return SDKRoundtrip(request=request, response=response, resp_index=i, step_number=step_number)
+            return SDKRoundtrip(
+                request=request,
+                response=response,
+                resp_index=i,
+                step_number=step_number,
+            )
     remaining_responses = [resp for i, resp in enumerate(responses_list) if i not in used_responses]
     err_msg = f"Could not match request {ref} with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
     raise ValueError(err_msg)
