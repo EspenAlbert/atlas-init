@@ -25,6 +25,7 @@ class MockTFLog(Entity):
     output_dir: Path
     sdk_path: Path
     diff_skip_suffixes: list[str] = Field(default_factory=list)
+    keep_duplicates: bool = False
 
     @model_validator(mode="after")
     def ensure_paths_exist(self) -> Self:
@@ -50,6 +51,7 @@ def mock_tf_log(req: MockTFLog) -> None:
         roundtrips,
         api_spec_paths,
         is_diff=req.differ,
+        prune_duplicates=not req.keep_duplicates,
     )
     # avoid anchors
     data_yaml = dump(json.loads(dump(data, "json")), "yaml")
@@ -68,6 +70,7 @@ def mock_tf_log_cmd(
         help="the path to the output test directory, for example: internal/service/advancedclustertpf/testdata/",
     ),
     diff_skip_suffixes: list[str] = typer.Option(..., "-s", "--skip-suffixes", default_factory=list),
+    keep_duplicates: bool = typer.Option(False, "-keep", "--keep-duplicates", help="keep duplicate requests"),
 ):
     cwd = Path.cwd()
     default_sdk_path = cwd.parent / "atlas-sdk-go"
@@ -77,5 +80,6 @@ def mock_tf_log_cmd(
         output_dir=Path(output_testdir) if output_testdir else default_testdir,
         sdk_path=Path(sdk_repo_path_str) if sdk_repo_path_str else default_sdk_path,
         diff_skip_suffixes=diff_skip_suffixes,
+        keep_duplicates=keep_duplicates,
     )
     mock_tf_log(event_in)

@@ -115,7 +115,8 @@ def test_parse_http_requests(
         modifiers=modifiers,
     )
     # avoid anchors
-    data_parsed = json.loads(dump(data, "json"))
+    data_json = data.model_dump_json(exclude_none=True)
+    data_parsed = json.loads(data_json)
     s = StringIO()
     yaml.safe_dump(
         data_parsed,
