@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class StatusText(Entity):
+    response_index: int
     status: int
     text: str
 
@@ -21,9 +22,9 @@ class StatusText(Entity):
 
 
 class RequestInfo(Entity):
-    version: str
-    method: str
     path: str
+    method: str
+    version: str
     text: str
     responses: list[StatusText] = Field(default_factory=list)
 
@@ -55,8 +56,9 @@ class StepRequests(Entity):
         text: str,
         text_response: str,
         is_diff: bool,
+        response_index: int,
     ):
-        status_text = StatusText(status=status, text=text_response)
+        status_text = StatusText(status=status, text=text_response, response_index=response_index)
         info = RequestInfo(
             path=path,
             method=method,
@@ -111,6 +113,7 @@ class MockRequestData(Entity):
             normalized_text,
             normalized_response_text,
             is_diff,
+            rt.resp_index,
         )
 
     def update_variables(self, variables: dict[str, str]) -> None:
@@ -249,5 +252,5 @@ def create_mock_data(
         normalized_text = normalize_text(rt.request.text, rt_variables)
         normalized_response_text = normalize_text(rt.response.text, rt_variables)
         mock_data.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
-    # requests.prune_duplicate_responses() better to keep duplicates to stay KISS
+    # mock_data.prune_duplicate_responses() #better to keep duplicates to stay KISS
     return mock_data

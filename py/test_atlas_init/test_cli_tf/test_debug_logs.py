@@ -1,3 +1,4 @@
+from io import StringIO
 import json
 import logging
 from os import getenv
@@ -9,8 +10,9 @@ from atlas_init.cli_tf.debug_logs_test_data import (
 )
 from atlas_init.cli_tf.debug_logs_test_data import RTModifier
 from atlas_init.repos.go_sdk import parse_api_spec_paths
-from model_lib import dump
+from model_lib import dump, parse_payload
 import pytest
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -113,5 +115,17 @@ def test_parse_http_requests(
         modifiers=modifiers,
     )
     # avoid anchors
-    data_yaml = dump(json.loads(dump(data, "json")), "yaml")
+    data_parsed = json.loads(dump(data, "json"))
+    s = StringIO()
+    yaml.safe_dump(
+        data_parsed,
+        s,
+        default_flow_style=False,
+        width=100_000,
+        allow_unicode=True,
+        sort_keys=False,
+    )
+    data_yaml = s.getvalue()
+    parsed_again = parse_payload(data_yaml, "yaml")
+    assert parsed_again
     file_regression.check(data_yaml, extension=".yaml")

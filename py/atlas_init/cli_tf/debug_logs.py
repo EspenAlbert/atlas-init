@@ -2,6 +2,7 @@ import json
 import logging
 import re
 from contextlib import suppress
+from functools import total_ordering
 from typing import Any, NamedTuple, Self
 
 from model_lib import Entity
@@ -83,6 +84,7 @@ def extract_version(content_type: str) -> str:
     raise ValueError(f"Could not extract version from {content_type} header")
 
 
+@total_ordering
 class SDKRoundtrip(Entity):
     request: PathHeadersPayload
     response: StatusHeadersResponse
@@ -111,6 +113,11 @@ class SDKRoundtrip(Entity):
         if req.expect_list_response and not resp_payload_list:
             raise ValueError(f"Expected list response but got dict: {resp.text}")
         return self
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, SDKRoundtrip):
+            raise TypeError
+        return self.resp_index < other.resp_index
 
 
 MARKER_END = "-----------------------------------"
@@ -162,7 +169,7 @@ def parse_http_requests(logs: str) -> list[SDKRoundtrip]:
         roundtrip = match_request(used_responses, responses_list, ref, request, tf_step_starts)
         sdk_roundtrips.append(roundtrip)
         used_responses.add(roundtrip.resp_index)
-    return sdk_roundtrips
+    return sorted(sdk_roundtrips)
 
 
 def find_step_number(ref: FileRef, step_starts: list[int]) -> int:
