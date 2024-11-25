@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 class StatusText(Entity):
+    response_index: int
     status: int
     text: str
+    duplicate_responses: int | None = None
 
     @property
     def id(self):
@@ -21,9 +23,9 @@ class StatusText(Entity):
 
 
 class RequestInfo(Entity):
-    version: str
-    method: str
     path: str
+    method: str
+    version: str
     text: str
     responses: list[StatusText] = Field(default_factory=list)
 
@@ -43,6 +45,10 @@ class StepRequests(Entity):
     diff_requests: list[RequestInfo] = Field(default_factory=list)
     request_responses: list[RequestInfo] = Field(default_factory=list)
 
+    @property
+    def all_requests(self):
+        return self.diff_requests + self.request_responses
+
     def existing_request(self, info: RequestInfo) -> RequestInfo | None:
         return next((r for r in self.request_responses if r.id == info.id), None)
 
@@ -55,8 +61,9 @@ class StepRequests(Entity):
         text: str,
         text_response: str,
         is_diff: bool,
+        response_index: int,
     ):
-        status_text = StatusText(status=status, text=text_response)
+        status_text = StatusText(status=status, text=text_response, response_index=response_index)
         info = RequestInfo(
             path=path,
             method=method,
@@ -111,6 +118,7 @@ class MockRequestData(Entity):
             normalized_text,
             normalized_response_text,
             is_diff,
+            rt.resp_index,
         )
 
     def update_variables(self, variables: dict[str, str]) -> None:
@@ -139,21 +147,32 @@ class MockRequestData(Entity):
         if changes:
             raise VariablesChangedError(changes)
 
+    def replace_text_variables(self):
+        for step in self.steps:
+            for request in step.all_requests:
+                request.text = normalize_text(request.text, self.variables)
+                for response in request.responses:
+                    response.text = normalize_text(response.text, self.variables)
+
     def prune_duplicate_responses(self):
         for step in self.steps:
             for request in step.request_responses:
                 pruned_responses = []
-                seen_response_ids = set()
+                seen_response_ids: dict[str, StatusText] = {}
                 before_len = len(request.responses)
                 for response in request.responses:
-                    if response.id in seen_response_ids:
+                    if existing_response := seen_response_ids.get(response.id):
+                        if existing_response.duplicate_responses is None:
+                            existing_response.duplicate_responses = 0
+                        existing_response.duplicate_responses += 1
                         continue
-                    seen_response_ids.add(response.id)
+                    seen_response_ids[response.id] = response
                     pruned_responses.append(response)
                 request.responses = pruned_responses
                 after_len = len(request.responses)
-                if before_len != after_len:
-                    logger.info(f"Pruned {before_len - after_len} duplicate responses from {request.id}")
+                duplicate_responses = before_len - after_len
+                if duplicate_responses > 0:
+                    logger.info(f"Pruned {duplicate_responses} duplicate responses from {request.id}")
 
 
 class ApiSpecPath(Entity):
@@ -204,7 +223,7 @@ def normalize_text(text: str, variables: dict[str, str]) -> str:
 
 
 def default_is_diff(rt: SDKRoundtrip) -> bool:
-    return rt.request.method not in {"DELETE", "GET"}
+    return rt.request.method not in {"GET"}
 
 
 class VariableChange(NamedTuple):
@@ -225,6 +244,8 @@ def create_mock_data(
     api_spec_paths: dict[str, list[ApiSpecPath]],
     is_diff: Callable[[SDKRoundtrip], bool] | None = None,
     modifiers: list[RTModifier] | None = None,
+    *,
+    prune_duplicates: bool = True,
 ) -> MockRequestData:
     steps = max(rt.step_number for rt in roundtrips)
     mock_data = MockRequestData(step_count=steps)
@@ -246,8 +267,10 @@ def create_mock_data(
         for modifier in modifiers:
             if modifier.match(rt, normalized_path):
                 modifier.modification(rt)
-        normalized_text = normalize_text(rt.request.text, rt_variables)
-        normalized_response_text = normalize_text(rt.response.text, rt_variables)
+        normalized_text = normalize_text(rt.request.text, mock_data.variables)
+        normalized_response_text = normalize_text(rt.response.text, mock_data.variables)
         mock_data.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
-    # requests.prune_duplicate_responses() better to keep duplicates to stay KISS
+    mock_data.replace_text_variables()
+    if prune_duplicates:
+        mock_data.prune_duplicate_responses()  # better to keep duplicates to stay KISS
     return mock_data
