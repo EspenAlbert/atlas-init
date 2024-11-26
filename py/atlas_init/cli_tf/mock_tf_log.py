@@ -91,6 +91,15 @@ def mock_tf_log_cmd(
     mock_tf_log(event_in)
 
 
+def is_cache_up_to_date(cache_path: Path, cache_ttl: int) -> bool:
+    if cache_path.exists():
+        modified_ts = file_utils.file_modified_time(cache_path)
+        if modified_ts > time.time() - cache_ttl:
+            logger.info(f"using cached admin api: {cache_path} downloaded {time.time()-modified_ts:.0f}s ago")
+            return True
+    return False
+
+
 def resolve_admin_api_path(sdk_repo_path_str: str, sdk_branch: str, admin_api_path: str) -> Path:
     if admin_api_path:
         resolved_admin_api_path = Path(admin_api_path)
@@ -102,12 +111,8 @@ def resolve_admin_api_path(sdk_repo_path_str: str, sdk_branch: str, admin_api_pa
         resolved_admin_api_path = api_spec_path_transformed(sdk_repo_path)
     else:
         resolved_admin_api_path = DEFAULT_DOWNLOADS_DIR / "atlas-api-transformed.yaml"
-        if resolved_admin_api_path.exists():
-            modified_ts = file_utils.file_modified_time(resolved_admin_api_path)
-            if modified_ts > time.time() - 3600:
-                logger.info(f"using cached admin api: {resolved_admin_api_path}")
-                return resolved_admin_api_path
-        download_admin_api(resolved_admin_api_path, sdk_branch)
+        if not is_cache_up_to_date(resolved_admin_api_path, 3600):
+            download_admin_api(resolved_admin_api_path, sdk_branch)
     assert resolved_admin_api_path.exists(), f"unable to resolve admin_api_path={resolved_admin_api_path}"
     assert resolved_admin_api_path.is_file(), f"not a file admin_api_path={resolved_admin_api_path}"
     return resolved_admin_api_path
