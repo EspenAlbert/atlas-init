@@ -19,7 +19,15 @@ Currently, used with
 - <https://github.com/mongodb/mongodb/mongodbatlas-cloudformation-resources>
 - see [atlas_init#repo_aliases](atlas_init.yaml) for an up-to-date list
 
-## Requirements
+## Quickstart
+Recommended as a tool with [uvx](https://docs.astral.sh/uv/guides/tools/#running-tools)
+```shell
+uvx atlas-init # help info
+uvx atlas-init tf # help for tf specific commands
+uvx atlas-init cfn # help for cfn specific commands
+```
+
+## Profile Configuration
 1. [Create an organization](https://cloud-dev.mongodb.com/v2#/preferences/organizations)
 2. Go to `access_manager` and click `Create Api Key`: <https://cloud-dev.mongodb.com/v2#/org/{ORG_ID_IN_URL_FROM_1}/access/apiKeys>
    - Tick all permissions
@@ -45,17 +53,7 @@ ATLAS_INIT_CFN_PROFILE=YOUR_NAME
 ATLAS_INIT_CFN_REGION=eu-south-2 # find a region with few other profiles
 ```
 
-## Three modes of running
-
-### 1. `pip install` normal user
-
-```shell
-source .venv/bin/activate # ensure you are in your preferred python env
-(uv) pip install atlas-init
-# use export ATLAS_INIT_PROFILES_PATH=/somewhere/to/store/your/env-vars/and/tf/state
-```
-
-### 2. Local development, run from github repo
+## Local development
 
 ```shell
 git clone https://github.com/EspenAlbert/atlas-init
@@ -90,26 +88,10 @@ echo "alias atlas_init='export PYTHONPATH=$pypath && \"$VENV_PYTHON\" -m atlas_i
 atlas_init # should show how to use the cli
 ```
 
-### 3. `pip install` local wheel
-- will be used by the CI in other repos
+### CI Installation Tests (`pip install` local wheel)
 - [atlasci_local_install](atlasci_local_install.sh)
   - creates a local `.venv` builds the wheel from this repo and installs it
 - use `export ATLAS_INIT_PROFILES_PATH=/somewhere/to/store/your/env-vars/and/tf/state`
-
-## Commands
-
-```shell
-cd terraform/cfn/{YOUR_RESOURCE_PATH}
-# if you used `pip install` replace `atlas_init` with `atlasci`
-atlas_init # help info
-atlas_init # initialize the terraform providers
-atlas_init tf # help for tf specific commands
-atlas_init cfn # help for cfn specific commands
-atals_init apply # `terraform apply`
-# use cmd+v if you plan on using other tools, e.g., cfn make commands
-# see appendix on how to configure .vscode test env-vars
-atals_init destroy # `terraform destroy`
-```
 
 
 ## Appendix
@@ -150,3 +132,4 @@ terraform providers lock \
     -platform=darwin_arm64 \
     -platform=linux_arm64
     # -platform=windows_amd64 \
+```

@@ -34,7 +34,7 @@ dependencies = [
 ]
 
 [project.scripts]
-atlasci = "atlas_init.cli:typer_main"
+atlas-init = "atlas_init.cli:typer_main"
 
 [project.urls]
 Documentation = "https://github.com/EspenAlbert/atlas-init#readme"
