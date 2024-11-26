@@ -73,7 +73,7 @@ params = [
     params,
     ids=[p[0] for p in params],
 )
-def test_parse_http_requests(
+def test_mock_tf_log(
     api_spec_path_transformed,
     log_filename,
     modifiers,

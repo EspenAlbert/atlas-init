@@ -73,11 +73,6 @@ def sdk_repo_path() -> Path:
     return Path(repo_path_str)
 
 
-@pytest.fixture(scope="session")
-def api_spec_path_transformed() -> Path:
-    return resolve_admin_api_path(os.environ.get("SDK_REPO_PATH", ""), "main", "")
-
-
 @pytest.fixture
 def parse_resource_v3(spec_resources_v3_paths):
     def parse_resource(resource_name: str) -> ResourceSchemaV3:
