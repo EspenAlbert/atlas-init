@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p profiles/default
           cd py
-          hatch run default:atlasci
+          hatch run default:atlas-init
       - uses: hashicorp/setup-terraform@v3
         name: configure terraform
         with:
