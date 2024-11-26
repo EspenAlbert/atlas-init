@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable
 from unittest.mock import MagicMock
 
+from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 import pytest
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
@@ -70,6 +71,11 @@ def sdk_repo_path() -> Path:
     if not repo_path_str:
         pytest.skip("needs os.environ[SDK_REPO_PATH]")
     return Path(repo_path_str)
+
+
+@pytest.fixture(scope="session")
+def api_spec_path_transformed() -> Path:
+    return resolve_admin_api_path(os.environ.get("SDK_REPO_PATH", ""), "main", "")
 
 
 @pytest.fixture

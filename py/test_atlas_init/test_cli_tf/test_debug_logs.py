@@ -1,65 +1,38 @@
 import json
 import logging
-from io import StringIO
-from os import getenv
+from pathlib import Path
 from typing import Callable
 
+from atlas_init.cli_tf.mock_tf_log import MockTFLog, mock_tf_log
 import pytest
 import yaml
 from model_lib import parse_payload
 
-from atlas_init.cli_tf.debug_logs import SDKRoundtrip, parse_http_requests, parsed
+from atlas_init.cli_tf.debug_logs import SDKRoundtrip, parsed
 from atlas_init.cli_tf.debug_logs_test_data import (
     RTModifier,
-    create_mock_data,
-    default_is_diff,
 )
-from atlas_init.repos.go_sdk import api_spec_path_transformed, parse_api_spec_paths
+from atlas_init.repos.go_sdk import parse_api_spec_paths
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def log_file_text(tf_test_data_dir) -> Callable[[str], str]:
-    def read_log_file_text(file_name: str) -> str:
-        path = tf_test_data_dir / "tf_acc_logs" / file_name
-        return path.read_text()
+def log_file_path(tf_test_data_dir) -> Callable[[str], Path]:
+    def read_log_file_text(file_name: str) -> Path:
+        return tf_test_data_dir / "tf_acc_logs" / file_name
 
     return read_log_file_text
 
 
-def log_roundtrips(
-    roundtrips: list[SDKRoundtrip], differ: Callable[[SDKRoundtrip], bool] | None = None
-):
-    differ = differ or default_is_diff
-    diff_count = 0
-    step_nr = 0
-    for rt in roundtrips:
-        if not differ(rt):
-            continue
-        if rt.step_number != step_nr:
-            logger.info(f"{'-' * 80}\nStep {rt.step_number}")
-            step_nr = rt.step_number
-        diff_count += 1
-        logger.info(
-            f"\n{rt.request.method} {rt.request.path}\n{rt.request.text}\n{rt.response.status}-{rt.response.status_text}\n{rt.response.text}"
-        )
-    logger.info(f"Diffable requests: {diff_count}")
-
-
 @pytest.fixture(scope="session")
-def api_spec_paths(sdk_repo_path):
-    api_spec_path = api_spec_path_transformed(sdk_repo_path)
-    return parse_api_spec_paths(api_spec_path)
+def api_spec_paths(api_spec_path_transformed: Path):
+    return parse_api_spec_paths(api_spec_path_transformed)
 
 
 _resource_policy_log = "TestAccResourcePolicy_basic.log"
-_unit_tested_logs = {_resource_policy_log}
 
-_diff_overrides = {
-    _resource_policy_log: lambda rt: rt.request.method in {"POST", "PUT", "PATCH"}
-    and not rt.request.path.endswith(":validate")
-}
+_suffixes_skipped = {_resource_policy_log: [":validate"]}
 
 
 def add_label_tags(rt: SDKRoundtrip):
@@ -88,7 +61,7 @@ cluster_modifier = RTModifier(
 
 
 params = [
-    ("TestAccResourcePolicy_basic.log", []),
+    (_resource_policy_log, []),
     ("TestAccClusterAdvancedCluster_basicTenant.log", []),
     ("TestAccAdvancedCluster_configSharded.log", [cluster_modifier]),
     ("TestAccAdvancedCluster_basic.log", [cluster_modifier]),
@@ -101,35 +74,24 @@ params = [
     ids=[p[0] for p in params],
 )
 def test_parse_http_requests(
-    log_filename, modifiers, log_file_text, api_spec_paths, file_regression
+    api_spec_path_transformed,
+    log_filename,
+    modifiers,
+    log_file_path,
+    file_regression,
+    tmp_path,
 ):
-    assert len(api_spec_paths) == 5
-    roundtrips = parse_http_requests(log_file_text(log_filename))
-    # sourcery skip: no-conditionals-in-tests
-    if log_filename in _unit_tested_logs:
-        assert len(roundtrips) == 35
-    differ = _diff_overrides.get(log_filename)
-    if getenv("LOG_ROUNDTRIPS"):
-        log_roundtrips(roundtrips, differ)
-    data = create_mock_data(
-        roundtrips,
-        api_spec_paths,
-        is_diff=differ,
+    test_data = tmp_path / "testdata"
+    test_data.mkdir()
+    req = MockTFLog(
+        log_path=log_file_path(log_filename),
+        output_dir=test_data,
+        admin_api_path=api_spec_path_transformed,
+        diff_skip_suffixes=_suffixes_skipped.get(log_filename, []),
+        keep_duplicates=False,
         modifiers=modifiers,
     )
-    # avoid anchors
-    data_json = data.model_dump_json(exclude_none=True)
-    data_parsed = json.loads(data_json)
-    s = StringIO()
-    yaml.safe_dump(
-        data_parsed,
-        s,
-        default_flow_style=False,
-        width=100_000,
-        allow_unicode=True,
-        sort_keys=False,
-    )
-    data_yaml = s.getvalue()
-    parsed_again = parse_payload(data_yaml, "yaml")
+    output_path = mock_tf_log(req)
+    parsed_again = parse_payload(output_path)
     assert parsed_again
-    file_regression.check(data_yaml, extension=".yaml")
+    file_regression.check(output_path.read_text(), extension=".yaml")

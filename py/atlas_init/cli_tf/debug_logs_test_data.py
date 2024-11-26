@@ -31,7 +31,7 @@ class RequestInfo(Entity):
 
     @property
     def id(self):
-        return "__".join((self.method, self.path, self.version, self.text))  # noqa: FLY002
+        return "__".join(part for part in (self.method, self.path, self.version, self.text) if part)
 
 
 class StepRequests(Entity):
@@ -143,9 +143,9 @@ class MockRequestData(Entity):
     def replace_text_variables(self):
         for step in self.steps:
             for request in step.all_requests:
-                request.text = normalize_text(request.text, self.variables)
+                request.text = normalize_text(request.text, self.variables, expect_json=True)
                 for response in request.responses:
-                    response.text = normalize_text(response.text, self.variables)
+                    response.text = normalize_text(response.text, self.variables, expect_json=True)
 
     def prune_duplicate_responses(self):
         for step in self.steps:
@@ -202,10 +202,10 @@ def find_normalized_path(path: str, api_spec_paths: list[ApiSpecPath]) -> ApiSpe
     raise ValueError(f"Could not find path: {path}")
 
 
-def normalize_text(text: str, variables: dict[str, str]) -> str:
+def normalize_text(text: str, variables: dict[str, str], *, expect_json: bool = False) -> str:
     for var, value in variables.items():
         text = text.replace(value, f"{{{var}}}")
-    if not text:
+    if not text or not expect_json:
         return text
     try:
         parsed_text = json.loads(text)
@@ -260,8 +260,8 @@ def create_mock_data(
         for modifier in modifiers:
             if modifier.match(rt, normalized_path):
                 modifier.modification(rt)
-        normalized_text = normalize_text(rt.request.text, mock_data.variables)
-        normalized_response_text = normalize_text(rt.response.text, mock_data.variables)
+        normalized_text = normalize_text(rt.request.text, mock_data.variables, expect_json=True)
+        normalized_response_text = normalize_text(rt.response.text, mock_data.variables, expect_json=True)
         mock_data.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
     mock_data.replace_text_variables()
     if prune_duplicates:
