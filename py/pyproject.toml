@@ -79,7 +79,7 @@ path = "scripts/file_copy.py"
 require-runtime-dependencies = true
 
 [tool.ruff]
-extend-exclude = ["test_atlas_init", "atlas_init/humps.py"]
+extend-exclude = ["test_atlas_init", "atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
 
 [tool.ruff.lint]
 extend-ignore = [

@@ -24,3 +24,4 @@ github_ci_summary
 demo/
 py/.env*
 tf_log/
+downloads
