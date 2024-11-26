@@ -14,7 +14,7 @@ from atlas_init.cli_tf.debug_logs_test_data import (
     create_mock_data,
     default_is_diff,
 )
-from atlas_init.repos.go_sdk import parse_api_spec_paths
+from atlas_init.repos.go_sdk import api_spec_path_transformed, parse_api_spec_paths
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,8 @@ def log_roundtrips(
 
 @pytest.fixture(scope="session")
 def api_spec_paths(sdk_repo_path):
-    return parse_api_spec_paths(sdk_repo_path)
+    api_spec_path = api_spec_path_transformed(sdk_repo_path)
+    return parse_api_spec_paths(api_spec_path)
 
 
 _resource_policy_log = "TestAccResourcePolicy_basic.log"

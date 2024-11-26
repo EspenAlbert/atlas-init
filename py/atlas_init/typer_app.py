@@ -59,4 +59,8 @@ def main(
     logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
     if not show_secrets:
         hide_secrets(log_handler, {**os.environ})
-    logger.info(f"in the app callback, log-level: {log_level}, command: {ctx.command}")
+    logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
+
+
+def format_cmd(ctx: typer.Context) -> str:
+    return f"'{ctx.info_name} {ctx.invoked_subcommand}'"

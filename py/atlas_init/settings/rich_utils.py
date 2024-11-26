@@ -46,7 +46,7 @@ def hide_secrets(handler: logging.Handler, secrets_dict: dict[str, str]) -> None
 
 def configure_logging(log_level: str = "INFO") -> logging.Handler:
     _LogLevel(log_level=log_level)  # type: ignore
-    handler = RichHandler(rich_tracebacks=True)
+    handler = RichHandler(rich_tracebacks=False)
     logging.basicConfig(
         level=logging.getLevelName(log_level),
         format="%(message)s",

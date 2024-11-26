@@ -31,14 +31,7 @@ class RequestInfo(Entity):
 
     @property
     def id(self):
-        return "__".join(  # noqa: FLY002
-            [
-                self.method,
-                self.path,
-                self.version,
-                self.text,
-            ]  # need to include text to differentiate between requests
-        )
+        return "__".join((self.method, self.path, self.version, self.text))  # noqa: FLY002
 
 
 class StepRequests(Entity):
