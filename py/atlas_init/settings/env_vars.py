@@ -6,6 +6,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple
 
+import typer
 from model_lib import field_names, parse_payload
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -271,4 +272,16 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
 
 
 def init_settings() -> AtlasInitSettings:
+    missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
+        os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE),
+        required_extra_fields=["project_name"],
+    )
+    if missing_env_vars:
+        typer.echo(f"missing env_vars: {missing_env_vars}")
+    if ambiguous_env_vars:
+        typer.echo(
+            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli & in .env-manual file with different values)"
+        )
+    if missing_env_vars or ambiguous_env_vars:
+        raise typer.Exit(1)
     return AtlasInitSettings.safe_settings()

@@ -57,14 +57,14 @@ jobs:
         with:
           terraform_version: "1.7.4"
       - name: atlas-init-init
-        run: source atlas-init/.venv/bin/activate && cd tf && atlasci init
+        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init init
       - name: atlas-init-apply
-        run: source atlas-init/.venv/bin/activate && cd tf && atlasci apply -auto-approve
+        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init apply -auto-approve
       - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7
         with:
           go-version-file: 'tf/go.mod'
       - name: atlas-init-test-go
-        run: source atlas-init/.venv/bin/activate && cd tf && atlasci test-go
+        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init test-go
       - name: atlas-init-destroy
-        run: source atlas-init/.venv/bin/activate && cd tf && atlasci destroy -auto-approve
+        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init destroy -auto-approve
         if: always()

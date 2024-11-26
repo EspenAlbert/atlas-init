@@ -35,7 +35,7 @@ def hide_secrets(handler: logging.Handler, secrets_dict: dict[str, str]) -> None
         if not isinstance(value, str):
             continue
         key_lower = key.lower()
-        if key_lower in {"true", "false"}:
+        if key_lower in {"true", "false"} or value.lower() in {"true", "false"}:
             continue
         if any(safe in key_lower for safe in safe_keys):
             continue

@@ -1,18 +1,19 @@
 import logging
+
+import pytest
+
 from atlas_init.cli_tf.schema_go_parser import parse_schema_functions
 from atlas_init.cli_tf.schema_table import explode_attributes
 from atlas_init.cli_tf.schema_table_models import TFSchemaAttribute
-from atlas_init.cli_tf.schema_v3 import Attribute, ComputedOptionalRequired, Resource
+from atlas_init.cli_tf.schema_v2_sdk import parse_sdk_model
+from atlas_init.cli_tf.schema_v3 import Attribute, Resource
+from atlas_init.cli_tf.schema_v3_sdk import generate_model_go
 from atlas_init.cli_tf.schema_v3_sdk_base import (
     schema_attributes,
     set_allowed_missing_attributes,
     set_name_attribute_overrides,
 )
 from atlas_init.cli_tf.schema_v3_sdk_create import generate_schema_to_model
-import pytest
-
-from atlas_init.cli_tf.schema_v2_sdk import parse_sdk_model
-from atlas_init.cli_tf.schema_v3_sdk import generate_model_go
 
 logger = logging.getLogger(__name__)
 

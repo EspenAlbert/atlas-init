@@ -22,7 +22,7 @@ def run(command: str, exit_code: int = 0) -> Result:
     if exit_code == 0 and (e := result.exception):
         logger.exception(e)
         raise e
-    assert result.exit_code == exit_code
+    assert result.exit_code == exit_code, "exit code is not as expected"
     return result
 
 
@@ -38,14 +38,14 @@ def test_normal_help_command_is_ok():
 
 def test_missing_env_vars(tmp_paths):
     run_expect_error(
-        "cfn",
+        "init",
         "missing env_vars: ['ATLAS_INIT_PROJECT_NAME', 'MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY'",
     )
 
 
 def test_missing_project_name(tmp_paths):
     write_required_vars(tmp_paths)
-    run_expect_error("cfn", "missing env_vars: ['ATLAS_INIT_PROJECT_NAME']")
+    run_expect_error("init", "missing env_vars: ['ATLAS_INIT_PROJECT_NAME']")
 
 
 def test_cli_project_name(tmp_paths):

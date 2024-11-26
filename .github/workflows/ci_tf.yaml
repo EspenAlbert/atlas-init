@@ -38,15 +38,15 @@ jobs:
         run: |
           mkdir -p profiles/default
           cd py
-          hatch run default:atlasci
+          hatch run default:atlas-init
       - uses: hashicorp/setup-terraform@v3
         name: configure terraform
         with:
             terraform_version: "1.7.4"
       - name: cli_init
-        run: cd py && hatch run default:atlasci -- init
+        run: cd py && hatch run default:atlas-init -- init
       - name: cli_apply
-        run: cd py && hatch run default:atlasci -- apply -auto-approve
+        run: cd py && hatch run default:atlas-init -- apply -auto-approve
       - name: cli_destroy
-        run: cd py && hatch run default:atlasci -- destroy -auto-approve
+        run: cd py && hatch run default:atlas-init -- destroy -auto-approve
         if: always()

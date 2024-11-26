@@ -10,7 +10,6 @@ from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
-    AtlasInitSettings,
     as_env_var_name,
     env_var_names,
 )
@@ -52,25 +51,12 @@ def main(
     ),
     show_secrets: bool = typer.Option(False, help="show secrets in the logs"),
 ):
-    explicit_env_vars: dict[str, str] = {}
+    if profile != DEFAULT_PROFILE:
+        os.environ[as_env_var_name("profile")] = profile
     if project_name != "":
-        explicit_env_vars[as_env_var_name("project_name")] = project_name
+        os.environ[as_env_var_name("project_name")] = project_name
     log_handler = configure_logging(log_level)
     logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
-    missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
-        profile,
-        required_extra_fields=["project_name"],
-        explicit_env_vars=explicit_env_vars,
-    )
-    if missing_env_vars:
-        typer.echo(f"missing env_vars: {missing_env_vars}")
-    if ambiguous_env_vars:
-        typer.echo(
-            f"amiguous env_vars: {missing_env_vars} (specified both in cli & in .env-manual file with different values)"
-        )
-    if missing_env_vars or ambiguous_env_vars:
-        raise typer.Exit(1)
     if not show_secrets:
         hide_secrets(log_handler, {**os.environ})
-    command = ctx.invoked_subcommand
-    logger.info(f"in the app callback, log-level: {log_level}, command: {command}")
+    logger.info(f"in the app callback, log-level: {log_level}, command: {ctx.command}")
