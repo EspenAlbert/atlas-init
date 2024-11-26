@@ -98,12 +98,12 @@ class SDKRoundtrip(Entity):
     @property
     def version(self) -> str:
         content_type = self.response.headers.get("Content-Type", "v1")
-        try:
+        content_type_req = self.request.headers.get("Accept", "v1")
+        with suppress(ValueError):
             return extract_version(content_type)
-        except ValueError:
-            logger.warning(f"failed to extract version from response header ({content_type}), trying request")
-        content_type = self.request.headers.get("Accept", "v1")
-        return extract_version(content_type)
+        with suppress(ValueError):
+            return extract_version(content_type_req)
+        raise ValueError(f"Could not extract version from req/resp: {content_type} or {content_type_req}")
 
     @model_validator(mode="after")
     def ensure_match(self) -> Self:
@@ -159,7 +159,7 @@ def parse_http_requests(logs: str) -> list[SDKRoundtrip]:
     Can say that expected payload is either a list or a dict and if it ends with an identifier it is higher chance for a dict
     """
     test_name = parse_test_name(logs)
-    logger.info(f"Finding http requests for test name: {test_name}")
+    logger.info(f"Finding http requests for test name: '{test_name}'")
     requests, responses = parse_raw_req_responses(logs)
     tf_step_starts = [i for i, line in enumerate(logs.splitlines()) if MARKER_START_STEP in line]
     used_responses: set[int] = set()

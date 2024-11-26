@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 import pytest
 
 from atlas_init.settings.env_vars import (
@@ -20,6 +21,11 @@ def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths:  # type: ignore
     yield AtlasInitPaths()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
+
+
+@pytest.fixture(scope="session")
+def api_spec_path_transformed() -> Path:
+    return resolve_admin_api_path(os.environ.get("SDK_REPO_PATH", ""), "main", "")
 
 
 def mongodb_atlas_required_vars() -> dict[str, str]:

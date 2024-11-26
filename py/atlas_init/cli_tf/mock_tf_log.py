@@ -1,11 +1,14 @@
 import json
 import logging
 import time
+from collections.abc import Callable
+from io import StringIO
 from pathlib import Path
 from typing import Self
 
 import typer
-from model_lib import Entity, dump
+import yaml
+from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import file_utils
 
@@ -15,8 +18,16 @@ from atlas_init.cli_tf.debug_logs import (
     parse_http_requests,
     parse_test_name,
 )
-from atlas_init.cli_tf.debug_logs_test_data import create_mock_data, default_is_diff
-from atlas_init.repos.go_sdk import api_spec_path_transformed, download_admin_api, parse_api_spec_paths
+from atlas_init.cli_tf.debug_logs_test_data import (
+    RTModifier,
+    create_mock_data,
+    default_is_diff,
+)
+from atlas_init.repos.go_sdk import (
+    api_spec_path_transformed,
+    download_admin_api,
+    parse_api_spec_paths,
+)
 from atlas_init.settings.path import DEFAULT_DOWNLOADS_DIR
 
 logger = logging.getLogger(__name__)
@@ -28,6 +39,8 @@ class MockTFLog(Entity):
     admin_api_path: Path
     diff_skip_suffixes: list[str] = Field(default_factory=list)
     keep_duplicates: bool = False
+    modifiers: list[RTModifier] = Field(default_factory=list)
+    log_diff_roundtrips: bool = False
 
     @model_validator(mode="after")
     def ensure_paths_exist(self) -> Self:
@@ -44,22 +57,40 @@ class MockTFLog(Entity):
         return default_is_diff(rt) and not any(rt.request.path.endswith(suffix) for suffix in self.diff_skip_suffixes)
 
 
-def mock_tf_log(req: MockTFLog) -> None:
+def mock_tf_log(req: MockTFLog) -> Path:
     log_file_text = req.log_path.read_text()
     test_name = parse_test_name(log_file_text)
     roundtrips = parse_http_requests(log_file_text)
+    logger.info(f"Found #{len(roundtrips)} roundtrips")
+    if req.log_diff_roundtrips:
+        log_diff_roundtrips(roundtrips, req.differ)
     api_spec_paths = parse_api_spec_paths(req.admin_api_path)
     data = create_mock_data(
         roundtrips,
         api_spec_paths,
         is_diff=req.differ,
         prune_duplicates=not req.keep_duplicates,
+        modifiers=req.modifiers,
     )
     # avoid anchors
-    data_yaml = dump(json.loads(dump(data, "json")), "yaml")
+    data_json = data.model_dump_json(exclude_none=True)
+    data_parsed = json.loads(data_json)
+    s = StringIO()
+    yaml.safe_dump(
+        data_parsed,
+        s,
+        default_flow_style=False,
+        width=100_000,
+        allow_unicode=True,
+        sort_keys=False,
+    )
+    data_yaml = s.getvalue()
+    test_name = test_name.replace("TestAcc", "TestMock")
     output_path = req.output_dir / f"{test_name}.yaml"
+    logger.info(f"Variables found {data.variables}")
     logger.info(f"Writing to {output_path}")
     file_utils.ensure_parents_write_text(output_path, data_yaml)
+    return output_path
 
 
 def mock_tf_log_cmd(
@@ -68,7 +99,7 @@ def mock_tf_log_cmd(
         "",
         "-o",
         "--output-testdir",
-        help="the path to the output test directory, for example: internal/service/advancedclustertpf/testdata/, uses cwd/testdata by default",
+        help="the path to the output test directory, for example: internal/service/advancedclustertpf/testdata/, uses $(cwd)/testdata by default",
     ),
     sdk_repo_path_str: str = option_sdk_repo_path,
     sdk_branch: str = typer.Option("main", "-b", "--branch", help="the branch for downloading openapi spec"),
@@ -77,6 +108,9 @@ def mock_tf_log_cmd(
     ),
     diff_skip_suffixes: list[str] = typer.Option(..., "-s", "--skip-suffixes", default_factory=list),
     keep_duplicates: bool = typer.Option(False, "-keep", "--keep-duplicates", help="keep duplicate requests"),
+    log_diff_roundtrips: bool = typer.Option(
+        False, "-l", "--log-diff-roundtrips", help="print out the roundtrips used in diffs"
+    ),
 ):
     cwd = Path.cwd()
     default_testdir = cwd / "testdata"
@@ -87,6 +121,7 @@ def mock_tf_log_cmd(
         admin_api_path=resolved_admin_api_path,
         diff_skip_suffixes=diff_skip_suffixes,
         keep_duplicates=keep_duplicates,
+        log_diff_roundtrips=log_diff_roundtrips,
     )
     mock_tf_log(event_in)
 
@@ -116,3 +151,20 @@ def resolve_admin_api_path(sdk_repo_path_str: str, sdk_branch: str, admin_api_pa
     assert resolved_admin_api_path.exists(), f"unable to resolve admin_api_path={resolved_admin_api_path}"
     assert resolved_admin_api_path.is_file(), f"not a file admin_api_path={resolved_admin_api_path}"
     return resolved_admin_api_path
+
+
+def log_diff_roundtrips(roundtrips: list[SDKRoundtrip], differ: Callable[[SDKRoundtrip], bool] | None = None):
+    differ = differ or default_is_diff
+    diff_count = 0
+    step_nr = 0
+    for rt in roundtrips:
+        if not differ(rt):
+            continue
+        if rt.step_number != step_nr:
+            logger.info(f"{'-' * 80}\nStep {rt.step_number}")
+            step_nr = rt.step_number
+        diff_count += 1
+        logger.info(
+            f"\n{rt.request.method} {rt.request.path}\n{rt.request.text}\n{rt.response.status}-{rt.response.status_text}\n{rt.response.text}"
+        )
+    logger.info(f"Diffable requests: {diff_count}")

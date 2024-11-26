@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable
 from unittest.mock import MagicMock
 
+from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 import pytest
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
