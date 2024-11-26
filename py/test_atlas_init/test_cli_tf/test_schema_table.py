@@ -1,7 +1,9 @@
-import logging
 import difflib
+import logging
 from pathlib import Path
 from random import shuffle
+
+import pytest
 
 from atlas_init.cli_tf.schema_table import (
     TFSchemaSrc,
@@ -10,7 +12,6 @@ from atlas_init.cli_tf.schema_table import (
     sorted_schema_paths,
 )
 from atlas_init.cli_tf.schema_table_models import TFSchemaTableColumn
-import pytest
 
 logger = logging.getLogger(__name__)
 

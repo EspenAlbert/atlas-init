@@ -1,18 +1,20 @@
-from io import StringIO
 import json
 import logging
+from io import StringIO
 from os import getenv
 from typing import Callable
+
+import pytest
+import yaml
+from model_lib import parse_payload
+
 from atlas_init.cli_tf.debug_logs import SDKRoundtrip, parse_http_requests, parsed
 from atlas_init.cli_tf.debug_logs_test_data import (
+    RTModifier,
     create_mock_data,
     default_is_diff,
 )
-from atlas_init.cli_tf.debug_logs_test_data import RTModifier
 from atlas_init.repos.go_sdk import parse_api_spec_paths
-from model_lib import dump, parse_payload
-import pytest
-import yaml
 
 logger = logging.getLogger(__name__)
 

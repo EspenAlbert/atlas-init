@@ -1,5 +1,4 @@
 from collections import Counter
-import re
 
 from atlas_init.cli_tf.schema_go_parser import parse_schema_functions
 
@@ -29,7 +28,7 @@ def test_go_parser(go_schema_paths):
         ("value", 2),
     ]
     by_name = {a.name: a for a in attributes}
-    assert by_name["analytics_specs"].start_end == (386, 420)
+    assert by_name["analytics_specs"].start_end == (389, 423)
     by_schema_path = {a.attribute_path: a for a in attributes}
     assert len(by_schema_path) == len(attributes)
     assert (

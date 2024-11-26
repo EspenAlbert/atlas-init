@@ -1,12 +1,15 @@
+import logging
 import os
 from collections.abc import Callable
 from pathlib import Path
 
 import dotenv
+from appdirs import user_data_dir
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init import running_in_repo
 
+logger = logging.getLogger(__name__)
 """WARNING these variables should only be used through the AtlasInitSettings, not directly"""
 if running_in_repo():
     ROOT_PATH = Path(__file__).parent.parent.parent.parent  # atlas_init REPO_PATH
@@ -14,9 +17,10 @@ if running_in_repo():
 else:
     ROOT_PATH = Path(__file__).parent.parent  # site package install directory
     _default_profiles_path = os.environ.get("ATLAS_INIT_PROFILES_PATH")
-    assert (
-        _default_profiles_path
-    ), "must set os.environ['ATLAS_INIT_PROFILES_PATH'] to a writeable directory for atlas_init to work"
+    if not _default_profiles_path:
+        _default_profiles_path = Path(user_data_dir("atlas_init")) / "profiles"
+        warning_msg = f"os.environ['ATLAS_INIT_PROFILES_PATH'] is not set using default: {_default_profiles_path}"
+        logger.warning(warning_msg)
     DEFAULT_PROFILES_PATH = Path(_default_profiles_path)
 DEFAULT_PROFILES_PATH.mkdir(exist_ok=True, parents=True)
 DEFAULT_TF_PATH = ROOT_PATH / "tf"

@@ -17,6 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+  "appdirs==1.4.4",
   "boto3==1.34.55",
   "GitPython==3.1.42",
   "humanize==4.9.0",
