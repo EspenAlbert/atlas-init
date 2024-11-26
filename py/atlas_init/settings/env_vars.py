@@ -280,7 +280,7 @@ def init_settings() -> AtlasInitSettings:
         typer.echo(f"missing env_vars: {missing_env_vars}")
     if ambiguous_env_vars:
         typer.echo(
-            f"amiguous env_vars: {missing_env_vars} (specified both in cli & in .env-manual file with different values)"
+            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli & in .env-manual file with different values)"
         )
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
