@@ -44,9 +44,9 @@ jobs:
         with:
             terraform_version: "1.7.4"
       - name: cli_init
-        run: cd py && hatch run default:atlas-init-- init
+        run: cd py && hatch run default:atlas-init -- init
       - name: cli_apply
-        run: cd py && hatch run default:atlas-init-- apply -auto-approve
+        run: cd py && hatch run default:atlas-init -- apply -auto-approve
       - name: cli_destroy
-        run: cd py && hatch run default:atlas-init-- destroy -auto-approve
+        run: cd py && hatch run default:atlas-init -- destroy -auto-approve
         if: always()
