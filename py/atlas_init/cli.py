@@ -9,7 +9,7 @@ from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
 from atlas_init.cli_helper import sdk_auto_changes
-from atlas_init.cli_helper.go import run_go_tests
+from atlas_init.cli_helper.go import GoTestMode, run_go_tests
 from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
@@ -117,7 +117,13 @@ def destroy(context: typer.Context):
 
 
 @app_command()
-def test_go():
+def test_go(
+    mode: GoTestMode = typer.Option("package", "-m", "--mode", help="package|individual"),
+    dry_run: bool = typer.Option(False, help="only log out the commands to be run"),
+    timeout_minutes: int = typer.Option(300, "-t", "--timeout", help="timeout in minutes"),
+    concurrent_runs: int = typer.Option(20, "-c", "--concurrent", help="number of concurrent runs"),
+    re_run: bool = typer.Option(False, "-r", "--re-run", help="re-run the tests if the log already exist"),
+):
     settings = init_settings()
     suites = active_suites(settings)
     sorted_suites = sorted(suite.name for suite in suites)
@@ -128,7 +134,18 @@ def test_go():
         case Repo.TF:
             repo_path = current_repo_path()
             package_prefix = settings.config.go_package_prefix(repo_alias)
-            run_go_tests(repo_path, repo_alias, package_prefix, settings, suites)
+            run_go_tests(
+                repo_path,
+                repo_alias,
+                package_prefix,
+                settings,
+                suites,
+                mode,
+                dry_run=dry_run,
+                timeout_minutes=timeout_minutes,
+                concurrent_runs=concurrent_runs,
+                re_run=re_run,
+            )
         case _:
             raise NotImplementedError
 
