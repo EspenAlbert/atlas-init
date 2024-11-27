@@ -66,6 +66,7 @@ def run_go_tests(
     concurrent_runs: int = 20,
     re_run: bool = False,
     env_vars: GoEnvVars = GoEnvVars.vscode,
+    names: set[str] | None = None,
 ) -> GoTestResult:
     test_env = _resolve_env_vars(settings, env_vars)
     if ci_value := test_env.pop("CI", None):
@@ -84,10 +85,13 @@ def run_go_tests(
                 concurrent_runs = 1
             test_names = find_individual_tests(repo_path, package_paths)
             for name, pkg_path in test_names.items():
+                if names and name not in names:
+                    continue
                 results.add_test_package_path(name, pkg_path)
                 commands_to_run[name] = f"go test {packages} -v -run ^{name}$ -timeout {timeout_minutes}m"
         elif mode == GoTestMode.package:
-            command = f"go test {packages} -v -run ^TestAcc* -timeout {timeout_minutes}m"
+            name_regex = f'^({"|".join(names)})$' if names else "^TestAcc*"
+            command = f"go test {packages} -v -run {name_regex} -timeout {timeout_minutes}m"
             if not group.sequential_tests:
                 command = f"{command} -parallel {concurrent_runs}"
             commands_to_run[group.name] = command

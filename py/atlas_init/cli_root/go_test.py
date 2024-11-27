@@ -23,6 +23,9 @@ def go_test(
         False, "--export-verbose", help="log roundtrips when exporting the mock-tf-log"
     ),
     env_method: GoEnvVars = typer.Option(GoEnvVars.manual, "--env", help="|".join(list(GoEnvVars))),
+    names: list[str] = typer.Option(
+        ..., "-n", "--names", default_factory=list, help="run only the tests with these names"
+    ),
 ):
     if export_mock_tf_log and mode != GoTestMode.individual:
         err_msg = "exporting mock-tf-log is only supported for individual tests"
@@ -50,6 +53,7 @@ def go_test(
                 concurrent_runs=concurrent_runs,
                 re_run=re_run,
                 env_vars=env_method,
+                names=set(names),
             )
         case _:
             raise NotImplementedError
