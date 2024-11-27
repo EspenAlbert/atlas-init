@@ -46,3 +46,10 @@ def package_skip_suffixes(pkg_name: str) -> list[str]:
     if pkg_name == "resourcepolicy":
         return [":validate"]
     return []
+
+
+def package_must_substrings(pkg_name: str) -> list[str]:
+    # sourcery skip: assign-if-exp, reintroduce-else
+    if pkg_name == "advancedcluster":
+        return ["/clusters"]
+    return []

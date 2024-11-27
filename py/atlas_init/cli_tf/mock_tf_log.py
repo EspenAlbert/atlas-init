@@ -23,7 +23,11 @@ from atlas_init.cli_tf.debug_logs_test_data import (
     create_mock_data,
     default_is_diff,
 )
-from atlas_init.cli_tf.debug_logs_test_data_package_config import package_modifiers, package_skip_suffixes
+from atlas_init.cli_tf.debug_logs_test_data_package_config import (
+    package_modifiers,
+    package_must_substrings,
+    package_skip_suffixes,
+)
 from atlas_init.repos.go_sdk import (
     api_spec_path_transformed,
     download_admin_api,
@@ -39,6 +43,7 @@ class MockTFLog(Entity):
     output_dir: Path
     admin_api_path: Path
     diff_skip_suffixes: list[str] = Field(default_factory=list)
+    diff_must_substrings: list[str] = Field(default_factory=list)
     keep_duplicates: bool = False
     modifiers: list[RTModifier] = Field(default_factory=list)
     package_name: str = ""
@@ -57,10 +62,16 @@ class MockTFLog(Entity):
         if (package_name := self.package_name) and not self.skip_default_package_config:
             self.modifiers.extend(package_modifiers(package_name))
             self.diff_skip_suffixes.extend(package_skip_suffixes(package_name))
+            self.diff_must_substrings.extend(package_must_substrings(package_name))
         return self
 
     def differ(self, rt: SDKRoundtrip) -> bool:
-        return default_is_diff(rt) and not any(rt.request.path.endswith(suffix) for suffix in self.diff_skip_suffixes)
+        is_diff = default_is_diff(rt) and not any(
+            rt.request.path.endswith(suffix) for suffix in self.diff_skip_suffixes
+        )
+        if is_diff and self.diff_must_substrings:
+            return is_diff and all(substring in rt.request.path for substring in self.diff_must_substrings)
+        return is_diff
 
 
 def mock_tf_log(req: MockTFLog) -> Path:
@@ -117,6 +128,7 @@ def mock_tf_log_cmd(
     log_diff_roundtrips: bool = typer.Option(
         False, "-l", "--log-diff-roundtrips", help="print out the roundtrips used in diffs"
     ),
+    package_name: str = typer.Option("", "-p", "--package-name", help="the package name to use for modifiers"),
 ):
     cwd = Path.cwd()
     default_testdir = cwd / "testdata"
@@ -128,6 +140,7 @@ def mock_tf_log_cmd(
         diff_skip_suffixes=diff_skip_suffixes,
         keep_duplicates=keep_duplicates,
         log_diff_roundtrips=log_diff_roundtrips,
+        package_name=package_name,
     )
     mock_tf_log(event_in)
 
