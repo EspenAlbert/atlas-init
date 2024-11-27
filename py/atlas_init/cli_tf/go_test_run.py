@@ -5,11 +5,13 @@ import re
 from collections.abc import Iterable
 from enum import StrEnum
 from functools import total_ordering
+from pathlib import Path
 
 import humanize
 from github.WorkflowJob import WorkflowJob
 from model_lib import Entity, Event, utc_datetime
 from pydantic import Field
+from zero_3rdparty.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,24 @@ class LineInfo(Event):
     text: str
 
 
+class GoTestContextStep(Entity):
+    name: str
+
+
+class GoTestContext(Entity):
+    """Abstraction on WorkflowJob to also support local runs"""
+
+    name: str
+    created_at: utc_datetime = Field(default_factory=utc_now)
+    steps: list[GoTestContextStep] = Field(default_factory=list)
+    html_url: str = "http://localhost"
+
+    @classmethod
+    def from_local_run(cls, name: str, steps: list[GoTestContextStep]) -> GoTestContext:
+        raise NotImplementedError
+        # return cls(name=name, steps=steps)
+
+
 @total_ordering
 class GoTestRun(Entity):
     name: str
@@ -42,8 +62,9 @@ class GoTestRun(Entity):
     start_line: LineInfo
     ts: utc_datetime
     finish_ts: utc_datetime | None = None
-    job: WorkflowJob
+    job: GoTestContext | WorkflowJob
     test_step: int
+    log_path: Path | None = None
 
     finish_line: LineInfo | None = None
     context_lines: list[str] = Field(default_factory=list)
@@ -87,6 +108,10 @@ class GoTestRun(Entity):
     def is_failure(self) -> bool:
         return self.status == GoTestStatus.FAIL
 
+    @property
+    def is_pass(self) -> bool:
+        return self.status == GoTestStatus.PASS
+
     def add_line_match(self, match: LineMatch, line: str, line_number: int) -> None:
         self.run_seconds = match.run_seconds or self.run_seconds
         self.finish_line = LineInfo(number=line_number, text=line)
@@ -99,7 +124,7 @@ class GoTestRun(Entity):
         match: LineMatch,
         line: str,
         line_number: int,
-        job: WorkflowJob,
+        job: WorkflowJob | GoTestContext,
         test_step_nr: int,
     ) -> GoTestRun:
         start_line = LineInfo(number=line_number, text=line)
@@ -140,7 +165,7 @@ def match_line(line: str) -> LineMatch | None:
     2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
     """
     if match := line_result.match(line):
-        line_match = LineMatch(**match.groupdict())
+        line_match = LineMatch(**match.groupdict())  # type: ignore
         return None if _test_name_is_nested(line_match.name, line) else line_match
     return None
 
@@ -168,7 +193,7 @@ def extract_context(line: str) -> str:
     return ""
 
 
-def parse(test_lines: list[str], job: WorkflowJob, test_step_nr: int) -> Iterable[GoTestRun]:
+def parse(test_lines: list[str], job: WorkflowJob | GoTestContext, test_step_nr: int) -> Iterable[GoTestRun]:
     tests: dict[str, GoTestRun] = {}
     context_lines: list[str] = []
     current_context_test = ""

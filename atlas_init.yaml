@@ -60,6 +60,8 @@ test_suites:
   repo_go_packages:
     cfn:
     - cfn-resources/resource-policy
+    tf:
+    - internal/service/resourcepolicy
 - name: s3
   repo_go_packages:
     tf:
