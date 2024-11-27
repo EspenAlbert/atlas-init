@@ -11,13 +11,15 @@ from pydantic import ValidationError, model_validator
 logger = logging.getLogger(__name__)
 
 
-def parsed(payload: str) -> tuple[dict[str, Any], list]:
+def parsed(payload: str) -> tuple[dict[str, Any] | None, list | None, bool | None]:
     with suppress(ValueError):
         resp = json.loads(payload)
         if isinstance(resp, dict):
-            return resp, []
+            return resp, None, None
         if isinstance(resp, list):
-            return {}, resp
+            return None, resp, None
+    if payload.strip() in {"true", "false"}:
+        return None, None, payload.strip() == "true"
     raise ValueError(f"Could not parse payload: {payload}")
 
 
@@ -109,8 +111,8 @@ class SDKRoundtrip(Entity):
     def ensure_match(self) -> Self:
         req = self.request
         resp = self.response
-        _, resp_payload_list = parsed(resp.text)
-        if req.expect_list_response and not resp_payload_list:
+        _, resp_payload_list, __ = parsed(resp.text)
+        if req.expect_list_response and resp_payload_list is None:
             raise ValueError(f"Expected list response but got dict: {resp.text}")
         return self
 

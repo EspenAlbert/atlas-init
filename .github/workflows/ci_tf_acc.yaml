@@ -64,7 +64,7 @@ jobs:
         with:
           go-version-file: 'tf/go.mod'
       - name: atlas-init-test-go
-        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init test-go
+        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init go-test
       - name: atlas-init-destroy
         run: source atlas-init/.venv/bin/activate && cd tf && atlas-init destroy -auto-approve
         if: always()

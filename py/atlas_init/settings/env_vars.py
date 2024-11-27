@@ -170,9 +170,12 @@ class AtlasInitPaths(BaseSettings):
         assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
         return load_dotenv(env_path)
 
-    def load_profile_manual_env_vars(self) -> dict[str, str]:
+    def load_profile_manual_env_vars(self, *, skip_os_update: bool = False) -> dict[str, str]:
+        # sourcery skip: dict-assign-update-to-union
         manual_env_vars = self.manual_env_vars
         if manual_env_vars:
+            if skip_os_update:
+                return manual_env_vars
             logger.warning(f"loading manual env-vars from {self.env_file_manual}")
             os.environ.update(manual_env_vars)
         else:

@@ -27,9 +27,10 @@ app_command = partial(
 
 
 def extra_root_commands():
-    from atlas_init.cli_root import trigger
+    from atlas_init.cli_root import go_test, trigger
 
     assert trigger
+    assert go_test
 
 
 @app.callback(invoke_without_command=True)

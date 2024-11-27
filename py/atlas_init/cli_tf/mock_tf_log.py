@@ -23,6 +23,7 @@ from atlas_init.cli_tf.debug_logs_test_data import (
     create_mock_data,
     default_is_diff,
 )
+from atlas_init.cli_tf.debug_logs_test_data_package_config import package_modifiers, package_skip_suffixes
 from atlas_init.repos.go_sdk import (
     api_spec_path_transformed,
     download_admin_api,
@@ -40,7 +41,9 @@ class MockTFLog(Entity):
     diff_skip_suffixes: list[str] = Field(default_factory=list)
     keep_duplicates: bool = False
     modifiers: list[RTModifier] = Field(default_factory=list)
+    package_name: str = ""
     log_diff_roundtrips: bool = False
+    skip_default_package_config: bool = False
 
     @model_validator(mode="after")
     def ensure_paths_exist(self) -> Self:
@@ -51,6 +54,9 @@ class MockTFLog(Entity):
         if not self.output_dir.exists():
             raise ValueError(f"output_dir: '{self.output_dir}' doesn't exist")
         assert self.output_dir.name == "testdata", "output_path should be a directory named testdata"
+        if (package_name := self.package_name) and not self.skip_default_package_config:
+            self.modifiers.extend(package_modifiers(package_name))
+            self.diff_skip_suffixes.extend(package_skip_suffixes(package_name))
         return self
 
     def differ(self, rt: SDKRoundtrip) -> bool:

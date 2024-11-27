@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from typing import IO, TypeVar
 
 import typer
+from zero_3rdparty.id_creator import simple_id
 
 StrT = TypeVar("StrT", bound=str)
 
@@ -92,6 +93,15 @@ def run_command_receive_result(
         logger.critical(f"command failed {command}, {output_text}")
         raise typer.Exit(1)
     return output_text
+
+
+def run_command_is_ok_output(command: str, cwd: Path, logger: Logger, env: dict | None = None) -> tuple[bool, str]:
+    with TemporaryDirectory() as temp_dir:
+        result_file = Path(temp_dir) / f"{simple_id()}.txt"
+        with open(result_file, "w") as file:
+            is_ok = run_command_is_ok(command.split(), env=env, cwd=cwd, logger=logger, output=file)
+        output_text = result_file.read_text().strip()
+    return is_ok, output_text
 
 
 def add_to_clipboard(clipboard_content: str, logger: Logger):
