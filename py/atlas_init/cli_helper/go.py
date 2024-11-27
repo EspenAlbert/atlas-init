@@ -79,6 +79,9 @@ def run_go_tests(
             logger.warning(f"no go packages for suite: {group}")
             continue
         if mode == GoTestMode.individual:
+            if group.sequential_tests:
+                logger.info(f"running individual tests sequentially as {group.name} is set to sequential_tests")
+                concurrent_runs = 1
             test_names = find_individual_tests(repo_path, package_paths)
             for name, pkg_path in test_names.items():
                 results.add_test_package_path(name, pkg_path)

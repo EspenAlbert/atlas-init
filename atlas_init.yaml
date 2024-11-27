@@ -57,6 +57,7 @@ test_suites:
   vars:
     use_project_extra: true
 - name: resource_policy
+  sequential_tests: true
   repo_go_packages:
     cfn:
     - cfn-resources/resource-policy
