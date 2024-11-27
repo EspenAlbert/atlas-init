@@ -44,8 +44,11 @@ class GoTestResult(Entity):
 
     def add_test_results_all_pass(self, test_name: str, test_results: list[GoTestRun]) -> bool:
         prev_test_results = self.runs.setdefault(test_name, [])
-        if prev_test_results is not None:
+        if prev_test_results:
             logger.warning(f"2nd time test results for {test_name}")
+        for result in test_results:
+            log_path = _log_path(test_name)
+            result.log_path = log_path
         prev_test_results.extend(test_results)
         return all(run.is_pass for run in test_results)
 
@@ -80,7 +83,6 @@ def run_go_tests(
             for name, pkg_path in test_names.items():
                 results.add_test_package_path(name, pkg_path)
                 commands_to_run[name] = f"go test {packages} -v -run ^{name}$ -timeout {timeout_minutes}m"
-
         elif mode == GoTestMode.package:
             command = f"go test {packages} -v -run ^TestAcc* -timeout {timeout_minutes}m"
             if not group.sequential_tests:
@@ -91,6 +93,9 @@ def run_go_tests(
     commands_str = "\n".join(f"'{name}': '{command}'" for name, command in sorted(commands_to_run.items()))
     logger.info(f"will run the following commands:\n{commands_str}")
     if dry_run:
+        return results
+    if not commands_to_run:
+        logger.warning("no tests to run!")
         return results
     return _run_tests(
         results,
@@ -118,7 +123,7 @@ def _resolve_env_vars(settings: AtlasInitSettings, env_vars: GoEnvVars) -> dict[
 def find_individual_tests(repo_path: Path, package_paths: list[str]) -> dict[str, Path]:
     tests = {}
     for package_path in package_paths:
-        package_abs_path = repo_path / package_path
+        package_abs_path = repo_path / package_path.lstrip(".").lstrip("/")
         for go_file in package_abs_path.glob("*.go"):
             with go_file.open() as f:
                 for line in f:
@@ -139,7 +144,8 @@ def _run_tests(
     re_run: bool = False,
 ) -> GoTestResult:
     futures = {}
-    with ThreadPoolExecutor(max_workers=min(max_workers, len(commands_to_run))) as pool:
+    actual_workers = min(max_workers, len(commands_to_run)) or 1
+    with ThreadPoolExecutor(max_workers=actual_workers) as pool:
         for name, command in sorted(commands_to_run.items()):
             log_path = _log_path(name)
             if log_path.exists() and log_path.read_text() and not re_run:

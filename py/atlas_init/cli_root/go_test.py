@@ -69,7 +69,7 @@ def _export_mock_tf_logs(results: GoTestResult):
             continue
         assert len(runs) == 1, f"expected only 1 run for test_name={test_name}, got {len(runs)}"
         run = runs[0]
-        tpf_package_path = package_path.rename(f"{package_path.name}tpf") / "testdata"
+        tpf_package_path = package_path.with_name(f"{package_path.name}tpf") / "testdata"
         default_package_path = package_path / "testdata"
         if not tpf_package_path.exists():
             logger.warning(

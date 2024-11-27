@@ -10,7 +10,7 @@ from pathlib import Path
 import humanize
 from github.WorkflowJob import WorkflowJob
 from model_lib import Entity, Event, utc_datetime
-from pydantic import Field
+from pydantic import Field, field_validator
 from zero_3rdparty.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -140,15 +140,20 @@ class GoTestRun(Entity):
 
 
 class LineMatch(Event):
-    ts: utc_datetime
+    ts: utc_datetime = Field(default_factory=utc_now)
     status: GoTestStatus
     name: str
     run_seconds: float | None = None
 
+    @field_validator("ts", mode="before")
+    @classmethod
+    def remove_none(cls, v):
+        return v or utc_now()
+
 
 _status_options = "|".join(list(GoTestStatus))
 line_result = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)\s[-=]+\s"
+    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?\s?[-=]+\s"
     + r"(?P<status>%s):?\s+" % _status_options  # noqa: UP031
     + r"(?P<name>[\w_]+)"
     + r"\s*\(?(?P<run_seconds>[\d\.]+)?s?\)?"
@@ -171,7 +176,7 @@ def match_line(line: str) -> LineMatch | None:
 
 
 context_start_pattern = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)\s[-=]+\s" r"NAME\s+" r"(?P<name>[\w_]+)"
+    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?\s?[-=]+\s" r"NAME\s+" r"(?P<name>[\w_]+)"
 )
 
 
@@ -182,7 +187,7 @@ def context_start_match(line: str) -> str:
 
 
 context_line_pattern = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)" r"\s{5}" r"(?P<indent>\s*)" r"(?P<relevant_line>.*)"
+    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?" r"\s{5}" r"(?P<indent>\s*)" r"(?P<relevant_line>.*)"
 )
 
 

@@ -23,6 +23,8 @@ _ok_examples = """\
 2024-06-26T04:41:47.7209465Z === RUN   TestAccNetworkDSPrivateLinkEndpoint_basic
 2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
 2024-06-26T04:41:47.7168636Z --- FAIL: TestAccNetworkRSNetworkPeering_updateBasicAzure (443.97s)
+=== RUN   TestAccResourcePolicy_invalidConfig
+--- PASS: TestAccResourcePolicy_invalidConfig (4.67s)
 2024-06-26T04:41:47.7171679Z --- SKIP: TestAccNetworkRSNetworkPeering_basicGCP (0.00s)"""
 
 _none_examples = """\
