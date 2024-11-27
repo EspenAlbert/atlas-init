@@ -19,6 +19,9 @@ def go_test(
     concurrent_runs: int = typer.Option(20, "-c", "--concurrent", help="number of concurrent runs"),
     re_run: bool = typer.Option(False, "-r", "--re-run", help="re-run the tests if the log already exist"),
     export_mock_tf_log: bool = typer.Option(False, "-e", "--export", help="export the mock-tf-log"),
+    export_mock_tf_log_verbose: bool = typer.Option(
+        False, "--export-verbose", help="log roundtrips when exporting the mock-tf-log"
+    ),
     env_method: GoEnvVars = typer.Option(GoEnvVars.manual, "--env", help="|".join(list(GoEnvVars))),
 ):
     if export_mock_tf_log and mode != GoTestMode.individual:
@@ -54,12 +57,12 @@ def go_test(
         error_msg = "no results found"
         raise ValueError(error_msg)
     if export_mock_tf_log:
-        _export_mock_tf_logs(results)
+        _export_mock_tf_logs(results, export_mock_tf_log_verbose)
     # use the test_results: dict[str, list[GoTestRun]]
     # TODO: create_detailed_summary()
 
 
-def _export_mock_tf_logs(results: GoTestResult):
+def _export_mock_tf_logs(results: GoTestResult, verbose: bool):
     package_paths = results.test_name_package_path
     admin_api_path = resolve_admin_api_path("", sdk_branch="main", admin_api_path="")
     for test_name, runs in results.runs.items():
@@ -78,11 +81,15 @@ def _export_mock_tf_logs(results: GoTestResult):
             tpf_package_path = default_package_path
         tf_log_path = run.log_path
         assert tf_log_path, f"test didn't set tf_log_path: {test_name}"
+        if test_name in results.failure_names:
+            logger.warning(f"test_name={test_name} failed, not exporting mock-tf-log")
+            continue
         req = MockTFLog(
             log_path=tf_log_path,
             output_dir=tpf_package_path,
             admin_api_path=admin_api_path,
             package_name=package_path.name,
+            log_diff_roundtrips=verbose,
         )
         mocked_yaml = mock_tf_log(req)
         logger.info(f"mocked TestConfig saved to {mocked_yaml}")
