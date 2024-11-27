@@ -10,11 +10,13 @@ logger = logging.getLogger(__name__)
 def add_label_tags(rt: SDKRoundtrip):
     logger.info(f"Adding labels and tags to {rt.id}")
     request = rt.request
-    req_dict, req_list = parsed(request.text)
+    req_dict, req_list, req_bool = parsed(request.text)
     response = rt.response
-    resp_dict, resp_list = parsed(response.text)
-    if resp_list or req_list:
+    resp_dict, resp_list, req_bool = parsed(response.text)
+    if resp_list or req_list or req_bool is not None:
         return
+    resp_dict = resp_dict or {}
+    req_dict = req_dict or {}
     for extra_field in ["labels", "tags"]:
         if extra_field not in resp_dict:
             resp_dict[extra_field] = []
