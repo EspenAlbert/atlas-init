@@ -90,7 +90,7 @@ def run_go_tests(
                 results.add_test_package_path(name, pkg_path)
                 commands_to_run[name] = f"go test {packages} -v -run ^{name}$ -timeout {timeout_minutes}m"
         elif mode == GoTestMode.package:
-            name_regex = "^TestAcc*" if names is None else f'^({"|".join(names)})$'
+            name_regex = f'^({"|".join(names)})$' if names else "^TestAcc*"
             command = f"go test {packages} -v -run {name_regex} -timeout {timeout_minutes}m"
             if not group.sequential_tests:
                 command = f"{command} -parallel {concurrent_runs}"
