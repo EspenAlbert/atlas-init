@@ -33,7 +33,7 @@ class GoEnvVars(StrEnum):
 
 class GoTestResult(Entity):
     runs: dict[str, list[GoTestRun]] = Field(default_factory=dict)
-    failure_names: list[str] = Field(default_factory=list)
+    failure_names: set[str] = Field(default_factory=set)
 
     test_name_package_path: dict[str, Path] = Field(default_factory=dict)
 
@@ -42,11 +42,12 @@ class GoTestResult(Entity):
             logger.warning(f"overwriting test_name={test_name} with package_path={old_path} --> {package_path}")
         self.test_name_package_path[test_name] = package_path
 
-    def add_test_results(self, test_name: str, test_results: list[GoTestRun]):
+    def add_test_results_all_pass(self, test_name: str, test_results: list[GoTestRun]) -> bool:
         prev_test_results = self.runs.setdefault(test_name, [])
         if prev_test_results is not None:
             logger.warning(f"2nd time test results for {test_name}")
         prev_test_results.extend(test_results)
+        return all(run.is_pass for run in test_results)
 
 
 def run_go_tests(
@@ -162,7 +163,7 @@ def _run_tests(
             ok, command_out = f.result()
         except Exception:
             logger.exception(f"failed to run command for {name}")
-            results.failure_names.append(name)
+            results.failure_names.add(name)
             continue
         context = GoTestContext(
             name=name,
@@ -173,19 +174,21 @@ def _run_tests(
             parsed_tests = list(parse(command_out.splitlines(), context, test_step_nr=0))
         except Exception:
             logger.exception(f"failed to parse tests for {name}")
-            results.failure_names.append(name)
+            results.failure_names.add(name)
             continue
-        if not ok:
-            results.failure_names.append(name)
+        if not parsed_tests and not ok:
+            results.failure_names.add(name)
             logger.error(f"failed to run tests for {name}: {command_out}")
-            # TODO: If the test run completed but no "errors" we should parse and store the test
             continue
         if not parsed_tests:
-            logger.warning(f"no test results for {name}: {command_out}")
+            logger.warning(f"failed to parse tests for {name}: {command_out}")
             continue
-        results.add_test_results(name, parsed_tests)
+        if not ok:
+            logger.warning(f"failing tests for {name}: {command_out}")
+        if not results.add_test_results_all_pass(name, parsed_tests):
+            results.failure_names.add(name)
     if failure_names := results.failure_names:
-        move_failed_logs_to_error_dir(set(failure_names))
+        move_failed_logs_to_error_dir(failure_names)
         logger.error(f"failed to run tests: {sorted(failure_names)}")
     return results
 
