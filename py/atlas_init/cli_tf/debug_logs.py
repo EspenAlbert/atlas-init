@@ -137,6 +137,8 @@ class SDKRoundtrip(Entity):
             raise ValueError(f"Expected list response but got dict: {resp.text}")
         if not req.expect_list_response and "results" in resp_payload_dict:
             raise ValueError(f"Expected dict response but got list: {resp.text}")
+        if resp_payload_list and not req.expect_list_response:
+            raise ValueError("Expected dict response but got list")  # noqa: EM101
         return self
 
     def __lt__(self, other) -> bool:
@@ -224,7 +226,7 @@ def match_request(
                 step_number=step_number,
             )
     remaining_responses = [resp for i, resp in enumerate(responses_list) if i not in used_responses]
-    err_msg = f"Could not match request {ref} with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
+    err_msg = f"Could not match request {request.path} ({ref}) with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
     raise ValueError(err_msg)
 
 
