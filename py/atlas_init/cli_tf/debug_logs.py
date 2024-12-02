@@ -32,7 +32,16 @@ class PathHeadersPayload(Entity):
 
     @property
     def expect_list_response(self) -> bool:
-        return self.method == "GET" and self.path.endswith("s") and all(not c.isdigit() for c in self.path)
+        final_path = self.path.split("/")[-1]
+        if final_path in {"settings", "processArgs"}:
+            return False
+        return self.method == "GET" and self.path.endswith("s") and all(not c.isdigit() for c in final_path)
+
+    @model_validator(mode="after")
+    def normalize_path(self) -> Self:
+        if "?" in self.path:
+            self.path = self.path.split("?", 1)[0]
+        return self
 
 
 def parse_request(request_lines: list[str]) -> PathHeadersPayload:
@@ -107,13 +116,28 @@ class SDKRoundtrip(Entity):
             return extract_version(content_type_req)
         raise ValueError(f"Could not extract version from req/resp: {content_type} or {content_type_req}")
 
+    @property
+    def java_method_match(self) -> bool:
+        java_method = self.response.headers.get("X-Java-Method")
+        if not java_method:
+            return False
+        java_method_final = java_method.split("::")[-1]
+        final_req_path = self.request.path.split("/")[-1]
+        return final_req_path.lower() in java_method_final.lower()
+
     @model_validator(mode="after")
     def ensure_match(self) -> Self:
+        if self.java_method_match:
+            return self
         req = self.request
         resp = self.response
-        _, resp_payload_list, __ = parsed(resp.text)
-        if req.expect_list_response and resp_payload_list is None:
+        resp_payload_dict, resp_payload_list, __ = parsed(resp.text)
+        resp_payload_dict = resp_payload_dict or {}
+        want_list = req.expect_list_response
+        if want_list and resp_payload_list is None and "results" not in resp_payload_dict:
             raise ValueError(f"Expected list response but got dict: {resp.text}")
+        if not want_list and (resp_payload_list or "results" in resp_payload_dict):
+            raise ValueError(f"Expected dict response but got list: {resp.text}")
         return self
 
     def __lt__(self, other) -> bool:
@@ -201,7 +225,7 @@ def match_request(
                 step_number=step_number,
             )
     remaining_responses = [resp for i, resp in enumerate(responses_list) if i not in used_responses]
-    err_msg = f"Could not match request {ref} with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
+    err_msg = f"Could not match request {request.path} ({ref}) with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
     raise ValueError(err_msg)
 
 

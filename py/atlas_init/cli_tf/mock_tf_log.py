@@ -184,6 +184,6 @@ def log_diff_roundtrips(roundtrips: list[SDKRoundtrip], differ: Callable[[SDKRou
             step_nr = rt.step_number
         diff_count += 1
         logger.info(
-            f"\n{rt.request.method} {rt.request.path}\n{rt.request.text}\n{rt.response.status}-{rt.response.status_text}\n{rt.response.text}"
+            f"\n{rt.request.method} {rt.request.path} {rt.version}\n{rt.request.text}\n{rt.response.status}-{rt.response.status_text}\n{rt.response.text}"
         )
     logger.info(f"Diffable requests: {diff_count}")

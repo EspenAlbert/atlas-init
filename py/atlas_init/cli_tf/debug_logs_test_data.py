@@ -101,8 +101,6 @@ class MockRequestData(Entity):
         is_diff: bool,
     ):
         step = self.steps[rt.step_number - 1]
-        if rt.request.method == "PATCH":
-            logger.info(f"PATCH: {rt.request.path}")
         step.add_request(
             normalized_path,
             rt.request.method,
