@@ -133,12 +133,11 @@ class SDKRoundtrip(Entity):
         resp = self.response
         resp_payload_dict, resp_payload_list, __ = parsed(resp.text)
         resp_payload_dict = resp_payload_dict or {}
-        if req.expect_list_response and resp_payload_list is None and "results" not in resp_payload_dict:
+        want_list = req.expect_list_response
+        if want_list and resp_payload_list is None and "results" not in resp_payload_dict:
             raise ValueError(f"Expected list response but got dict: {resp.text}")
-        if not req.expect_list_response and "results" in resp_payload_dict:
+        if not want_list and (resp_payload_list or "results" in resp_payload_dict):
             raise ValueError(f"Expected dict response but got list: {resp.text}")
-        if resp_payload_list and not req.expect_list_response:
-            raise ValueError("Expected dict response but got list")  # noqa: EM101
         return self
 
     def __lt__(self, other) -> bool:
