@@ -53,6 +53,9 @@ class CfnExampleInputs(CfnType):
         assert self.region_filter, "region is required"
         assert self.execution_role.startswith("arn:aws:iam::"), f"invalid execution role: {self.execution_role}"
         assert self.region
+        if self.delete_stack_first and self.operation == Operation.UPDATE:
+            err_msg = "cannot delete first when updating"
+            raise ValueError(err_msg)
         return self
 
     @property
