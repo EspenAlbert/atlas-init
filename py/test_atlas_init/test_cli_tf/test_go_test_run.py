@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import logging
 import pytest
 
 from atlas_init.cli_tf.go_test_run import (
@@ -11,6 +11,7 @@ from atlas_init.cli_tf.go_test_run import (
     parse,
 )
 
+logger = logging.getLogger(__name__)
 _network_logs_one_failure = (
     Path(__file__).parent / "test_data/network_logs_one_failure.txt"
 )
@@ -25,6 +26,7 @@ _ok_examples = """\
 2024-06-26T04:41:47.7168636Z --- FAIL: TestAccNetworkRSNetworkPeering_updateBasicAzure (443.97s)
 === RUN   TestAccResourcePolicy_invalidConfig
 --- PASS: TestAccResourcePolicy_invalidConfig (4.67s)
+2024-11-30T03:46:31.7791056Z --- FAIL: TestMigAdvancedCluster_replicaSetAWSProviderUpdate (11801.39s)
 2024-06-26T04:41:47.7171679Z --- SKIP: TestAccNetworkRSNetworkPeering_basicGCP (0.00s)"""
 
 _none_examples = """\
@@ -35,7 +37,9 @@ _none_examples = """\
 
 @pytest.mark.parametrize("line", _ok_examples.splitlines(keepends=True))
 def test_match_line(line):
-    assert match_line(line) is not None
+    match = match_line(line)
+    assert match is not None
+    logger.info(f" name='{match.name}'")
 
 
 @pytest.mark.parametrize("line", _none_examples.splitlines())
@@ -145,11 +149,15 @@ def test_context_lines():
             full_context.append(more_context)
     assert _expected_context_lines == "\n".join(full_context)
 
+_ci_logs_test_data = [
+    ("30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config", "TestAccConfigDSAtlasUsers_InvalidAttrCombinations", GoTestStatus.PASS),
+    ("33721193952_tests-1.10.x-latest_tests-1.10.x-latest-false_advanced_cluster", "TestMigAdvancedCluster_replicaSetAWSProviderUpdate", GoTestStatus.FAIL),
+]
 
-def test_parsing_nested_test(github_ci_logs_dir: Path, mock_job):
-    file_path = github_ci_logs_dir / "30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config.txt"
+@pytest.mark.parametrize("log_file,test_name,expected_status", _ci_logs_test_data, ids=[f"{t[0]}-{t[1]}" for t in _ci_logs_test_data])
+def test_parsing_nested_test(github_ci_logs_dir: Path, mock_job, log_file, test_name, expected_status):
+    file_path = github_ci_logs_dir / f"{log_file}.txt"
     tests = parse_tests(file_path, mock_job)
-    nested_test = "TestAccConfigDSAtlasUsers_InvalidAttrCombinations"
-    nested_test = next((test for test in tests if test.name == nested_test), None)
-    assert nested_test
-    assert nested_test.status == GoTestStatus.PASS
+    nested_test = next((test for test in tests if test.name == test_name), None)
+    assert nested_test, f"couldn't find test with name={test_name} in {','.join(t.name for t in tests)}"
+    assert nested_test.status == expected_status
