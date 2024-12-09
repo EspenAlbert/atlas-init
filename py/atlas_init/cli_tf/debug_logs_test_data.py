@@ -246,22 +246,32 @@ def create_mock_data(
         request_path = rt.request.path
         method = rt.request.method
         spec_path = find_normalized_path(request_path, api_spec_paths[method])
-        rt_variables = spec_path.variables(request_path)
-        normalized_path = spec_path.path
-        try:
-            mock_data.update_variables(rt_variables)
-        except VariablesChangedError as e:
-            for change in e.changes:
-                rt_variables.pop(change.var_name)
-                rt_variables[change.new_var_name] = change.new
-            normalized_path = normalize_text(request_path, rt_variables)
-        for modifier in modifiers:
-            if modifier.match(rt, normalized_path):
-                modifier.modification(rt)
-        normalized_text = normalize_text(rt.request.text, mock_data.variables, expect_json=True)
-        normalized_response_text = normalize_text(rt.response.text, mock_data.variables, expect_json=True)
+        normalized_path, normalized_text, normalized_response_text = normalize_rt(modifiers, mock_data, rt, spec_path)
         mock_data.add_roundtrip(rt, normalized_path, normalized_text, normalized_response_text, is_diff(rt))
     mock_data.replace_text_variables()
     if prune_duplicates:
         mock_data.prune_duplicate_responses()  # better to keep duplicates to stay KISS
     return mock_data
+
+
+def normalize_rt(
+    modifiers: list[RTModifier],
+    mock_data: MockRequestData,
+    rt: SDKRoundtrip,
+    spec_path: ApiSpecPath,
+):
+    request_path = rt.request.path
+    rt_variables = spec_path.variables(request_path)
+    try:
+        mock_data.update_variables(rt_variables)
+    except VariablesChangedError as e:
+        for change in e.changes:
+            rt_variables.pop(change.var_name)
+            rt_variables[change.new_var_name] = change.new
+    normalized_path = normalize_text(request_path, rt_variables)
+    for modifier in modifiers:
+        if modifier.match(rt, normalized_path):
+            modifier.modification(rt)
+    normalized_text = normalize_text(rt.request.text, mock_data.variables, expect_json=True)
+    normalized_response_text = normalize_text(rt.response.text, mock_data.variables, expect_json=True)
+    return normalized_path, normalized_text, normalized_response_text
