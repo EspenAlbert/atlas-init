@@ -67,8 +67,9 @@ def run_go_tests(
     re_run: bool = False,
     env_vars: GoEnvVars = GoEnvVars.vscode,
     names: set[str] | None = None,
+    use_replay_mode: bool = False,
 ) -> GoTestResult:
-    test_env = _resolve_env_vars(settings, env_vars)
+    test_env = _resolve_env_vars(settings, env_vars, use_replay_mode=use_replay_mode)
     if ci_value := test_env.pop("CI", None):
         logger.warning(f"pooped CI={ci_value}")
     results = GoTestResult()
@@ -115,14 +116,16 @@ def run_go_tests(
     )
 
 
-def _resolve_env_vars(settings: AtlasInitSettings, env_vars: GoEnvVars) -> dict[str, str]:
+def _resolve_env_vars(settings: AtlasInitSettings, env_vars: GoEnvVars, *, use_replay_mode: bool) -> dict[str, str]:
     if env_vars == GoEnvVars.manual:
         extra_vars = settings.load_profile_manual_env_vars(skip_os_update=True)
     elif env_vars == GoEnvVars.vscode:
         extra_vars = settings.load_env_vars(settings.env_vars_vs_code)
     else:
         raise NotImplementedError(f"don't know how to load env_vars={env_vars}")
-    test_env = os.environ | extra_vars | {"TF_ACC": "1", "TF_LOG": "DEBUG"}
+    mocker_env_name = "HTTP_MOCKER_REPLAY" if use_replay_mode else "HTTP_MOCKER_CAPTURE"
+    extra_vars |= {"TF_ACC": "1", "TF_LOG": "DEBUG", mocker_env_name: "true"}
+    test_env = os.environ | extra_vars
     logger.info(f"go test env-vars-extra: {sorted(extra_vars)}")
     return test_env
 

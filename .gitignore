@@ -1,7 +1,7 @@
 *.tfstate*
 *.code-workspace
 *.auto.tfvars
-dev.tfrc
+dev*.tfrc
 *.env-generated
 *.env
 *.env_manual

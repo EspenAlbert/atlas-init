@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import logging
 import pytest
@@ -97,7 +98,11 @@ _backup_context_2_name = "TestAccBackupRSOnlineArchiveWithProcessRegion"
 
 
 def check_test(
-    tests: list[GoTestRun], name: str, context_lines: str, status: GoTestStatus, url: str = ""
+    tests: list[GoTestRun],
+    name: str,
+    context_lines: str,
+    status: GoTestStatus,
+    url: str = "",
 ):
     found_tests = [t for t in tests if t.name == name]
     assert found_tests, f"couldn't find test with name={name}"
@@ -116,12 +121,24 @@ def test_parse_with_error_context(mock_job):
     tests = parse_tests(_backup_logs_multiple_failures_with_context, mock_job)
     assert tests
     check_status_counts(tests, fail_count=4, skip_count=0, pass_count=19)
-    check_test(tests, _backup_context_1_name, _backup_context_1, GoTestStatus.FAIL, "https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26681936440#step:5:235")
+    check_test(
+        tests,
+        _backup_context_1_name,
+        _backup_context_1,
+        GoTestStatus.FAIL,
+        "https://github.com/mongodb/terraform-provider-mongodbatlas/actions/runs/9671377861/job/26681936440#step:5:235",
+    )
     check_test(tests, _backup_context_2_name, _backup_context_2, GoTestStatus.FAIL)
 
 
 def test_context_start_match():
-    assert context_start_match("2024-06-26T00:58:20.7916997Z === NAME  TestAccBackupRSOnlineArchive") == 'TestAccBackupRSOnlineArchive'
+    assert (
+        context_start_match(
+            "2024-06-26T00:58:20.7916997Z === NAME  TestAccBackupRSOnlineArchive"
+        )
+        == "TestAccBackupRSOnlineArchive"
+    )
+
 
 _context_lines = """\
 2024-06-26T00:58:20.7918346Z     resource_online_archive_test.go:32: Step 2/7 error: Error running apply: exit status 1
@@ -149,15 +166,45 @@ def test_context_lines():
             full_context.append(more_context)
     assert _expected_context_lines == "\n".join(full_context)
 
+
 _ci_logs_test_data = [
-    ("30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config", "TestAccConfigDSAtlasUsers_InvalidAttrCombinations", GoTestStatus.PASS),
-    ("33721193952_tests-1.10.x-latest_tests-1.10.x-latest-false_advanced_cluster", "TestMigAdvancedCluster_replicaSetAWSProviderUpdate", GoTestStatus.FAIL),
+    (
+        "30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config",
+        "TestAccConfigDSAtlasUsers_InvalidAttrCombinations",
+        GoTestStatus.PASS,
+    ),
+    (
+        "33721193952_tests-1.10.x-latest_tests-1.10.x-latest-false_advanced_cluster",
+        "TestMigAdvancedCluster_replicaSetAWSProviderUpdate",
+        GoTestStatus.FAIL,
+    ),
 ]
 
-@pytest.mark.parametrize("log_file,test_name,expected_status", _ci_logs_test_data, ids=[f"{t[0]}-{t[1]}" for t in _ci_logs_test_data])
-def test_parsing_nested_test(github_ci_logs_dir: Path, mock_job, log_file, test_name, expected_status):
+
+@pytest.mark.parametrize(
+    "log_file,test_name,expected_status",
+    _ci_logs_test_data,
+    ids=[f"{t[0]}-{t[1]}" for t in _ci_logs_test_data],
+)
+def test_parsing_nested_test(
+    github_ci_logs_dir: Path, mock_job, log_file, test_name, expected_status
+):
     file_path = github_ci_logs_dir / f"{log_file}.txt"
     tests = parse_tests(file_path, mock_job)
     nested_test = next((test for test in tests if test.name == test_name), None)
-    assert nested_test, f"couldn't find test with name={test_name} in {','.join(t.name for t in tests)}"
+    assert (
+        nested_test
+    ), f"couldn't find test with name={test_name} in {','.join(t.name for t in tests)}"
     assert nested_test.status == expected_status
+
+
+@pytest.mark.skipif(
+    os.environ.get("TESTDIR_MAKE_MOCKABLE", "") == "",
+    reason="needs os.environ[TESTDIR_MAKE_MOCKABLE]",
+)
+def test_rename_directories_and_files():
+    path = Path(os.environ["TESTDIR_MAKE_MOCKABLE"])
+    paths = path.glob("*")
+    for p in paths:
+        if not p.name.startswith("TestAccMockable"):
+            p.rename(p.with_name(p.name.replace("TestAcc", "TestAccMockable")))
