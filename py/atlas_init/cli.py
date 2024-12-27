@@ -40,7 +40,7 @@ from atlas_init.repos.path import (
     find_paths,
     resource_name,
 )
-from atlas_init.settings.config import RepoAliasNotFoundError
+from atlas_init.settings.config import RepoAliasNotFoundError, TestSuite
 from atlas_init.settings.env_vars import (
     active_suites,
     init_settings,
@@ -70,10 +70,15 @@ def plan(context: typer.Context, *, skip_outputs: bool = False):
 
 @app_command()
 def apply(context: typer.Context, *, skip_outputs: bool = False):
-    _plan_or_apply(context.args, "apply", skip_outputs=skip_outputs)
+    suites = _plan_or_apply(context.args, "apply", skip_outputs=skip_outputs)
+    for suite in suites:
+        for hook in suite.post_apply_hooks:
+            logger.info(f"running post apply hook: {hook.name}")
+            hook_func = locate(hook.locate)
+            hook_func()  # type: ignore
 
 
-def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool):
+def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool) -> list[TestSuite]:
     settings = init_settings()
     logger.info(f"using the '{command}' command, extra args: {extra_args}")
     try:
@@ -97,6 +102,7 @@ def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, 
     if settings.env_vars_generated.exists():
         dump_vscode_dotenv(settings.env_vars_generated, settings.env_vars_vs_code)
         logger.info(f"your .env file is ready @ {settings.env_vars_vs_code}")
+    return suites
 
 
 @app_command()

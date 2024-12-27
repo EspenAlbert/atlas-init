@@ -65,6 +65,11 @@ class TerraformVars(Entity):
         return config
 
 
+class PyHook(Entity):
+    name: str
+    locate: str
+
+
 @dump_ignore_falsy
 @total_ordering
 class TestSuite(Entity):
@@ -75,6 +80,7 @@ class TestSuite(Entity):
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)
     repo_globs: dict[str, list[str]] = Field(default_factory=dict)
     vars: TerraformVars = Field(default_factory=TerraformVars)  # type: ignore
+    post_apply_hooks: list[PyHook] = Field(default_factory=list)
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, TestSuite):  # type: ignore
