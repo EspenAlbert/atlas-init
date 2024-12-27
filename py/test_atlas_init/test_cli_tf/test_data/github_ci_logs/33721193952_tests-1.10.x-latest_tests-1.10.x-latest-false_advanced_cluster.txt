@@ -1,0 +1,29 @@
+
+2024-11-30T00:29:50.3187240Z === RUN   TestMigAdvancedCluster_replicaSetAWSProviderUpdate
+2024-11-30T00:29:50.3188041Z === PAUSE TestMigAdvancedCluster_replicaSetAWSProviderUpdate
+2024-11-30T03:42:19.1303494Z 2024-11-30T03:42:19.129Z [ERROR] sdk.proto: Response contains error diagnostic: tf_resource_type=mongodbatlas_advanced_cluster diagnostic_summary="error updating advanced cluster (test-acc-tf-c-2284726486720125565): timeout while waiting for state to become 'IDLE' (last state: 'UPDATING', timeout: 3h0m0s)" diagnostic_detail="" diagnostic_severity=ERROR tf_req_id=deb543ce-1caf-ed1a-a74a-dd1424295cc0 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.7 tf_rpc=ApplyResourceChange
+2024-11-30T03:42:19.1370595Z 2024-11-30T03:42:19.136Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestMigAdvancedCluster_replicaSetAWSProviderUpdate test_step_number=2 test_terraform_path=/home/runner/work/_temp/2e7d5ae3-922a-4945-909a-d55712a0b676/terraform test_working_directory=/tmp/plugintest3335886395
+2024-11-30T03:42:19.1371851Z   error=
+2024-11-30T03:42:19.1372183Z   | Error running apply: exit status 1
+2024-11-30T03:42:19.1372446Z   | 
+2024-11-30T03:42:19.1373718Z   | Error: error updating advanced cluster (test-acc-tf-c-2284726486720125565): timeout while waiting for state to become 'IDLE' (last state: 'UPDATING', timeout: 3h0m0s)
+2024-11-30T03:42:19.1374493Z   | 
+2024-11-30T03:42:19.1374758Z   |   with mongodbatlas_advanced_cluster.test,
+2024-11-30T03:42:19.1375343Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_advanced_cluster" "test":
+2024-11-30T03:42:19.1375970Z   |   12: \t\tresource "mongodbatlas_advanced_cluster" "test" {
+2024-11-30T03:42:19.1376394Z   | 
+2024-11-30T03:42:19.1376582Z   
+2024-11-30T03:42:19.1376900Z === NAME  TestMigAdvancedCluster_replicaSetAWSProviderUpdate
+2024-11-30T03:42:19.1377672Z     resource_advanced_cluster_migration_test.go:54: Step 2/2 error: Error running apply: exit status 1
+2024-11-30T03:42:19.1378293Z         
+2024-11-30T03:42:19.1379496Z         Error: error updating advanced cluster (test-acc-tf-c-2284726486720125565): timeout while waiting for state to become 'IDLE' (last state: 'UPDATING', timeout: 3h0m0s)
+2024-11-30T03:42:19.1380169Z         
+2024-11-30T03:42:19.1380501Z           with mongodbatlas_advanced_cluster.test,
+2024-11-30T03:42:19.1381257Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_advanced_cluster" "test":
+2024-11-30T03:42:19.1381956Z           12: 		resource "mongodbatlas_advanced_cluster" "test" {
+2024-11-30T03:42:19.1382478Z         
+2024-11-30T03:46:31.7791056Z --- FAIL: TestMigAdvancedCluster_replicaSetAWSProviderUpdate (11801.39s)
+2024-11-30T03:46:31.7791559Z FAIL
+2024-11-30T03:46:31.7792010Z Deleting execution project: test-acc-tf-p-89310970549397495, id: 674a5c7be8f37b6adf43ad6d
+2024-11-30T03:46:32.2176991Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/advancedcluster	11804.666s
+2024-11-30T03:46:32.2289468Z FAIL

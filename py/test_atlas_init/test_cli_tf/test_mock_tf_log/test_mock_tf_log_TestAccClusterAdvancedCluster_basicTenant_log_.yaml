@@ -259,7 +259,7 @@ steps:
     - response_index: 89
       status: 202
       text: '{}'
-  - path: /api/atlas/v2/groups/{groupId}/clusters
+  - path: /api/atlas/v2/groups/{groupId}/clusters/
     method: GET
     version: '2024-08-05'
     text: ''

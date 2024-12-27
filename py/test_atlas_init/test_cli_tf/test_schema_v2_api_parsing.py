@@ -1,5 +1,8 @@
+import contextlib
 import os
+import logging
 from pathlib import Path
+import re
 
 import pytest
 from model_lib import dump, parse_model, parse_payload
@@ -11,6 +14,8 @@ from atlas_init.cli_tf.schema_v2_api_parsing import (
     minimal_api_spec,
     parse_api_spec_param,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def test_openapi_schema_create_parameters(
@@ -124,4 +129,71 @@ def test_ensure_test_data_admin_api_is_up_to_date(
 def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
     updated = api_spec_text_changes(schema_v2, openapi_schema)
     updated_yaml = dump(updated, "yaml")
-    file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")
+    file_regression.check(
+        updated_yaml, basename="openapi_text_changes", extension=".yaml"
+    )
+
+
+@pytest.mark.skipif(
+    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
+)
+def test_invalid_in_regex_patterns():
+    api_path = Path(os.environ["API_SPEC_PATH"])
+    expected_count = 1033
+    should_not_match = "ac/b"
+    project_id_example_pattern = re.compile("^([a-f0-9]{24})$")
+    assert not project_id_example_pattern.match(should_not_match)
+    assert not pattern_match_full("[0-9a-f]+", should_not_match)
+    patterns = find_patterns_in_file_and_match(api_path, should_not_match)
+    assert (
+        len(patterns) == expected_count
+    ), f"expected {expected_count} patterns, got {len(patterns)}"
+
+
+def find_patterns_in_file_and_match(
+    api_path: Path, expected_no_match: str
+) -> list[str]:
+    patterns = []
+    lines = api_path.read_text().splitlines()
+    prefix = 'pattern: "'
+    for i, line in enumerate(lines):
+        if prefix in line:
+            pattern_value = line.split(prefix)[1].strip()
+            # handle multi line patterns
+            j = 0
+            while not pattern_value.endswith('"'):
+                j += 1
+                pattern_value += lines[i + j].strip().rstrip("\\")
+            pattern_value = pattern_value.rstrip('"')
+            patterns.append(pattern_value)
+            pattern_value = valid_pattern(pattern_value)
+            if not pattern_value:
+                logger.warning(f"invalid pattern: {patterns[-1]} on line: {i+1}")
+                continue
+            if pattern_match_full(pattern_value, expected_no_match):
+                logger.warning(
+                    f"pattern: {pattern_value} matched invalid character: {expected_no_match} on L={i+1}"
+                )
+    return patterns
+
+
+def valid_pattern(pattern: str) -> str:
+    # some patterns are invalid for python re.compile, try to fix them
+    for c in [pattern, pattern.replace("\\\\", "\\"), pattern.replace("?<", "?P<")]:
+        with contextlib.suppress(re.error):
+            re.compile(c)
+            return c
+    return ""
+
+
+def pattern_match_full(pattern: str, text: str) -> bool:
+    # avoid any partial matches (e.g., start of string matches)
+    compiled = re.compile(pattern)
+    m = compiled.match(text)
+    return m is not None and m[0] == text
+
+
+def find_patterns_in_file_regex(api_path: Path) -> list[str]:
+    text = api_path.read_text()
+    pattern_regex = re.compile(r'\s+pattern:\s+"(?P<pattern>[^"]*)"$\s*', re.MULTILINE)
+    return pattern_regex.findall(text)

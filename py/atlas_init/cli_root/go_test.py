@@ -26,6 +26,7 @@ def go_test(
     names: list[str] = typer.Option(
         ..., "-n", "--names", default_factory=list, help="run only the tests with these names"
     ),
+    use_replay_mode: bool = typer.Option(False, "--replay", help="use replay mode and stored responses"),
 ):
     if export_mock_tf_log and mode != GoTestMode.individual:
         err_msg = "exporting mock-tf-log is only supported for individual tests"
@@ -54,6 +55,7 @@ def go_test(
                 re_run=re_run,
                 env_vars=env_method,
                 names=set(names),
+                use_replay_mode=use_replay_mode,
             )
         case _:
             raise NotImplementedError

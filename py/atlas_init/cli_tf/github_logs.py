@@ -222,7 +222,8 @@ def select_step_and_log_content(job: WorkflowJob, logs_path: Path) -> tuple[int,
 
 def test_step(steps: list[WorkflowStep]) -> int:
     for i, step in enumerate(steps, 1):
-        if "test" in step.name.lower():
+        name_lower = step.name.lower()
+        if "acceptance test" in name_lower and "mocked" not in name_lower:
             return i
     last_step = len(steps)
     logger.warning(f"using {last_step} as final step, unable to find 'test' in {steps}")

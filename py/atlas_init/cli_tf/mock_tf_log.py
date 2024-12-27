@@ -128,7 +128,7 @@ def mock_tf_log_cmd(
     log_diff_roundtrips: bool = typer.Option(
         False, "-l", "--log-diff-roundtrips", help="print out the roundtrips used in diffs"
     ),
-    package_name: str = typer.Option("", "-p", "--package-name", help="the package name to use for modifiers"),
+    package_name: str = typer.Option("-p", "--package-name", prompt=True, help="the package name to use for modifiers"),
 ):
     cwd = Path.cwd()
     default_testdir = cwd / "testdata"
