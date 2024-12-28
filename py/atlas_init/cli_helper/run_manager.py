@@ -102,7 +102,7 @@ class ResultStore:
         self._killed = True
 
 
-class ProcessManager:
+class RunManager:
     def __init__(
         self,
         worker_count: int = 100,
@@ -167,7 +167,9 @@ class ProcessManager:
 
         def read_output(process: subprocess.Popen):
             for line in process.stdout:  # type: ignore
-                result._add_line(line) # noqa: SLF001 # private call ok within the same file
+                result._add_line(
+                    line
+                )  # noqa: SLF001 # private call ok within the same file
 
         with subprocess.Popen(
             command,
@@ -210,11 +212,17 @@ class ProcessManager:
         self.pool.__exit__(None, None, None)
 
     def terminate_all(self):
-        self._send_signal_to_all(signal.SIGINT, ResultStore._abort) # noqa: SLF001 # private call ok within the same file
+        self._send_signal_to_all(
+            signal.SIGINT, ResultStore._abort
+        )  # noqa: SLF001 # private call ok within the same file
         self.wait_for_processes_ok(self.signal_int_timeout_s)
-        self._send_signal_to_all(signal.SIGTERM, ResultStore._terminate) # noqa: SLF001 # private call ok within the same file
+        self._send_signal_to_all(
+            signal.SIGTERM, ResultStore._terminate
+        )  # noqa: SLF001 # private call ok within the same file
         self.wait_for_processes_ok(self.signal_term_timeout_s)
-        self._send_signal_to_all(signal.SIGKILL, ResultStore._kill) # noqa: SLF001 # private call ok within the same file
+        self._send_signal_to_all(
+            signal.SIGKILL, ResultStore._kill
+        )  # noqa: SLF001 # private call ok within the same file
         self.wait_for_processes_ok(self.signal_kill_timeout_s)
 
     def _send_signal_to_all(
@@ -232,9 +240,7 @@ class ProcessManager:
             return True
         while monotonic() - start < timeout:
             with self.lock:
-                if not any(
-                    result.in_progress() for result in self.results.values()
-                ):
+                if not any(result.in_progress() for result in self.results.values()):
                     return True
             time.sleep(0.1)
         return False

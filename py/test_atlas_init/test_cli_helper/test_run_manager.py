@@ -2,7 +2,7 @@ import logging
 import time
 from concurrent.futures import wait
 
-from atlas_init.cli_helper.run_manager import ProcessManager, ResultStore
+from atlas_init.cli_helper.run_manager import RunManager, ResultStore
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def test_terminate_on_exit(tmp_path):
     start = time.time()
     stores: list[ResultStore] = []
-    with ProcessManager() as manager:
+    with RunManager() as manager:
         futures = []
         # sourcery skip: no-loop-in-tests
         for i in range(4):
@@ -30,7 +30,7 @@ def test_terminate_on_exit(tmp_path):
 
 
 def test_run_process_wait_on_log(tmp_path):
-    with ProcessManager() as manager:
+    with RunManager() as manager:
         store = ResultStore()
         future = manager.run_process_wait_on_log(
             'echo "hello"; sleep 10',
@@ -48,7 +48,7 @@ def test_run_process_wait_on_log(tmp_path):
 
 def test_normal_wait(tmp_path):
     start = time.monotonic()
-    with ProcessManager() as manager:
+    with RunManager() as manager:
         result = manager.run_process(
             "echo hello; sleep 1", logger=logger, cwd=tmp_path
         ).result()
@@ -72,12 +72,19 @@ except KeyboardInterrupt:
 def test_by_default_read_output_after_abort(tmp_path):
     python_script = tmp_path / "script.py"
     python_script.write_text(_python_script_log_after_terminate)
-    with ProcessManager() as manager:
-        future = manager.run_process_wait_on_log("python ./script.py", logger=logger, cwd=tmp_path, line_in_log="script started", timeout=1)
+    with RunManager() as manager:
+        future = manager.run_process_wait_on_log(
+            "python ./script.py",
+            logger=logger,
+            cwd=tmp_path,
+            line_in_log="script started",
+            timeout=1,
+        )
     time.sleep(0.3)
     result = future.result()
     assert "script started" in result.result_str
     assert "KeyboardInterrupt" in result.result_str
+
 
 _python_script_never_terminate = """
 import time
@@ -91,11 +98,18 @@ except KeyboardInterrupt:
     raise Exception("should have been killed by now")
 """
 
+
 def test_kill_after_timeout(tmp_path):
     python_script = tmp_path / "script.py"
     python_script.write_text(_python_script_never_terminate)
-    with ProcessManager() as manager:
-        future = manager.run_process_wait_on_log("python ./script.py", logger=logger, cwd=tmp_path, line_in_log="script started", timeout=1)
+    with RunManager() as manager:
+        future = manager.run_process_wait_on_log(
+            "python ./script.py",
+            logger=logger,
+            cwd=tmp_path,
+            line_in_log="script started",
+            timeout=1,
+        )
     time.sleep(0.3)
     result = future.result()
     assert "script started" in result.result_str
