@@ -7,6 +7,8 @@ import subprocess
 import sys
 import threading
 import time
+from collections import deque
+from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
@@ -16,7 +18,7 @@ from time import monotonic
 default_logger = logging.getLogger(__name__)
 
 
-class ResultInPrgoressError(Exception):
+class ResultInProgressError(Exception):
     pass
 
 
@@ -39,10 +41,12 @@ class WaitOnText:
 @dataclass
 class ResultStore:
     wait_condition: WaitOnText | None = None
+    _recent_lines: deque = field(default_factory=lambda: deque(maxlen=1000))
 
     result: list[str] = field(default_factory=list)
     exit_code: int | None = None
     _aborted: bool = False
+    _terminated: bool = False
     _killed: bool = False
 
     @property
@@ -52,24 +56,25 @@ class ResultStore:
     @property
     def is_ok(self) -> bool:
         if self.in_progress():
-            raise ResultInPrgoressError
+            raise ResultInProgressError
         return self.exit_code == 0
+
+    def _add_line(self, line: str) -> None:
+        self._recent_lines.append(line)
+        self.result.append(line)
 
     def unexpected_error(self) -> bool:
         if self.in_progress():
-            raise ResultInPrgoressError
+            raise ResultInProgressError
         return self.exit_code != 0 and not self._aborted
 
-    def got_killed(self) -> bool:
+    def force_stopped(self) -> bool:
         if self.in_progress():
-            raise ResultInPrgoressError
-        return self._killed
+            raise ResultInProgressError
+        return self._killed or self._terminated
 
     def in_progress(self) -> bool:
         return self.exit_code is None
-
-    def _add_line(self, line: str) -> None:
-        self.result.append(line)
 
     def wait(self) -> None:
         condition = self.wait_condition
@@ -77,12 +82,11 @@ class ResultStore:
             return
         timeout = condition.timeout
         start = monotonic()
-        look_index = 0
         while monotonic() - start < timeout:
             if not self.in_progress():
                 raise LogTextNotFoundError(self)
-            for line in self.result[look_index:]:
-                look_index += 1
+            while self._recent_lines:
+                line = self._recent_lines.popleft()
                 if condition.line in line:
                     return
             time.sleep(0.1)
@@ -91,12 +95,21 @@ class ResultStore:
     def _abort(self) -> None:
         self._aborted = True
 
+    def _terminate(self) -> None:
+        self._terminated = True
+
     def _kill(self) -> None:
         self._killed = True
 
 
 class ProcessManager:
-    def __init__(self, worker_count: int = 100, terminate_read_timeout: float = 0.2, terminate_abort_timeout: float = 0.2):
+    def __init__(
+        self,
+        worker_count: int = 100,
+        signal_int_timeout_s: float = 0.2,
+        signal_term_timeout_s: float = 0.2,
+        signal_kill_timeout_s: float = 0.2,
+    ):
         """
         Args:
             worker_count: the number of workers to run in parallel
@@ -106,8 +119,9 @@ class ProcessManager:
         self.results: dict[int, ResultStore] = {}
         self.lock = threading.RLock()
         self.pool = ThreadPoolExecutor(max_workers=worker_count)
-        self.terminate_read_timeout = terminate_read_timeout
-        self.terminate_abort_timeout = terminate_abort_timeout
+        self.signal_int_timeout_s = signal_int_timeout_s
+        self.signal_term_timeout_s = signal_term_timeout_s
+        self.signal_kill_timeout_s = signal_kill_timeout_s
 
     def __enter__(self):
         self.pool.__enter__()
@@ -117,7 +131,7 @@ class ProcessManager:
         self,
         command: str,
         cwd: Path,
-        logger: Logger,
+        logger: Logger | None,
         env: dict | None = None,
         result_store: ResultStore | None = None,
         *,
@@ -134,7 +148,7 @@ class ProcessManager:
         self,
         command: str,
         cwd: Path,
-        logger: Logger,
+        logger: Logger | None,
         env: dict | None = None,
         result_store: ResultStore | None = None,
     ) -> Future[ResultStore]:
@@ -144,11 +158,17 @@ class ProcessManager:
         self,
         command: str,
         cwd: Path,
-        logger: Logger,
+        logger: Logger | None,
         env: dict | None = None,
         result: ResultStore | None = None,
     ) -> ResultStore:
         result = result or ResultStore()
+        logger = logger or default_logger
+
+        def read_output(process: subprocess.Popen):
+            for line in process.stdout:  # type: ignore
+                result._add_line(line) # noqa: SLF001 # private call ok within the same file
+
         with subprocess.Popen(
             command,
             cwd=cwd,
@@ -164,21 +184,21 @@ class ProcessManager:
             with self.lock:
                 self.processes[threading.get_ident()] = process
                 self.results[threading.get_ident()] = result
+            read_future = self.pool.submit(read_output, process)
             try:
-                for line in process.stdout:  # type: ignore
-                    result._add_line(line) # noqa: SLF001 # private call ok within the same file
-                process.wait()
-            except KeyboardInterrupt:
-                process.terminate()
                 process.wait()
             finally:
+                try:
+                    read_future.result(1)
+                except BaseException:
+                    logger.exception(f"failed to read output for command: {command}")
                 with self.lock:
                     del self.processes[threading.get_ident()]
                     del self.results[threading.get_ident()]
         result.exit_code = process.returncode
         if result.unexpected_error():
             logger.error(f"command failed '{command}', error code: {result.exit_code}")
-        if result.got_killed():
+        if result.force_stopped():
             logger.error(f"command killed '{command}'")
         return result
 
@@ -190,29 +210,31 @@ class ProcessManager:
         self.pool.__exit__(None, None, None)
 
     def terminate_all(self):
-        with self.lock:
-            processes = self.processes
-            if not processes:
-                return
-            for pid, process in processes.items():
-                self.results[pid]._abort() # noqa: SLF001 # private call ok within the same file
-                gpid = os.getpgid(process.pid)
-                os.killpg(gpid, signal.SIGINT) # use process group to send to all children
-        time.sleep(self.terminate_read_timeout)
-        with self.lock:
-            for process in self.processes.values():
-                process.stdout.close()  # type: ignore
-        self._sleep_until_done(self.terminate_abort_timeout)
+        self._send_signal_to_all(signal.SIGINT, ResultStore._abort) # noqa: SLF001 # private call ok within the same file
+        self.wait_for_processes_ok(self.signal_int_timeout_s)
+        self._send_signal_to_all(signal.SIGTERM, ResultStore._terminate) # noqa: SLF001 # private call ok within the same file
+        self.wait_for_processes_ok(self.signal_term_timeout_s)
+        self._send_signal_to_all(signal.SIGKILL, ResultStore._kill) # noqa: SLF001 # private call ok within the same file
+        self.wait_for_processes_ok(self.signal_kill_timeout_s)
+
+    def _send_signal_to_all(
+        self, signal_type: signal.Signals, result_call: Callable[[ResultStore], None]
+    ):
         with self.lock:
             for pid, process in self.processes.items():
-                result = self.results[pid]
-                if result.in_progress():
-                    result._kill() # noqa: SLF001 # private call ok within the same file
-                    process.kill()
+                result_call(self.results[pid])
+                gpid = os.getpgid(process.pid)
+                os.killpg(gpid, signal_type)
 
-    def _sleep_until_done(self, seconds: float):
+    def wait_for_processes_ok(self, timeout: float):
         start = monotonic()
-        while monotonic() - start < seconds:
+        if not self.processes:
+            return True
+        while monotonic() - start < timeout:
+            with self.lock:
+                if not any(
+                    result.in_progress() for result in self.results.values()
+                ):
+                    return True
             time.sleep(0.1)
-            if not self.processes:
-                return
+        return False
