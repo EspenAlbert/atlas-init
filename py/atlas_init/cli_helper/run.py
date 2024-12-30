@@ -46,7 +46,7 @@ def run_binary_command_is_ok(
     binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None, *, dry_run: bool = False
 ) -> bool:
     env = env or {**os.environ}
-    bin_path = find_binary_on_path(binary_name, logger, allow_missing=dry_run)
+    bin_path = find_binary_on_path(binary_name, logger, allow_missing=dry_run) or binary_name
     return run_command_is_ok(
         f"{bin_path} {command}",
         env=env,
