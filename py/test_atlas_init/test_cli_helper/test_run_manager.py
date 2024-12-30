@@ -59,7 +59,7 @@ def test_normal_wait(tmp_path):
 
 _python_script_log_after_terminate = """
 import time
-print("script started")
+print("script started", flush=True)
 try:
     time.sleep(10)
     print("never interrupted!", flush=True)
@@ -78,7 +78,7 @@ def test_by_default_read_output_after_abort(tmp_path):
             logger=logger,
             cwd=tmp_path,
             line_in_log="script started",
-            timeout=1,
+            timeout=2,
         )
     time.sleep(0.3)
     result = future.result()

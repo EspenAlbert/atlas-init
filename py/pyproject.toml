@@ -52,7 +52,7 @@ fmt_config = ["python scripts/atlas_init_sort.py"]
 
 [tool.hatch.envs.hatch-test]
 installer = "uv"
-default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
+default-args = ["test_atlas_init", "-s", "-vv", "--tb=short", "--log-cli-level=INFO", "--ignore=.venv/*"]
 extra-dependencies = [
   "hatchling==1.24.2",
   "pymongo==4.7.3",

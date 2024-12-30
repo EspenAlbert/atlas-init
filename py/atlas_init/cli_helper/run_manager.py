@@ -196,6 +196,8 @@ class RunManager:
             read_future = self.pool.submit(read_output, process)
             try:
                 process.wait()
+            except Exception:
+                logger.exception(f"failed to run command: {command}")
             finally:
                 try:
                     read_future.result(1)
