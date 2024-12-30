@@ -38,8 +38,7 @@ def create_realm_app():
         settings.include_extra_env_vars(realm_settings.model_dump())
         return
     logger.info("creating new real app")
-    apps = list_apps(base_url, auth_headers, project_id)
-    if apps:
+    if apps := list_apps(base_url, auth_headers, project_id):
         logger.info(f"got apps: {apps}")
         app_id = apps[0]["_id"]
     else:
