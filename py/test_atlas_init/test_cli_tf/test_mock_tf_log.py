@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Callable
 
@@ -32,6 +33,7 @@ params = [
 ]
 
 
+@pytest.mark.skipif(os.environ.get("RUN_DEPRECATED", "") == "", reason="needs os.environ[RUN_DEPRECATED]")
 @pytest.mark.parametrize(
     "log_filename,pkg_name",
     params,
