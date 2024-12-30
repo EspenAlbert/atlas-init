@@ -46,7 +46,7 @@ def run_binary_command_is_ok(
     binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None, *, dry_run: bool = False
 ) -> bool:
     env = env or {**os.environ}
-    bin_path = find_binary_on_path(binary_name, logger)
+    bin_path = find_binary_on_path(binary_name, logger, allow_missing=dry_run)
     return run_command_is_ok(
         f"{bin_path} {command}",
         env=env,
@@ -60,6 +60,7 @@ def find_binary_on_path(binary_name: str, logger: Logger, *, allow_missing: bool
     if bin_path := which(binary_name):
         return bin_path
     if allow_missing:
+        logger.warning(f"binary '{binary_name}' not found on $PATH")
         return ""
     logger.critical(f"please install '{binary_name}'")
     raise typer.Exit(1)

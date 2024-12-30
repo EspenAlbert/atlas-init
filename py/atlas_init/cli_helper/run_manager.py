@@ -172,7 +172,7 @@ class RunManager:
 
     def _resolve_command(self, binary: str, command: str, logger: Logger | None):
         if binary:
-            binary_path = find_binary_on_path(binary, logger or default_logger)
+            binary_path = find_binary_on_path(binary, logger or default_logger, allow_missing=self.dry_run)
             command = f"{binary_path} {command}"
         return command
 
