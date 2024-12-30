@@ -192,7 +192,7 @@ class AtlasInitPaths(BaseSettings):
         if manual_env_vars:
             if skip_os_update:
                 return manual_env_vars
-            logger.warning(f"loading manual env-vars from {self.env_file_manual}")
+            logger.info(f"loading manual env-vars from {self.env_file_manual}")
             os.environ.update(manual_env_vars)
         else:
             logger.warning(f"no {self.env_file_manual}")

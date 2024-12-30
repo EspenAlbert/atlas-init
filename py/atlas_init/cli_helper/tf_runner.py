@@ -9,7 +9,7 @@ from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
 from atlas_init.cli_helper.run import (
     add_to_clipboard,
-    run_command_is_ok,
+    run_binary_command_is_ok,
     run_command_receive_result,
 )
 from atlas_init.settings.config import TerraformVars, TestSuite
@@ -63,14 +63,14 @@ def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[st
 
 def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
     command_parts = [
-        "terraform",
         command,
         "-var-file",
         str(settings.tf_vars_path),
         *extra_args,
     ]
-    is_ok = run_command_is_ok(
-        command_parts,
+    is_ok = run_binary_command_is_ok(
+        "terraform",
+        " ".join(command_parts),
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
         cwd=settings.tf_path,
         logger=logger,

@@ -15,6 +15,8 @@ from logging import Logger
 from pathlib import Path
 from time import monotonic
 
+from atlas_init.cli_helper.run import find_binary_on_path
+
 default_logger = logging.getLogger(__name__)
 
 
@@ -126,6 +128,11 @@ class RunManager:
         self.signal_kill_timeout_s = signal_kill_timeout_s
         self.dry_run = dry_run
 
+    def set_timeouts(self, timeout: float):
+        self.signal_int_timeout_s = timeout
+        self.signal_term_timeout_s = timeout
+        self.signal_kill_timeout_s = timeout
+
     def __enter__(self):
         self.pool.__enter__()
         return self
@@ -140,7 +147,9 @@ class RunManager:
         *,
         line_in_log: str,
         timeout: float,
+        binary: str = "",
     ) -> Future[ResultStore]:
+        command = self._resolve_command(binary, command, logger)
         store = result_store or ResultStore()
         store.wait_condition = WaitOnText(line=line_in_log, timeout=timeout)
         future = self.pool.submit(self._run, command, cwd, logger, env, store)
@@ -155,8 +164,17 @@ class RunManager:
         logger: Logger | None,
         env: dict | None = None,
         result_store: ResultStore | None = None,
+        *,
+        binary: str = "",
     ) -> Future[ResultStore]:
+        command = self._resolve_command(binary, command, logger)
         return self.pool.submit(self._run, command, cwd, logger, env, result_store)
+
+    def _resolve_command(self, binary: str, command: str, logger: Logger | None):
+        if binary:
+            binary_path = find_binary_on_path(binary, logger or default_logger)
+            command = f"{binary_path} {command}"
+        return command
 
     def _run(
         self,
@@ -173,6 +191,13 @@ class RunManager:
             for line in process.stdout:  # type: ignore
                 result._add_line(line)
 
+        sys_stderr = sys.stderr
+
+        def read_stderr(process: subprocess.Popen):
+            for line in process.stderr:
+                sys_stderr.write(line)
+                result._add_line(line)
+
         logger.info(f"running command '{command}' from {cwd}")
         if self.dry_run:
             result.exit_code = 0
@@ -183,7 +208,7 @@ class RunManager:
             cwd=cwd,
             env=env,
             stdout=subprocess.PIPE,
-            stderr=sys.stderr,
+            stderr=subprocess.PIPE,
             stdin=sys.stdin,
             start_new_session=True,
             shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection
@@ -193,16 +218,18 @@ class RunManager:
             with self.lock:
                 self.processes[threading.get_ident()] = process
                 self.results[threading.get_ident()] = result
-            read_future = self.pool.submit(read_output, process)
+            read_future_out = self.pool.submit(read_output, process)
+            read_future_err = self.pool.submit(read_stderr, process)
             try:
                 process.wait()
             except Exception:
                 logger.exception(f"failed to run command: {command}")
             finally:
-                try:
-                    read_future.result(1)
-                except BaseException:
-                    logger.exception(f"failed to read output for command: {command}")
+                for std_name, future in zip(["stdout", "stderr"], [read_future_out, read_future_err], strict=False):
+                    try:
+                        future.result(1)
+                    except BaseException:
+                        logger.exception(f"failed to read output ({std_name}) for command: {command}")
                 with self.lock:
                     del self.processes[threading.get_ident()]
                     del self.results[threading.get_ident()]

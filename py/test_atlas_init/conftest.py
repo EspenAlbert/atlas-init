@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 import logging
 import os
 from pathlib import Path
+import re
 from typing import Callable, Literal, TypeAlias
 from unittest.mock import MagicMock
 
@@ -160,7 +161,10 @@ def cli_configure(
 def cli_assertions(file_regression, caplog, tmp_path):
     caplog.set_level(logging.DEBUG)
 
-    def normalize_tmp_path(text: str) -> str:
+    def normalize_cmd(substring_match: str, text: str) -> str:
+        binary = substring_match.split()[0]
+        binary_path_pattern = re.compile(rf"(\S+/)({binary})")
+        text = binary_path_pattern.sub(r"\2", text, count=1)
         return text.replace(str(tmp_path), "/tmp")
 
     def _check_assertions(args: CLIArgs):
@@ -170,8 +174,8 @@ def cli_assertions(file_regression, caplog, tmp_path):
                 case RunAssertion(substring):
                     for log_text in caplog.messages:
                         if substring in log_text:
-                            output.commands_run[substring] = normalize_tmp_path(
-                                log_text
+                            output.commands_run[substring] = normalize_cmd(
+                                substring, log_text
                             )
                             break
                     else:

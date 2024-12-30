@@ -17,6 +17,7 @@ from atlas_init.cli_cfn.aws import (
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     read_execution_role,
 )
+from atlas_init.cli_cfn.contract import contract_test_cmd
 from atlas_init.cli_cfn.example import example_cmd
 from atlas_init.cli_cfn.files import create_sample_file_from_input, has_md_link, iterate_schemas
 from atlas_init.cli_helper.run import run_command_is_ok
@@ -29,6 +30,7 @@ from atlas_init.settings.env_vars import active_suites, init_settings
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="example")(example_cmd)
+app.command(name="contract-test")(contract_test_cmd)
 logger = logging.getLogger(__name__)
 
 
@@ -108,7 +110,7 @@ def inputs(
     assert parent_dir, f"unable to find a {CREATE_FILENAME} in {create_dirs} in {cwd}"
     if not run_command_is_ok(
         cwd=cwd,
-        cmd=[f"./{parent_dir}/{CREATE_FILENAME}", *context.args],
+        cmd=f"./{parent_dir}/{CREATE_FILENAME}" + " ".join(context.args),
         env={**os.environ} | env_extra,
         logger=logger,
     ):

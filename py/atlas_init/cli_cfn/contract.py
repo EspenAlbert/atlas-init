@@ -1,13 +1,17 @@
 import logging
+import os
 import re
 from pathlib import Path
 
+import typer
 from model_lib import Entity
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.cli_cfn.files import create_sample_file_from_input
-from atlas_init.cli_helper.run import run_command_exit_on_failure, run_command_is_ok
+from atlas_init.cli_helper.run import (
+    run_binary_command_is_ok,
+)
 from atlas_init.cli_helper.run_manager import RunManager
 from atlas_init.cli_root import is_dry_run
 from atlas_init.repos.path import Repo, ResourcePaths, find_paths
@@ -23,6 +27,14 @@ class RunContractTest(Entity):
     aws_profile: str
     skip_build: bool = False
     dry_run: bool = Field(default_factory=is_dry_run)
+    only_names: list[str] | None = None
+
+    @property
+    def run_tests_command(self) -> tuple[str, str]:
+        if self.only_names:
+            names = " ".join(f"-k {name}" for name in self.only_names)
+            return "cfn", f"test --function-name TestEntrypoint --verbose --region {self.cfn_region} -- {names}"
+        return "cfn", f"test --function-name TestEntrypoint --verbose --region {self.cfn_region}"
 
 
 class RunContractTestOutput(Entity):
@@ -49,25 +61,39 @@ class CFNBuild(Entity):
     ldflags: str = "-s -w -X github.com/mongodb/mongodbatlas-cloudformation-resources/util.defaultLogLevel=info -X github.com/mongodb/mongodbatlas-cloudformation-resources/version.Version=${CFNREP_GIT_SHA}"
 
     @property
+    def extra_env(self) -> dict[str, str]:
+        return {"GOOS": self.goos, "CGO_ENABLED": str(self.cgo), "GOARCH": self.goarch}
+
+    @property
     def flags(self) -> str:
         return self.ldflags.replace("${CFNREP_GIT_SHA}", self.git_sha)
 
     @property
-    def command(self) -> str:
-        return f'env GOOS={self.goos} CGO_ENABLED={self.cgo} GOARCH={self.goarch} go build -ldflags="{self.flags}" -tags="{self.tags}" -o bin/bootstrap cmd/main.go'
+    def command_build(self) -> str:
+        return f'build -ldflags="{self.flags}" -tags="{self.tags}" -o bin/bootstrap cmd/main.go'
 
     @property
     def cfn_generate(self) -> str:
-        return "cfn generate"
+        return "generate"
 
     @property
-    def commands(self) -> list[str]:
-        return [self.cfn_generate, self.command]
+    def commands(self) -> list[tuple[str, str]]:
+        return [
+            ("cfn", self.cfn_generate),
+            ("go", self.command_build),
+        ]
+
+
+def contract_test_cmd(
+    only_names: list[str] = typer.Option(None, "-n", "--only-names", help="only run these contract tests"),
+):
+    contract_test(only_names=only_names)
 
 
 def contract_test(
     settings: AtlasInitSettings | None = None,
     resource_paths: ResourcePaths | None = None,
+    only_names: list[str] | None = None,
 ):
     settings = settings or init_settings()
     resource_paths = resource_paths or find_paths(Repo.CFN)
@@ -85,6 +111,7 @@ def contract_test(
         repo_path=resource_paths.repo_path,
         aws_profile=settings.AWS_PROFILE,
         cfn_region=settings.cfn_region,
+        only_names=only_names,
     )
     if run_contract_test.skip_build:
         logger.info("skipping build")
@@ -110,9 +137,8 @@ class CreateContractTestInputsResponse(Entity):
             logger.warning("no input files created")
             return
         inputs_dir = self.input_files[0].parent
-        logger.info(f"{len(inputs)} created in '{inputs_dir}'")
-        for file in self.input_files:
-            logger.info(file.name)
+        logger.info(f"{len(inputs)} inputs created in '{inputs_dir}'")
+        logger.info("\n".join(f"'{file.name}'" for file in self.input_files))
 
 
 def create_contract_test_inputs(
@@ -145,26 +171,39 @@ def file_replacements(text: str, replacements: dict[str, str], file_name: str) -
 
 
 def build(event: CFNBuild):
-    for command in event.commands:
-        run_command_exit_on_failure(command, cwd=event.resource_path, logger=logger, dry_run=event.dry_run)
+    for binary, command in event.commands:
+        is_ok = run_binary_command_is_ok(
+            binary,
+            command,
+            cwd=event.resource_path,
+            logger=logger,
+            dry_run=event.dry_run,
+            env={**os.environ, **event.extra_env},
+        )
+        if not is_ok:
+            logger.critical(f"failed to run {binary} {command}")
+            raise typer.Exit(1)
 
 
 def run_contract_tests(event: RunContractTest) -> RunContractTestOutput:
     with RunManager(dry_run=event.dry_run) as manager:
+        manager.set_timeouts(3)
         resource_path = event.resource_path
         run_future = manager.run_process_wait_on_log(
-            f"sam local start-lambda --skip-pull-image --region {event.cfn_region}",
+            f"local start-lambda --skip-pull-image --region {event.cfn_region}",
+            binary="sam",
             cwd=resource_path,
             logger=logger,
             line_in_log="Running on http://",
             timeout=60,
         )
-        contract_test = f"cfn test --function-name TestEntrypoint --verbose --region {event.cfn_region}"
-        test_result_ok = run_command_is_ok(
-            contract_test.split(),
+        binary, test_cmd = event.run_tests_command
+        test_result_ok = run_binary_command_is_ok(
+            binary,
+            test_cmd,
             cwd=resource_path,
             logger=logger,
-            env={"AWS_PROFILE": event.aws_profile},
+            env={**os.environ, "AWS_PROFILE": event.aws_profile},
             dry_run=event.dry_run,
         )
     sam_local_result = run_future.result(timeout=1)
