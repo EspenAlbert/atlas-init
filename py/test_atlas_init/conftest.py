@@ -6,6 +6,7 @@ import re
 from typing import Callable, Literal, TypeAlias
 from unittest.mock import MagicMock
 
+from atlas_init.cli_helper.run import LOG_CMD_PREFIX
 from atlas_init.cli_root import set_dry_run
 from atlas_init.repos.path import (
     GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
@@ -162,10 +163,13 @@ def cli_assertions(file_regression, caplog, tmp_path):
     caplog.set_level(logging.DEBUG)
 
     def normalize_cmd(substring_match: str, text: str) -> str:
+        text = text.removeprefix(LOG_CMD_PREFIX)
+        text = text.replace(str(tmp_path), "/tmp")
         binary = substring_match.split()[0]
-        binary_path_pattern = re.compile(rf"(\S+/)({binary})")
-        text = binary_path_pattern.sub(r"\2", text, count=1)
-        return text.replace(str(tmp_path), "/tmp")
+        if not text.startswith(substring_match):
+            binary_path_pattern = re.compile(rf"(\S+/)({binary})")
+            text = binary_path_pattern.sub(r"\2", text, count=1)
+        return text
 
     def _check_assertions(args: CLIArgs):
         output = _AssertionOutput()
@@ -174,9 +178,7 @@ def cli_assertions(file_regression, caplog, tmp_path):
                 case RunAssertion(substring):
                     for log_text in caplog.messages:
                         if substring in log_text:
-                            output.commands_run[substring] = normalize_cmd(
-                                substring, log_text
-                            )
+                            output.commands_run[substring] = normalize_cmd(substring, log_text)
                             break
                     else:
                         output.commands_missing.append(

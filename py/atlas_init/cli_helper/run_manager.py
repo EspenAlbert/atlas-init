@@ -15,7 +15,7 @@ from logging import Logger
 from pathlib import Path
 from time import monotonic
 
-from atlas_init.cli_helper.run import find_binary_on_path
+from atlas_init.cli_helper.run import LOG_CMD_PREFIX, find_binary_on_path
 
 default_logger = logging.getLogger(__name__)
 
@@ -198,7 +198,7 @@ class RunManager:
                 sys_stderr.write(line)
                 result._add_line(line)
 
-        logger.info(f"running command '{command}' from {cwd}")
+        logger.info(f"{LOG_CMD_PREFIX}{command}' from '{cwd}'")
         if self.dry_run:
             result.exit_code = 0
             result.result.append(f"DRY RUN: {command}")

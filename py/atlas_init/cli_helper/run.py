@@ -10,6 +10,8 @@ from typing import IO
 import typer
 from zero_3rdparty.id_creator import simple_id
 
+LOG_CMD_PREFIX = "running: '"
+
 
 def run_command_is_ok(
     cmd: str,
@@ -21,7 +23,7 @@ def run_command_is_ok(
     dry_run: bool = False,
 ) -> bool:
     env = env or {**os.environ}
-    logger.info(f"running: '{cmd}' from '{cwd}'")
+    logger.info(f"{LOG_CMD_PREFIX}{cmd}' from '{cwd}'")
     if dry_run:
         return True
     output = output or sys.stdout  # type: ignore
