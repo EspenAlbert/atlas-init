@@ -69,12 +69,7 @@ def find_binary_on_path(binary_name: str, logger: Logger, *, allow_missing: bool
 
 
 def run_command_exit_on_failure(
-    cmd: list[StrT] | str,
-    cwd: Path | str,
-    logger: Logger,
-    env: dict | None = None,
-    *,
-    dry_run: bool = False
+    cmd: list[StrT] | str, cwd: Path | str, logger: Logger, env: dict | None = None, *, dry_run: bool = False
 ) -> None:
     if isinstance(cmd, str):
         cmd = cmd.split()  # type: ignore

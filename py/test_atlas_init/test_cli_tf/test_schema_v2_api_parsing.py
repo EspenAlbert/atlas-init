@@ -1,8 +1,8 @@
 import contextlib
-import os
 import logging
-from pathlib import Path
+import os
 import re
+from pathlib import Path
 
 import pytest
 from model_lib import dump, parse_model, parse_payload

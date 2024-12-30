@@ -46,9 +46,7 @@ class CFNBuild(Entity):
     goarch: str = "amd64"
     goos: str = "linux"
     git_sha: str = "local"
-    ldflags: str = (
-        "-s -w -X github.com/mongodb/mongodbatlas-cloudformation-resources/util.defaultLogLevel=info -X github.com/mongodb/mongodbatlas-cloudformation-resources/version.Version=${CFNREP_GIT_SHA}"
-    )
+    ldflags: str = "-s -w -X github.com/mongodb/mongodbatlas-cloudformation-resources/util.defaultLogLevel=info -X github.com/mongodb/mongodbatlas-cloudformation-resources/version.Version=${CFNREP_GIT_SHA}"
 
     @property
     def flags(self) -> str:
@@ -99,9 +97,7 @@ def contract_test(
         logger.info("contract tests passed 🥳")
     else:
         logger.error("contract tests failed 💥")
-        logger.error(
-            f"function logs (exit_code={result.sam_local_exit_code}):\n {result.sam_local_logs}"
-        )
+        logger.error(f"function logs (exit_code={result.sam_local_exit_code}):\n {result.sam_local_logs}")
 
 
 class CreateContractTestInputsResponse(Entity):
@@ -133,13 +129,9 @@ def create_contract_test_inputs(
         inputs_file = inputs_dir / template.name.replace(".template", "")
         ensure_parents_write_text(inputs_file, template_file)
         input_files.append(inputs_file)
-        sample_file = create_sample_file_from_input(
-            samples_dir, event.log_group_name, inputs_file
-        )
+        sample_file = create_sample_file_from_input(samples_dir, event.log_group_name, inputs_file)
         sample_files.append(sample_file)
-    return CreateContractTestInputsResponse(
-        input_files=input_files, sample_files=sample_files
-    )
+    return CreateContractTestInputsResponse(input_files=input_files, sample_files=sample_files)
 
 
 def file_replacements(text: str, replacements: dict[str, str], file_name: str) -> str:
@@ -148,9 +140,7 @@ def file_replacements(text: str, replacements: dict[str, str], file_name: str) -
         if var_name in replacements:
             text = text.replace(match.group(0), replacements[var_name])
         else:
-            logger.warning(
-                f"found placeholder {match.group(0)} in {file_name} but no replacement"
-            )
+            logger.warning(f"found placeholder {match.group(0)} in {file_name} but no replacement")
     return text
 
 

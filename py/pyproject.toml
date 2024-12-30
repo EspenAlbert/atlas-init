@@ -95,3 +95,7 @@ extend-ignore = [
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
   "UP040",   #  Type alias `ResourceTypes` uses `TypeAlias` annotation instead of the `type` keyword
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"atlas_init/cli_helper/run_manager.py" = ["SLF001"]
+"scripts/*.py" = ["INP001", "T201"]

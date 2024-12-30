@@ -12,20 +12,14 @@ from zero_3rdparty import file_utils
 logger = logging.getLogger(__name__)
 
 
-def create_sample_file_from_input(
-    samples_dir: Path, log_group_name: str, inputs_file: Path
-) -> Path:
+def create_sample_file_from_input(samples_dir: Path, log_group_name: str, inputs_file: Path) -> Path:
     resource_state = parse_payload(inputs_file)
-    assert isinstance(
-        resource_state, dict
-    ), f"input file with not a dict {resource_state}"
+    assert isinstance(resource_state, dict), f"input file with not a dict {resource_state}"
     samples_file = samples_dir / inputs_file.name
     if inputs_file.name.endswith("_create.json"):
         return create_sample_file(samples_file, log_group_name, resource_state)
     if inputs_file.name.endswith("_update.json"):
-        prev_state_path = inputs_file.parent / inputs_file.name.replace(
-            "_update.json", "_create.json"
-        )
+        prev_state_path = inputs_file.parent / inputs_file.name.replace("_update.json", "_create.json")
         prev_state: dict = parse_payload(prev_state_path)  # type: ignore
         return create_sample_file(
             samples_file,
@@ -63,9 +57,7 @@ class CfnSchema(Entity):
     model_config = CamelAlias
 
     description: str
-    type_name: str = Field(
-        pattern=r"^[a-zA-Z0-9]{2,64}::[a-zA-Z0-9]{2,64}::[a-zA-Z0-9]{2,64}$"
-    )
+    type_name: str = Field(pattern=r"^[a-zA-Z0-9]{2,64}::[a-zA-Z0-9]{2,64}::[a-zA-Z0-9]{2,64}$")
 
 
 def iterate_schemas(resource_root: Path) -> Iterable[tuple[Path, CfnSchema]]:

@@ -3,11 +3,11 @@ import os
 import sys
 from functools import partial
 
-from atlas_init.cli_root import set_dry_run
 import typer
 
 from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
+from atlas_init.cli_root import set_dry_run
 from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
@@ -37,9 +37,7 @@ def extra_root_commands():
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    log_level: str = typer.Option(
-        "INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"
-    ),
+    log_level: str = typer.Option("INFO", help="use one of [INFO, WARNING, ERROR, CRITICAL]"),
     profile: str = typer.Option(
         DEFAULT_PROFILE,
         "-p",
@@ -62,14 +60,10 @@ def main(
     if project_name != "":
         os.environ[as_env_var_name("project_name")] = project_name
     log_handler = configure_logging(log_level)
-    logger.info(
-        f"running in repo: {running_in_repo()} python location:{sys.executable}"
-    )
+    logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
     if not show_secrets:
         hide_secrets(log_handler, {**os.environ})
-    logger.info(
-        f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}"
-    )
+    logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
 
 
 def format_cmd(ctx: typer.Context) -> str:

@@ -109,6 +109,7 @@ class RunManager:
         signal_int_timeout_s: float = 0.2,
         signal_term_timeout_s: float = 0.2,
         signal_kill_timeout_s: float = 0.2,
+        *,
         dry_run: bool = False,
     ):
         """
@@ -170,9 +171,7 @@ class RunManager:
 
         def read_output(process: subprocess.Popen):
             for line in process.stdout:  # type: ignore
-                result._add_line(
-                    line
-                )  # private call ok within the same file
+                result._add_line(line)
 
         logger.info(f"running command '{command}' from {cwd}")
         if self.dry_run:
@@ -213,29 +212,19 @@ class RunManager:
         return result
 
     def __exit__(self, *_):
-        self.pool.shutdown(
-            wait=False, cancel_futures=True
-        )  # wait happens in __exit__, avoid new futures starting
+        self.pool.shutdown(wait=False, cancel_futures=True)  # wait happens in __exit__, avoid new futures starting
         self.terminate_all()
         self.pool.__exit__(None, None, None)
 
     def terminate_all(self):
-        self._send_signal_to_all(
-            signal.SIGINT, ResultStore._abort
-        )  # private call ok within the same file
+        self._send_signal_to_all(signal.SIGINT, ResultStore._abort)
         self.wait_for_processes_ok(self.signal_int_timeout_s)
-        self._send_signal_to_all(
-            signal.SIGTERM, ResultStore._terminate
-        )  # private call ok within the same file
+        self._send_signal_to_all(signal.SIGTERM, ResultStore._terminate)
         self.wait_for_processes_ok(self.signal_term_timeout_s)
-        self._send_signal_to_all(
-            signal.SIGKILL, ResultStore._kill
-        )  # private call ok within the same file
+        self._send_signal_to_all(signal.SIGKILL, ResultStore._kill)
         self.wait_for_processes_ok(self.signal_kill_timeout_s)
 
-    def _send_signal_to_all(
-        self, signal_type: signal.Signals, result_call: Callable[[ResultStore], None]
-    ):
+    def _send_signal_to_all(self, signal_type: signal.Signals, result_call: Callable[[ResultStore], None]):
         with self.lock:
             for pid, process in self.processes.items():
                 result_call(self.results[pid])

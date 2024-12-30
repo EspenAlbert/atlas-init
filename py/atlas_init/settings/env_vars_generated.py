@@ -5,7 +5,8 @@ from pydantic_settings import BaseSettings
 
 
 class _EnvVarsGenerated(BaseSettings):
-    model_config = ConfigDict(extra="ignore") # type: ignore
+    model_config = ConfigDict(extra="ignore")  # type: ignore
+
 
 class AtlasSettings(_EnvVarsGenerated):
     MONGODB_ATLAS_ORG_ID: str
@@ -20,7 +21,7 @@ class RealmSettings(_EnvVarsGenerated):
     MONGODB_REALM_FUNCTION_ID: str
     MONGODB_REALM_FUNCTION_NAME: str
     MONGODB_REALM_BASE_URL: str
-    RANDOM_INT_100K: str = Field(default_factory=lambda: str(random.randint(0, 100_000))) # noqa: S311 # not used for cryptographic purposes
+    RANDOM_INT_100K: str = Field(default_factory=lambda: str(random.randint(0, 100_000)))  # noqa: S311 # not used for cryptographic purposes
 
 
 class EnvVarsGenerated(AtlasSettings):

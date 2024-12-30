@@ -4,7 +4,6 @@ from atlas_init.cli_tf.debug_logs import (
     StatusHeadersResponse,
 )
 
-
 _req1 = PathHeadersPayload(
     method="GET",
     path="/api/atlas/v2/groups/6746cef5aef48d1cb2658a7f/ipAddresses",
