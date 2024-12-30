@@ -63,7 +63,6 @@ extra-dependencies = [
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
 branch = true
-parallel = true
 
 [tool.coverage.paths]
 atlas_init = ["atlas_init"]
