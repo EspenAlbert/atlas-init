@@ -19,10 +19,14 @@ def run_command_is_ok(
     cwd: Path | str,
     logger: Logger,
     output: IO | None = None,
+    *,
+    dry_run: bool = False,
 ) -> bool:
     env = env or {**os.environ}
     command_str = " ".join(cmd)
     logger.info(f"running: '{command_str}' from '{cwd}'")
+    if dry_run:
+        return True
     output = output or sys.stdout  # type: ignore
     exit_code = subprocess.call(
         cmd,
@@ -69,11 +73,13 @@ def run_command_exit_on_failure(
     cwd: Path | str,
     logger: Logger,
     env: dict | None = None,
+    *,
+    dry_run: bool = False
 ) -> None:
     if isinstance(cmd, str):
         cmd = cmd.split()  # type: ignore
     assert isinstance(cmd, list)
-    if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger):
+    if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger, dry_run=dry_run):
         logger.critical("command failed, see output 👆")
         raise typer.Exit(1)
 

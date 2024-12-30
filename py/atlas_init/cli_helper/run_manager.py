@@ -109,6 +109,7 @@ class RunManager:
         signal_int_timeout_s: float = 0.2,
         signal_term_timeout_s: float = 0.2,
         signal_kill_timeout_s: float = 0.2,
+        dry_run: bool = False,
     ):
         """
         Args:
@@ -122,6 +123,7 @@ class RunManager:
         self.signal_int_timeout_s = signal_int_timeout_s
         self.signal_term_timeout_s = signal_term_timeout_s
         self.signal_kill_timeout_s = signal_kill_timeout_s
+        self.dry_run = dry_run
 
     def __enter__(self):
         self.pool.__enter__()
@@ -141,7 +143,8 @@ class RunManager:
         store = result_store or ResultStore()
         store.wait_condition = WaitOnText(line=line_in_log, timeout=timeout)
         future = self.pool.submit(self._run, command, cwd, logger, env, store)
-        store.wait()
+        if not self.dry_run:
+            store.wait()
         return future
 
     def run_process(
@@ -169,8 +172,13 @@ class RunManager:
             for line in process.stdout:  # type: ignore
                 result._add_line(
                     line
-                )  # noqa: SLF001 # private call ok within the same file
+                )  # private call ok within the same file
 
+        logger.info(f"running command '{command}' from {cwd}")
+        if self.dry_run:
+            result.exit_code = 0
+            result.result.append(f"DRY RUN: {command}")
+            return result
         with subprocess.Popen(
             command,
             cwd=cwd,
@@ -214,15 +222,15 @@ class RunManager:
     def terminate_all(self):
         self._send_signal_to_all(
             signal.SIGINT, ResultStore._abort
-        )  # noqa: SLF001 # private call ok within the same file
+        )  # private call ok within the same file
         self.wait_for_processes_ok(self.signal_int_timeout_s)
         self._send_signal_to_all(
             signal.SIGTERM, ResultStore._terminate
-        )  # noqa: SLF001 # private call ok within the same file
+        )  # private call ok within the same file
         self.wait_for_processes_ok(self.signal_term_timeout_s)
         self._send_signal_to_all(
             signal.SIGKILL, ResultStore._kill
-        )  # noqa: SLF001 # private call ok within the same file
+        )  # private call ok within the same file
         self.wait_for_processes_ok(self.signal_kill_timeout_s)
 
     def _send_signal_to_all(
