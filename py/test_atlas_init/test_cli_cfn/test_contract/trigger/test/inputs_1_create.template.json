@@ -1,0 +1,32 @@
+{
+  "Name": "cfn-test-trigger-${RANDOM_INT_100K}",
+  "Type": "DATABASE",
+  "Profile": "${MONGODB_ATLAS_PROFILE}",
+  "DatabaseTrigger": {
+    "OperationTypes": [
+      "INSERT"
+    ],
+    "Database": "${DB_NAME}",
+    "Collection": "${COLLECTION_NAME}",
+    "ServiceId": "${MONGODB_REALM_SERVICE_ID}",
+    "FullDocument": "true",
+    "FullDocumentBeforeChange": "false",
+    "Unordered": "false",
+    "SkipCatchupEvents": "false",
+    "Match" : "{\"$and\":[{\"fullDocument.availability.value\":\"AVAILABLE\"},{\"$ne\":[\"fullDocument.retailPrice\",\"fullDocumentBeforeChange.retailPrice\"]}]}"
+  },
+  "Disabled": "false",
+  "EventProcessors": {
+    "FUNCTION": {
+      "FuncConfig": {
+        "FunctionName": "${MONGODB_REALM_FUNCTION_NAME}",
+        "FunctionId": "${MONGODB_REALM_FUNCTION_ID}"
+      }
+    },
+    "AWSEVENTBRIDGE": {
+      "AWSConfig": {}
+    }
+  },
+  "AppId": "${MONGODB_REALM_APP_ID}",
+  "ProjectId": "${MONGODB_ATLAS_PROJECT_ID"
+}

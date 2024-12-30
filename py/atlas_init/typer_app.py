@@ -7,6 +7,7 @@ import typer
 
 from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
+from atlas_init.cli_root import set_dry_run
 from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
@@ -51,7 +52,9 @@ def main(
         help="atlas project name to create",
     ),
     show_secrets: bool = typer.Option(False, help="show secrets in the logs"),
+    dry_run: bool = typer.Option(False, help="dry-run mode"),
 ):
+    set_dry_run(dry_run)
     if profile != DEFAULT_PROFILE:
         os.environ[as_env_var_name("profile")] = profile
     if project_name != "":

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, TypeVar
 
 import typer
 from model_lib import field_names, parse_payload
-from pydantic import field_validator, model_validator
+from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from atlas_init.cloud.aws import AwsRegion
@@ -19,11 +20,13 @@ from atlas_init.settings.config import (
 from atlas_init.settings.config import (
     active_suites as config_active_suites,
 )
+from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_PROFILES_PATH,
     DEFAULT_SCHEMA_CONFIG_PATH,
     DEFAULT_TF_PATH,
+    dump_dotenv,
     load_dotenv,
     repo_path_rel_path,
 )
@@ -36,19 +39,23 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+T = TypeVar("T")
 
 
-class ExternalSettings(BaseSettings):
+class ExternalSettings(AtlasSettings):
     model_config = SettingsConfigDict(env_prefix="")
 
     TF_CLI_CONFIG_FILE: str = ""
     AWS_PROFILE: str = ""
     AWS_REGION: AwsRegion = "us-east-1"
-    MONGODB_ATLAS_ORG_ID: str
-    MONGODB_ATLAS_PRIVATE_KEY: str
-    MONGODB_ATLAS_PUBLIC_KEY: str
-    MONGODB_ATLAS_BASE_URL: str = "https://cloud-dev.mongodb.com/"
     non_interactive: bool = False
+
+    @property
+    def realm_url(self) -> str:
+        assert not self.is_mongodbgov_cloud, "realm_url is not supported for mongodbgov cloud"
+        if "cloud-dev." in self.MONGODB_ATLAS_BASE_URL:
+            return "https://services.cloud-dev.mongodb.com/"
+        return "https://services.cloud.mongodb.com/"
 
     @property
     def is_interactive(self) -> bool:
@@ -170,17 +177,34 @@ class AtlasInitPaths(BaseSettings):
         assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
         return load_dotenv(env_path)
 
+    def env_vars_cls_or_none(self, t: type[T], *, path: Path | None = None) -> T | None:
+        with suppress(ValidationError):
+            return self.env_vars_cls(t, path=path)
+
+    def env_vars_cls(self, t: type[T], *, path: Path | None = None) -> T:
+        path = path or self.env_vars_generated
+        env_vars = self.load_env_vars(path) if path.exists() else {}
+        return t(**env_vars)
+
     def load_profile_manual_env_vars(self, *, skip_os_update: bool = False) -> dict[str, str]:
         # sourcery skip: dict-assign-update-to-union
         manual_env_vars = self.manual_env_vars
         if manual_env_vars:
             if skip_os_update:
                 return manual_env_vars
-            logger.warning(f"loading manual env-vars from {self.env_file_manual}")
+            logger.info(f"loading manual env-vars from {self.env_file_manual}")
             os.environ.update(manual_env_vars)
         else:
             logger.warning(f"no {self.env_file_manual}")
         return manual_env_vars
+
+    def include_extra_env_vars(self, extra_env_vars: dict[str, str]) -> None:
+        extra_name = ", ".join(extra_env_vars.keys())
+        for env_vars_path in [self.env_vars_generated, self.env_vars_vs_code]:
+            original_env_vars = self.load_env_vars(env_vars_path)
+            new_env_vars = original_env_vars | extra_env_vars
+            dump_dotenv(env_vars_path, new_env_vars)
+            logger.info(f"done {env_vars_path} updated with {extra_name} env-vars ✅")
 
 
 class EnvVarsCheck(NamedTuple):

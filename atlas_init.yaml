@@ -91,3 +91,12 @@ test_suites:
   vars:
     cluster_info_m10: true
     stream_instance: true
+- name: trigger
+  repo_go_packages:
+    cfn:
+    - cfn-resources/trigger
+  vars:
+    cluster_info_m10: true
+  post_apply_hooks:
+  - name: create_realm_resources
+    locate: atlas_init.cli_root.trigger.create_realm_app

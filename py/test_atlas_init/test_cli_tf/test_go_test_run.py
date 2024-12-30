@@ -1,6 +1,7 @@
+import logging
 import os
 from pathlib import Path
-import logging
+
 import pytest
 
 from atlas_init.cli_tf.go_test_run import (

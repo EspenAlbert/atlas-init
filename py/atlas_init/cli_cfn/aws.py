@@ -436,7 +436,7 @@ def ensure_resource_type_activated(
             default=True,
         )
     ):
-        assert run_command_is_ok(cmd=submit_cmd.split(), env=None, cwd=resource_path, logger=logger)
+        assert run_command_is_ok(cmd=submit_cmd, env=None, cwd=resource_path, logger=logger)
         cfn_type_details = get_last_cfn_type(type_name, region, is_third_party=False)
     if cfn_type_details is None:
         third_party = get_last_cfn_type(type_name, region, is_third_party=True, force_version=force_version)

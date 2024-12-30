@@ -1,12 +1,12 @@
 import logging
+import os
 from pathlib import Path
 from typing import Callable
 
-from atlas_init.cli_tf.mock_tf_log import MockTFLog, mock_tf_log
 import pytest
-import yaml
 from model_lib import parse_payload
 
+from atlas_init.cli_tf.mock_tf_log import MockTFLog, mock_tf_log
 from atlas_init.repos.go_sdk import parse_api_spec_paths
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ params = [
 ]
 
 
+@pytest.mark.skipif(os.environ.get("RUN_DEPRECATED", "") == "", reason="needs os.environ[RUN_DEPRECATED]")
 @pytest.mark.parametrize(
     "log_filename,pkg_name",
     params,

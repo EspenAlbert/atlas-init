@@ -52,7 +52,7 @@ fmt_config = ["python scripts/atlas_init_sort.py"]
 
 [tool.hatch.envs.hatch-test]
 installer = "uv"
-default-args = ["test_atlas_init", "--capture=no", "--tb=short", "-vv"]
+default-args = ["test_atlas_init", "-s", "-vv", "--tb=short", "--log-cli-level=INFO", "--ignore=.venv/*"]
 extra-dependencies = [
   "hatchling==1.24.2",
   "pymongo==4.7.3",
@@ -63,7 +63,6 @@ extra-dependencies = [
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
 branch = true
-parallel = true
 
 [tool.coverage.paths]
 atlas_init = ["atlas_init"]
@@ -95,3 +94,7 @@ extend-ignore = [
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
   "UP040",   #  Type alias `ResourceTypes` uses `TypeAlias` annotation instead of the `type` keyword
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"atlas_init/cli_helper/run_manager.py" = ["SLF001"]
+"scripts/*.py" = ["INP001", "T201"]

@@ -5,24 +5,27 @@ from logging import Logger
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
-from typing import IO, TypeVar
+from typing import IO
 
 import typer
 from zero_3rdparty.id_creator import simple_id
 
-StrT = TypeVar("StrT", bound=str)
+LOG_CMD_PREFIX = "running: '"
 
 
 def run_command_is_ok(
-    cmd: list[StrT],
+    cmd: str,
     env: dict | None,
     cwd: Path | str,
     logger: Logger,
     output: IO | None = None,
+    *,
+    dry_run: bool = False,
 ) -> bool:
     env = env or {**os.environ}
-    command_str = " ".join(cmd)
-    logger.info(f"running: '{command_str}' from '{cwd}'")
+    logger.info(f"{LOG_CMD_PREFIX}{cmd}' from '{cwd}'")
+    if dry_run:
+        return True
     output = output or sys.stdout  # type: ignore
     exit_code = subprocess.call(
         cmd,
@@ -31,49 +34,44 @@ def run_command_is_ok(
         stdout=output,
         cwd=cwd,
         env=env,
+        shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection
     )
     is_ok = exit_code == 0
     if is_ok:
-        logger.info(f"success 🥳 '{command_str}'\n")  # adds extra space to separate runs
+        logger.info(f"success 🥳 '{cmd}'\n")  # adds extra space to separate runs
     else:
-        logger.error(f"error 💥, exit code={exit_code}, '{command_str}'")
+        logger.error(f"error 💥, exit code={exit_code}, '{cmd}'")
     return is_ok
 
 
 def run_binary_command_is_ok(
-    binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None
+    binary_name: str, command: str, cwd: Path, logger: Logger, env: dict | None = None, *, dry_run: bool = False
 ) -> bool:
     env = env or {**os.environ}
-
-    bin_path = find_binary_on_path(binary_name, logger)
+    bin_path = find_binary_on_path(binary_name, logger, allow_missing=dry_run) or binary_name
     return run_command_is_ok(
-        [bin_path, *command.split()],
+        f"{bin_path} {command}",
         env=env,
         cwd=cwd,
         logger=logger,
+        dry_run=dry_run,
     )
 
 
 def find_binary_on_path(binary_name: str, logger: Logger, *, allow_missing: bool = False) -> str:
-    bin_path = which(binary_name)
-    if bin_path:
+    if bin_path := which(binary_name):
         return bin_path
     if allow_missing:
+        logger.warning(f"binary '{binary_name}' not found on $PATH")
         return ""
     logger.critical(f"please install '{binary_name}'")
     raise typer.Exit(1)
 
 
 def run_command_exit_on_failure(
-    cmd: list[StrT] | str,
-    cwd: Path | str,
-    logger: Logger,
-    env: dict | None = None,
+    cmd: str, cwd: Path | str, logger: Logger, env: dict | None = None, *, dry_run: bool = False
 ) -> None:
-    if isinstance(cmd, str):
-        cmd = cmd.split()  # type: ignore
-    assert isinstance(cmd, list)
-    if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger):
+    if not run_command_is_ok(cmd, cwd=cwd, env=env, logger=logger, dry_run=dry_run):
         logger.critical("command failed, see output 👆")
         raise typer.Exit(1)
 
@@ -84,7 +82,7 @@ def run_command_receive_result(
     with TemporaryDirectory() as temp_dir:
         result_file = Path(temp_dir) / "file"
         with open(result_file, "w") as file:
-            is_ok = run_command_is_ok(command.split(), env=env, cwd=cwd, logger=logger, output=file)
+            is_ok = run_command_is_ok(command, env=env, cwd=cwd, logger=logger, output=file)
         output_text = result_file.read_text().strip()
     if not is_ok:
         if can_fail:
@@ -99,7 +97,7 @@ def run_command_is_ok_output(command: str, cwd: Path, logger: Logger, env: dict 
     with TemporaryDirectory() as temp_dir:
         result_file = Path(temp_dir) / f"{simple_id()}.txt"
         with open(result_file, "w") as file:
-            is_ok = run_command_is_ok(command.split(), env=env, cwd=cwd, logger=logger, output=file)
+            is_ok = run_command_is_ok(command, env=env, cwd=cwd, logger=logger, output=file)
         output_text = result_file.read_text().strip()
     return is_ok, output_text
 
