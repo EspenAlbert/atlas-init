@@ -71,7 +71,7 @@ def run_in_regions(call: Callable[[str], T], regions: list[str] | None = None) -
 def upload_to_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
     profiles_path = profile_path.parent
     assert profiles_path.name == "profiles"
-    excluded = [".DS_Store", ".terraform/*"]
+    excluded = [".DS_Store", ".terraform/*", ".env-manual"]
     excluded_str = " ".join([f'--exclude "{pattern}"' for pattern in excluded])
     assert run_binary_command_is_ok(
         "aws",

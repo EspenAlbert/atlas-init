@@ -39,6 +39,7 @@ ENV_PROJECT_NAME = f"{ENV_PREFIX}PROJECT_NAME"
 ENV_PROFILE = f"{ENV_PREFIX}PROFILE"
 ENV_PROFILES_PATH = f"{ENV_PREFIX}PROFILES_PATH"
 ENV_TEST_SUITES = f"{ENV_PREFIX}TEST_SUITES"
+ENV_CLIPBOARD_COPY = f"{ENV_PREFIX}CLIPBOARD_COPY"
 REQUIRED_FIELDS = [
     "MONGODB_ATLAS_ORG_ID",
     "MONGODB_ATLAS_PRIVATE_KEY",
@@ -186,7 +187,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
     cfn_use_kms_key: bool = False
     project_name: str = ""
 
-    skip_copy: bool = False
+    cliboard_copy: str = ""
     test_suites: str = ""
 
     @classmethod

@@ -8,7 +8,6 @@ from model_lib import dump
 from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
 from atlas_init.cli_helper.run import (
-    add_to_clipboard,
     run_binary_command_is_ok,
     run_command_receive_result,
 )
@@ -77,13 +76,6 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
     )
     if not is_ok:
         raise TerraformRunError
-    if settings.skip_copy:
-        return
-    env_generated = settings.env_vars_generated
-    if env_generated.exists():
-        clipboard_content = "\n".join(f"export {line}" for line in env_generated.read_text().splitlines())
-        add_to_clipboard(clipboard_content, logger)
-        logger.info("loaded env-vars to clipboard ✅")
 
 
 def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):

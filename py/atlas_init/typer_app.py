@@ -7,14 +7,17 @@ import typer
 
 from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
+from atlas_init.cli_helper.run import add_to_clipboard
 from atlas_init.cli_root import set_dry_run
 from atlas_init.cli_tf.app import app as app_tf
 from atlas_init.cloud.aws import download_from_s3, upload_to_s3
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
+    ENV_CLIPBOARD_COPY,
     ENV_PROFILE,
     ENV_PROJECT_NAME,
     ENV_S3_PROFILE_BUCKET,
+    AtlasInitSettings,
     init_settings,
 )
 from atlas_init.settings.rich_utils import configure_logging, hide_secrets
@@ -22,12 +25,24 @@ from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 logger = logging.getLogger(__name__)
 
 
-def sync_on_done(return_value, s3_profile_bucket: str = "", **kwargs):
+def sync_on_done(return_value, s3_profile_bucket: str = "", use_clipboard: str = "", **kwargs):
     logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
+    settings: AtlasInitSettings | None = None
     if s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")
-        settings = init_settings()
+        settings = settings or init_settings()
         upload_to_s3(settings.profile_dir, s3_profile_bucket)
+    if use_clipboard:
+        settings = settings or init_settings()
+        match use_clipboard:
+            case "manual":
+                env_path = settings.env_file_manual
+            case _:
+                env_path = settings.env_vars_generated
+        if env_path.exists():
+            clipboard_content = "\n".join(f"export {line}" for line in env_path.read_text().splitlines())
+            add_to_clipboard(clipboard_content, logger)
+            logger.info(f"loaded env-vars from {env_path} to clipboard ✅")
 
 
 app = typer.Typer(
@@ -78,12 +93,15 @@ def main(
         help="s3 bucket to store profiles will be synced before and after the command",
         envvar=ENV_S3_PROFILE_BUCKET,
     ),
+    use_clipboard: str = typer.Option("", help="add env-vars generated to clipboard", envvar=ENV_CLIPBOARD_COPY),
 ):
     set_dry_run(dry_run)
     if profile != DEFAULT_PROFILE:
         os.environ[ENV_PROFILE] = profile
     if project_name != "":
         os.environ[ENV_PROJECT_NAME] = project_name
+    if use_clipboard:
+        os.environ[ENV_CLIPBOARD_COPY] = use_clipboard
     log_handler = configure_logging(log_level)
     logger.info(f"running in atlas-init repo: {running_in_repo()} python location:{sys.executable}")
     if not show_secrets:
