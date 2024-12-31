@@ -40,7 +40,7 @@ env:
   ATLAS_INIT_CFN_USE_KMS_KEY: "false"
   ATLAS_INIT_PROFILE: ${{ inputs.atlas_init_profile || format('profile-{0}',github.run_id) }}
   ATLAS_INIT_PROJECT_NAME: ${{ inputs.atlas_init_project_name || format('gh-ci-{0}', github.run_id) }}
-  ATLAS_INIT_S3_BUCKET: ${{ inputs.profile_s3_bucket }}
+  ATLAS_INIT_S3_PROFILE_BUCKET: ${{ inputs.profile_s3_bucket }}
   
 jobs:
   cli_check:
