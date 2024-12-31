@@ -6,8 +6,8 @@ from typer.testing import CliRunner
 
 from atlas_init.cli import app
 from atlas_init.settings.env_vars import (
+    ENV_PROFILE,
     AtlasInitPaths,
-    as_env_var_name,
     init_settings,
 )
 from test_atlas_init.conftest import write_required_vars
@@ -57,7 +57,7 @@ def test_cli_project_name(tmp_paths):
 
 def test_override_profile_with_env_var(tmp_paths, monkeypatch):
     different_profile = "other-profile"
-    monkeypatch.setenv(as_env_var_name("profile"), different_profile)
+    monkeypatch.setenv(ENV_PROFILE, different_profile)
     new_paths = copy_and_validate(tmp_paths, profile=different_profile)
     project_name = "some-project"
     write_required_vars(new_paths, project_name=project_name)
