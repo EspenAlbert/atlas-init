@@ -104,10 +104,13 @@ def main(
         os.environ[ENV_PROJECT_NAME] = project_name
     if use_clipboard:
         os.environ[ENV_CLIPBOARD_COPY] = use_clipboard
-    log_handler = configure_logging(log_level)
-    logger.info(f"running in atlas-init repo: {running_in_repo()} python location:{sys.executable}")
+    is_running_in_repo = running_in_repo()
+    handler = configure_logging(app, log_level, is_running_in_repo=is_running_in_repo)
+    init_settings(required_env_vars=[])
     if not show_secrets:
-        hide_secrets(log_handler, {**os.environ})
+        # must happen after init_settings that might load some env-vars
+        hide_secrets(handler, {**os.environ})
+    logger.info(f"running in atlas-init repo: {is_running_in_repo} python location:{sys.executable}")
     logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
     if s3_bucket := s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_bucket}")

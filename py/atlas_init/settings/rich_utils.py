@@ -1,6 +1,7 @@
 import logging
 from typing import Literal
 
+import typer
 from pydantic import BaseModel
 from rich.logging import RichHandler
 
@@ -44,13 +45,21 @@ def hide_secrets(handler: logging.Handler, secrets_dict: dict[str, str]) -> None
     handler.addFilter(SecretsHider(list(secrets_to_hide), name="secrets-hider"))
 
 
-def configure_logging(log_level: str = "INFO") -> logging.Handler:
+def configure_logging(
+    app: typer.Typer, log_level: str = "INFO", *, is_running_in_repo: bool = False
+) -> logging.Handler:
     _LogLevel(log_level=log_level)  # type: ignore
-    handler = RichHandler(rich_tracebacks=False)
+    handler = RichHandler(rich_tracebacks=False, level=log_level)
     logging.basicConfig(
-        level=logging.getLevelName(log_level),
+        level=log_level,
         format="%(message)s",
         datefmt="[%X]",
         handlers=[handler],
+        force=True,
     )
+    if not is_running_in_repo or handler.level >= logging.WARNING:
+        logging.warning("using basic tracebacks/errors")
+        app.pretty_exceptions_enable = False
+        app.pretty_exceptions_show_locals = False
+
     return handler
