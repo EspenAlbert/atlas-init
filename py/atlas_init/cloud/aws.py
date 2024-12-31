@@ -2,10 +2,12 @@ import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Annotated, TypeVar
 
 import stringcase
 from pydantic import AfterValidator, ConfigDict
+from zero_3rdparty.file_utils import copy, file_modified_time, iter_paths_and_relative
 from zero_3rdparty.iter_utils import flat_map
 from zero_3rdparty.object_name import as_name
 
@@ -85,10 +87,22 @@ def upload_to_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
 def download_from_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
     profiles_path = profile_path.parent
     assert profiles_path.name == "profiles"
-    assert run_binary_command_is_ok(
-        "aws",
-        f"s3 sync s3://{s3_bucket}/{s3_prefix}profiles/{profile_path.name} {profile_path.name}/",
-        profiles_path,
-        logger=logger,
-        dry_run=is_dry_run(),
-    )
+    copy_dir = f"{profile_path.name}_copy/"
+    with TemporaryDirectory() as tmp_dir:
+        copy_dir = Path(tmp_dir) / f"safe-{profile_path.name}"
+        assert run_binary_command_is_ok(
+            "aws",
+            f"s3 sync s3://{s3_bucket}/{s3_prefix}profiles/{profile_path.name} {copy_dir}",
+            profiles_path,
+            logger=logger,
+            dry_run=is_dry_run(),
+        )
+        copy_new_files(copy_dir, profile_path)
+
+
+def copy_new_files(src_dir: Path, dest_dir: Path):
+    for src_path, rel_path in iter_paths_and_relative(src_dir, only_files=True):
+        dest_path = dest_dir / rel_path
+        if not dest_path.exists() or file_modified_time(src_path) > file_modified_time(dest_path):
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            copy(src_path, dest_path)
