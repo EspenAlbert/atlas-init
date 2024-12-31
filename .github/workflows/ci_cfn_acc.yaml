@@ -10,6 +10,12 @@ on:
       profile_s3_bucket:
         description: 'S3 bucket for profiles'
         default: ''
+      atlas_init_profile:
+        description: 'Atlas init profile, useful when using profile_s3_bucket, otherwise creating a new profile'
+        default: ''
+      atlas_init_project_name:
+        description: 'Atlas init project_name, useful when using profile_s3_bucket, otherwise expecting to create a new project'
+        default: ''
 
 concurrency:
     group: '${{ github.workflow }}'
@@ -28,10 +34,12 @@ env:
   NON_INTERACTIVE: "true"
   FOLDER_PATH: "cfn/cfn-resources/${{ inputs.folder_name }}"
   TF_VAR_use_project_myip: "false"
+  # should always mange its own CFN secret
   ATLAS_INIT_CFN_PROFILE: profile-${{ github.run_id }}
   ATLAS_INIT_CFN_REGION: eu-west-1
   ATLAS_INIT_CFN_USE_KMS_KEY: "false"
-  ATLAS_INIT_PROJECT_NAME: gh-ci-${{ github.run_id }}
+  ATLAS_INIT_PROFILE: ${{ inputs.atlas_init_profile || format('profile-{0}',github.run_id) }}
+  ATLAS_INIT_PROJECT_NAME: ${{ inputs.atlas_init_project_name || format('gh-ci-{0}', github.run_id) }}
   ATLAS_INIT_S3_BUCKET: ${{ inputs.profile_s3_bucket }}
   
 jobs:
@@ -68,7 +76,7 @@ jobs:
       - name: atlas-init-install
         run: |
           cd atlas-init
-          mkdir -p profiles/default
+          mkdir -p profiles/${{ env.ATLAS_INIT_PROFILE }}
           echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
           ./atlasci_local_install.sh
       - uses: hashicorp/setup-terraform@v3
