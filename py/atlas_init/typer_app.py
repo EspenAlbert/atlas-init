@@ -17,7 +17,6 @@ from atlas_init.settings.env_vars import (
     ENV_PROFILE,
     ENV_PROJECT_NAME,
     ENV_S3_PROFILE_BUCKET,
-    AtlasInitSettings,
     init_settings,
 )
 from atlas_init.settings.rich_utils import configure_logging, hide_secrets
@@ -27,10 +26,9 @@ logger = logging.getLogger(__name__)
 
 def sync_on_done(return_value, s3_profile_bucket: str = "", use_clipboard: str = "", **kwargs):
     logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
-    settings: AtlasInitSettings | None = None
+    settings = init_settings(required_env_vars=[])
     if s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")
-        settings = settings or init_settings()
         upload_to_s3(settings.profile_dir, s3_profile_bucket)
     if use_clipboard:
         settings = settings or init_settings()
@@ -51,8 +49,8 @@ app = typer.Typer(
     no_args_is_help=True,
     result_callback=sync_on_done,
 )
-app.add_typer(app_cfn, name="cfn", result_callback=sync_on_done)
-app.add_typer(app_tf, name="tf", result_callback=sync_on_done)
+app.add_typer(app_cfn, name="cfn")
+app.add_typer(app_tf, name="tf")
 
 app_command = partial(
     app.command,
@@ -93,7 +91,11 @@ def main(
         help="s3 bucket to store profiles will be synced before and after the command",
         envvar=ENV_S3_PROFILE_BUCKET,
     ),
-    use_clipboard: str = typer.Option("", help="add env-vars generated to clipboard", envvar=ENV_CLIPBOARD_COPY),
+    use_clipboard: str = typer.Option(
+        "",
+        help="add env-vars to clipboard, manual=.env-manual file, other value=.env-generated file",
+        envvar=ENV_CLIPBOARD_COPY,
+    ),
 ):
     set_dry_run(dry_run)
     if profile != DEFAULT_PROFILE:

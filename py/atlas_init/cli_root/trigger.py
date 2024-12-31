@@ -35,7 +35,7 @@ def create_realm_app():
         realm_settings.MONGODB_REALM_FUNCTION_ID,
     ):
         logger.info(f"function {realm_settings.MONGODB_REALM_FUNCTION_NAME} already exists ✅")
-        settings.include_extra_env_vars(realm_settings.model_dump())
+        settings.include_extra_env_vars_in_vscode(realm_settings.model_dump())
         return
     logger.info("creating new realm app")
     if apps := list_apps(base_url, auth_headers, project_id):
@@ -67,7 +67,7 @@ def create_realm_app():
     extra_env_vars = realm_settings.model_dump()
     dump_dotenv(settings.env_vars_trigger, extra_env_vars)
     logger.info(f"done {settings.env_vars_trigger} created with trigger env-vars ✅")
-    settings.include_extra_env_vars(extra_env_vars)
+    settings.include_extra_env_vars_in_vscode(extra_env_vars)
 
 
 def login_to_realm(settings, base_url):

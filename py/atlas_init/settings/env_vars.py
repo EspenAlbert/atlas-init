@@ -165,13 +165,12 @@ class AtlasInitPaths(BaseSettings):
             logger.warning(f"no {self.env_file_manual}")
         return manual_env_vars
 
-    def include_extra_env_vars(self, extra_env_vars: dict[str, str]) -> None:
+    def include_extra_env_vars_in_vscode(self, extra_env_vars: dict[str, str]) -> None:
         extra_name = ", ".join(extra_env_vars.keys())
-        for env_vars_path in [self.env_vars_generated, self.env_vars_vs_code]:
-            original_env_vars = self.load_env_vars(env_vars_path)
-            new_env_vars = original_env_vars | extra_env_vars
-            dump_dotenv(env_vars_path, new_env_vars)
-            logger.info(f"done {env_vars_path} updated with {extra_name} env-vars ✅")
+        original_env_vars = self.load_env_vars(self.env_vars_vs_code)
+        new_env_vars = original_env_vars | extra_env_vars
+        dump_dotenv(self.env_vars_vs_code, new_env_vars)
+        logger.info(f"done {self.env_vars_vs_code} updated with {extra_name} env-vars ✅")
 
 
 class EnvVarsCheck(NamedTuple):
@@ -259,11 +258,16 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
     return config_active_suites(settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed)
 
 
-def init_settings() -> AtlasInitSettings:
+_sentinel = object()
+
+
+def init_settings(required_env_vars: list[str] | object = _sentinel) -> AtlasInitSettings:
+    if required_env_vars is _sentinel:
+        required_env_vars = [ENV_PROJECT_NAME]
     profile = os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE)
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
-        required_env_vars=[ENV_PROJECT_NAME],
+        required_env_vars=required_env_vars,  # type: ignore
     )
     if missing_env_vars:
         typer.echo(f"missing env_vars: {missing_env_vars}")
