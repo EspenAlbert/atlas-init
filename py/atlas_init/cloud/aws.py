@@ -75,24 +75,30 @@ def upload_to_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
     assert profiles_path.name == "profiles"
     excluded = [".DS_Store", ".terraform/*", ".env-manual"]
     excluded_str = " ".join([f'--exclude "{pattern}"' for pattern in excluded])
+    dest_path = _s3_path(s3_bucket, profile_path.name, "", s3_prefix=s3_prefix)
     assert run_binary_command_is_ok(
         "aws",
-        f"s3 sync {profile_path.name} s3://{s3_bucket}/{s3_prefix}/profiles/{profile_path.name} {excluded_str}",
+        f"s3 sync {profile_path.name} {dest_path} {excluded_str}",
         profiles_path,
         logger=logger,
         dry_run=is_dry_run(),
     )
 
 
+def _s3_path(s3_bucket: str, profile_name: str, rel_path: str, s3_prefix: str = "") -> str:
+    return f"s3://{s3_bucket}//{s3_prefix}profiles/{profile_name}/{rel_path}"
+
+
 def download_from_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
     profiles_path = profile_path.parent
     assert profiles_path.name == "profiles"
+    src_path = _s3_path(s3_bucket, profile_path.name, "", s3_prefix)
     copy_dir = f"{profile_path.name}_copy/"
     with TemporaryDirectory() as tmp_dir:
         copy_dir = Path(tmp_dir) / f"safe-{profile_path.name}"
         assert run_binary_command_is_ok(
             "aws",
-            f"s3 sync s3://{s3_bucket}/{s3_prefix}profiles/{profile_path.name} {copy_dir}",
+            f"s3 sync {src_path} {copy_dir}",
             profiles_path,
             logger=logger,
             dry_run=is_dry_run(),
@@ -100,9 +106,20 @@ def download_from_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
         copy_new_files(copy_dir, profile_path)
 
 
+_aws_keys = (
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_PROFILE",
+)
+
+
 def copy_new_files(src_dir: Path, dest_dir: Path):
     for src_path, rel_path in iter_paths_and_relative(src_dir, only_files=True):
         dest_path = dest_dir / rel_path
         if not dest_path.exists() or file_modified_time(src_path) > file_modified_time(dest_path):
             dest_path.parent.mkdir(parents=True, exist_ok=True)
-            copy(src_path, dest_path)
+            if src_path.name == ".env-manual":
+                lines_no_aws = [line for line in src_path.read_text().splitlines() if not line.startswith(_aws_keys)]
+                dest_path.write_text("\n".join(lines_no_aws))
+            else:
+                copy(src_path, dest_path)

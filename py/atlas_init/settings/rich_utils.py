@@ -55,7 +55,6 @@ def configure_logging(
         format="%(message)s",
         datefmt="[%X]",
         handlers=[handler],
-        force=True,
     )
     if not is_running_in_repo or handler.level >= logging.WARNING:
         logging.warning("using basic tracebacks/errors")

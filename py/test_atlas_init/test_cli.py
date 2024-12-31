@@ -39,7 +39,7 @@ def test_normal_help_command_is_ok():
 def test_missing_env_vars(tmp_paths):
     run_expect_error(
         "init",
-        "missing env_vars: ['ATLAS_INIT_PROJECT_NAME', 'MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY'",
+        "missing env_vars: ['MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY'",
     )
 
 
