@@ -1,12 +1,16 @@
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, wait
+from pathlib import Path
 from typing import Annotated, TypeVar
 
 import stringcase
 from pydantic import AfterValidator, ConfigDict
 from zero_3rdparty.iter_utils import flat_map
 from zero_3rdparty.object_name import as_name
+
+from atlas_init.cli_helper.run import run_binary_command_is_ok
+from atlas_init.cli_root import is_dry_run
 
 logger = logging.getLogger(__name__)
 PascalAlias = ConfigDict(alias_generator=stringcase.pascalcase, populate_by_name=True)
@@ -62,3 +66,29 @@ def run_in_regions(call: Callable[[str], T], regions: list[str] | None = None) -
         except Exception:
             logger.exception(f"failed to call {name} in region = {region}, error 👆")
     return region_responses
+
+
+def upload_to_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
+    profiles_path = profile_path.parent
+    assert profiles_path.name == "profiles"
+    excluded = [".DS_Store", ".terraform/*"]
+    excluded_str = " ".join([f'--exclude "{pattern}"' for pattern in excluded])
+    assert run_binary_command_is_ok(
+        "aws",
+        f"s3 sync {profile_path.name} s3://{s3_bucket}/{s3_prefix}/profiles/{profile_path.name} {excluded_str}",
+        profiles_path,
+        logger=logger,
+        dry_run=is_dry_run(),
+    )
+
+
+def download_from_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
+    profiles_path = profile_path.parent
+    assert profiles_path.name == "profiles"
+    assert run_binary_command_is_ok(
+        "aws",
+        f"s3 sync s3://{s3_bucket}/{s3_prefix}profiles/{profile_path.name} {profile_path.name}/",
+        profiles_path,
+        logger=logger,
+        dry_run=is_dry_run(),
+    )

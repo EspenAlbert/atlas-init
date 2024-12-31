@@ -9,17 +9,35 @@ from atlas_init import running_in_repo
 from atlas_init.cli_cfn.app import app as app_cfn
 from atlas_init.cli_root import set_dry_run
 from atlas_init.cli_tf.app import app as app_tf
+from atlas_init.cloud.aws import download_from_s3, upload_to_s3
 from atlas_init.settings.env_vars import (
     DEFAULT_PROFILE,
-    as_env_var_name,
-    env_var_names,
+    ENV_PROFILE,
+    ENV_PROJECT_NAME,
+    ENV_S3_PROFILE_BUCKET,
+    init_settings,
 )
 from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 
 logger = logging.getLogger(__name__)
-app = typer.Typer(name="atlas_init", invoke_without_command=True, no_args_is_help=True)
-app.add_typer(app_cfn, name="cfn")
-app.add_typer(app_tf, name="tf")
+
+
+def sync_on_done(return_value, s3_profile_bucket: str = "", **kwargs):
+    logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
+    if s3_profile_bucket:
+        logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")
+        settings = init_settings()
+        upload_to_s3(settings.profile_dir, s3_profile_bucket)
+
+
+app = typer.Typer(
+    name="atlas_init",
+    invoke_without_command=True,
+    no_args_is_help=True,
+    result_callback=sync_on_done,
+)
+app.add_typer(app_cfn, name="cfn", result_callback=sync_on_done)
+app.add_typer(app_tf, name="tf", result_callback=sync_on_done)
 
 app_command = partial(
     app.command,
@@ -42,28 +60,39 @@ def main(
         DEFAULT_PROFILE,
         "-p",
         "--profile",
-        envvar=env_var_names("profile"),
+        envvar=ENV_PROFILE,
         help="used to load .env_manual, store terraform state and variables, and dump .env files.",
     ),
     project_name: str = typer.Option(
         "",
         "--project",
-        envvar=env_var_names("project_name"),
+        envvar=ENV_PROJECT_NAME,
         help="atlas project name to create",
     ),
     show_secrets: bool = typer.Option(False, help="show secrets in the logs"),
     dry_run: bool = typer.Option(False, help="dry-run mode"),
+    s3_profile_bucket: str = typer.Option(
+        "",
+        "-s3",
+        "--s3-profile-bucket",
+        help="s3 bucket to store profiles will be synced before and after the command",
+        envvar=ENV_S3_PROFILE_BUCKET,
+    ),
 ):
     set_dry_run(dry_run)
     if profile != DEFAULT_PROFILE:
-        os.environ[as_env_var_name("profile")] = profile
+        os.environ[ENV_PROFILE] = profile
     if project_name != "":
-        os.environ[as_env_var_name("project_name")] = project_name
+        os.environ[ENV_PROJECT_NAME] = project_name
     log_handler = configure_logging(log_level)
-    logger.info(f"running in repo: {running_in_repo()} python location:{sys.executable}")
+    logger.info(f"running in atlas-init repo: {running_in_repo()} python location:{sys.executable}")
     if not show_secrets:
         hide_secrets(log_handler, {**os.environ})
     logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
+    if s3_bucket := s3_profile_bucket:
+        logger.info(f"using s3 bucket for profile sync: {s3_bucket}")
+        settings = init_settings()
+        download_from_s3(settings.profile_dir, s3_bucket)
 
 
 def format_cmd(ctx: typer.Context) -> str:
