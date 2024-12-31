@@ -76,7 +76,6 @@ def read_from_env(env_key: str, default: str = "") -> str:
     for name in [env_key, env_key.lower(), env_key.upper()]:
         if name in os.environ:
             return os.environ[name]
-    logger.info(f"field not found in env: {env_key}, using default: {default}")
     return default
 
 
@@ -139,8 +138,8 @@ class AtlasInitPaths(BaseSettings):
     def load_env_vars(self, path: Path) -> dict[str, str]:
         return load_dotenv(path)
 
-    def load_env_vars_generated(self) -> dict[str, str]:
-        env_path = self.env_vars_generated
+    def load_env_vars_full(self) -> dict[str, str]:
+        env_path = self.env_vars_vs_code
         assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
         return load_dotenv(env_path)
 
@@ -149,7 +148,7 @@ class AtlasInitPaths(BaseSettings):
             return self.env_vars_cls(t, path=path)
 
     def env_vars_cls(self, t: type[T], *, path: Path | None = None) -> T:
-        path = path or self.env_vars_generated
+        path = path or self.env_vars_vs_code
         env_vars = self.load_env_vars(path) if path.exists() else {}
         return t(**env_vars)
 
@@ -159,8 +158,9 @@ class AtlasInitPaths(BaseSettings):
         if manual_env_vars:
             if skip_os_update:
                 return manual_env_vars
-            logger.info(f"loading manual env-vars from {self.env_file_manual}")
-            os.environ.update(manual_env_vars)
+            if new_updates := {k: v for k, v in manual_env_vars.items() if k not in os.environ}:
+                logger.info(f"loading manual env-vars {','.join(new_updates)}")
+                os.environ.update(new_updates)
         else:
             logger.warning(f"no {self.env_file_manual}")
         return manual_env_vars
@@ -241,15 +241,16 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
     def test_suites_parsed(self) -> list[str]:
         return [t for t in self.test_suites.split(",") if t]
 
-    def cfn_config(self) -> dict[str, Any]:
+    def tf_vars(self) -> dict[str, Any]:
+        variables = {}
         if self.cfn_profile:
-            return {
-                "cfn_config": {
-                    "profile": self.cfn_profile,
-                    "region": self.cfn_region,
-                    "use_kms_key": self.cfn_use_kms_key,
-                }
+            variables["cfn_config"] = {
+                "profile": self.cfn_profile,
+                "region": self.cfn_region,
+                "use_kms_key": self.cfn_use_kms_key,
             }
+        if self.s3_profile_bucket:
+            variables["use_aws_s3"] = True
         return {}
 
 
@@ -261,7 +262,9 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
 _sentinel = object()
 
 
-def init_settings(required_env_vars: list[str] | object = _sentinel) -> AtlasInitSettings:
+def init_settings(
+    required_env_vars: list[str] | object = _sentinel,
+) -> AtlasInitSettings:
     if required_env_vars is _sentinel:
         required_env_vars = [ENV_PROJECT_NAME]
     profile = os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE)

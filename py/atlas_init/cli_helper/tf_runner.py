@@ -30,7 +30,7 @@ def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> 
         "project_name": settings.project_name,
         "out_dir": settings.profile_dir,
         "extra_env_vars": settings.manual_env_vars,
-        **settings.cfn_config(),
+        **settings.tf_vars(),
         **tf_vars.as_configs(),
     }
 
@@ -82,7 +82,8 @@ def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
     tf_vars_path = settings.tf_vars_path
     tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
     tf_vars_str = dump(tf_vars, "pretty_json")
-    logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
+    logger.info(f"writing tf vars to {tf_vars_path}")
+    logger.debug(f"tf vars:\n{tf_vars_str}")
     tf_vars_path.write_text(tf_vars_str)
 
 
