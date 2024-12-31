@@ -7,6 +7,9 @@ on:
         description: 'Folder name'
         required: true
         default: 'trigger'
+      profile_s3_bucket:
+        description: 'S3 bucket for profiles'
+        default: ''
 
 concurrency:
     group: '${{ github.workflow }}'
@@ -29,6 +32,7 @@ env:
   ATLAS_INIT_CFN_REGION: eu-west-1
   ATLAS_INIT_CFN_USE_KMS_KEY: "false"
   ATLAS_INIT_PROJECT_NAME: gh-ci-${{ github.run_id }}
+  ATLAS_INIT_S3_BUCKET: ${{ inputs.profile_s3_bucket }}
   
 jobs:
   cli_check:
