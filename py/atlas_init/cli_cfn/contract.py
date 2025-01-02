@@ -33,8 +33,14 @@ class RunContractTest(Entity):
     def run_tests_command(self) -> tuple[str, str]:
         if self.only_names:
             names = " ".join(f"-k {name}" for name in self.only_names)
-            return "cfn", f"test --function-name TestEntrypoint --verbose --region {self.cfn_region} -- {names}"
-        return "cfn", f"test --function-name TestEntrypoint --verbose --region {self.cfn_region}"
+            return (
+                "cfn",
+                f"test --function-name TestEntrypoint --verbose --region {self.cfn_region} -- {names}",
+            )
+        return (
+            "cfn",
+            f"test --function-name TestEntrypoint --verbose --region {self.cfn_region}",
+        )
 
 
 class RunContractTestOutput(Entity):
@@ -98,7 +104,7 @@ def contract_test(
     settings = settings or init_settings()
     resource_paths = resource_paths or find_paths(Repo.CFN)
     resource_name = resource_paths.resource_name
-    generated_env_vars = settings.load_env_vars_generated()
+    generated_env_vars = settings.load_env_vars_full()
     create_inputs = CreateContractTestInputs(
         resource_path=resource_paths.resource_path,
         env_vars_generated=generated_env_vars,

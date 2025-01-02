@@ -8,7 +8,6 @@ from model_lib import dump
 from zero_3rdparty.file_utils import copy, iter_paths_and_relative
 
 from atlas_init.cli_helper.run import (
-    add_to_clipboard,
     run_binary_command_is_ok,
     run_command_receive_result,
 )
@@ -31,7 +30,7 @@ def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> 
         "project_name": settings.project_name,
         "out_dir": settings.profile_dir,
         "extra_env_vars": settings.manual_env_vars,
-        **settings.cfn_config(),
+        **settings.tf_vars(),
         **tf_vars.as_configs(),
     }
 
@@ -77,20 +76,14 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
     )
     if not is_ok:
         raise TerraformRunError
-    if settings.skip_copy:
-        return
-    env_generated = settings.env_vars_generated
-    if env_generated.exists():
-        clipboard_content = "\n".join(f"export {line}" for line in env_generated.read_text().splitlines())
-        add_to_clipboard(clipboard_content, logger)
-        logger.info("loaded env-vars to clipboard ✅")
 
 
 def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
     tf_vars_path = settings.tf_vars_path
     tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
     tf_vars_str = dump(tf_vars, "pretty_json")
-    logger.info(f"writing tf vars to {tf_vars_path}: \n{tf_vars_str}")
+    logger.info(f"writing tf vars to {tf_vars_path}")
+    logger.debug(f"tf vars:\n{tf_vars_str}")
     tf_vars_path.write_text(tf_vars_str)
 
 

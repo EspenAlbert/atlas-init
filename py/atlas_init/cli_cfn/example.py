@@ -79,7 +79,11 @@ def example_cmd(
     operation: str = typer.Argument(...),
     example_name: str = typer.Option("", "-e", "--example-name", help="example filestem"),
     resource_params: list[str] = typer.Option(
-        ..., "-r", "--resource-param", default_factory=list, help="key=value, can be set many times"
+        ...,
+        "-r",
+        "--resource-param",
+        default_factory=list,
+        help="key=value, can be set many times",
     ),
     stack_timeout_s: int = typer.Option(3600, "-t", "--stack-timeout-s"),
     delete_first: bool = typer.Option(False, "-d", "--delete-first", help="Delete existing stack first"),
@@ -96,9 +100,9 @@ def example_cmd(
     register_all_types_in_example: bool = typer.Option(False, "--reg-all", help="Check all types"),
 ):
     settings = init_settings()
-    assert settings.cfn_config, "no cfn config found, re-run atlas_init apply with CFN flags"
+    assert settings.tf_vars, "no cfn config found, re-run atlas_init apply with CFN flags"
     repo_path, resource_path, _ = find_paths(Repo.CFN)
-    env_vars_generated = settings.load_env_vars_generated()
+    env_vars_generated = settings.load_env_vars_full()
     inputs = CfnExampleInputs(
         type_name=type_name or infer_cfn_type_name(),
         example_name=example_name,
@@ -119,13 +123,18 @@ def example_cmd(
     example_handler(inputs, repo_path, resource_path, settings)
 
 
-def example_handler(inputs: CfnExampleInputs, repo_path: Path, resource_path: Path, settings: AtlasInitSettings):
+def example_handler(
+    inputs: CfnExampleInputs,
+    repo_path: Path,
+    resource_path: Path,
+    settings: AtlasInitSettings,
+):
     logger.info(
         f"about to {inputs.operation} stack {inputs.stack_name} for {inputs.type_name} in {inputs.region_filter} params: {inputs.resource_params}"
     )
     type_name = inputs.type_name
     stack_name = inputs.stack_name
-    env_vars_generated = settings.load_env_vars_generated()
+    env_vars_generated = settings.load_env_vars_full()
     region = inputs.region
     operation = inputs.operation
     stack_timeout_s = inputs.stack_timeout_s

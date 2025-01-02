@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, NamedTuple, TypeVar
 
 import typer
-from model_lib import field_names, parse_payload
+from model_lib import parse_payload
 from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -34,6 +34,12 @@ from atlas_init.settings.path import (
 logger = logging.getLogger(__name__)
 ENV_PREFIX = "ATLAS_INIT_"
 DEFAULT_PROFILE = "default"
+ENV_S3_PROFILE_BUCKET = f"{ENV_PREFIX}S3_PROFILE_BUCKET"
+ENV_PROJECT_NAME = f"{ENV_PREFIX}PROJECT_NAME"
+ENV_PROFILE = f"{ENV_PREFIX}PROFILE"
+ENV_PROFILES_PATH = f"{ENV_PREFIX}PROFILES_PATH"
+ENV_TEST_SUITES = f"{ENV_PREFIX}TEST_SUITES"
+ENV_CLIPBOARD_COPY = f"{ENV_PREFIX}CLIPBOARD_COPY"
 REQUIRED_FIELDS = [
     "MONGODB_ATLAS_ORG_ID",
     "MONGODB_ATLAS_PRIVATE_KEY",
@@ -66,49 +72,10 @@ class ExternalSettings(AtlasSettings):
         return "mongodbgov" in self.MONGODB_ATLAS_BASE_URL
 
 
-def as_env_var_name(field_name: str) -> str:
-    names = set(field_names(AtlasInitSettings))
-    assert (
-        field_name in names or field_name.lower() in names
-    ), f"unknown field name for {AtlasInitSettings}: {field_name}"
-    external_settings_names = set(field_names(ExternalSettings))
-    if field_name in external_settings_names:
-        return field_name.upper()
-    return f"{ENV_PREFIX}{field_name}".upper()
-
-
-def dump_manual_dotenv_from_env(path: Path) -> None:
-    env_vars: dict[str, str] = {}
-    names = field_names(AtlasInitSettings)
-    ext_settings_names = field_names(ExternalSettings)
-    path_settings_names = field_names(AtlasInitPaths)
-    names = set(names + ext_settings_names + path_settings_names)
-    os_env = os.environ
-    for name in sorted(names):
-        env_name = as_env_var_name(name)
-        if env_name.lower() in os_env or env_name.upper() in os_env:
-            env_value = os_env.get(env_name.upper()) or os_env.get(env_name.lower())
-            if env_value:
-                env_vars[env_name] = env_value
-
-    content = "\n".join(f"{k}={v}" for k, v in env_vars.items())
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-
-
-def env_var_names(field_name: str) -> list[str]:
-    return [f"{ENV_PREFIX}{name}" for name in (field_name, field_name.lower(), field_name.upper())]
-
-
-def read_from_env(field_name: str, default: str = "") -> str:
-    assert as_env_var_name(field_name)
-    for name in [field_name, field_name.lower(), field_name.upper()]:
+def read_from_env(env_key: str, default: str = "") -> str:
+    for name in [env_key, env_key.lower(), env_key.upper()]:
         if name in os.environ:
             return os.environ[name]
-        prefix_name = f"{ENV_PREFIX}{name}"
-        if prefix_name in os.environ:
-            return os.environ[prefix_name]
-    logger.info(f"field not found in env: {field_name}, using default: {default}")
     return default
 
 
@@ -121,6 +88,7 @@ class AtlasInitPaths(BaseSettings):
     profiles_path: Path = DEFAULT_PROFILES_PATH
     tf_schema_config_path: Path = DEFAULT_SCHEMA_CONFIG_PATH
     schema_out_path: Path | None = None
+    s3_profile_bucket: str = ""
 
     @property
     def schema_out_path_computed(self) -> Path:
@@ -137,9 +105,7 @@ class AtlasInitPaths(BaseSettings):
     @property
     def manual_env_vars(self) -> dict[str, str]:
         env_manual_path = self.env_file_manual
-        if env_manual_path.exists():
-            return load_dotenv(env_manual_path)
-        return {}
+        return load_dotenv(env_manual_path) if env_manual_path.exists() else {}
 
     @property
     def env_vars_generated(self) -> Path:
@@ -172,8 +138,8 @@ class AtlasInitPaths(BaseSettings):
     def load_env_vars(self, path: Path) -> dict[str, str]:
         return load_dotenv(path)
 
-    def load_env_vars_generated(self) -> dict[str, str]:
-        env_path = self.env_vars_generated
+    def load_env_vars_full(self) -> dict[str, str]:
+        env_path = self.env_vars_vs_code
         assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
         return load_dotenv(env_path)
 
@@ -182,7 +148,7 @@ class AtlasInitPaths(BaseSettings):
             return self.env_vars_cls(t, path=path)
 
     def env_vars_cls(self, t: type[T], *, path: Path | None = None) -> T:
-        path = path or self.env_vars_generated
+        path = path or self.env_vars_vs_code
         env_vars = self.load_env_vars(path) if path.exists() else {}
         return t(**env_vars)
 
@@ -192,19 +158,19 @@ class AtlasInitPaths(BaseSettings):
         if manual_env_vars:
             if skip_os_update:
                 return manual_env_vars
-            logger.info(f"loading manual env-vars from {self.env_file_manual}")
-            os.environ.update(manual_env_vars)
+            if new_updates := {k: v for k, v in manual_env_vars.items() if k not in os.environ}:
+                logger.info(f"loading manual env-vars {','.join(new_updates)}")
+                os.environ.update(new_updates)
         else:
             logger.warning(f"no {self.env_file_manual}")
         return manual_env_vars
 
-    def include_extra_env_vars(self, extra_env_vars: dict[str, str]) -> None:
+    def include_extra_env_vars_in_vscode(self, extra_env_vars: dict[str, str]) -> None:
         extra_name = ", ".join(extra_env_vars.keys())
-        for env_vars_path in [self.env_vars_generated, self.env_vars_vs_code]:
-            original_env_vars = self.load_env_vars(env_vars_path)
-            new_env_vars = original_env_vars | extra_env_vars
-            dump_dotenv(env_vars_path, new_env_vars)
-            logger.info(f"done {env_vars_path} updated with {extra_name} env-vars ✅")
+        original_env_vars = self.load_env_vars(self.env_vars_vs_code)
+        new_env_vars = original_env_vars | extra_env_vars
+        dump_dotenv(self.env_vars_vs_code, new_env_vars)
+        logger.info(f"done {self.env_vars_vs_code} updated with {extra_name} env-vars ✅")
 
 
 class EnvVarsCheck(NamedTuple):
@@ -220,41 +186,35 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
     cfn_use_kms_key: bool = False
     project_name: str = ""
 
-    skip_copy: bool = False
+    cliboard_copy: str = ""
     test_suites: str = ""
 
     @classmethod
     def check_env_vars(
         cls,
         profile: str = DEFAULT_PROFILE,
-        required_extra_fields: list[str] | None = None,
-        explicit_env_vars: dict[str, str] | None = None,
+        required_env_vars: list[str] | None = None,
     ) -> EnvVarsCheck:
-        """side effect of loading env-vars and set profile"""
-        os.environ[as_env_var_name("profile")] = profile
-        required_extra_fields = required_extra_fields or []
-        explicit_env_vars = explicit_env_vars or {}
-        path_settings = AtlasInitPaths()
-        manual_env_vars = path_settings.load_profile_manual_env_vars()
+        required_env_vars = required_env_vars or []
+        path_settings = AtlasInitPaths(profile=profile)
+        manual_env_vars = path_settings.manual_env_vars
         ambiguous: list[str] = []
-        for env_name, env_value in explicit_env_vars.items():
-            manual_value = manual_env_vars.get(env_name)
-            if manual_value and manual_value != env_value:
+        for env_name, manual_value in manual_env_vars.items():
+            env_value = read_from_env(env_name)
+            if env_value and manual_value != env_value:
                 ambiguous.append(env_name)
-            else:
-                os.environ[env_name] = env_value
         missing_env_vars = sorted(
-            as_env_var_name(field_name)
-            for field_name in REQUIRED_FIELDS + required_extra_fields
-            if read_from_env(field_name) == ""
+            env_name
+            for env_name in REQUIRED_FIELDS + required_env_vars
+            if read_from_env(env_name) == "" and env_name not in manual_env_vars
         )
         return EnvVarsCheck(missing=missing_env_vars, ambiguous=sorted(ambiguous))
 
     @classmethod
-    def safe_settings(cls) -> AtlasInitSettings:
-        """loads .env_manual before creating the settings"""
-        path_settings = AtlasInitPaths()
-        path_settings.load_profile_manual_env_vars()
+    def safe_settings(cls, profile: str) -> AtlasInitSettings:
+        """side effect of loading manual env-vars and set profile"""
+        os.environ[ENV_PROFILE] = profile
+        AtlasInitPaths(profile=profile).load_profile_manual_env_vars()
         ext_settings = ExternalSettings()  # type: ignore
         path_settings = AtlasInitPaths()
         return cls(**path_settings.model_dump(), **ext_settings.model_dump())
@@ -281,16 +241,17 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
     def test_suites_parsed(self) -> list[str]:
         return [t for t in self.test_suites.split(",") if t]
 
-    def cfn_config(self) -> dict[str, Any]:
+    def tf_vars(self) -> dict[str, Any]:
+        variables = {}
         if self.cfn_profile:
-            return {
-                "cfn_config": {
-                    "profile": self.cfn_profile,
-                    "region": self.cfn_region,
-                    "use_kms_key": self.cfn_use_kms_key,
-                }
+            variables["cfn_config"] = {
+                "profile": self.cfn_profile,
+                "region": self.cfn_region,
+                "use_kms_key": self.cfn_use_kms_key,
             }
-        return {}
+        if self.s3_profile_bucket:
+            variables["use_aws_s3"] = True
+        return variables
 
 
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
@@ -298,10 +259,18 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
     return config_active_suites(settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed)
 
 
-def init_settings() -> AtlasInitSettings:
+_sentinel = object()
+
+
+def init_settings(
+    required_env_vars: list[str] | object = _sentinel,
+) -> AtlasInitSettings:
+    if required_env_vars is _sentinel:
+        required_env_vars = [ENV_PROJECT_NAME]
+    profile = os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE)
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
-        os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE),
-        required_extra_fields=["project_name"],
+        profile,
+        required_env_vars=required_env_vars,  # type: ignore
     )
     if missing_env_vars:
         typer.echo(f"missing env_vars: {missing_env_vars}")
@@ -311,4 +280,4 @@ def init_settings() -> AtlasInitSettings:
         )
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
-    return AtlasInitSettings.safe_settings()
+    return AtlasInitSettings.safe_settings(profile)

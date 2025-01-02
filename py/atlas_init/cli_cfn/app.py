@@ -19,7 +19,11 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
 )
 from atlas_init.cli_cfn.contract import contract_test_cmd
 from atlas_init.cli_cfn.example import example_cmd
-from atlas_init.cli_cfn.files import create_sample_file_from_input, has_md_link, iterate_schemas
+from atlas_init.cli_cfn.files import (
+    create_sample_file_from_input,
+    has_md_link,
+    iterate_schemas,
+)
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import run_in_regions
 from atlas_init.repos.cfn import (
@@ -52,7 +56,7 @@ def reg(
             deregister_cfn_resource_type(type_name, deregister=not dry_run, region_filter=region)
     logger.info(f"ready to activate {type_name}")
     settings = init_settings()
-    cfn_execution_role = read_execution_role(settings.load_env_vars_generated())
+    cfn_execution_role = read_execution_role(settings.load_env_vars_full())
     last_third_party = get_last_cfn_type(type_name, region, is_third_party=True)
     assert last_third_party, f"no 3rd party extension found for {type_name} in {region}"
     if dry_run:
@@ -98,7 +102,7 @@ def inputs(
     cwd = current_dir()
     suite = suites[0]
     assert suite.cwd_is_repo_go_pkg(cwd, repo_alias="cfn")
-    env_extra = settings.load_env_vars_generated()
+    env_extra = settings.load_env_vars_full()
     CREATE_FILENAME = "cfn-test-create-inputs.sh"  # noqa: N806
     create_dirs = ["test/contract-testing", "test"]
     parent_dir = None

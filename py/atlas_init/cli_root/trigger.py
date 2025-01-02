@@ -26,7 +26,7 @@ def create_realm_app():
     project_id = settings.env_vars_cls(EnvVarsGenerated).MONGODB_ATLAS_PROJECT_ID
     cluster_name = settings.env_vars_cls(TFModuleCluster).MONGODB_ATLAS_CLUSTER_NAME
     auth_headers = login_to_realm(settings, base_url)
-    realm_settings = settings.env_vars_cls_or_none(RealmSettings)
+    realm_settings = settings.env_vars_cls_or_none(RealmSettings, path=settings.env_vars_trigger)
     if realm_settings and function_exists(
         base_url,
         auth_headers,
@@ -35,9 +35,9 @@ def create_realm_app():
         realm_settings.MONGODB_REALM_FUNCTION_ID,
     ):
         logger.info(f"function {realm_settings.MONGODB_REALM_FUNCTION_NAME} already exists ✅")
-        settings.include_extra_env_vars(realm_settings.model_dump())
+        settings.include_extra_env_vars_in_vscode(realm_settings.model_dump())
         return
-    logger.info("creating new real app")
+    logger.info("creating new realm app")
     if apps := list_apps(base_url, auth_headers, project_id):
         logger.info(f"got apps: {apps}")
         app_id = apps[0]["_id"]
@@ -67,7 +67,7 @@ def create_realm_app():
     extra_env_vars = realm_settings.model_dump()
     dump_dotenv(settings.env_vars_trigger, extra_env_vars)
     logger.info(f"done {settings.env_vars_trigger} created with trigger env-vars ✅")
-    settings.include_extra_env_vars(extra_env_vars)
+    settings.include_extra_env_vars_in_vscode(extra_env_vars)
 
 
 def login_to_realm(settings, base_url):

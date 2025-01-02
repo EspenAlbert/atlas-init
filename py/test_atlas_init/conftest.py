@@ -1,38 +1,37 @@
-from dataclasses import dataclass, field
 import logging
 import os
-from pathlib import Path
 import re
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Literal, TypeAlias
 from unittest.mock import MagicMock
 
+import pytest
+from model_lib import dump
+from pydantic import BaseModel, Field
+from zero_3rdparty.file_utils import copy, ensure_parents_write_text
+
 from atlas_init.cli_helper.run import LOG_CMD_PREFIX
 from atlas_init.cli_root import set_dry_run
+from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 from atlas_init.repos.path import (
     GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES,
     Repo,
     resource_root,
 )
-from model_lib import dump
-from pydantic import BaseModel, Field
-import pytest
-
-from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 from atlas_init.settings.env_vars import (
+    ENV_PROFILES_PATH,
+    ENV_PROJECT_NAME,
     REQUIRED_FIELDS,
     AtlasInitPaths,
-    as_env_var_name,
 )
 from atlas_init.settings.path import current_dir, dump_dotenv
-from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 
 
 @pytest.fixture
 def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths:  # type: ignore
-    profiles_path = as_env_var_name("profiles_path")
     env_before = {**os.environ}
-    assert profiles_path == "ATLAS_INIT_PROFILES_PATH"
-    monkeypatch.setenv(profiles_path, str(tmp_path))
+    monkeypatch.setenv(ENV_PROFILES_PATH, str(tmp_path))
     yield AtlasInitPaths()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
@@ -113,7 +112,7 @@ def extract_node_subdir(node_name: str) -> str:
     return node_name.split("[", 1)[1].split("]")[0] if "[" in node_name else ""
 
 
-@pytest.fixture()
+@pytest.fixture
 def cli_configure(
     original_datadir: Path, request, monkeypatch, tmp_path, tmp_paths: AtlasInitPaths
 ) -> Callable[[CLIArgs], None]:
@@ -158,7 +157,7 @@ def cli_configure(
     return _cli_configure
 
 
-@pytest.fixture()
+@pytest.fixture
 def cli_assertions(file_regression, caplog, tmp_path):
     caplog.set_level(logging.DEBUG)
 
@@ -215,7 +214,7 @@ def write_required_vars(
 ):
     env_vars_in_file = env_vars_in_file or mongodb_atlas_required_vars()
     if project_name:
-        env_vars_in_file[as_env_var_name("project_name")] = project_name
+        env_vars_in_file[ENV_PROJECT_NAME] = project_name
     dump_dotenv(paths.env_file_manual, env_vars_in_file)
 
 

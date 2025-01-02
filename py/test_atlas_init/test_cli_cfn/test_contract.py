@@ -1,6 +1,7 @@
+import pytest
+
 from atlas_init.cli_cfn.contract import RunContractTest, contract_test
 from atlas_init.repos.path import Repo
-import pytest
 from test_atlas_init.conftest import CLIArgs
 
 

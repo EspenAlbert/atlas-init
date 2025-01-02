@@ -26,7 +26,7 @@ jobs:
       - name: test_no_coverage
         run: cd py && hatch test -- -s -vv --tb=short --capture=no --log-cli-level=INFO
       - name: test_with_coverage
-        run: cd py && hatch test -- --cov --cov-report=xml -s -vv --tb=short --capture=no --log-cli-level=INFO
+        run: cd py && hatch test -- --cov --cov-report=xml -s -vv --tb=short --capture=no --log-cli-level=INFO --ignore=test_atlas_init/test_cli_helper/test_run_manager.py # these tests are somehow stopping the coverage report from being generated
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

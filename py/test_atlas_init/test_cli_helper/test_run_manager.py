@@ -2,7 +2,7 @@ import logging
 import time
 from concurrent.futures import wait
 
-from atlas_init.cli_helper.run_manager import RunManager, ResultStore
+from atlas_init.cli_helper.run_manager import ResultStore, RunManager
 
 logger = logging.getLogger(__name__)
 
