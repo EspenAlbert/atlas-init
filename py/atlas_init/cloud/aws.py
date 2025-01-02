@@ -73,7 +73,7 @@ def run_in_regions(call: Callable[[str], T], regions: list[str] | None = None) -
 def upload_to_s3(profile_path: Path, s3_bucket: str, s3_prefix: str = ""):
     profiles_path = profile_path.parent
     assert profiles_path.name == "profiles"
-    excluded = [".DS_Store", ".terraform/*", ".env-manual"]
+    excluded = [".DS_Store", ".terraform/*"]
     excluded_str = " ".join([f'--exclude "{pattern}"' for pattern in excluded])
     dest_path = _s3_path(s3_bucket, profile_path.name, "", s3_prefix=s3_prefix)
     assert run_binary_command_is_ok(
@@ -114,12 +114,14 @@ _aws_keys = (
 
 
 def copy_new_files(src_dir: Path, dest_dir: Path):
-    for src_path, rel_path in iter_paths_and_relative(src_dir, only_files=True):
+    for src_path, rel_path in iter_paths_and_relative(src_dir, "*", only_files=True):
         dest_path = dest_dir / rel_path
         if not dest_path.exists() or file_modified_time(src_path) > file_modified_time(dest_path):
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             if src_path.name == ".env-manual":
+                if dest_path.exists():
+                    continue  # never overwrite the manual file
                 lines_no_aws = [line for line in src_path.read_text().splitlines() if not line.startswith(_aws_keys)]
-                dest_path.write_text("\n".join(lines_no_aws))
+                dest_path.write_text("\n".join(lines_no_aws) + "\n")
             else:
                 copy(src_path, dest_path)

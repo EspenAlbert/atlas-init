@@ -7,7 +7,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple, TypeVar
 
-import typer
 from model_lib import parse_payload
 from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -45,11 +44,12 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+FILENAME_ENV_MANUAL = ".env-manual"
 T = TypeVar("T")
 
 
 class ExternalSettings(AtlasSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", extra="ignore")
 
     TF_CLI_CONFIG_FILE: str = ""
     AWS_PROFILE: str = ""
@@ -100,7 +100,7 @@ class AtlasInitPaths(BaseSettings):
 
     @property
     def env_file_manual(self) -> Path:
-        return self.profile_dir / ".env-manual"
+        return self.profile_dir / FILENAME_ENV_MANUAL
 
     @property
     def manual_env_vars(self) -> dict[str, str]:
@@ -162,7 +162,7 @@ class AtlasInitPaths(BaseSettings):
                 logger.info(f"loading manual env-vars {','.join(new_updates)}")
                 os.environ.update(new_updates)
         else:
-            logger.warning(f"no {self.env_file_manual}")
+            logger.warning(f"no {self.env_file_manual} exists")
         return manual_env_vars
 
     def include_extra_env_vars_in_vscode(self, extra_env_vars: dict[str, str]) -> None:
@@ -211,11 +211,11 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return EnvVarsCheck(missing=missing_env_vars, ambiguous=sorted(ambiguous))
 
     @classmethod
-    def safe_settings(cls, profile: str) -> AtlasInitSettings:
+    def safe_settings(cls, profile: str, *, ext_settings: ExternalSettings | None = None) -> AtlasInitSettings:
         """side effect of loading manual env-vars and set profile"""
         os.environ[ENV_PROFILE] = profile
         AtlasInitPaths(profile=profile).load_profile_manual_env_vars()
-        ext_settings = ExternalSettings()  # type: ignore
+        ext_settings = ext_settings or ExternalSettings()  # type: ignore
         path_settings = AtlasInitPaths()
         return cls(**path_settings.model_dump(), **ext_settings.model_dump())
 
@@ -260,24 +260,44 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
 
 
 _sentinel = object()
+PLACEHOLDER_VALUE = "PLACEHOLDER"
+
+
+class EnvVarsError(Exception):
+    def __init__(self, missing: list[str], ambiguous: list[str]):
+        self.missing = missing
+        self.ambiguous = ambiguous
+        super().__init__(f"missing: {missing}, ambiguous: {ambiguous}")
+
+    def __str__(self) -> str:
+        return f"missing: {self.missing}, ambiguous: {self.ambiguous}"
 
 
 def init_settings(
     required_env_vars: list[str] | object = _sentinel,
+    *,
+    non_required: bool = False,
 ) -> AtlasInitSettings:
     if required_env_vars is _sentinel:
         required_env_vars = [ENV_PROJECT_NAME]
+    if non_required:
+        required_env_vars = []
     profile = os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE)
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
         required_env_vars=required_env_vars,  # type: ignore
     )
-    if missing_env_vars:
-        typer.echo(f"missing env_vars: {missing_env_vars}")
+    if missing_env_vars and not non_required:
+        logger.warning(f"missing env_vars: {missing_env_vars}")
     if ambiguous_env_vars:
-        typer.echo(
-            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli & in .env-manual file with different values)"
+        logger.warning(
+            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli/env & in .env-manual file with different values)"
         )
+    ext_settings = None
+    if non_required and missing_env_vars:
+        placeholders = {k: PLACEHOLDER_VALUE for k in missing_env_vars}
+        missing_env_vars = []
+        ext_settings = ExternalSettings(**placeholders)  # type: ignore
     if missing_env_vars or ambiguous_env_vars:
-        raise typer.Exit(1)
-    return AtlasInitSettings.safe_settings(profile)
+        raise EnvVarsError(missing_env_vars, ambiguous_env_vars)
+    return AtlasInitSettings.safe_settings(profile, ext_settings=ext_settings)

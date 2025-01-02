@@ -31,6 +31,7 @@ env:
   ATLAS_INIT_PROFILE: ${{ inputs.atlas_init_profile }}
   ATLAS_INIT_S3_PROFILE_BUCKET: ${{ inputs.profile_s3_bucket }}
   FORCE_COLOR: "yes"
+  COLUMNS: 140
   TF_INPUT: "false"
   NON_INTERACTIVE: "true"
   
@@ -64,7 +65,7 @@ jobs:
             uv-version: "0.4.18"
       - name: hatch-install
         run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin --system
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin setuptools --system
       - name: atlas-init-install
         run: |
           cd atlas-init
@@ -84,5 +85,5 @@ jobs:
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init apply -auto-approve
       - name: atlas-init-contract-test-dry-run
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init --dry-run cfn contract-test
-      - name: atlas-init-contract-test-dry-run
+      - name: atlas-init-contract-test
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init cfn contract-test

@@ -5,6 +5,7 @@ import pytest
 from atlas_init.settings.env_vars import (
     ENV_PROJECT_NAME,
     ENV_TEST_SUITES,
+    PLACEHOLDER_VALUE,
     REQUIRED_FIELDS,
     AtlasInitSettings,
     EnvVarsCheck,
@@ -87,6 +88,13 @@ def test_check_env_vars(monkeypatch, test_case, tmp_paths):
         )
         == test_case.expected
     )
+
+
+def test_init_settings_non_required_use_placeholders(tmp_paths):
+    settings = init_settings(non_required=True)
+    settings_dict = settings.model_dump()
+    placehodler_values = [settings_dict.get(key, "") for key in REQUIRED_FIELDS]
+    assert placehodler_values == [PLACEHOLDER_VALUE] * len(REQUIRED_FIELDS)
 
 
 @pytest.mark.skip("needs a profile to exist")

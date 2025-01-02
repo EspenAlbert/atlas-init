@@ -1,6 +1,7 @@
 import logging
 
 import requests
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from zero_3rdparty.id_creator import simple_id
 
 from atlas_init.settings.env_vars import init_settings
@@ -43,7 +44,7 @@ def create_realm_app():
         app_id = apps[0]["_id"]
     else:
         logger.info("no apps found, creating one")
-        app = create_app(base_url, auth_headers, project_id, cluster_name)
+        app = create_app(base_url, auth_headers, project_id, cluster_name, settings.AWS_REGION)
         logger.info(f"created app: {app}")
         app_id = app["_id"]
     logger.info(f"using app_id: {app_id}")
@@ -75,14 +76,12 @@ def login_to_realm(settings, base_url):
         "username": settings.MONGODB_ATLAS_PUBLIC_KEY,
         "apiKey": settings.MONGODB_ATLAS_PRIVATE_KEY,
     }
-    response = requests.post(
+    token_response = _request_post_call(
         f"{base_url}api/admin/v3.0/auth/providers/mongodb-cloud/login",
-        json=login_req,
+        data=login_req,
         headers={"Accept": "application/json", "Content-Type": "application/json"},
         timeout=10,
     )
-    response.raise_for_status()
-    token_response = response.json()
     access_token = token_response["access_token"]
     logger.debug(f"token: {access_token}")
     return {"Authorization": f"Bearer {access_token}"}
@@ -100,13 +99,30 @@ def list_apps(base_url: str, auth_headers: dict[str, str], project_id: str) -> l
     return apps
 
 
-def create_app(base_url: str, auth_headers: dict[str, str], project_id: str, cluster_name: str) -> dict:
+# https://www.mongodb.com/docs/atlas/app-services/apps/deployment-models-and-regions/#cloud-deployment-regions
+_cloud_deployment_regions = {
+    "aws-eu-west-1": "IE",
+    "aws-us-west-2": "US-OR",
+    "aws-ap-southeast-2": "AU",
+    "aws-us-east-1": "US-VA",
+}
+
+
+def create_app(
+    base_url: str, auth_headers: dict[str, str], project_id: str, cluster_name: str, aws_region: str
+) -> dict:
+    provider_region = f"aws-{aws_region}"
+    location = _cloud_deployment_regions.get(provider_region)
+    if not location:
+        raise ValueError(
+            f"unknown location for provider_region: {provider_region}, only supports: {_cloud_deployment_regions}"
+        )
     create_app_req = {
         "name": "atlas-init-app",
-        "location": "US-VA",
+        "location": location,
         "deployment_model": "GLOBAL",
         "environment": "production",
-        "provider_region": "aws-us-east-1",
+        "provider_region": provider_region,
         "data_source": {
             "name": "mongodb-atlas",
             "type": "mongodb-atlas",
@@ -117,16 +133,15 @@ def create_app(base_url: str, auth_headers: dict[str, str], project_id: str, clu
             },
         },
     }
-    create_app_response = requests.post(
+    app_response = _request_post_call(
         f"{base_url}api/admin/v3.0/groups/{project_id}/apps",
-        json=create_app_req,
+        data=create_app_req,
         headers=auth_headers,
         timeout=10,
+        log_data_on_failure=True,
     )
-    create_app_response.raise_for_status()
-    app = create_app_response.json()
-    assert isinstance(app, dict), f"expected dict, got: {app!r}"
-    return app
+    assert isinstance(app_response, dict), f"expected dict, got: {app_response!r}"
+    return app_response
 
 
 def create_service(
@@ -146,14 +161,13 @@ def create_service(
             "wireProtocolEnabled": True,
         },
     }
-    create_service_response = requests.post(
+    service = _request_post_call(
         f"{base_url}api/admin/v3.0/groups/{project_id}/apps/{app_id}/services",
-        json=create_service_req,
+        data=create_service_req,
         headers=auth_headers,
         timeout=10,
+        log_data_on_failure=True,
     )
-    create_service_response.raise_for_status()
-    service = create_service_response.json()
     assert isinstance(service, dict), f"expected dict, got: {service}"
     return service
 
@@ -172,14 +186,13 @@ def create_function(
         "source": 'exports = function(changeEvent) {console.log("New Document Inserted")};',
         "run_as_system": True,
     }
-    create_func_response = requests.post(
+    func = _request_post_call(
         f"{base_url}api/admin/v3.0/groups/{project_id}/apps/{app_id}/functions",
-        json=create_func_req,
+        data=create_func_req,
         headers=auth_headers,
         timeout=10,
+        log_data_on_failure=True,
     )
-    create_func_response.raise_for_status()
-    func = create_func_response.json()
     assert isinstance(func, dict), f"expected dict, got: {func}"
     return func
 
@@ -203,3 +216,26 @@ def function_exists(
     func = get_func_response.json()
     assert isinstance(func, dict), f"expected dict response, got: {func}"
     return True
+
+
+class _RetryPostRequestError(Exception):
+    pass
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_fixed(10),
+    retry=retry_if_exception_type(),
+    reraise=True,
+)
+def _request_post_call(
+    url: str, data: dict, headers: dict[str, str], timeout: int, *, log_data_on_failure: bool = False
+) -> dict:
+    response = requests.post(url, json=data, headers=headers, timeout=timeout)
+    if response.status_code >= 500:  # noqa: PLR2004
+        logger.warning(f"failed to post to {url}, status_code: {response.status_code}, response: {response.text}")
+        if log_data_on_failure:
+            logger.warning(f"data: {data}")
+        raise _RetryPostRequestError(f"status_code: {response.status_code}, response: {response.text}")
+    response.raise_for_status()
+    return response.json()

@@ -3,25 +3,21 @@ name: 'CI CFN ACC'
 on:
   workflow_dispatch:
     inputs:
+      aws_region:
+        description: 'AWS region'
+        required: true
+        default: 'eu-west-1'
       folder_name:
         description: 'Folder name'
         required: true
         default: 'trigger'
-      profile_s3_bucket:
-        description: 'S3 bucket for profiles'
-        default: ''
-      atlas_init_profile:
-        description: 'Atlas init profile, useful when using profile_s3_bucket, otherwise creating a new profile'
-        default: ''
-      atlas_init_project_name:
-        description: 'Atlas init project_name, useful when using profile_s3_bucket, otherwise expecting to create a new project'
-        default: ''
 
 concurrency:
     group: '${{ github.workflow }}'
     cancel-in-progress: false
 
 env:
+  COLUMNS: 140
   FORCE_COLOR: "yes"
   MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
   MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
@@ -29,18 +25,17 @@ env:
   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  AWS_REGION: eu-west-1
+  AWS_REGION: ${{ inputs.AWS_REGION }}
   TF_INPUT: "false"
   NON_INTERACTIVE: "true"
   FOLDER_PATH: "cfn/cfn-resources/${{ inputs.folder_name }}"
   TF_VAR_use_project_myip: "false"
   # should always mange its own CFN secret
   ATLAS_INIT_CFN_PROFILE: profile-${{ github.run_id }}
-  ATLAS_INIT_CFN_REGION: eu-west-1
+  ATLAS_INIT_CFN_REGION: ${{ inputs.AWS_REGION }}
   ATLAS_INIT_CFN_USE_KMS_KEY: "false"
-  ATLAS_INIT_PROFILE: ${{ inputs.atlas_init_profile || format('profile-{0}',github.run_id) }}
-  ATLAS_INIT_PROJECT_NAME: ${{ inputs.atlas_init_project_name || format('gh-ci-{0}', github.run_id) }}
-  ATLAS_INIT_S3_PROFILE_BUCKET: ${{ inputs.profile_s3_bucket }}
+  ATLAS_INIT_PROFILE: ${{ format('profile-{0}',github.run_id) }}
+  ATLAS_INIT_PROJECT_NAME: ${{ format('gh-ci-{0}', github.run_id) }}
   
 jobs:
   cli_check:
@@ -64,15 +59,15 @@ jobs:
           use-installer: true
       - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_TEST_ENV }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST_ENV }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: yezz123/setup-uv@v4
         with:
             uv-version: "0.4.18"
       - name: hatch-install
         run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin --system
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin setuptools --system
       - name: atlas-init-install
         run: |
           cd atlas-init
@@ -92,7 +87,7 @@ jobs:
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init apply -auto-approve
       - name: atlas-init-contract-test-dry-run
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init --dry-run cfn contract-test
-      - name: atlas-init-contract-test-dry-run
+      - name: atlas-init-contract-test
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init cfn contract-test
       - name: atlas-init-destroy
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init destroy -auto-approve

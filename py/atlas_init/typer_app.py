@@ -17,7 +17,6 @@ from atlas_init.settings.env_vars import (
     ENV_PROFILE,
     ENV_PROJECT_NAME,
     ENV_S3_PROFILE_BUCKET,
-    AtlasInitSettings,
     init_settings,
 )
 from atlas_init.settings.rich_utils import configure_logging, hide_secrets
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def sync_on_done(return_value, s3_profile_bucket: str = "", use_clipboard: str = "", **kwargs):
     logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
-    settings = init_settings(required_env_vars=[])
+    settings = init_settings(non_required=True)
     if s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")
         upload_to_s3(settings.profile_dir, s3_profile_bucket)
@@ -109,12 +108,11 @@ def main(
     handler = configure_logging(app, log_level, is_running_in_repo=is_running_in_repo)
     logger.info(f"running in atlas-init repo: {is_running_in_repo} python location:{sys.executable}")
     logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
-    settings: AtlasInitSettings | None = None
     if s3_bucket := s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_bucket}")
-        settings = init_settings(required_env_vars=[])
+        settings = init_settings(non_required=True)
         download_from_s3(settings.profile_dir, s3_bucket)
-    settings = settings or init_settings(required_env_vars=[])
+    settings = init_settings(required_env_vars=[])
     if not show_secrets:
         # must happen after init_settings that might load some env-vars
         hide_secrets(handler, {**os.environ})
