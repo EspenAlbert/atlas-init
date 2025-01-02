@@ -64,7 +64,7 @@ jobs:
             uv-version: "0.4.18"
       - name: hatch-install
         run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin --system
+          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin setuptools --system
       - name: atlas-init-install
         run: |
           cd atlas-init
