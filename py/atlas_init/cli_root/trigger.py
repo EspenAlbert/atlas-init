@@ -223,7 +223,7 @@ class _RetryPostRequestError(Exception):
 
 
 @retry(
-    stop=stop_after_attempt(3),
+    stop=stop_after_attempt(5),
     wait=wait_fixed(10),
     retry=retry_if_exception_type(),
     reraise=True,
@@ -232,8 +232,8 @@ def _request_post_call(
     url: str, data: dict, headers: dict[str, str], timeout: int, *, log_data_on_failure: bool = False
 ) -> dict:
     response = requests.post(url, json=data, headers=headers, timeout=timeout)
-    logger.warning(f"failed to post to {url}, status_code: {response.status_code}, response: {response.text}")
     if response.status_code >= 500:  # noqa: PLR2004
+        logger.warning(f"failed to post to {url}, status_code: {response.status_code}, response: {response.text}")
         if log_data_on_failure:
             logger.warning(f"data: {data}")
         raise _RetryPostRequestError(f"status_code: {response.status_code}, response: {response.text}")
