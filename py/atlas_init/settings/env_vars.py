@@ -45,6 +45,7 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+FILENAME_ENV_MANUAL = ".env-manual"
 T = TypeVar("T")
 
 
@@ -100,7 +101,7 @@ class AtlasInitPaths(BaseSettings):
 
     @property
     def env_file_manual(self) -> Path:
-        return self.profile_dir / ".env-manual"
+        return self.profile_dir / FILENAME_ENV_MANUAL
 
     @property
     def manual_env_vars(self) -> dict[str, str]:
@@ -277,7 +278,7 @@ def init_settings(
         profile,
         required_env_vars=required_env_vars,  # type: ignore
     )
-    if missing_env_vars:
+    if missing_env_vars and not non_required:
         typer.echo(f"missing env_vars: {missing_env_vars}")
     if ambiguous_env_vars:
         typer.echo(
