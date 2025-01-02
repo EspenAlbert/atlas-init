@@ -1,4 +1,5 @@
 import logging
+from typing import Type, TypeVar
 
 from click.testing import Result
 from model_lib import copy_and_validate
@@ -7,7 +8,10 @@ from typer.testing import CliRunner
 from atlas_init.cli import app
 from atlas_init.settings.env_vars import (
     ENV_PROFILE,
+    ENV_PROJECT_NAME,
+    REQUIRED_FIELDS,
     AtlasInitPaths,
+    EnvVarsError,
     init_settings,
 )
 from test_atlas_init.conftest import write_required_vars
@@ -18,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def run(command: str, exit_code: int = 0) -> Result:
     result = runner.invoke(app, command.split())
-    logger.info(result.stdout)
+    logger.info(f"cli command output={result.stdout}")
     if exit_code == 0 and (e := result.exception):
         logger.exception(e)
         raise e
@@ -26,10 +30,13 @@ def run(command: str, exit_code: int = 0) -> Result:
     return result
 
 
-def run_expect_error(command: str, error_message: str, exit_code: int = 1) -> Result:
+ErrT = TypeVar("ErrT", bound=Exception)
+
+
+def run_expect_error(command: str, error: Type[ErrT], exit_code: int = 1) -> ErrT:
     result = run(command, exit_code=exit_code)
-    assert error_message in result.stdout
-    return result
+    assert isinstance(result.exception, error)
+    return result.exception
 
 
 def test_normal_help_command_is_ok():
@@ -37,15 +44,14 @@ def test_normal_help_command_is_ok():
 
 
 def test_missing_env_vars(tmp_paths):
-    run_expect_error(
-        "init",
-        "missing env_vars: ['MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY'",
-    )
+    error = run_expect_error("init", error=EnvVarsError)
+    assert error.missing == REQUIRED_FIELDS
 
 
 def test_missing_project_name(tmp_paths):
     write_required_vars(tmp_paths)
-    run_expect_error("init", "missing env_vars: ['ATLAS_INIT_PROJECT_NAME']")
+    error = run_expect_error("init", error=EnvVarsError)
+    assert ENV_PROJECT_NAME in error.missing
 
 
 def test_cli_project_name(tmp_paths):

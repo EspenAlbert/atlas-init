@@ -7,7 +7,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple, TypeVar
 
-import typer
 from model_lib import parse_payload
 from pydantic import ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -163,7 +162,7 @@ class AtlasInitPaths(BaseSettings):
                 logger.info(f"loading manual env-vars {','.join(new_updates)}")
                 os.environ.update(new_updates)
         else:
-            logger.warning(f"no {self.env_file_manual}")
+            logger.warning(f"no {self.env_file_manual} exists")
         return manual_env_vars
 
     def include_extra_env_vars_in_vscode(self, extra_env_vars: dict[str, str]) -> None:
@@ -264,6 +263,16 @@ _sentinel = object()
 PLACEHOLDER_VALUE = "PLACEHOLDER"
 
 
+class EnvVarsError(Exception):
+    def __init__(self, missing: list[str], ambiguous: list[str]):
+        self.missing = missing
+        self.ambiguous = ambiguous
+        super().__init__(f"missing: {missing}, ambiguous: {ambiguous}")
+
+    def __str__(self) -> str:
+        return f"missing: {self.missing}, ambiguous: {self.ambiguous}"
+
+
 def init_settings(
     required_env_vars: list[str] | object = _sentinel,
     *,
@@ -279,10 +288,10 @@ def init_settings(
         required_env_vars=required_env_vars,  # type: ignore
     )
     if missing_env_vars and not non_required:
-        typer.echo(f"missing env_vars: {missing_env_vars}")
+        logger.warning(f"missing env_vars: {missing_env_vars}")
     if ambiguous_env_vars:
-        typer.echo(
-            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli & in .env-manual file with different values)"
+        logger.warning(
+            f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli/env & in .env-manual file with different values)"
         )
     ext_settings = None
     if non_required and missing_env_vars:
@@ -290,5 +299,5 @@ def init_settings(
         missing_env_vars = []
         ext_settings = ExternalSettings(**placeholders)  # type: ignore
     if missing_env_vars or ambiguous_env_vars:
-        raise typer.Exit(1)
+        raise EnvVarsError(missing_env_vars, ambiguous_env_vars)
     return AtlasInitSettings.safe_settings(profile, ext_settings=ext_settings)
