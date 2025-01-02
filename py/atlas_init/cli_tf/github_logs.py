@@ -127,6 +127,8 @@ def find_job_test_runs(workflow_dir: Path, job: WorkflowJob) -> list[GoTestRun]:
 
 
 def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
+    if job.conclusion in {"skipped", "cancelled", None}:
+        return []
     step, logs_lines = select_step_and_log_content(job, logs_path)
     return list(parse(logs_lines, job, step))
 
@@ -151,7 +153,7 @@ def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
 def logs_dir() -> Path:
     logs_dir_str = os.environ.get(GITHUB_CI_RUN_LOGS_ENV_NAME)
     if not logs_dir_str:
-        logger.warning(f"using {DEFAULT_GITHUB_CI_RUN_LOGS} to store github ci logs!")
+        logger.info(f"using {DEFAULT_GITHUB_CI_RUN_LOGS} to store github ci logs!")
         return DEFAULT_GITHUB_CI_RUN_LOGS
     return Path(logs_dir_str)
 
@@ -159,7 +161,7 @@ def logs_dir() -> Path:
 def summary_dir(summary_name: str) -> Path:
     summary_dir_str = os.environ.get(GITHUB_CI_SUMMARY_DIR_ENV_NAME)
     if not summary_dir_str:
-        logger.warning(f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries")
+        logger.info(f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries")
         return DEFAULT_GITHUB_SUMMARY_DIR / summary_name
     return Path(summary_dir_str) / summary_name
 
