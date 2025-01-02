@@ -47,6 +47,7 @@ class RunContractTestOutput(Entity):
     sam_local_logs: str
     sam_local_exit_code: int
     contract_test_ok: bool
+    rpdk_log: str
 
 
 class CreateContractTestInputs(Entity):
@@ -93,7 +94,16 @@ class CFNBuild(Entity):
 def contract_test_cmd(
     only_names: list[str] = typer.Option(None, "-n", "--only-names", help="only run these contract tests"),
 ):
-    contract_test(only_names=only_names)
+    result = contract_test(only_names=only_names)
+    if result.contract_test_ok:
+        logger.info("contract tests passed 🥳")
+    else:
+        logger.error("contract tests failed 💥")
+        logger.error(
+            f"function logs (exit_code={result.sam_local_exit_code}):\n {result.sam_local_logs}\n\nRPDK logs:\n{result.rpdk_log[-10_000:]}"
+        )
+        raise typer.Exit(1)
+    return result
 
 
 def contract_test(
@@ -125,12 +135,7 @@ def contract_test(
         build_event = CFNBuild(resource_path=resource_paths.resource_path)
         build(build_event)
         logger.info("build ok ✅")
-    result = run_contract_tests(run_contract_test)
-    if result.contract_test_ok:
-        logger.info("contract tests passed 🥳")
-    else:
-        logger.error("contract tests failed 💥")
-        logger.error(f"function logs (exit_code={result.sam_local_exit_code}):\n {result.sam_local_logs}")
+    return run_contract_tests(run_contract_test)
 
 
 class CreateContractTestInputsResponse(Entity):
@@ -209,12 +214,14 @@ def run_contract_tests(event: RunContractTest) -> RunContractTestOutput:
             test_cmd,
             cwd=resource_path,
             logger=logger,
-            env={**os.environ, "AWS_PROFILE": event.aws_profile},
             dry_run=event.dry_run,
         )
+        extra_log = resource_path / "rpdk.log"
+        log_content = extra_log.read_text() if extra_log.exists() else ""
     sam_local_result = run_future.result(timeout=1)
     return RunContractTestOutput(
         sam_local_logs=sam_local_result.result_str,
         sam_local_exit_code=sam_local_result.exit_code or -1,
         contract_test_ok=test_result_ok,
+        rpdk_log=log_content,
     )
