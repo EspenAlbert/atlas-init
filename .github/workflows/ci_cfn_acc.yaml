@@ -17,6 +17,7 @@ concurrency:
     cancel-in-progress: false
 
 env:
+  COLUMNS: 140
   FORCE_COLOR: "yes"
   MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
   MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
