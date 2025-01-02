@@ -251,7 +251,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
             }
         if self.s3_profile_bucket:
             variables["use_aws_s3"] = True
-        return {}
+        return variables
 
 
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
