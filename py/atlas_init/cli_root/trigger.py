@@ -43,7 +43,7 @@ def create_realm_app():
         app_id = apps[0]["_id"]
     else:
         logger.info("no apps found, creating one")
-        app = create_app(base_url, auth_headers, project_id, cluster_name)
+        app = create_app(base_url, auth_headers, project_id, cluster_name, settings.AWS_REGION)
         logger.info(f"created app: {app}")
         app_id = app["_id"]
     logger.info(f"using app_id: {app_id}")
@@ -100,13 +100,30 @@ def list_apps(base_url: str, auth_headers: dict[str, str], project_id: str) -> l
     return apps
 
 
-def create_app(base_url: str, auth_headers: dict[str, str], project_id: str, cluster_name: str) -> dict:
+# https://www.mongodb.com/docs/atlas/app-services/apps/deployment-models-and-regions/#cloud-deployment-regions
+_cloud_deployment_regions = {
+    "aws-eu-west-1": "IE",
+    "aws-us-west-2": "US-OR",
+    "aws-ap-southeast-2": "AU",
+    "aws-us-east-1": "US-VA",
+}
+
+
+def create_app(
+    base_url: str, auth_headers: dict[str, str], project_id: str, cluster_name: str, aws_region: str
+) -> dict:
+    provider_region = f"aws-{aws_region}"
+    location = _cloud_deployment_regions.get(provider_region)
+    if not location:
+        raise ValueError(
+            f"unknown location for provider_region: {provider_region}, only supports: {_cloud_deployment_regions}"
+        )
     create_app_req = {
         "name": "atlas-init-app",
-        "location": "US-VA",
+        "location": location,
         "deployment_model": "GLOBAL",
         "environment": "production",
-        "provider_region": "aws-us-east-1",
+        "provider_region": provider_region,
         "data_source": {
             "name": "mongodb-atlas",
             "type": "mongodb-atlas",
