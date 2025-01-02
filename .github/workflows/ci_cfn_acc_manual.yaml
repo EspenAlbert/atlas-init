@@ -84,5 +84,5 @@ jobs:
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init apply -auto-approve
       - name: atlas-init-contract-test-dry-run
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init --dry-run cfn contract-test
-      - name: atlas-init-contract-test-dry-run
+      - name: atlas-init-contract-test
         run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init cfn contract-test
