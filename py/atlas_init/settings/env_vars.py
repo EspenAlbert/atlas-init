@@ -49,7 +49,7 @@ T = TypeVar("T")
 
 
 class ExternalSettings(AtlasSettings):
-    model_config = SettingsConfigDict(env_prefix="")
+    model_config = SettingsConfigDict(env_prefix="", extra="ignore")
 
     TF_CLI_CONFIG_FILE: str = ""
     AWS_PROFILE: str = ""
@@ -211,11 +211,11 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return EnvVarsCheck(missing=missing_env_vars, ambiguous=sorted(ambiguous))
 
     @classmethod
-    def safe_settings(cls, profile: str) -> AtlasInitSettings:
+    def safe_settings(cls, profile: str, *, ext_settings: ExternalSettings | None = None) -> AtlasInitSettings:
         """side effect of loading manual env-vars and set profile"""
         os.environ[ENV_PROFILE] = profile
         AtlasInitPaths(profile=profile).load_profile_manual_env_vars()
-        ext_settings = ExternalSettings()  # type: ignore
+        ext_settings = ext_settings or ExternalSettings()  # type: ignore
         path_settings = AtlasInitPaths()
         return cls(**path_settings.model_dump(), **ext_settings.model_dump())
 
@@ -260,13 +260,18 @@ def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
 
 
 _sentinel = object()
+PLACEHOLDER_VALUE = "PLACEHOLDER"
 
 
 def init_settings(
     required_env_vars: list[str] | object = _sentinel,
+    *,
+    non_required: bool = False,
 ) -> AtlasInitSettings:
     if required_env_vars is _sentinel:
         required_env_vars = [ENV_PROJECT_NAME]
+    if non_required:
+        required_env_vars = []
     profile = os.getenv("ATLAS_INIT_PROFILE", DEFAULT_PROFILE)
     missing_env_vars, ambiguous_env_vars = AtlasInitSettings.check_env_vars(
         profile,
@@ -278,6 +283,11 @@ def init_settings(
         typer.echo(
             f"amiguous env_vars: {ambiguous_env_vars} (specified both in cli & in .env-manual file with different values)"
         )
+    ext_settings = None
+    if non_required and missing_env_vars:
+        placeholders = {k: PLACEHOLDER_VALUE for k in missing_env_vars}
+        missing_env_vars = []
+        ext_settings = ExternalSettings(**placeholders)  # type: ignore
     if missing_env_vars or ambiguous_env_vars:
         raise typer.Exit(1)
-    return AtlasInitSettings.safe_settings(profile)
+    return AtlasInitSettings.safe_settings(profile, ext_settings=ext_settings)
