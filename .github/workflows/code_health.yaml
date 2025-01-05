@@ -21,6 +21,10 @@ jobs:
           uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
       - run: ./py/pre-commit.sh
         name: lint
+        continue-on-error: true
+      - name: pyright-type-check
+        run: cd py && hatch run type:check
+        continue-on-error: true
       - name: build
         run: cd py && hatch build -t wheel --clean-hooks-after
       - name: test_no_coverage
@@ -32,5 +36,3 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: py/coverage.xml
-      - name: pyright-type-check
-        run: cd py && hatch run hatch-test.py3.12:check

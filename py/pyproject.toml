@@ -67,10 +67,12 @@ venvPath = ".venv"
 venvName = "hatch-test.py3.12"
 exclude = ["atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
 
-[tool.hatch.envs.hatch-test.scripts]
-check = [
-  "pyright"
-]
+[tool.hatch.envs.type]
+installer = "uv"
+extra-dependencies = ["pyright==1.1.391"]
+
+[tool.hatch.envs.type.scripts]
+check = ["pyright"]
 
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
