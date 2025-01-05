@@ -32,3 +32,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: py/coverage.xml
+      - name: pyright-type-check
+        run: cd py && hatch run hatch-test.py3.12:check
