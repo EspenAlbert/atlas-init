@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"  # Specify that we are using pip
+    directory: "/py"           # Path to the directory containing pyproject.toml
+    schedule:
+      interval: "weekly"        # Check for updates weekly
+    commit-message:
+      prefix: "chore"             # Optional: Customize commit message prefix
+    labels:
+      - "dependencies"           # Optional: Add labels to PRs created by Dependabot
