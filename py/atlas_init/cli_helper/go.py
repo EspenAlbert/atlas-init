@@ -58,7 +58,7 @@ def run_go_tests(
     repo_alias: str,
     package_prefix: str,
     settings: AtlasInitSettings,
-    groups: list[TestSuite],
+    groups: list[TestSuite],  # type: ignore
     mode: GoTestMode = GoTestMode.package,
     *,
     dry_run: bool = False,

@@ -194,7 +194,7 @@ class RunManager:
         sys_stderr = sys.stderr
 
         def read_stderr(process: subprocess.Popen):
-            for line in process.stderr:
+            for line in process.stderr:  # type: ignore
                 sys_stderr.write(line)
                 result._add_line(line)
 

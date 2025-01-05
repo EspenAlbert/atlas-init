@@ -210,7 +210,7 @@ class Schema(BaseModelLocal):
 
 
 class Resource(BaseModelLocal):
-    schema: Schema
+    schema: Schema  # pyright: ignore
     name: SnakeCaseString
 
     @property

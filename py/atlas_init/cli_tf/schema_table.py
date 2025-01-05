@@ -1,6 +1,4 @@
-# import typer
-
-
+# pyright: reportIncompatibleMethodOverride=none
 from collections import defaultdict
 from collections.abc import Iterable
 from functools import total_ordering
