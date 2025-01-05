@@ -78,7 +78,7 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
             hook_func()  # type: ignore
 
 
-def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool) -> list[TestSuite]:
+def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool) -> list[TestSuite]:  # type: ignore
     settings = init_settings()
     logger.info(f"using the '{command}' command, extra args: {extra_args}")
     try:

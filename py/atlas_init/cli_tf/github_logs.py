@@ -88,7 +88,7 @@ def find_test_runs(
     repository = tf_repo()
     for workflow in repository.get_workflow_runs(
         created=f">{since.strftime('%Y-%m-%d')}",
-        branch=branch,
+        branch=branch,  # type: ignore
         exclude_pull_requests=True,  # type: ignore
     ):
         if not include_workflow(workflow):

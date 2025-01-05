@@ -50,7 +50,7 @@ def deregister_cfn_resource_type(type_name: str, deregister: bool, region_filter
                     logger.info(f"deregistering: {arn}")
                     client.deregister_type(Arn=arn)
             if default_version_arn is not None:
-                logger.info(f"deregistering default-arn: {arn}")
+                logger.info(f"deregistering default-arn: {default_version_arn}")
                 client.deregister_type(Arn=default_version_arn)
         except Exception as e:
             if "The type does not exist" in repr(e):

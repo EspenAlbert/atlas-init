@@ -254,7 +254,7 @@ class AtlasInitSettings(AtlasInitPaths, ExternalSettings):
         return variables
 
 
-def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:
+def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:  # type: ignore
     repo_path, cwd_rel_path = repo_path_rel_path()
     return config_active_suites(settings.config, repo_path, cwd_rel_path, settings.test_suites_parsed)
 

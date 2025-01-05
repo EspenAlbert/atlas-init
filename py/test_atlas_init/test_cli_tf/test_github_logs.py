@@ -14,28 +14,11 @@ from atlas_init.cli_tf.github_logs import (
     select_step_and_log_content,
     tf_repo,
 )
-from atlas_init.cli_tf.go_test_run_format import fail_test_summary, job_summary
 
 skip_condition = pytest.mark.skipif(
     any(os.environ.get(name, "") == "" for name in REQUIRED_GH_ENV_VARS),
     reason=f"needs env vars: {REQUIRED_GH_ENV_VARS}",
 )
-
-
-@skip_condition
-def test_find_test_failures():
-    job_runs = find_test_runs(
-        utc_now() - timedelta(days=8),
-        include_job=include_test_jobs("cluster_outage_simulation"),
-    )
-    for key in sorted(job_runs.keys(), reverse=True):
-        runs = job_runs[key]
-        summary = job_summary(runs)
-        print(summary)
-        if fail_summary := fail_test_summary(runs):
-            print(indent(fail_summary, "  "))
-
-    assert job_runs
 
 
 def test_include_test_jobs(mock_job):

@@ -154,7 +154,7 @@ MARKER_TEST = "Starting TestSteps: "
 
 
 class FileRef(NamedTuple):
-    index: int
+    request_index: int
     line_start: int
     line_end: int
 
@@ -249,12 +249,12 @@ def parse_raw_req_responses(
             in_response = True
             current_start = i + 1
         if in_request and line.startswith(MARKER_END):
-            key = FileRef(index=request_count, line_start=current_start, line_end=i)
+            key = FileRef(request_index=request_count, line_start=current_start, line_end=i)
             requests[key] = log_lines[current_start:i]
             request_count += 1
             in_request = False
         if in_response and line.startswith(MARKER_END):
-            key = FileRef(index=request_count, line_start=current_start, line_end=i)
+            key = FileRef(request_index=request_count, line_start=current_start, line_end=i)
             responses[key] = log_lines[current_start:i]
             response_count += 1
             in_response = False

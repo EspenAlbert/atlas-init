@@ -108,7 +108,7 @@ def iter_blocks(block: Block, level: int | None = None) -> Iterable[Block]:
                     hcl="\n".join(block_lines),
                 )
     if line_level_start_names.get(level) is not None:
-        raise ValueError(f"Unfinished block @ {line_nr} in {block.name} at level {level}")
+        raise ValueError(f"Unfinished block @ {line_nr} in {block.name} at level {level}")  # pyright: ignore
 
 
 def hcl_attrs(block: Block) -> dict[str, str]:
