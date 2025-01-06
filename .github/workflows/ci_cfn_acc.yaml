@@ -64,23 +64,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: atlas-init-install
-        run: |
-          cd atlas-init
-          mkdir -p profiles/${{ env.ATLAS_INIT_PROFILE }}
-          echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
-          ./atlasci_local_install.sh
       - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7
         with:
-          go-version-file: 'cfn/cfn-resources/go.mod'
-      - name: atlas-init-init
-        run: source atlas-init/.venv/bin/activate && cd cfn && atlas-init init
-      - name: atlas-init-apply
-        run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init apply -auto-approve
-      - name: atlas-init-contract-test-dry-run
-        run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init --dry-run cfn contract-test
-      - name: atlas-init-contract-test
-        run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init cfn contract-test
-      - name: atlas-init-destroy
-        run: source atlas-init/.venv/bin/activate && cd ${{ env.FOLDER_PATH}} && atlas-init destroy -auto-approve
-        if: always()
+            go-version-file: 'cfn/cfn-resources/go.mod'
+      - name: cli_command_with_tf
+        uses: "./atlas-init/.github/templates/cli_command_with_tf"
+        with:
+          cli_command: "cfn contract-test"
+          atlas_init_repo_path: "atlas-init"
+          cwd: ${{ env.FOLDER_PATH}}
+          atlas_init_profile: ${{ env.ATLAS_INIT_PROFILE }}
+          dry_run_first: "true"
