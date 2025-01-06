@@ -18,29 +18,40 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
   
-  lint_and_test:
+  lint:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-      - uses: yezz123/setup-uv@v4
-        with:
-            uv-version: "0.1.12"
-      - name: hatch-install
-        run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
       - run: ./py/pre-commit.sh
         name: lint
-        continue-on-error: true
+  type-check:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
       - name: pyright-type-check
         run: cd py && hatch run type:check
-        continue-on-error: true
+  build:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
       - name: build
         run: cd py && hatch build -t wheel --clean-hooks-after
+  test:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
       - name: test_no_coverage
         run: cd py && hatch test -- -s -vv --tb=short --capture=no --log-cli-level=INFO
       - name: test_with_coverage
@@ -50,5 +61,12 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: py/coverage.xml
+  security-check:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
       - run: cd py && hatch run sec:check
         name: security-check

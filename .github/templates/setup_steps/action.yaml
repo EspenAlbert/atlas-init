@@ -1,0 +1,14 @@
+name: setup_steps
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    - uses: yezz123/setup-uv@v4
+      with:
+        uv-version: "0.1.12"
+    - name: hatch-install
+      run: uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
