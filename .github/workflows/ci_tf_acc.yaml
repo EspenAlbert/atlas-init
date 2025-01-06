@@ -31,40 +31,22 @@ jobs:
         name: atlas-init-checkout
         with:
           path: atlas-init
+      - name: setup_steps
+        uses: "./atlas-init/.github/templates/setup_steps"
+        with:
+          tf_version: "default"
       - uses: actions/checkout@v4
         name: terraform-provider-mongodbatlas-checkout
         with:
           repository: mongodb/terraform-provider-mongodbatlas
           path: tf
           ref: df44242152a96883f0535d2dc6b62ecae76d9e4e
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-      - uses: yezz123/setup-uv@v4
-        with:
-            uv-version: "0.1.12"
-      - name: hatch-install
-        run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
-      - name: atlas-init-install
-        run: |
-          cd atlas-init
-          mkdir -p profiles/default
-          echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
-          ./atlasci_local_install.sh
-      - uses: hashicorp/setup-terraform@v3
-        name: configure terraform
-        with:
-          terraform_version: "1.7.4"
-      - name: atlas-init-init
-        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init init
-      - name: atlas-init-apply
-        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init apply -auto-approve
       - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7
         with:
           go-version-file: 'tf/go.mod'
-      - name: atlas-init-test-go
-        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init go-test
-      - name: atlas-init-destroy
-        run: source atlas-init/.venv/bin/activate && cd tf && atlas-init destroy -auto-approve
-        if: always()
+      - name: cli_command_with_tf
+        uses: "./atlas-init/.github/templates/cli_command_with_tf"
+        with:
+          cli_command: "go-test"
+          atlas_init_repo_path: "atlas-init"
+          cwd: "tf"
