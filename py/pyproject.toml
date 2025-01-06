@@ -27,7 +27,7 @@ dependencies = [
   "pygithub==2.3.0",
   "requests==2.32.2",
   "pydantic-settings==2.7.1",
-  "rich==13.7.1",
+  "rich==13.9.4",
   "stringcase==1.2.0",
   "tenacity==8.2.3",
   "typer==0.15.1",
