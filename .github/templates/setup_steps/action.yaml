@@ -1,4 +1,5 @@
 name: setup_steps
+description: 'Setup steps for the workflow to use `atlas-init`'
 
 inputs:
   tf_version:

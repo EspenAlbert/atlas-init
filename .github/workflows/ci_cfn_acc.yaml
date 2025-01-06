@@ -6,7 +6,7 @@ on:
       aws_region:
         description: 'AWS region'
         required: true
-        default: 'eu-west-1'
+        default: 'us-east-1'
       folder_name:
         description: 'Folder name'
         required: true
@@ -51,7 +51,7 @@ jobs:
           tf_version: "default"
           extra_pypi_packages: "cloudformation-cli cloudformation-cli-go-plugin setuptools"
       - uses: actions/checkout@v4
-        name: terraform-provider-mongodbatlas-checkout
+        name: cfn-checkout
         with:
           repository: mongodb/mongodbatlas-cloudformation-resources
           path: cfn
