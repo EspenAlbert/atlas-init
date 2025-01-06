@@ -1,5 +1,6 @@
 name: setup_steps
 
+inputs: {}
 runs:
   using: composite
   steps:
