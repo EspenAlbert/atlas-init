@@ -30,7 +30,7 @@ dependencies = [
   "pydantic-settings==2.7.1",
   "rich==14.0.0",
   "stringcase==1.2.0",
-  "tenacity==8.2.3",
+  "tenacity==9.0.0",
   "typer==0.15.1",
   "zero-3rdparty==1.0.0b2",
 ]
