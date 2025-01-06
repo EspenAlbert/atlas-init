@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import signal
-import subprocess
+import subprocess  # nosec
 import sys
 import threading
 import time
@@ -211,7 +211,7 @@ class RunManager:
             stderr=subprocess.PIPE,
             stdin=sys.stdin,
             start_new_session=True,
-            shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection
+            shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection #nosec
             bufsize=0,
             text=True,  # This makes it return strings instead of bytes
         ) as process:
