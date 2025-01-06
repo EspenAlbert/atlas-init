@@ -39,23 +39,23 @@ runs:
     shell: bash
     run: |
       echo "::group::terraform init"
-      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.inputs.cwd) }} && atlas-init init
+      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init init
       echo "::group::terraform apply"
-      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.inputs.cwd) }} && atlas-init apply -auto-approve
+      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init apply -auto-approve
   - name: atlas-init-dry-run-${{ inputs.step_name }}
     shell: bash
     if : ${{ inputs.dry_run_first == 'true' }}
     run: |
       echo "::group::dry-run-${{ inputs.step_name }}"
-      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.inputs.cwd) }} && atlas-init --dry-run ${{ inputs.cli_command }}
+      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init --dry-run ${{ inputs.cli_command }}
   - name: atlas-init-${{ inputs.step_name }}
     shell: bash
     run: |
       echo "::group::${{ inputs.step_name }}"
-      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.inputs.cwd) }} && atlas-init ${{ inputs.cli_command }}
+      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init ${{ inputs.cli_command }}
   - name: atlas-init-destroy
     shell: bash
     if: ${{ inputs.cleanup == 'true' && always() }}
     run: |
       echo "::group::terraform destroy"
-      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.inputs.cwd) }} && atlas-init destroy -auto-approve
+      source ${{ format('{0}/{1}', github.workspace, inputs.atlas_init_repo_path) }}/.venv/bin/activate && cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init destroy -auto-approve
