@@ -1,6 +1,5 @@
 name: setup_steps
 
-inputs: {}
 runs:
   using: composite
   steps:
@@ -12,3 +11,4 @@ runs:
         uv-version: "0.1.12"
     - name: hatch-install
       run: uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      shell: bash
