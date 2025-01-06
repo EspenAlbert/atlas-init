@@ -36,18 +36,25 @@ runs:
         ./atlasci_local_install.sh
   - name: atlas-init-init
     shell: bash
-    run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init init
-  - name: atlas-init-apply
-    shell: bash
-    run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init apply -auto-approve
+    run: |
+      echo "::group::terraform init"
+      source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init init
+      echo "::group::terraform apply"
+      source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init apply -auto-approve
   - name: atlas-init-dry-run-${{ inputs.step_name }}
     shell: bash
-    run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init --dry-run ${{ inputs.cli_command }}
     if : ${{ inputs.dry_run_first == 'true' }}
+    run: |
+      echo "::group::dry-run-${{ inputs.step_name }}"
+      source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init --dry-run ${{ inputs.cli_command }}
   - name: atlas-init-${{ inputs.step_name }}
     shell: bash
-    run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init ${{ inputs.cli_command }}
+    run: |
+      echo "::group::${{ inputs.step_name }}"
+      source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init ${{ inputs.cli_command }}
   - name: atlas-init-destroy
     shell: bash
-    run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init destroy -auto-approve
     if: ${{ inputs.cleanup == 'true' && always() }}
+    run: |
+      echo "::group::terraform destroy"
+      source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init destroy -auto-approve
