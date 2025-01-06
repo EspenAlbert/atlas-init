@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec
 import sys
 from logging import Logger
 from pathlib import Path
@@ -34,7 +34,7 @@ def run_command_is_ok(
         stdout=output,
         cwd=cwd,
         env=env,
-        shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection
+        shell=True,  # noqa: S602 # We control the calls to this function and don't suspect any shell injection #nosec
     )
     is_ok = exit_code == 0
     if is_ok:
@@ -104,6 +104,6 @@ def run_command_is_ok_output(command: str, cwd: Path, logger: Logger, env: dict 
 
 def add_to_clipboard(clipboard_content: str, logger: Logger):
     if pb_binary := find_binary_on_path("pbcopy", logger, allow_missing=True):
-        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)
+        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)  # nosec
     else:
         logger.warning("pbcopy not found on $PATH")

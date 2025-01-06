@@ -54,12 +54,23 @@ fmt_config = ["python scripts/atlas_init_sort.py"]
 installer = "uv"
 default-args = ["test_atlas_init", "-s", "-vv", "--tb=short", "--log-cli-level=INFO", "--ignore=.venv/*"]
 extra-dependencies = [
+  "bandit==1.8.0",
   "hatchling==1.24.2",
   "pymongo==4.7.3",
   "pyright==1.1.391",
   "pytest-cov==6.0.0",
   "pytest-regressions==2.5.0",
 ] # used to make it simpler to sync venv with IDE
+
+[tool.bandit]
+exclude_dirs = ["test_*", "atlas_init/cli_tf/hcl/*"]
+skips= ["B101"]
+[tool.hatch.envs.sec]
+installer = "uv"
+extra-dependencies = ["bandit==1.8.0"]
+
+[tool.hatch.envs.sec.scripts]
+check = ["bandit -c pyproject.toml -r atlas_init"]
 
 [tool.pyright]
 include = ["atlas_init"]

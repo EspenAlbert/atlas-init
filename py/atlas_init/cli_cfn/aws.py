@@ -336,7 +336,7 @@ def get_last_cfn_type(
         "Filters": {"Category": category, "TypeNamePrefix": prefix},
         "MaxResults": 100,
     }
-    next_token = ""
+    next_token = ""  # nosec
     for _ in range(100):
         types_response: ListTypesOutputTypeDef = client.list_types(**kwargs)  # type: ignore
         next_token = types_response.get("NextToken", "")

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class GoTestStatus(StrEnum):
     RUN = "RUN"
-    PASS = "PASS"  # noqa: S105
+    PASS = "PASS"  # noqa: S105 #nosec
     FAIL = "FAIL"
     SKIP = "SKIP"
 

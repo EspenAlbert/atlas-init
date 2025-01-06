@@ -38,3 +38,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: py/coverage.xml
+      - run: cd py && hatch run sec:check
+        name: security-check
