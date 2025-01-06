@@ -23,7 +23,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - run: ./py/pre-commit.sh
@@ -33,7 +33,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: pyright-type-check
@@ -43,7 +43,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: build
@@ -53,7 +53,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: test_no_coverage
@@ -61,7 +61,7 @@ jobs:
       - name: test_with_coverage
         run: cd py && hatch test -- --cov --cov-report=xml -s -vv --tb=short --capture=no --log-cli-level=INFO --ignore=test_atlas_init/test_cli_helper/test_run_manager.py # these tests are somehow stopping the coverage report from being generated
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: py/coverage.xml
@@ -70,8 +70,19 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - run: cd py && hatch run sec:check
         name: security-check
+  workflow-check:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check workflow files
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+        shell: bash

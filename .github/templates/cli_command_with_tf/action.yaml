@@ -1,4 +1,5 @@
 name: cli_command_with_tf
+description: 'Run a CLI command with atlas-init wrapped with tf init+apply+(destroy)'
 
 inputs:
   step_name:
