@@ -1,5 +1,9 @@
 name: 'Code Health'
 
+concurrency:
+    group: '${{ github.workflow }}'
+    cancel-in-progress: false
+
 on:
   pull_request:
     types: [opened, reopened]
