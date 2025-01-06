@@ -49,3 +49,4 @@ jobs:
         with:
           cli_command: "go-test"
           atlas_init_repo_path: "atlas-init"
+          cwd: "tf"
