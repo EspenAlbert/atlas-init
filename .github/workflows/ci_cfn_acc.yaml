@@ -46,7 +46,7 @@ jobs:
         with:
           path: atlas-init
       - name: setup_steps
-        uses: "./.github/templates/setup_steps"
+        uses: "./atlas-init/.github/templates/setup_steps"
         with:
           tf_version: "default"
           extra_pypi_packages: "cloudformation-cli cloudformation-cli-go-plugin setuptools"
