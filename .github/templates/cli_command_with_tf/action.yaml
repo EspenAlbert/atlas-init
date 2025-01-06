@@ -21,6 +21,7 @@ runs:
   using: composite
   steps:
   - name: atlas-init-install
+    shell: bash
     run: |
         cd ${{ inputs.atlas_init_repo_path }}
         mkdir -p profiles/${{ inputs.profile_name }}
@@ -28,11 +29,15 @@ runs:
         echo "ATLAS_INIT_PROFILE=${{ inputs.profile_name }}" >> $GITHUB_ENV
         ./atlasci_local_install.sh
   - name: atlas-init-init
+    shell: bash
     run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init init
   - name: atlas-init-apply
+    shell: bash
     run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init apply -auto-approve
   - name: atlas-init-command
+    shell: bash
     run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init ${{ inputs.cli_command }}
   - name: atlas-init-destroy
+    shell: bash
     run: source ${{ inputs.atlas_init_repo_path }}/.venv/bin/activate && cd ${{ inputs.cwd }} && atlas-init destroy -auto-approve
     if: ${{ inputs.cleanup == 'true' && always() }}
