@@ -1,5 +1,13 @@
 name: setup_steps
 
+inputs:
+  tf_version:
+    description: 'Set to also install Terraform'
+    default: ''
+  extra_pypi_packages:
+    description: 'Extra pip packages to install'
+    default: ''
+
 runs:
   using: composite
   steps:
@@ -10,5 +18,15 @@ runs:
       with:
         uv-version: "0.1.12"
     - name: hatch-install
-      run: uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 --system
+      run: uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 ${{ inputs.extra_pypi_packages }} --system
       shell: bash
+    - uses: hashicorp/setup-terraform@v3
+      name: configure terraform specific version
+      if: ${{ inputs.tf_version != '' && inputs.tf_version != 'default' }}
+      with:
+        terraform_version: ${{ inputs.tf_version }}
+    - uses: hashicorp/setup-terraform@v3
+      name: configure terraform default version
+      if: ${{ inputs.tf_version == 'default' }}
+      with:
+        terraform_version: "1.10.2"

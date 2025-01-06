@@ -45,15 +45,17 @@ jobs:
         name: atlas-init-checkout
         with:
           path: atlas-init
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
+        with:
+          tf_version: "default"
+          extra_pypi_packages: "cloudformation-cli cloudformation-cli-go-plugin setuptools"
       - uses: actions/checkout@v4
         name: terraform-provider-mongodbatlas-checkout
         with:
           repository: mongodb/mongodbatlas-cloudformation-resources
           path: cfn
           ref: 28a7488aeae8e0212c1ee36483f0fd239ffa9371
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
       - uses: aws-actions/setup-sam@2360ef6d90015369947b45b496193ab9976a9b04
         with:
           use-installer: true
@@ -62,22 +64,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - uses: yezz123/setup-uv@v4
-        with:
-            uv-version: "0.4.18"
-      - name: hatch-install
-        run: |
-          uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 cloudformation-cli cloudformation-cli-go-plugin setuptools --system
       - name: atlas-init-install
         run: |
           cd atlas-init
           mkdir -p profiles/${{ env.ATLAS_INIT_PROFILE }}
           echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
           ./atlasci_local_install.sh
-      - uses: hashicorp/setup-terraform@v3
-        name: configure terraform
-        with:
-          terraform_version: "1.10.2"
       - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7
         with:
           go-version-file: 'cfn/cfn-resources/go.mod'
