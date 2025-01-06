@@ -23,6 +23,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - run: ./py/pre-commit.sh
@@ -32,6 +33,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: pyright-type-check
@@ -41,6 +43,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: build
@@ -50,6 +53,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: test_no_coverage
@@ -66,6 +70,7 @@ jobs:
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - run: cd py && hatch run sec:check
