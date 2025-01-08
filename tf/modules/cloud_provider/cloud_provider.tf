@@ -22,7 +22,7 @@ resource "mongodbatlas_cloud_provider_access_authorization" "auth_role" {
 
 
 resource "aws_iam_role" "aws_role" {
-  name = "atlas_init_aws_role_${var.name_suffix}"
+  name = "mongodb-atlas-ainit-${var.name_suffix}"
 
   assume_role_policy = <<EOF
 {

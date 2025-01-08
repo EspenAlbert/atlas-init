@@ -11,7 +11,7 @@ locals {
   resource_actions_yaml = file("${path.module}/resource_actions.yaml")
   services              = yamldecode(local.services_yaml)
   resource_actions      = yamldecode(local.resource_actions_yaml)
-  role_name             = "cfn-execution-role-${var.cfn_profile}"
+  role_name             = "mongodb-atlas-cfn-${var.cfn_profile}"
   iam_policy_statement = {
     Sid      = "Original"
     Action   = local.resource_actions
