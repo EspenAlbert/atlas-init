@@ -24,7 +24,7 @@ runs:
         python-version: "3.12"
     - uses: yezz123/setup-uv@v4
       with:
-        uv-version: "0.1.12"
+        uv-version: "0.5.13"
     - name: atlas-init-install
       run: uv pip install -U atlas-init==${{ inputs.version }} ${{ inputs.extra-pypi-packages }} --system
       shell: bash

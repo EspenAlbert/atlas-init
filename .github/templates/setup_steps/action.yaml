@@ -17,7 +17,7 @@ runs:
         python-version: "3.12"
     - uses: yezz123/setup-uv@v4
       with:
-        uv-version: "0.1.12"
+        uv-version: "0.5.13"
     - name: hatch-install
       run: uv pip install -U hatch==1.11.0 zero-3rdparty==0.0.30 ${{ inputs.extra_pypi_packages }} --system
       shell: bash
