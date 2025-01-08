@@ -1,0 +1,44 @@
+name: external-setup
+description: 'Setup steps for the workflow to use `atlas-init` and install prerequisites'
+
+inputs:
+  version:
+    description: 'Version of the atlas-init CLI'
+    default: "0.4.1"
+  tf-version:
+    description: 'Set to also install Terraform, use `default` to install the default version or empty to skip'
+    default: ''
+  go-version-file:
+    description: 'Path to the go.mod file to install Go'
+    default: ''
+  extra-pypi-packages:
+    description: 'Extra pip packages to install'
+    default: ''
+  
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+    - uses: yezz123/setup-uv@v4
+      with:
+        uv-version: "0.1.12"
+    - name: atlas-init-install
+      run: uv pip install -U atlas-init==${{ inputs.version }} ${{ inputs.extra-pypi-packages }} --system
+      shell: bash
+    - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed
+      if: ${{ inputs.go-version-file != '' }}
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+    - uses: hashicorp/setup-terraform@v3
+      name: configure terraform specific version
+      if: ${{ inputs.tf-version != '' && inputs.tf-version != 'default' }}
+      with:
+        terraform_version: ${{ inputs.tf-version }}
+    - uses: hashicorp/setup-terraform@v3
+      name: configure terraform default version
+      if: ${{ inputs.tf-version == 'default' }}
+      with:
+        terraform_version: "1.10.2"

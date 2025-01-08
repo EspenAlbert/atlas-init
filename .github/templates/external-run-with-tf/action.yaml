@@ -1,0 +1,57 @@
+name: external-run-with-tf
+description: 'Run a CLI command with atlas-init wrapped with tf init+apply+(destroy)'
+
+inputs:
+  cli-command:
+    description: 'CLI command to run with args atlas-init {cli-command}'
+    required: true
+  cwd:
+    description: 'Current working directory'
+    required: true
+  step-name:
+    description: 'Name of the step'
+    default: 'command'
+  profile-name:
+    description: 'Profile name to use for the atlas init CLI command'
+    default: default
+  cleanup:
+    description: 'Cleanup the resources after the command is run'
+    default: "true"
+  dry-run-first:
+    description: 'Run with dry-run before full run'
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+  - name: configure profile
+    shell: bash
+    run: |
+        echo "::group::atlas-init-profile"
+        mkdir -p profiles/${{ inputs.profile-name }}
+        echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
+        echo "ATLAS_INIT_PROFILE=${{ inputs.profile-name }}" >> $GITHUB_ENV
+  - name: atlas-init-init-apply
+    shell: bash
+    run: |
+      echo "::group::terraform init"
+      cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init init
+      echo "::group::terraform apply"
+      cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init apply -auto-approve
+  - name: atlas-init-dry-run-${{ inputs.step-name }}
+    shell: bash
+    if : ${{ inputs.dry-run-first == 'true' }}
+    run: |
+      echo "::group::dry-run-${{ inputs.step-name }}"
+      cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init --dry-run ${{ inputs.cli-command }}
+  - name: atlas-init-${{ inputs.step-name }}
+    shell: bash
+    run: |
+      echo "::group::${{ inputs.step-name }}"
+      cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init ${{ inputs.cli-command }}
+  - name: atlas-init-destroy
+    shell: bash
+    if: ${{ inputs.cleanup == 'true' && always() }}
+    run: |
+      echo "::group::terraform destroy"
+      cd ${{ format('{0}/{1}', github.workspace, inputs.cwd) }} && atlas-init destroy -auto-approve
