@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Literal, TypeAlias
+from typing import Callable, Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
@@ -24,6 +24,8 @@ from atlas_init.settings.env_vars import (
     ENV_PROJECT_NAME,
     REQUIRED_FIELDS,
     AtlasInitPaths,
+    AtlasInitSettings,
+    init_settings,
 )
 from atlas_init.settings.path import current_dir, dump_dotenv
 
@@ -111,14 +113,18 @@ def extract_node_subdir(node_name: str) -> str:
     """
     return node_name.split("[", 1)[1].split("]")[0] if "[" in node_name else ""
 
+class ConfigureSignature(Protocol):
+    def __call__(self, args: CLIArgs | None = None) -> AtlasInitSettings:
+        ...
 
 @pytest.fixture
 def cli_configure(
     original_datadir: Path, request, monkeypatch, tmp_path, tmp_paths: AtlasInitPaths
-) -> Callable[[CLIArgs], None]:
+) -> ConfigureSignature:
     def _cli_configure(
-        args: CLIArgs,
-    ):
+        args: CLIArgs | None = None,
+    ) -> AtlasInitSettings:
+        args = args or CLIArgs()
         set_dry_run(args.is_dry_run)
         function_name = request.function.__name__
         if not args.project_name:
@@ -126,9 +132,10 @@ def cli_configure(
         write_required_vars(tmp_paths, args.env_vars_in_file, args.project_name)
         if not args.skip_generated_vars:
             write_generated_vars(tmp_paths, args.env_vars_in_file)
+        settings = init_settings(non_required=True)
         repo = args.repo
         if repo is None:
-            return
+            return settings
         if repo != Repo.CFN:
             raise NotImplementedError(f"repo: {repo}")
         repo_path = tmp_path / Repo.CFN
@@ -153,7 +160,8 @@ def cli_configure(
                 copy(original_datadir / subdir, cwd)
             ensure_parents_write_text(cwd / "cmd/main.go", "")
         monkeypatch.chdir(cwd)
-
+        return settings
+    
     return _cli_configure
 
 

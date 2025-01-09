@@ -18,7 +18,7 @@ def test_ChangeGroup():
     assert group.is_active(
         "tf", ["internal/service/streamconnection/model_stream_connection.go"]
     )
-    assert group.is_active("tf", ["internal/service/streamconnection"])
+    assert not group.is_active("tf", ["internal/service/streamconnection"])
     assert not group.is_active(
         "tf", ["internal/service/another/model_stream_connection.go"]
     )

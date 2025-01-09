@@ -16,6 +16,15 @@ _KNOWN_OWNER_PROJECTS = {
 }
 
 
+def package_glob(package_path: str) -> str:
+    return f"{package_path}/*.go"
+
+
+def go_package_prefix(repo_path: Path) -> str:
+    owner_project = owner_project_name(repo_path)
+    return f"github.com/{owner_project}"
+
+
 def _owner_project_name(repo_path: Path) -> str:
     owner_project = owner_project_name(repo_path)
     if owner_project not in _KNOWN_OWNER_PROJECTS:
@@ -59,6 +68,11 @@ def resource_dir(repo_path: Path, full_path: Path) -> Path:
 class Repo(StrEnum):
     CFN = "cfn"
     TF = "tf"
+
+
+def as_repo_alias(path: Path) -> Repo:
+    owner = owner_project_name(path)
+    return _owner_lookup(owner)
 
 
 _owner_repos = {

@@ -2,7 +2,7 @@ import logging
 
 import typer
 
-from atlas_init.cli_helper.go import GoEnvVars, GoTestMode, GoTestResult, run_go_tests
+from atlas_init.cli_helper.go import GoEnvVars, GoTestCaptureMode, GoTestMode, GoTestResult, run_go_tests
 from atlas_init.cli_tf.mock_tf_log import MockTFLog, mock_tf_log, resolve_admin_api_path
 from atlas_init.repos.path import Repo, current_repo, current_repo_path
 from atlas_init.settings.env_vars import active_suites, init_settings
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @app_command()
 def go_test(
-    mode: GoTestMode = typer.Option("package", "-m", "--mode", help="package|individual"),
+    mode: str = typer.Option("package", "-m", "--mode", help="package|individual or a prefix"),
     dry_run: bool = typer.Option(False, help="only log out the commands to be run"),
     timeout_minutes: int = typer.Option(300, "-t", "--timeout", help="timeout in minutes"),
     concurrent_runs: int = typer.Option(20, "-c", "--concurrent", help="number of concurrent runs"),
@@ -22,11 +22,16 @@ def go_test(
     export_mock_tf_log_verbose: bool = typer.Option(
         False, "--export-verbose", help="log roundtrips when exporting the mock-tf-log"
     ),
-    env_method: GoEnvVars = typer.Option(GoEnvVars.manual, "--env", help="|".join(list(GoEnvVars))),
+    env_method: GoEnvVars = typer.Option(GoEnvVars.manual, "--env"),
     names: list[str] = typer.Option(
-        ..., "-n", "--names", default_factory=list, help="run only the tests with these names"
+        ...,
+        "-n",
+        "--names",
+        default_factory=list,
+        help="run only the tests with these names",
     ),
-    use_replay_mode: bool = typer.Option(False, "--replay", help="use replay mode and stored responses"),
+    capture_mode: GoTestCaptureMode = typer.Option(GoTestCaptureMode.capture, "--capture"),
+    use_old_schema: bool = typer.Option(False, "--old-schema", help="use the old schema for the tests"),
 ):
     if export_mock_tf_log and mode != GoTestMode.individual:
         err_msg = "exporting mock-tf-log is only supported for individual tests"
@@ -36,16 +41,13 @@ def go_test(
     sorted_suites = sorted(suite.name for suite in suites)
     logger.info(f"running go tests for {len(suites)} test-suites: {sorted_suites}")
     results: GoTestResult | None = None
-    match repo_alias := current_repo():
+    match current_repo():
         case Repo.CFN:
             raise NotImplementedError
         case Repo.TF:
             repo_path = current_repo_path()
-            package_prefix = settings.config.go_package_prefix(repo_alias)
             results = run_go_tests(
                 repo_path,
-                repo_alias,
-                package_prefix,
                 settings,
                 suites,
                 mode,
@@ -55,7 +57,8 @@ def go_test(
                 re_run=re_run,
                 env_vars=env_method,
                 names=set(names),
-                use_replay_mode=use_replay_mode,
+                capture_mode=capture_mode,
+                use_old_schema=use_old_schema,
             )
         case _:
             raise NotImplementedError
