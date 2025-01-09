@@ -1,4 +1,4 @@
-from atlas_init.cli_helper.go import move_failed_logs_to_error_dir
+from atlas_init.cli_helper.go import move_logs_to_dir
 
 failures = {
     "TestAccClusterAdvancedCluster_pinnedFCVWithVersionUpgradeAndDowngrade",
@@ -27,4 +27,4 @@ failures = {
 
 
 def test_move_failed_tests():
-    move_failed_logs_to_error_dir(failures)
+    move_logs_to_dir(failures)

@@ -68,10 +68,13 @@ def run_go_tests(
     env_vars: GoEnvVars = GoEnvVars.vscode,
     names: set[str] | None = None,
     use_replay_mode: bool = False,
+    old_schema: bool = False,
 ) -> GoTestResult:
     test_env = _resolve_env_vars(settings, env_vars, use_replay_mode=use_replay_mode)
     if ci_value := test_env.pop("CI", None):
         logger.warning(f"pooped CI={ci_value}")
+    if not old_schema:
+        os.environ["MONGODB_ATLAS_ADVANCED_CLUSTER_V2_SCHEMA"] = "true"
     results = GoTestResult()
     commands_to_run: dict[str, str] = {}
     for group in groups:
@@ -158,9 +161,13 @@ def _run_tests(
     with ThreadPoolExecutor(max_workers=actual_workers) as pool:
         for name, command in sorted(commands_to_run.items()):
             log_path = _log_path(name)
-            if log_path.exists() and log_path.read_text() and not re_run:
-                logger.info(f"skipping {name} because log exists")
-                continue
+            if log_path.exists() and log_path.read_text():
+                if re_run:
+                    logger.info(f"moving existing logs of {name} to old dir")
+                    move_logs_to_dir({name}, dir_name="old")
+                else:
+                    logger.info(f"skipping {name} because log exists")
+                    continue
             command_env = {**test_env, "TF_LOG_PATH": str(log_path)}
             future = pool.submit(
                 run_command_is_ok_output,
@@ -204,20 +211,20 @@ def _run_tests(
         if not results.add_test_results_all_pass(name, parsed_tests):
             results.failure_names.add(name)
     if failure_names := results.failure_names:
-        move_failed_logs_to_error_dir(failure_names)
+        move_logs_to_dir(failure_names)
         logger.error(f"failed to run tests: {sorted(failure_names)}")
     return results
 
 
-def move_failed_logs_to_error_dir(failures: set[str]):
-    error_dir = DEFAULT_DOWNLOADS_DIR / "failures"
+def move_logs_to_dir(names: set[str], dir_name: str = "failures"):
+    new_dir = DEFAULT_DOWNLOADS_DIR / dir_name
     for log in DEFAULT_DOWNLOADS_DIR.glob("*.log"):
-        if log.stem in failures:
+        if log.stem in names:
             text = log.read_text()
             assert "\n" in text
             first_line = text.split("\n", maxsplit=1)[0]
             ts = first_line.split(" ")[0]
-            log.rename(error_dir / f"{ts}.{log.name}")
+            log.rename(new_dir / f"{ts}.{log.name}")
 
 
 def _log_path(name: str) -> Path:
