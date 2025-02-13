@@ -17,6 +17,7 @@ from atlas_init.cli_helper.run import (
     run_command_receive_result,
 )
 from atlas_init.cli_tf.changelog import convert_to_changelog
+from atlas_init.cli_tf.example_vars import update_example_vars_cmd
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     find_test_runs,
@@ -48,6 +49,7 @@ from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
+app.command(name="example-vars")(update_example_vars_cmd)
 logger = logging.getLogger(__name__)
 
 

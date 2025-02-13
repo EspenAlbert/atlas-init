@@ -29,7 +29,7 @@ def test_process_variables(tmp_path, file_regression):
     example_variables_tf_path = tmp_path / "example_variables.tf"
     example_variables_tf_path.write_text(example_variables_tf)
     new_names = {
-        "cluster_name": "description of cluster name",
+        "cluster_name": 'description of "cluster" name',
         "provider_name": "azure/aws/gcp",
     }
     new_tf, existing_descriptions = update_descriptions(example_variables_tf_path, new_names)

@@ -1,5 +1,5 @@
 variable "cluster_name" {
-  description = "description of cluster name"
+  description = "description of \"cluster\" name"
   type = string
 }
 variable "replication_specs" {

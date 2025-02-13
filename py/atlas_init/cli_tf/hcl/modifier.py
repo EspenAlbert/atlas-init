@@ -4,7 +4,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import hcl2
-from lark import Token, Tree
+from lark import Token, Tree, UnexpectedToken
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def update_description(tree: Tree, new_descriptions: dict[str, str], existing_na
     existing_names[name].append(old_description)
     new_description = new_descriptions.get(name, "")
     if not new_description:
-        logger.warning(f"no description found for variable {name}")
+        logger.debug(f"no description found for variable {name}")
         return tree
     new_children[2] = update_body_with_description(variable_body, new_description)
     return Tree(tree.data, new_children)
@@ -59,6 +59,7 @@ def has_attribute_description(maybe_attribute: Token | Tree) -> bool:
 
 
 def update_body_with_description(tree: Tree, new_description: str) -> Tree:
+    new_description = new_description.replace('"', '\\"')
     new_children = tree.children.copy()
     found_description = False
     for i, maybe_attribute in enumerate(new_children):
@@ -120,9 +121,12 @@ def process_variables(
 
 
 def update_descriptions(tf_path: Path, new_names: dict[str, str]) -> tuple[str, dict[str, list[str]]]:
-    tree = hcl2.parses(tf_path.read_text())
+    try:
+        tree = hcl2.parses(tf_path.read_text())
+    except UnexpectedToken as e:
+        logger.warning(f"failed to parse {tf_path}: {e}")
+        return "", {}
     existing_descriptions = defaultdict(list)
-
     new_tree = process_variables(
         tree,
         new_names,

@@ -1,4 +1,10 @@
+import os
+from pathlib import Path
+
+import pytest
+
 from atlas_init.cli_tf.example_vars import UpdateExampleVars, VarDescriptionChange, update_example_vars
+from atlas_init.cli_tf.hcl.modifier import update_descriptions
 
 
 def test_description_change(tmp_path):
@@ -73,3 +79,11 @@ def test_update_example_vars(tmp_path, file_regression):
         ("replication_specs", True),
     ] == [(change.name, change.changed) for change in output.changes]
     file_regression.check(example_variables_tf_path.read_text(), extension=".tf")
+
+
+@pytest.mark.skipif(os.environ.get("TF_FILE", "") == "", reason="needs os.environ[TF_FILE]")
+def test_parsing_tf_file():
+    file = Path(os.environ["TF_FILE"])
+    assert file.exists()
+    response, _ = update_descriptions(file, {})
+    assert response
