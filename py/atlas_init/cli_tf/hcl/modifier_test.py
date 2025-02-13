@@ -1,6 +1,4 @@
-import hcl2
-
-from atlas_init.cli_tf.hcl.modifier import process_variables
+from atlas_init.cli_tf.hcl.modifier import update_descriptions
 
 example_variables_tf = """variable "cluster_name" {
   type = string
@@ -30,8 +28,14 @@ variable "provider_name" {
 def test_process_variables(tmp_path, file_regression):
     example_variables_tf_path = tmp_path / "example_variables.tf"
     example_variables_tf_path.write_text(example_variables_tf)
-    tree = hcl2.parses(example_variables_tf_path.read_text())
-    new_tree = process_variables(tree, {"cluster_name": "description of cluster name", "provider_name": "azure/aws/gcp"})
-    reconstructed = hcl2.writes(new_tree)
-    file_regression.check(reconstructed, extension=".tf")
-
+    new_names = {
+        "cluster_name": "description of cluster name",
+        "provider_name": "azure/aws/gcp",
+    }
+    new_tf, existing_descriptions = update_descriptions(example_variables_tf_path, new_names)
+    file_regression.check(new_tf, extension=".tf")
+    assert dict(existing_descriptions.items()) == {
+        "cluster_name": [""],
+        "provider_name": [""],
+        "replication_specs": ["List of replication specifications in legacy " "mongodbatlas_cluster format"],
+    }
