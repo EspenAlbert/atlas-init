@@ -146,16 +146,16 @@ def group_commands_for_mode(
             commands_to_run[f"{group.name}-{pkg_name}"] = command
         return commands_to_run
     if mode == GoTestMode.individual:
-        prefix = ""
+        prefix = "TestAcc"
     else:
         logger.info(f"using {GoTestMode.regex} with {mode}")
         prefix = mode
-        for pkg_url, tests in group.package_url_tests(repo_path, prefix=prefix).items():
-            for name, pkg_path in tests.items():
-                if names and name not in names:
-                    continue
-                results.add_test_package_path(name, pkg_path)
-                commands_to_run[name] = f"go test {pkg_url} -v -run ^{name}$ -timeout {timeout_minutes}m"
+    for pkg_url, tests in group.package_url_tests(repo_path, prefix=prefix).items():
+        for name, pkg_path in tests.items():
+            if names and name not in names:
+                continue
+            results.add_test_package_path(name, pkg_path)
+            commands_to_run[name] = f"go test {pkg_url} -v -run ^{name}$ -timeout {timeout_minutes}m"
     return commands_to_run
 
 
