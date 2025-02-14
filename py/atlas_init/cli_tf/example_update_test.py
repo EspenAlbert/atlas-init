@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from atlas_init.cli_tf.example_vars import (
+from atlas_init.cli_tf.example_update import (
     TFConfigDescriptionChange,
     UpdateExamples,
     update_examples,
@@ -13,18 +13,21 @@ from atlas_init.cli_tf.hcl.modifier import BLOCK_TYPE_VARIABLE, update_descripti
 
 def test_description_change(tmp_path):
     assert TFConfigDescriptionChange(
+        block_type=BLOCK_TYPE_VARIABLE,
         path=tmp_path,
         name="cluster_name",
         before="",
         after="description of cluster name",
     ).changed
     assert not TFConfigDescriptionChange(
+        block_type=BLOCK_TYPE_VARIABLE,
         path=tmp_path,
         name="cluster_name",
         before="description of cluster name",
         after="description of cluster name",
     ).changed
     assert not TFConfigDescriptionChange(
+        block_type=BLOCK_TYPE_VARIABLE,
         path=tmp_path,
         name="cluster_name",
         before="description of cluster name",
@@ -57,7 +60,7 @@ variable "provider_name" {
 """
 
 
-def test_update_example_vars(tmp_path, file_regression):
+def test_update_example(tmp_path, file_regression):
     base_dir = tmp_path / "example_base"
     base_dir.mkdir()
     example_variables_tf_path = base_dir / "example_variables.tf"

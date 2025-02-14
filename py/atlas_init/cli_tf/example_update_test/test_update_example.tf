@@ -1,6 +1,6 @@
 variable "cluster_name" {
   description = "description of cluster name"
-  type = string
+  type        = string
 }
 variable "replication_specs" {
   description = "Updated description"
@@ -19,5 +19,5 @@ variable "replication_specs" {
 
 variable "provider_name" {
   type    = string
-  default = ""# optional in v3
+  default = "" # optional in v3
 }
