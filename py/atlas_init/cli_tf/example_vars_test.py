@@ -3,24 +3,28 @@ from pathlib import Path
 
 import pytest
 
-from atlas_init.cli_tf.example_vars import UpdateExampleVars, VarDescriptionChange, update_example_vars
-from atlas_init.cli_tf.hcl.modifier import update_descriptions
+from atlas_init.cli_tf.example_vars import (
+    TFConfigDescriptionChange,
+    UpdateExamples,
+    update_examples,
+)
+from atlas_init.cli_tf.hcl.modifier import BLOCK_TYPE_VARIABLE, update_descriptions
 
 
 def test_description_change(tmp_path):
-    assert VarDescriptionChange(
+    assert TFConfigDescriptionChange(
         path=tmp_path,
         name="cluster_name",
         before="",
         after="description of cluster name",
     ).changed
-    assert not VarDescriptionChange(
+    assert not TFConfigDescriptionChange(
         path=tmp_path,
         name="cluster_name",
         before="description of cluster name",
         after="description of cluster name",
     ).changed
-    assert not VarDescriptionChange(
+    assert not TFConfigDescriptionChange(
         path=tmp_path,
         name="cluster_name",
         before="description of cluster name",
@@ -58,8 +62,8 @@ def test_update_example_vars(tmp_path, file_regression):
     base_dir.mkdir()
     example_variables_tf_path = base_dir / "example_variables.tf"
     example_variables_tf_path.write_text(example_variables_tf)
-    output = update_example_vars(
-        UpdateExampleVars(
+    output = update_examples(
+        UpdateExamples(
             examples_base_dir=base_dir,
             var_descriptions={
                 "cluster_name": "description of cluster name",
@@ -67,7 +71,7 @@ def test_update_example_vars(tmp_path, file_regression):
             },
         )
     )
-    assert output.before_descriptions == {
+    assert output.before_var_descriptions == {
         "cluster_name": "",
         "provider_name": "",
         "replication_specs": "List of replication specifications in legacy mongodbatlas_cluster format",
@@ -85,5 +89,5 @@ def test_update_example_vars(tmp_path, file_regression):
 def test_parsing_tf_file():
     file = Path(os.environ["TF_FILE"])
     assert file.exists()
-    response, _ = update_descriptions(file, {})
+    response, _ = update_descriptions(file, {}, block_type=BLOCK_TYPE_VARIABLE)
     assert response
