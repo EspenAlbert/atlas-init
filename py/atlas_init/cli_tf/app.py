@@ -29,6 +29,7 @@ from atlas_init.cli_tf.go_test_summary import (
     create_detailed_summary,
     create_short_summary,
 )
+from atlas_init.cli_tf.log_clean import log_clean
 from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
 from atlas_init.cli_tf.schema import (
     dump_generator_config,
@@ -50,6 +51,7 @@ from atlas_init.settings.interactive import confirm
 app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
 app.command(name="example-update")(update_example_cmd)
+app.command(name="log-clean")(log_clean)
 logger = logging.getLogger(__name__)
 
 
