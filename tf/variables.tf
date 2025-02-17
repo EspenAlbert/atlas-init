@@ -138,3 +138,8 @@ variable "use_federated_vars" {
   type    = bool
   default = false
 }
+
+variable "use_encryption_at_rest" {
+  type    = bool
+  default = false
+}

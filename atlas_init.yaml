@@ -13,6 +13,9 @@ test_suites:
 - name: clusterm10
   vars:
     cluster_info_m10: true
+- name: encryption_at_rest
+  vars:
+    use_encryption_at_rest: true
 - name: federated
   repo_go_packages:
     tf:

@@ -29,6 +29,7 @@ class TerraformVars(Entity):
     use_aws_vpc: bool = False
     use_aws_s3: bool = False
     use_federated_vars: bool = False
+    use_encryption_at_rest: bool = False
 
     def __add__(self, other: TerraformVars):  # type: ignore
         assert isinstance(other, TerraformVars)  # type: ignore
@@ -60,6 +61,8 @@ class TerraformVars(Entity):
             config["use_project_extra"] = True
         if self.use_federated_vars:
             config["use_federated_vars"] = True
+        if self.use_encryption_at_rest:
+            config["use_encryption_at_rest"] = True
         if self.stream_instance:
             # hack until backend bug with stream instance is fixed
             config["stream_instance_config"] = {"name": getenv("ATLAS_STREAM_INSTANCE_NAME", "atlas-init")}
