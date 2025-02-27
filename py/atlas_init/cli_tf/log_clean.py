@@ -1,7 +1,9 @@
+import logging
 from pathlib import Path
 
 import typer
 
+logger = logging.getLogger(__name__)
 SPLIT_STR = "mongodbatlas: "
 
 
@@ -16,9 +18,7 @@ def remove_prefix(line: str) -> str:
     ... )
     ' "biConnector": {'
     """
-    if SPLIT_STR not in line:
-        return line
-    return line.split(SPLIT_STR, 1)[1]
+    return line if SPLIT_STR not in line else line.split(SPLIT_STR, 1)[1]
 
 
 def log_clean(log_path: str = typer.Argument(..., help="Path to the log file")):
@@ -26,3 +26,4 @@ def log_clean(log_path: str = typer.Argument(..., help="Path to the log file")):
     assert log_path_parsed.exists(), f"file not found: {log_path}"
     new_lines = [remove_prefix(line) for line in log_path_parsed.read_text().splitlines()]
     log_path_parsed.write_text("\n".join(new_lines))
+    logger.info(f"cleaned log file: {log_path}")
