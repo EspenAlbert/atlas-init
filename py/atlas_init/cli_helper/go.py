@@ -176,7 +176,7 @@ def resolve_env_vars(
     test_env_vars |= {
         "TF_ACC": "1",
         "TF_LOG": "DEBUG",
-        "MONGODB_ATLAS_ADVANCED_CLUSTER_V2_SCHEMA": "false" if use_old_schema else "true",
+        "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "false" if use_old_schema else "true",
     }
     test_env_vars |= env_vars_for_capture(capture_mode)
     logger.info(f"go test env-vars-extra: {sorted(test_env_vars)}")
