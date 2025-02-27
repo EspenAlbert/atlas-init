@@ -59,6 +59,7 @@ extra-dependencies = [
   "hatchling==1.24.2",
   "pymongo==4.7.3",
   "pyright==1.1.391",
+  "pytest==8.3.4",
   "pytest-cov==6.0.0",
   "pytest-regressions==2.5.0",
 ] # used to make it simpler to sync venv with IDE
@@ -78,10 +79,6 @@ include = ["atlas_init"]
 venvPath = ".venv"
 venvName = "hatch-test.py3.12"
 exclude = ["atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
-
-[tool.hatch.envs.type]
-installer = "uv"
-extra-dependencies = ["pyright==1.1.391"]
 
 [tool.hatch.envs.type.scripts]
 check = ["pyright"]

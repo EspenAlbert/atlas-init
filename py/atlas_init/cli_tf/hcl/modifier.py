@@ -129,7 +129,7 @@ def process_descriptions(
 
 def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: str) -> tuple[str, dict[str, list[str]]]:
     try:
-        tree = hcl2.parses(tf_path.read_text())
+        tree = hcl2.parses(tf_path.read_text())  # type: ignore
     except UnexpectedToken as e:
         logger.warning(f"failed to parse {tf_path}: {e}")
         return "", {}
@@ -140,5 +140,5 @@ def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: st
         existing_descriptions,
         block_type=block_type,
     )
-    new_tf = hcl2.writes(new_tree)
+    new_tf = hcl2.writes(new_tree)  # type: ignore
     return new_tf, existing_descriptions

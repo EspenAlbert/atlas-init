@@ -133,7 +133,7 @@ def group_commands_for_mode(
     timeout_minutes: int,
     names: set[str] | None,
     results: GoTestResult,
-    group: TestSuite,
+    group: TestSuite,  # type: ignore
 ) -> dict[str, str]:
     commands_to_run: dict[str, str] = {}
     if mode == GoTestMode.package:
