@@ -14,12 +14,12 @@ jobs:
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: build
-        run: cd py && hatch build -t wheel --clean-hooks-after
+        run: just build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: python-package-distributions
-          path: py/dist/
+          path: dist/
   
   publish-to-pypi:
     name: >-

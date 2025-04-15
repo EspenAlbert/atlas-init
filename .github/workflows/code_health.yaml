@@ -18,6 +18,15 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
   
+  fmt-check:
+    needs: pre_job
+    if: needs.pre_job.outputs.should_skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup_steps
+        uses: "./.github/templates/setup_steps"
+      - run: just fmt-check
   lint:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
@@ -26,8 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
-      - run: ./py/pre-commit.sh
-        name: lint
+      - run: just lint
   type-check:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
@@ -37,7 +45,7 @@ jobs:
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: pyright-type-check
-        run: cd py && hatch run hatch-test.py3.12:pyright
+        run: just type-check
   build:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
@@ -47,7 +55,7 @@ jobs:
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
       - name: build
-        run: cd py && hatch build -t wheel --clean-hooks-after
+        run: just build
   test:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
@@ -59,15 +67,15 @@ jobs:
         with:
           tf_version: "default"
       - name: test_no_coverage
-        run: cd py && hatch test -- -s -vv --tb=short --capture=no --log-cli-level=INFO
+        run: just test
       - name: test_with_coverage
-        run: cd py && hatch test -- --cov --cov-report=xml -s -vv --tb=short --capture=no --log-cli-level=INFO --ignore=test_atlas_init/test_cli_helper/test_run_manager.py # these tests are somehow stopping the coverage report from being generated
+        run: just test-cov xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: py/coverage.xml
-  security-check:
+          files: coverage.xml
+  security-test:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'
     runs-on: ubuntu-latest
@@ -75,8 +83,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: setup_steps
         uses: "./.github/templates/setup_steps"
-      - run: cd py && hatch run sec:check
-        name: security-check
+      - run: sec-test
+        name: security-test
   workflow-check:
     needs: pre_job
     if: needs.pre_job.outputs.should_skip != 'true'

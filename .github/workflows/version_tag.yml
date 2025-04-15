@@ -6,7 +6,7 @@ on:
     branches: 
     - "main"
     paths:
-    - "py/atlas_init/__init__.py"
+    - "atlas_init/__init__.py"
 
 jobs:
   create-tag:
@@ -21,7 +21,7 @@ jobs:
         uses: "./.github/templates/setup_steps"
       - name: Get the tag
         id: get_tag
-        run: echo "tag=v$(cd py && hatch version)" >> "$GITHUB_OUTPUT"
+        run: echo "tag=v$(hatch version)" >> "$GITHUB_OUTPUT"
       - name: Create release tag
         id: tag_create
         uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72

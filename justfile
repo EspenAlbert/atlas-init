@@ -22,6 +22,8 @@ cli-help:
   uv run atlas-init
 sec-test:
   uv run bandit -c pyproject.toml -r atlas_init
+test-cov reportFormat="xml":
+  uv run pytest --cov --cov-report={{reportFormat}}
 test:
   uv run pytest
 test-file filename:

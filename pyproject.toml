@@ -61,11 +61,14 @@ exclude = ["atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
 branch = true
+parallel = true
+concurrency = ["multiprocessing"]
 
 [tool.coverage.paths]
 atlas_init = ["atlas_init"]
 
 [tool.coverage.report]
+omit=["*_test.py"]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.hatch.build.targets.wheel]
