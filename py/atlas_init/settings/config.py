@@ -2,22 +2,22 @@ from __future__ import annotations
 
 import fnmatch
 import logging
+from collections import defaultdict
 from collections.abc import Iterable
 from functools import total_ordering
 from os import getenv
 from pathlib import Path
 from typing import Any
 
-from model_lib import Entity, dump_ignore_falsy
+from model_lib import Entity, IgnoreFalsy
 from pydantic import Field, model_validator
 
-from atlas_init.repos.path import owner_project_name
+from atlas_init.repos.path import as_repo_alias, go_package_prefix, owner_project_name, package_glob
 
 logger = logging.getLogger(__name__)
 
 
-@dump_ignore_falsy
-class TerraformVars(Entity):
+class TerraformVars(IgnoreFalsy):
     cluster_info: bool = False
     cluster_info_m10: bool = False
     stream_instance: bool = False
@@ -28,6 +28,7 @@ class TerraformVars(Entity):
     use_aws_vpc: bool = False
     use_aws_s3: bool = False
     use_federated_vars: bool = False
+    use_encryption_at_rest: bool = False
 
     def __add__(self, other: TerraformVars):  # type: ignore
         assert isinstance(other, TerraformVars)  # type: ignore
@@ -59,6 +60,8 @@ class TerraformVars(Entity):
             config["use_project_extra"] = True
         if self.use_federated_vars:
             config["use_federated_vars"] = True
+        if self.use_encryption_at_rest:
+            config["use_encryption_at_rest"] = True
         if self.stream_instance:
             # hack until backend bug with stream instance is fixed
             config["stream_instance_config"] = {"name": getenv("ATLAS_STREAM_INSTANCE_NAME", "atlas-init")}
@@ -70,15 +73,13 @@ class PyHook(Entity):
     locate: str
 
 
-@dump_ignore_falsy
 @total_ordering
-class TestSuite(Entity):
+class TestSuite(IgnoreFalsy):
     __test__ = False
 
     name: str
     sequential_tests: bool = False
     repo_go_packages: dict[str, list[str]] = Field(default_factory=dict)
-    repo_globs: dict[str, list[str]] = Field(default_factory=dict)
     vars: TerraformVars = Field(default_factory=TerraformVars)  # type: ignore
     post_apply_hooks: list[PyHook] = Field(default_factory=list)
 
@@ -87,13 +88,23 @@ class TestSuite(Entity):
             raise TypeError
         return self.name < other.name
 
-    def all_globs(self, repo_alias: str) -> list[str]:
-        go_packages = self.repo_go_packages.get(repo_alias, [])
-        return self.repo_globs.get(repo_alias, []) + [f"{pkg}/*.go" for pkg in go_packages] + go_packages
+    def package_url_tests(self, repo_path: Path, prefix: str = "") -> dict[str, dict[str, Path]]:
+        alias = as_repo_alias(repo_path)
+        packages = self.repo_go_packages.get(alias, [])
+        names = defaultdict(dict)
+        for package in packages:
+            pkg_name = f"{go_package_prefix(repo_path)}/{package}"
+            for go_file in repo_path.glob(f"{package}/*.go"):
+                with go_file.open() as f:
+                    for line in f:
+                        if line.startswith(f"func {prefix}"):
+                            test_name = line.split("(")[0].strip().removeprefix("func ")
+                            names[pkg_name][test_name] = go_file.parent
+        return names
 
     def is_active(self, repo_alias: str, change_paths: Iterable[str]) -> bool:
         """changes paths should be relative to the repo"""
-        globs = self.all_globs(repo_alias)
+        globs = [package_glob(pkg) for pkg in self.repo_go_packages.get(repo_alias, [])]
         return any(any(fnmatch.fnmatch(path, glob) for glob in globs) for path in change_paths)
 
     def cwd_is_repo_go_pkg(self, cwd: Path, repo_alias: str) -> bool:
@@ -145,9 +156,9 @@ class AtlasInitConfig(Entity):
     @model_validator(mode="after")
     def ensure_all_repo_aliases_are_found(self):
         missing_aliases = set()
-        aliases = set(self.repo_aliases.keys())
+        aliases = set(self.repo_aliases.values())
         for group in self.test_suites:
-            if more_missing := group.repo_globs.keys() - aliases:
+            if more_missing := (group.repo_go_packages.keys() - aliases):
                 logger.warning(f"repo aliases not found for group={group.name}: {more_missing}")
                 missing_aliases |= more_missing
         if missing_aliases:

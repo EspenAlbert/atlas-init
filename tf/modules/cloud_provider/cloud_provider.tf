@@ -53,7 +53,14 @@ output "env_vars" {
   }
 }
 
-
 output "iam_role_name" {
   value = aws_iam_role.aws_role.name
+}
+
+output "atlas_role_id" {
+  value = mongodbatlas_cloud_provider_access_authorization.auth_role.role_id
+}
+
+output "iam_role_arn" {
+  value = aws_iam_role.aws_role.arn
 }

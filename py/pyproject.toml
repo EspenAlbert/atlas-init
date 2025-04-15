@@ -21,16 +21,18 @@ dependencies = [
   "boto3==1.35.92",
   "GitPython==3.1.42",
   "humanize==4.9.0",
-  "model-lib==0.0.30",
-  "mypy-boto3-cloudformation==1.34.66",
+  "model-lib[toml]==1.0.0b3",
+  "mypy-boto3-cloudformation==1.37.22",
   "orjson==3.10.13",
-  "pygithub==2.3.0",
+  "python-hcl2==6.1.0",
+  "pygithub==2.6.1",
   "requests==2.32.2",
   "pydantic-settings==2.7.1",
-  "rich==13.7.1",
+  "rich==14.0.0",
   "stringcase==1.2.0",
-  "tenacity==8.2.3",
+  "tenacity==9.0.0",
   "typer==0.15.1",
+  "zero-3rdparty==1.0.0b2",
 ]
 
 [project.scripts]
@@ -58,6 +60,7 @@ extra-dependencies = [
   "hatchling==1.24.2",
   "pymongo==4.7.3",
   "pyright==1.1.391",
+  "pytest==8.3.4",
   "pytest-cov==6.0.0",
   "pytest-regressions==2.5.0",
 ] # used to make it simpler to sync venv with IDE
@@ -77,10 +80,6 @@ include = ["atlas_init"]
 venvPath = ".venv"
 venvName = "hatch-test.py3.12"
 exclude = ["atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
-
-[tool.hatch.envs.type]
-installer = "uv"
-extra-dependencies = ["pyright==1.1.391"]
 
 [tool.hatch.envs.type.scripts]
 check = ["pyright"]

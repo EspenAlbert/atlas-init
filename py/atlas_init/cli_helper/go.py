@@ -24,11 +24,30 @@ logger = logging.getLogger(__name__)
 class GoTestMode(StrEnum):
     package = "package"
     individual = "individual"
+    regex = "regex"
 
 
 class GoEnvVars(StrEnum):
     manual = "manual"
     vscode = "vscode"
+
+
+class GoTestCaptureMode(StrEnum):
+    capture = "capture"
+    replay = "replay"
+    replay_and_update = "replay-and-update"
+    no_capture = "no-capture"
+
+
+def env_vars_for_capture(mode: GoTestCaptureMode) -> dict[str, str]:
+    env = {}
+    if mode == GoTestCaptureMode.capture:
+        env["HTTP_MOCKER_CAPTURE"] = "true"
+    if mode in {GoTestCaptureMode.replay, GoTestCaptureMode.replay_and_update}:
+        env["HTTP_MOCKER_REPLAY"] = "true"
+    if mode == GoTestCaptureMode.replay_and_update:
+        env["HTTP_MOCKER_DATA_UPDATE"] = "true"
+    return env
 
 
 class GoTestResult(Entity):
@@ -55,11 +74,9 @@ class GoTestResult(Entity):
 
 def run_go_tests(
     repo_path: Path,
-    repo_alias: str,
-    package_prefix: str,
     settings: AtlasInitSettings,
     groups: list[TestSuite],  # type: ignore
-    mode: GoTestMode = GoTestMode.package,
+    mode: GoTestMode | str = GoTestMode.package,
     *,
     dry_run: bool = False,
     timeout_minutes: int = 300,
@@ -67,37 +84,30 @@ def run_go_tests(
     re_run: bool = False,
     env_vars: GoEnvVars = GoEnvVars.vscode,
     names: set[str] | None = None,
-    use_replay_mode: bool = False,
+    capture_mode: GoTestCaptureMode = GoTestCaptureMode.capture,
+    use_old_schema: bool = False,
 ) -> GoTestResult:
-    test_env = _resolve_env_vars(settings, env_vars, use_replay_mode=use_replay_mode)
+    test_env = resolve_env_vars(
+        settings,
+        env_vars,
+        capture_mode=capture_mode,
+        use_old_schema=use_old_schema,
+    )
     if ci_value := test_env.pop("CI", None):
-        logger.warning(f"pooped CI={ci_value}")
+        logger.warning(f"popped CI={ci_value}")
     results = GoTestResult()
     commands_to_run: dict[str, str] = {}
     for group in groups:
-        package_paths = group.repo_go_packages.get(repo_alias, [])
-        packages = ",".join(f"{package_prefix}/{pkg}" for pkg in package_paths)
-        if not packages:
-            logger.warning(f"no go packages for suite: {group}")
+        if group.sequential_tests:
+            logger.info(f"running individual tests sequentially as {group.name} is set to sequential_tests")
+            concurrent_runs = 1
+        group_commands_to_run = group_commands_for_mode(
+            repo_path, mode, concurrent_runs, timeout_minutes, names, results, group
+        )
+        if not group_commands_to_run:
+            logger.warning(f"no tests for suite: {group.name}")
             continue
-        if mode == GoTestMode.individual:
-            if group.sequential_tests:
-                logger.info(f"running individual tests sequentially as {group.name} is set to sequential_tests")
-                concurrent_runs = 1
-            test_names = find_individual_tests(repo_path, package_paths)
-            for name, pkg_path in test_names.items():
-                if names and name not in names:
-                    continue
-                results.add_test_package_path(name, pkg_path)
-                commands_to_run[name] = f"go test {packages} -v -run ^{name}$ -timeout {timeout_minutes}m"
-        elif mode == GoTestMode.package:
-            name_regex = f'^({"|".join(names)})$' if names else "^TestAcc*"
-            command = f"go test {packages} -v -run {name_regex} -timeout {timeout_minutes}m"
-            if not group.sequential_tests:
-                command = f"{command} -parallel {concurrent_runs}"
-            commands_to_run[group.name] = command
-        else:
-            raise NotImplementedError(f"mode={mode}")
+        commands_to_run |= group_commands_to_run
     commands_str = "\n".join(f"'{name}': '{command}'" for name, command in sorted(commands_to_run.items()))
     logger.info(f"will run the following commands:\n{commands_str}")
     if dry_run:
@@ -116,31 +126,63 @@ def run_go_tests(
     )
 
 
-def _resolve_env_vars(settings: AtlasInitSettings, env_vars: GoEnvVars, *, use_replay_mode: bool) -> dict[str, str]:
+def group_commands_for_mode(
+    repo_path: Path,
+    mode: GoTestMode | str,
+    concurrent_runs: int,
+    timeout_minutes: int,
+    names: set[str] | None,
+    results: GoTestResult,
+    group: TestSuite,  # type: ignore
+) -> dict[str, str]:
+    commands_to_run: dict[str, str] = {}
+    if mode == GoTestMode.package:
+        name_regex = f'^({"|".join(names)})$' if names else "^TestAcc*"
+        for pkg_url in group.package_url_tests(repo_path):
+            command = f"go test {pkg_url} -v -run {name_regex} -timeout {timeout_minutes}m"
+            if not group.sequential_tests:
+                command = f"{command} -parallel {concurrent_runs}"
+            pkg_name = pkg_url.rsplit("/")[-1]
+            commands_to_run[f"{group.name}-{pkg_name}"] = command
+        return commands_to_run
+    if mode == GoTestMode.individual:
+        prefix = "TestAcc"
+    else:
+        logger.info(f"using {GoTestMode.regex} with {mode}")
+        prefix = mode
+    for pkg_url, tests in group.package_url_tests(repo_path, prefix=prefix).items():
+        for name, pkg_path in tests.items():
+            if names and name not in names:
+                continue
+            results.add_test_package_path(name, pkg_path)
+            commands_to_run[name] = f"go test {pkg_url} -v -run ^{name}$ -timeout {timeout_minutes}m"
+    return commands_to_run
+
+
+def resolve_env_vars(
+    settings: AtlasInitSettings,
+    env_vars: GoEnvVars,
+    *,
+    capture_mode: GoTestCaptureMode,
+    use_old_schema: bool,
+    skip_os: bool = False,
+) -> dict[str, str]:
     if env_vars == GoEnvVars.manual:
-        extra_vars = settings.load_profile_manual_env_vars(skip_os_update=True)
+        test_env_vars = settings.load_profile_manual_env_vars(skip_os_update=True)
     elif env_vars == GoEnvVars.vscode:
-        extra_vars = settings.load_env_vars(settings.env_vars_vs_code)
+        test_env_vars = settings.load_env_vars(settings.env_vars_vs_code)
     else:
         raise NotImplementedError(f"don't know how to load env_vars={env_vars}")
-    mocker_env_name = "HTTP_MOCKER_REPLAY" if use_replay_mode else "HTTP_MOCKER_CAPTURE"
-    extra_vars |= {"TF_ACC": "1", "TF_LOG": "DEBUG", mocker_env_name: "true"}
-    test_env = os.environ | extra_vars
-    logger.info(f"go test env-vars-extra: {sorted(extra_vars)}")
-    return test_env
-
-
-def find_individual_tests(repo_path: Path, package_paths: list[str]) -> dict[str, Path]:
-    tests = {}
-    for package_path in package_paths:
-        package_abs_path = repo_path / package_path.lstrip(".").lstrip("/")
-        for go_file in package_abs_path.glob("*.go"):
-            with go_file.open() as f:
-                for line in f:
-                    if line.startswith("func TestAcc"):
-                        test_name = line.split("(")[0].strip().removeprefix("func ")
-                        tests[test_name] = package_abs_path
-    return tests
+    test_env_vars |= {
+        "TF_ACC": "1",
+        "TF_LOG": "DEBUG",
+        "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "false" if use_old_schema else "true",
+    }
+    test_env_vars |= env_vars_for_capture(capture_mode)
+    logger.info(f"go test env-vars-extra: {sorted(test_env_vars)}")
+    if not skip_os:
+        test_env_vars = os.environ | test_env_vars  # os.environ on the left side, prefer explicit args
+    return test_env_vars
 
 
 def _run_tests(
@@ -158,9 +200,13 @@ def _run_tests(
     with ThreadPoolExecutor(max_workers=actual_workers) as pool:
         for name, command in sorted(commands_to_run.items()):
             log_path = _log_path(name)
-            if log_path.exists() and log_path.read_text() and not re_run:
-                logger.info(f"skipping {name} because log exists")
-                continue
+            if log_path.exists() and log_path.read_text():
+                if re_run:
+                    logger.info(f"moving existing logs of {name} to old dir")
+                    move_logs_to_dir({name}, dir_name="old")
+                else:
+                    logger.info(f"skipping {name} because log exists")
+                    continue
             command_env = {**test_env, "TF_LOG_PATH": str(log_path)}
             future = pool.submit(
                 run_command_is_ok_output,
@@ -204,20 +250,20 @@ def _run_tests(
         if not results.add_test_results_all_pass(name, parsed_tests):
             results.failure_names.add(name)
     if failure_names := results.failure_names:
-        move_failed_logs_to_error_dir(failure_names)
+        move_logs_to_dir(failure_names)
         logger.error(f"failed to run tests: {sorted(failure_names)}")
     return results
 
 
-def move_failed_logs_to_error_dir(failures: set[str]):
-    error_dir = DEFAULT_DOWNLOADS_DIR / "failures"
+def move_logs_to_dir(names: set[str], dir_name: str = "failures"):
+    new_dir = DEFAULT_DOWNLOADS_DIR / dir_name
     for log in DEFAULT_DOWNLOADS_DIR.glob("*.log"):
-        if log.stem in failures:
+        if log.stem in names:
             text = log.read_text()
             assert "\n" in text
             first_line = text.split("\n", maxsplit=1)[0]
             ts = first_line.split(" ")[0]
-            log.rename(error_dir / f"{ts}.{log.name}")
+            log.rename(new_dir / f"{ts}.{log.name}")
 
 
 def _log_path(name: str) -> Path:

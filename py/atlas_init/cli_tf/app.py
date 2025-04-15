@@ -17,6 +17,7 @@ from atlas_init.cli_helper.run import (
     run_command_receive_result,
 )
 from atlas_init.cli_tf.changelog import convert_to_changelog
+from atlas_init.cli_tf.example_update import update_example_cmd
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     find_test_runs,
@@ -28,6 +29,7 @@ from atlas_init.cli_tf.go_test_summary import (
     create_detailed_summary,
     create_short_summary,
 )
+from atlas_init.cli_tf.log_clean import log_clean
 from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
 from atlas_init.cli_tf.schema import (
     dump_generator_config,
@@ -48,6 +50,8 @@ from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
+app.command(name="example-update")(update_example_cmd)
+app.command(name="log-clean")(log_clean)
 logger = logging.getLogger(__name__)
 
 

@@ -5,7 +5,8 @@ locals {
     Owner = "terraform-atlas-init"
   }
   use_aws_vpc        = var.use_private_link || var.use_vpc_peering || var.use_aws_vpc
-  use_cloud_provider = var.use_aws_s3
+  use_aws_kms        = var.use_encryption_at_rest
+  use_cloud_provider = var.use_aws_s3 || var.use_encryption_at_rest
   # https://www.mongodb.com/docs/atlas/reference/amazon-aws/
   atlas_region = replace(upper(var.aws_region), "-", "_")
   use_cluster  = var.cluster_config.name != ""
@@ -133,6 +134,18 @@ module "aws_s3" {
   iam_role_name = module.cloud_provider[0].iam_role_name
 }
 
+module "aws_kms" {
+  source = "./modules/aws_kms"
+  count  = local.use_aws_kms ? 1 : 0
+
+  access_iam_role_arns = {
+    atlas = module.cloud_provider[0].iam_role_arn
+  }
+  aws_account_id       = local.aws_account_id
+  aws_region           = var.aws_region
+  key_suffix           = var.project_name
+}
+
 module "federated_vars" {
   source = "./modules/federated_vars"
   count  = var.use_federated_vars ? 1 : 0
@@ -141,4 +154,15 @@ module "federated_vars" {
   org_id                = var.org_id
   project_id            = local.project_id
   base_url              = var.atlas_base_url
+}
+
+module "encryption_at_rest" {
+  source = "./modules/encryption_at_rest"
+  count  = var.use_encryption_at_rest ? 1 : 0
+
+  project_id    = local.project_id
+  atlas_role_id = module.cloud_provider[0].atlas_role_id
+  kms_key_id    = module.aws_kms[0].kms_key_id
+  atlas_regions = [local.atlas_region]
+
 }
