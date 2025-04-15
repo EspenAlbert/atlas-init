@@ -13,7 +13,8 @@ def main():
     old = config_path.read_text()
     config = parse_model(config_path, t=AtlasInitConfig)
     config.test_suites = sorted(config.test_suites)
-    new = dump(config, "yaml")
+    config_raw = config.model_dump(exclude_defaults=True, exclude_none=True)
+    new = dump(config_raw, "yaml")
     if old == new:
         print("config is sorted ✅")
         return
