@@ -12,8 +12,8 @@ schema/
 tf_debug/
 dist
 .ruff_cache
-py/.coverage
-py/coverage.xml
+.coverage
+coverage.xml
 profiles_ci/
 .venv
 .sourcery.yaml
@@ -22,6 +22,7 @@ tf_bug_files
 github_ci_summary
 *.pyc
 demo/
-py/.env*
+.env*
 tf_log/
 downloads
+htmlcov

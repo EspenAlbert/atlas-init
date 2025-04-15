@@ -149,7 +149,7 @@ def is_cache_up_to_date(cache_path: Path, cache_ttl: int) -> bool:
     if cache_path.exists():
         modified_ts = file_utils.file_modified_time(cache_path)
         if modified_ts > time.time() - cache_ttl:
-            logger.info(f"using cached admin api: {cache_path} downloaded {time.time()-modified_ts:.0f}s ago")
+            logger.info(f"using cached admin api: {cache_path} downloaded {time.time() - modified_ts:.0f}s ago")
             return True
     return False
 

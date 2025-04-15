@@ -8,7 +8,7 @@ from atlas_init.settings.config import AtlasInitConfig
 
 def main():
     scripts_path = Path(__file__).parent
-    repo_path = scripts_path.parent.parent
+    repo_path = scripts_path.parent
     config_path = repo_path / "atlas_init.yaml"
     old = config_path.read_text()
     config = parse_model(config_path, t=AtlasInitConfig)

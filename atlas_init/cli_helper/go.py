@@ -137,7 +137,7 @@ def group_commands_for_mode(
 ) -> dict[str, str]:
     commands_to_run: dict[str, str] = {}
     if mode == GoTestMode.package:
-        name_regex = f'^({"|".join(names)})$' if names else "^TestAcc*"
+        name_regex = f"^({'|'.join(names)})$" if names else "^TestAcc*"
         for pkg_url in group.package_url_tests(repo_path):
             command = f"go test {pkg_url} -v -run {name_regex} -timeout {timeout_minutes}m"
             if not group.sequential_tests:

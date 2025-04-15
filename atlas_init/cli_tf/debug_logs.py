@@ -225,7 +225,7 @@ def match_request(
                 step_number=step_number,
             )
     remaining_responses = [resp for i, resp in enumerate(responses_list) if i not in used_responses]
-    err_msg = f"Could not match request {request.path} ({ref}) with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-'*80}\n{'\n'.join(r.text for r in remaining_responses)}"
+    err_msg = f"Could not match request {request.path} ({ref}) with any response\n\n{request}\n\n\nThere are #{len(remaining_responses)} responses left that doesn't match\n{'-' * 80}\n{'\n'.join(r.text for r in remaining_responses)}"
     raise ValueError(err_msg)
 
 
@@ -260,9 +260,9 @@ def parse_raw_req_responses(
             in_response = False
     assert not in_request, "Request not closed"
     assert not in_response, "Response not closed"
-    assert (
-        request_count == response_count
-    ), f"Mismatch in request and response count: {request_count} != {response_count}"
+    assert request_count == response_count, (
+        f"Mismatch in request and response count: {request_count} != {response_count}"
+    )
     parsed_requests = {}
     for ref, request_lines in requests.items():
         parsed_requests[ref] = parse_request(request_lines)

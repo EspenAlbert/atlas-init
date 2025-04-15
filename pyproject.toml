@@ -6,15 +6,15 @@ build-backend = "hatchling.build"
 name = "atlas-init"
 dynamic = ["version"]
 description = ''
-readme = "../readme.md"
-requires-python = ">=3.12"
+readme = "readme.md"
+requires-python = ">=3.13"
 license = "MIT"
 keywords = []
 authors = [{ name = "EspenAlbert", email = "albertespen@gmail.com" }]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
   "appdirs==1.4.4",
@@ -46,75 +46,52 @@ Source = "https://github.com/EspenAlbert/atlas-init"
 [tool.hatch.version]
 path = "atlas_init/__init__.py"
 
-[tool.hatch.envs.default]
-installer = "uv"
-
-[tool.hatch.envs.default.scripts]
-fmt_config = ["python scripts/atlas_init_sort.py"]
-
-[tool.hatch.envs.hatch-test]
-installer = "uv"
-default-args = ["test_atlas_init", "-s", "-vv", "--tb=short", "--log-cli-level=INFO", "--ignore=.venv/*"]
-extra-dependencies = [
-  "bandit==1.8.0",
-  "hatchling==1.24.2",
-  "pymongo==4.7.3",
-  "pyright==1.1.391",
-  "pytest==8.3.4",
-  "pytest-cov==6.0.0",
-  "pytest-regressions==2.5.0",
-] # used to make it simpler to sync venv with IDE
+[tool.pytest.ini_options]
+addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no"
+testpaths = ["test_atlas_init"]
 
 [tool.bandit]
 exclude_dirs = ["test_*", "atlas_init/cli_tf/hcl/*"]
 skips= ["B101"]
-[tool.hatch.envs.sec]
-installer = "uv"
-extra-dependencies = ["bandit==1.8.0"]
-
-[tool.hatch.envs.sec.scripts]
-check = ["bandit -c pyproject.toml -r atlas_init"]
 
 [tool.pyright]
 include = ["atlas_init"]
-venvPath = ".venv"
-venvName = "hatch-test.py3.12"
 exclude = ["atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
-
-[tool.hatch.envs.type.scripts]
-check = ["pyright"]
 
 [tool.coverage.run]
 source_pkgs = ["atlas_init"]
 branch = true
+parallel = true
+concurrency = ["multiprocessing"]
 
 [tool.coverage.paths]
 atlas_init = ["atlas_init"]
 
 [tool.coverage.report]
+omit=["*_test.py"]
 exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.hatch.build.targets.wheel]
 only-include = ["atlas_init"]
 
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "scripts/file_copy.py"
-require-runtime-dependencies = true
+[tool.hatch.build.targets.sdist]
+only-include = ["atlas_init"]
 
 [tool.ruff]
+line-length = 120
 extend-exclude = ["test_atlas_init", "atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
 
 [tool.ruff.lint]
 extend-ignore = [
-  "TCH003",
+  "TC003",
   "G004",
   "TRY003",
   "S101",
   "EM102",
   "FBT001",
   "B008",    # https://docs.astral.sh/ruff/rules/function-call-in-default-argument/
-  "TCH002",  # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
-  "TCH001",  # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
+  "TC002",  # https://docs.astral.sh/ruff/rules/typing-only-third-party-import/
+  "TC001",  # https://docs.astral.sh/ruff/rules/typing-only-first-party-import/
   "PERF401", # https://docs.astral.sh/ruff/rules/manual-list-comprehension/
   "UP040",   #  Type alias `ResourceTypes` uses `TypeAlias` annotation instead of the `type` keyword
 ]
@@ -122,3 +99,15 @@ extend-ignore = [
 [tool.ruff.lint.per-file-ignores]
 "atlas_init/cli_helper/run_manager.py" = ["SLF001"]
 "scripts/*.py" = ["INP001", "T201"]
+
+[dependency-groups]
+dev = [
+  "bandit==1.8.0",
+  "hatchling==1.24.2",
+  "pymongo==4.7.3",
+  "pyright==1.1.391",
+  "pytest==8.3.4",
+  "pytest-cov==6.0.0",
+  "pytest-regressions==2.5.0",
+  "ruff>=0.11.5",
+] # used to make it simpler to sync venv with IDE

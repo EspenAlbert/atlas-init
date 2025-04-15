@@ -35,7 +35,7 @@ runs:
         mkdir -p profiles/${{ inputs.profile_name }}
         echo "ATLAS_INIT_PROFILES_PATH=$(pwd)/profiles" >> $GITHUB_ENV
         echo "ATLAS_INIT_PROFILE=${{ inputs.profile_name }}" >> $GITHUB_ENV
-        ./atlasci_local_install.sh
+        uv sync
   - name: atlas-init-init-apply
     shell: bash
     run: |
