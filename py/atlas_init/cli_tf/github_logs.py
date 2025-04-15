@@ -130,7 +130,10 @@ def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
     if job.conclusion in {"skipped", "cancelled", None}:
         return []
     step, logs_lines = select_step_and_log_content(job, logs_path)
-    return list(parse(logs_lines, job, step))
+    test_runs = list(parse(logs_lines, job, step))
+    for run in test_runs:
+        run.log_path = logs_path
+    return test_runs
 
 
 def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:

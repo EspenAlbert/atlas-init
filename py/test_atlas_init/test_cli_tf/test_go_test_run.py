@@ -9,6 +9,7 @@ from atlas_init.cli_tf.go_test_run import (
     GoTestStatus,
     context_start_match,
     extract_context,
+    extract_group_name,
     match_line,
     parse,
 )
@@ -209,3 +210,7 @@ def test_rename_directories_and_files():
     for p in paths:
         if not p.name.startswith("TestAccMockable"):
             p.rename(p.with_name(p.name.replace("TestAcc", "TestAccMockable")))
+
+
+def test_extract_group_name():
+    assert extract_group_name(Path("40216340925_tests-1.11.x-latest_tests-1.11.x-latest-false_search_deployment.txt")) == "search_deployment"

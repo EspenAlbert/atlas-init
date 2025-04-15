@@ -43,6 +43,10 @@ class GoTestSummary(Entity):
     def success_rate_human(self) -> str:
         return f"{self.success_rate:.2%}"
 
+    @property
+    def group_name(self) -> str:
+        return next((r.group_name for r in self.results if r.group_name), "unknown-group")
+
     def last_pass_human(self) -> str:
         return next(
             (f"Passed {test.when}" for test in reversed(self.results) if test.status == GoTestStatus.PASS),
@@ -124,7 +128,9 @@ def create_detailed_summary(
         test_summary_path = summary_dir_path / f"{summary.success_rate_human}_{summary.name}.md"
         test_summary_md = summary_str(summary, start_test_date, end_test_date)
         file_utils.ensure_parents_write_text(test_summary_path, test_summary_md)
-        top_level_summary.append(f"- {summary.name} ({summary.success_rate_human}) ({summary.last_pass_human()})")
+        top_level_summary.append(
+            f"- {summary.name} - {summary.group_name} ({summary.success_rate_human}) ({summary.last_pass_human()}) ('{test_summary_path}')"
+        )
     return top_level_summary
 
 

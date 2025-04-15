@@ -55,6 +55,25 @@ class GoTestContext(Entity):
         # return cls(name=name, steps=steps)
 
 
+def extract_group_name(log_path: Path | None) -> str:
+    """
+    >>> extract_group_name(
+    ...     Path(
+    ...         "40216340925_tests-1.11.x-latest_tests-1.11.x-latest-false_search_deployment.txt"
+    ...     )
+    ... )
+    'search_deployment'
+    >>> extract_group_name(None)
+    ''
+    """
+    if log_path is None:
+        return ""
+    if "-" not in log_path.name:
+        return ""
+    last_part = log_path.stem.split("-")[-1]
+    return "_".join(last_part.split("_")[1:]) if "_" in last_part else last_part
+
+
 @total_ordering
 class GoTestRun(Entity):
     name: str
@@ -111,6 +130,10 @@ class GoTestRun(Entity):
     @property
     def is_pass(self) -> bool:
         return self.status == GoTestStatus.PASS
+
+    @property
+    def group_name(self) -> str:
+        return extract_group_name(self.log_path)
 
     def add_line_match(self, match: LineMatch, line: str, line_number: int) -> None:
         self.run_seconds = match.run_seconds or self.run_seconds
