@@ -1,9 +1,24 @@
+fail_fast: true
 repos:
-  - repo: local
-    hooks:
-      - id: py-pre-commit
-        name: py-pre-commit
-        language: system
-        entry: ./py/pre-commit.sh
-        pass_filenames: false
-        verbose: true
+- repo: local
+  hooks:
+    - id: pre-commit
+      name: Fmt
+      entry: bash -c 'just fmt'
+      language: system
+      always_run: true
+      types: [file]
+      stages:
+        - pre-commit
+- repo: local
+  hooks:
+    - id: pre-push
+      name: Lint & Test
+      entry: bash -c 'just pre-push'
+      language: system
+      always_run: true
+      types: [file]
+      stages:
+        - pre-push
+default_stages:
+  - pre-push
