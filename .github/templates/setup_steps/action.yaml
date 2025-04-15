@@ -31,3 +31,4 @@ runs:
       if: ${{ inputs.tf_version == 'default' }}
       with:
         terraform_version: "1.10.2"
+        terraform_wrapper: false
