@@ -89,7 +89,7 @@ atlas_init # should show how to use the cli
 ```
 
 ### CI Installation Tests (`pip install` local wheel)
-- [atlasci_local_install](atlasci_local_install.sh)
+- `uv sync`
   - creates a local `.venv` builds the wheel from this repo and installs it
 - use `export ATLAS_INIT_PROFILES_PATH=/somewhere/to/store/your/env-vars/and/tf/state`
 
