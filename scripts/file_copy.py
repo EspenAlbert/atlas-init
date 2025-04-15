@@ -13,9 +13,8 @@ REL_PATH_FILES = [
     "tf/.terraform.lock.hcl",
 ]
 
-PY_PATH = Path(__file__).parent.parent
+PY_PATH = REPO_PATH = Path(__file__).parent.parent
 ATLAS_INIT_PATH = PY_PATH / "atlas_init"
-REPO_PATH = PY_PATH.parent
 logger = logging.getLogger(__name__)
 
 

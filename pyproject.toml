@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "atlas-init"
 dynamic = ["version"]
 description = ''
-readme = "../readme.md"
+readme = "readme.md"
 requires-python = ">=3.12"
 license = "MIT"
 keywords = []
@@ -68,6 +68,7 @@ extra-dependencies = [
 [tool.bandit]
 exclude_dirs = ["test_*", "atlas_init/cli_tf/hcl/*"]
 skips= ["B101"]
+
 [tool.hatch.envs.sec]
 installer = "uv"
 extra-dependencies = ["bandit==1.8.0"]
@@ -97,9 +98,9 @@ exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 [tool.hatch.build.targets.wheel]
 only-include = ["atlas_init"]
 
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "scripts/file_copy.py"
-require-runtime-dependencies = true
+# [tool.hatch.build.targets.wheel.hooks.custom]
+# path = "scripts/file_copy.py"
+# require-runtime-dependencies = true
 
 [tool.ruff]
 extend-exclude = ["test_atlas_init", "atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
