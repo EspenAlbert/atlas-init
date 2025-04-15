@@ -12,7 +12,7 @@ from atlas_init import running_in_repo
 logger = logging.getLogger(__name__)
 """WARNING these variables should only be used through the AtlasInitSettings, not directly"""
 if running_in_repo():
-    ROOT_PATH = Path(__file__).parent.parent.parent.parent  # atlas_init REPO_PATH
+    ROOT_PATH = Path(__file__).parent.parent.parent  # atlas_init REPO_PATH
     DEFAULT_PROFILES_PATH = ROOT_PATH / "profiles"
 else:
     ROOT_PATH = Path(__file__).parent.parent  # site package install directory
