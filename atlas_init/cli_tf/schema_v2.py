@@ -466,8 +466,8 @@ def generate_go_attribute_schema_lines(
     attr_name = attr.tf_name
     lines = [indent(line_indent, f'"{attr_name}": {attribute_header(attr)}{{')]
     if desc := attr.description or attr.is_nested and (desc := schema.ref_resource(attr.schema_ref).description):
-        lines.append(indent(line_indent + 1, f'Description: "{desc.replace('\n', '\\n')}",'))
-        lines.append(indent(line_indent + 1, f'MarkdownDescription: "{desc.replace('\n', '\\n')}",'))
+        lines.append(indent(line_indent + 1, f'Description: "{desc.replace("\n", "\\n")}",'))
+        lines.append(indent(line_indent + 1, f'MarkdownDescription: "{desc.replace("\n", "\\n")}",'))
     if attr.is_required:
         lines.append(indent(line_indent + 1, "Required: true,"))
     if attr.is_optional:

@@ -32,9 +32,9 @@ def api_spec_text_changes(schema: SchemaV2, api_spec_parsed: OpenapiSchema) -> O
             if name.startswith(prefix):
                 schema_to_update.pop(name)
                 name_no_prefix = name.removeprefix(prefix)
-                assert (
-                    name_no_prefix not in schema_to_update
-                ), f"removed {prefix} from {name} in schema but {name_no_prefix} already exists"
+                assert name_no_prefix not in schema_to_update, (
+                    f"removed {prefix} from {name} in schema but {name_no_prefix} already exists"
+                )
                 schema_to_update[name_no_prefix] = value
     openapi_yaml = dump(api_spec_parsed, "yaml")
     for prefix in openapi_changes.schema_prefix_removal:

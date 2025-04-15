@@ -65,9 +65,9 @@ def update_examples(event_in: UpdateExamples) -> UpdateExamplesOutput:
     if event_in.skip_tf_fmt:
         logger.info("skipping terraform fmt")
     else:
-        assert run_binary_command_is_ok(
-            "terraform", "fmt -recursive", cwd=event_in.examples_base_dir, logger=logger
-        ), "terraform fmt failed"
+        assert run_binary_command_is_ok("terraform", "fmt -recursive", cwd=event_in.examples_base_dir, logger=logger), (
+            "terraform fmt failed"
+        )
     return UpdateExamplesOutput(
         before_var_descriptions=flatten_descriptions(existing_var_descriptions),
         before_output_descriptions=flatten_descriptions(existing_output_descriptions),

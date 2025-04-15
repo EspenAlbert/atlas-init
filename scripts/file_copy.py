@@ -23,9 +23,7 @@ app = typer.Typer()
 def _copy():
     for rel_path in REL_PATH_FILES:
         copy(REPO_PATH / rel_path, ATLAS_INIT_PATH / rel_path)
-    for tf_path, tf_rel_path in iter_paths_and_relative(
-        REPO_PATH / "tf", "*.tf", only_files=True
-    ):
+    for tf_path, tf_rel_path in iter_paths_and_relative(REPO_PATH / "tf", "*.tf", only_files=True):
         dest_path = ATLAS_INIT_PATH / "tf" / tf_rel_path
         copy(tf_path, dest_path)
     typer.echo("Copy complete: ✅")

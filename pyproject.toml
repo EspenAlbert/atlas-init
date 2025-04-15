@@ -75,6 +75,7 @@ only-include = ["atlas_init"]
 only-include = ["atlas_init"]
 
 [tool.ruff]
+line-length = 120
 extend-exclude = ["test_atlas_init", "atlas_init/humps.py", "atlas_init/cli_tf/schema.py"]
 
 [tool.ruff.lint]
