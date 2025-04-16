@@ -13,6 +13,7 @@ from atlas_init.cli_helper.run import (
 )
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
+from atlas_init.settings.env_vars_generated import AWSSettings, AtlasSettings
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +21,19 @@ logger = logging.getLogger(__name__)
 def get_tf_vars(settings: AtlasInitSettings, active_groups: list[TestSuite]) -> dict[str, Any]:  # type: ignore
     tf_vars = TerraformVars()  # type: ignore
     tf_vars = sum((group.vars for group in active_groups), start=tf_vars)
+    aws_settings = AWSSettings.from_env()
+    atlas_settings = AtlasSettings.from_env()
     return {
-        "atlas_public_key": settings.MONGODB_ATLAS_PUBLIC_KEY,
-        "atlas_private_key": settings.MONGODB_ATLAS_PRIVATE_KEY,
-        "atlas_base_url": settings.MONGODB_ATLAS_BASE_URL,
-        "is_mongodbgov_cloud": settings.is_mongodbgov_cloud,
-        "org_id": settings.MONGODB_ATLAS_ORG_ID,
-        "aws_region": settings.AWS_REGION,
+        "atlas_public_key": atlas_settings.MONGODB_ATLAS_PUBLIC_KEY,
+        "atlas_private_key": atlas_settings.MONGODB_ATLAS_PRIVATE_KEY,
+        "atlas_base_url": atlas_settings.MONGODB_ATLAS_BASE_URL,
+        "is_mongodbgov_cloud": atlas_settings.is_mongodbgov_cloud,
+        "org_id": atlas_settings.MONGODB_ATLAS_ORG_ID,
+        "aws_region": aws_settings.AWS_REGION,
         "project_name": settings.project_name,
         "out_dir": settings.profile_dir,
         "extra_env_vars": settings.manual_env_vars,
-        **settings.tf_vars(),
+        **settings.tf_vars(aws_settings.AWS_REGION),
         **tf_vars.as_configs(),
     }
 
@@ -56,7 +59,7 @@ class state_copier:  # noqa: N801
 
 
 def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
-    with state_copier(settings.tf_state_path, settings.tf_src_path):
+    with state_copier(settings.tf_state_path, settings.atlas_init_tf_src_path):
         _run_terraform(settings, command, extra_args)
 
 
@@ -71,7 +74,7 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
         "terraform",
         " ".join(command_parts),
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
-        cwd=settings.tf_src_path,
+        cwd=settings.atlas_init_tf_src_path,
         logger=logger,
     )
     if not is_ok:
@@ -88,10 +91,10 @@ def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
 
 
 def export_outputs(settings: AtlasInitSettings) -> None:
-    with state_copier(settings.tf_state_path, settings.tf_src_path):
+    with state_copier(settings.tf_state_path, settings.atlas_init_tf_src_path):
         result = run_command_receive_result(
             "terraform output -json",
-            settings.tf_src_path,
+            settings.atlas_init_tf_src_path,
             logger,
             env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
         )

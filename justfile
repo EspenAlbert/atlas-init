@@ -30,3 +30,7 @@ test-file filename:
   uv run pytest {{filename}}
 type-check:
   uv run pyright
+
+[positional-arguments]
+run *args:
+  uv run atlas-init {{args}}

@@ -7,7 +7,7 @@ from typing import Callable, Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
-from model_lib import dump
+from model_lib import dump, field_names
 from pydantic import BaseModel, Field
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 
@@ -21,18 +21,22 @@ from atlas_init.repos.path import (
 )
 from atlas_init.settings.env_vars import (
     ENV_PROJECT_NAME,
-    REQUIRED_FIELDS,
     AtlasInitSettings,
     init_settings,
 )
+from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import current_dir, dump_dotenv
 
 
 @pytest.fixture
 def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
-    monkeypatch.setenv("STATIC_DIR", str(tmp_path/ "static"))
-    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    static_dir = tmp_path/ "static"
+    monkeypatch.setenv("STATIC_DIR", str(static_dir))
+    cache_dir = tmp_path / "cache"
+    monkeypatch.setenv("CACHE_DIR", str(cache_dir))
+    static_dir.mkdir()
+    cache_dir.mkdir()
     yield AtlasInitSettings.from_env() # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
@@ -131,7 +135,7 @@ def cli_configure(
         write_required_vars(tmp_paths, args.env_vars_in_file, args.project_name)
         if not args.skip_generated_vars:
             write_generated_vars(tmp_paths, args.env_vars_in_file)
-        settings = init_settings(non_required=True)
+        settings = init_settings()
         repo = args.repo
         if repo is None:
             return settings
@@ -211,7 +215,7 @@ def cli_assertions(file_regression, caplog, tmp_path):
 
 
 def mongodb_atlas_required_vars() -> dict[str, str]:
-    return {key: f"value_{key}" for key in REQUIRED_FIELDS}
+    return {key: f"value_{key}" for key in field_names(AtlasSettings)}
 
 
 def write_required_vars(
