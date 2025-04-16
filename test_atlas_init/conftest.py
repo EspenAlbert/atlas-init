@@ -20,10 +20,8 @@ from atlas_init.repos.path import (
     resource_root,
 )
 from atlas_init.settings.env_vars import (
-    ENV_PROFILES_PATH,
     ENV_PROJECT_NAME,
     REQUIRED_FIELDS,
-    AtlasInitPaths,
     AtlasInitSettings,
     init_settings,
 )
@@ -31,10 +29,11 @@ from atlas_init.settings.path import current_dir, dump_dotenv
 
 
 @pytest.fixture
-def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitPaths:  # type: ignore
+def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
-    monkeypatch.setenv(ENV_PROFILES_PATH, str(tmp_path))
-    yield AtlasInitPaths()  # type: ignore
+    monkeypatch.setenv("STATIC_DIR", str(tmp_path/ "static"))
+    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
+    yield AtlasInitSettings.from_env() # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
 
@@ -119,7 +118,7 @@ class ConfigureSignature(Protocol):
 
 @pytest.fixture
 def cli_configure(
-    original_datadir: Path, request, monkeypatch, tmp_path, tmp_paths: AtlasInitPaths
+    original_datadir: Path, request, monkeypatch, tmp_path, tmp_paths: AtlasInitSettings
 ) -> ConfigureSignature:
     def _cli_configure(
         args: CLIArgs | None = None,
@@ -216,7 +215,7 @@ def mongodb_atlas_required_vars() -> dict[str, str]:
 
 
 def write_required_vars(
-    paths: AtlasInitPaths,
+    paths: AtlasInitSettings,
     env_vars_in_file: dict[str, str] | None = None,
     project_name: str = "",
 ):
@@ -226,7 +225,7 @@ def write_required_vars(
     dump_dotenv(paths.env_file_manual, env_vars_in_file)
 
 
-def write_generated_vars(paths: AtlasInitPaths, env_vars_in_file: dict[str, str]):
+def write_generated_vars(paths: AtlasInitSettings, env_vars_in_file: dict[str, str]):
     dump_dotenv(paths.env_vars_generated, env_vars_in_file)
     dump_dotenv(paths.env_vars_vs_code, env_vars_in_file)
 

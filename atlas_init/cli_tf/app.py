@@ -63,7 +63,7 @@ def schema(
     schema_out_path = settings.schema_out_path_computed
     schema_out_path.mkdir(exist_ok=True)
 
-    schema_parsed = parse_py_terraform_schema(settings.tf_schema_config_path)
+    schema_parsed = parse_py_terraform_schema(settings.atlas_init_tf_schema_config_path)
     generator_config = dump_generator_config(schema_parsed)
     generator_config_path = schema_out_path / "generator_config.yaml"
     generator_config_path.write_text(generator_config)

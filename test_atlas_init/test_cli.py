@@ -10,7 +10,7 @@ from atlas_init.settings.env_vars import (
     ENV_PROFILE,
     ENV_PROJECT_NAME,
     REQUIRED_FIELDS,
-    AtlasInitPaths,
+    AtlasInitSettings,
     EnvVarsError,
     init_settings,
 )
@@ -86,7 +86,7 @@ def test_override_profile_with_cli(tmp_paths):
     assert settings.project_name == project_name
 
 
-def test_destroy_no_state_dir(tmp_paths: AtlasInitPaths, caplog):
+def test_destroy_no_state_dir(tmp_paths: AtlasInitSettings, caplog):
     assert not tmp_paths.tf_state_path.exists()
     caplog.set_level(logging.INFO)
     write_required_vars(tmp_paths, project_name=test_destroy_no_state_dir.__name__)

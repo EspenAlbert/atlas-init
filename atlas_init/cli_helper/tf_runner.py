@@ -56,7 +56,7 @@ class state_copier:  # noqa: N801
 
 
 def run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[str]):
-    with state_copier(settings.tf_state_path, settings.tf_path):
+    with state_copier(settings.tf_state_path, settings.tf_src_path):
         _run_terraform(settings, command, extra_args)
 
 
@@ -71,7 +71,7 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
         "terraform",
         " ".join(command_parts),
         env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
-        cwd=settings.tf_path,
+        cwd=settings.tf_src_path,
         logger=logger,
     )
     if not is_ok:
@@ -88,10 +88,10 @@ def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
 
 
 def export_outputs(settings: AtlasInitSettings) -> None:
-    with state_copier(settings.tf_state_path, settings.tf_path):
+    with state_copier(settings.tf_state_path, settings.tf_src_path):
         result = run_command_receive_result(
             "terraform output -json",
-            settings.tf_path,
+            settings.tf_src_path,
             logger,
             env=os.environ | {"TF_DATA_DIR": settings.tf_data_dir},
         )
