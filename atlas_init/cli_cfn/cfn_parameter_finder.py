@@ -2,44 +2,17 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from model_lib import Entity, dump, parse_model, parse_payload
+from model_lib import Entity, dump, parse_model
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
-from zero_3rdparty.dict_nested import read_nested
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_cfn.files import create_sample_file, default_log_group_name
 from atlas_init.cloud.aws import PascalAlias
 from atlas_init.repos.cfn import CfnType, cfn_examples_dir, cfn_type_normalized
-from atlas_init.settings.path import DEFAULT_TF_SRC_PATH
 
 logger = logging.getLogger(__name__)
-
-
-def read_execution_role(loaded_env_vars: dict[str, str]) -> str:
-    return loaded_env_vars["CFN_EXAMPLE_EXECUTION_ROLE"]
-
-
-def check_execution_role(repo_path: Path, loaded_env_vars: dict[str, str]) -> str:
-    execution_role = cfn_examples_dir(repo_path) / "execution-role.yaml"
-    execution_raw = parse_payload(execution_role)
-    actions_expected = read_nested(
-        execution_raw,
-        "Resources.ExecutionRole.Properties.Policies.[0].PolicyDocument.Statement.[0].Action",
-    )
-    actions_found = parse_payload(DEFAULT_TF_SRC_PATH / "modules/cfn/resource_actions.yaml")
-    if diff := set(actions_expected) ^ set(actions_found):
-        raise ValueError(f"non-matching execution role actions: {sorted(diff)}")
-    services_found = parse_payload(DEFAULT_TF_SRC_PATH / "modules/cfn/assume_role_services.yaml")
-    services_expected = read_nested(
-        execution_raw,
-        "Resources.ExecutionRole.Properties.AssumeRolePolicyDocument.Statement.[0].Principal.Service",
-    )
-    if diff := set(services_found) ^ set(services_expected):
-        raise ValueError(f"non-matching execution role services: {sorted(diff)}")
-    logger.info(f"execution role is up to date with {execution_role}")
-    return read_execution_role(loaded_env_vars)
 
 
 class TemplatePathNotFoundError(Exception):

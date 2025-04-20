@@ -14,9 +14,6 @@ from atlas_init.cli_cfn.aws import (
 from atlas_init.cli_cfn.aws import (
     delete_stack as delete_stack_aws,
 )
-from atlas_init.cli_cfn.cfn_parameter_finder import (
-    read_execution_role,
-)
 from atlas_init.cli_cfn.contract import contract_test_cmd
 from atlas_init.cli_cfn.example import example_cmd
 from atlas_init.cli_cfn.files import (
@@ -31,6 +28,7 @@ from atlas_init.repos.cfn import (
 )
 from atlas_init.repos.path import Repo, current_dir, find_paths, resource_root
 from atlas_init.settings.env_vars import active_suites, init_settings
+from atlas_init.settings.env_vars_modules import TFModuleCfn
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="example")(example_cmd)
@@ -55,8 +53,8 @@ def reg(
         if local:
             deregister_cfn_resource_type(type_name, deregister=not dry_run, region_filter=region)
     logger.info(f"ready to activate {type_name}")
-    settings = init_settings()
-    cfn_execution_role = read_execution_role(settings.load_env_vars_full())
+    settings = init_settings(TFModuleCfn)
+    cfn_execution_role = settings.env_vars_cls(TFModuleCfn).CFN_EXAMPLE_EXECUTION_ROLE
     last_third_party = get_last_cfn_type(type_name, region, is_third_party=True)
     assert last_third_party, f"no 3rd party extension found for {type_name} in {region}"
     if dry_run:

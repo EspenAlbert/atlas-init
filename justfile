@@ -1,12 +1,16 @@
+set dotenv-load
+
 default:
     just --list
-pre-push: lint fmt-config fmt-check file-generate test
+pre-push: lint fmt-config fmt-check file-check file-generate test
   @echo "All checks passed"
 build:
   uv run scripts/file_utils.py copy
   uv run scripts/file_utils.py generate
   uv build
   uv run scripts/file_utils.py clean
+file-check:
+  uv run scripts/file_utils.py check
 file-generate:
   uv run scripts/file_utils.py generate
 fix:

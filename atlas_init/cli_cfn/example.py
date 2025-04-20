@@ -15,7 +15,6 @@ from atlas_init.cli_cfn.aws import (
 from atlas_init.cli_cfn.aws import delete_stack as delete_stack_aws
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     CfnTemplate,
-    check_execution_role,
     decode_parameters,
     dump_resource_to_file,
     dump_sample_file,
@@ -106,7 +105,6 @@ def example_cmd(
     aws_settings = AWSSettings.from_env()
     assert settings.tf_vars, "no cfn config found, re-run atlas_init apply with CFN flags"
     repo_path, resource_path, _ = find_paths(Repo.CFN)
-    env_vars_generated = settings.load_env_vars_full()
     inputs = CfnExampleInputs(
         type_name=type_name or infer_cfn_type_name(),
         example_name=example_name,
@@ -119,7 +117,7 @@ def example_cmd(
         force_deregister=force_deregister,
         reg_version=reg_version,
         force_keep=force_keep,
-        execution_role=execution_role or check_execution_role(repo_path, env_vars_generated),
+        execution_role=execution_role or cfn_settings.CFN_EXAMPLE_EXECUTION_ROLE,
         export_example_to_inputs=export_example_to_inputs,
         export_example_to_samples=export_example_to_samples,
         register_all_types_in_example=register_all_types_in_example,
