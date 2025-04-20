@@ -2,13 +2,14 @@ import logging
 from os import getenv
 from pathlib import Path
 
-from model_lib import parse_payload
+from model_lib import dump, parse_model, parse_payload
 import typer
 from zero_3rdparty.file_utils import clean_dir, copy, iter_paths_and_relative
 from zero_3rdparty.dict_nested import read_nested
 
 from atlas_init.cli_tf.hcl.modifier import read_block_attribute_object_keys
 from atlas_init.repos.cfn import cfn_examples_dir
+from atlas_init.settings.config import AtlasInitConfig
 
 REL_PATH_FILES = [
     "atlas_init.yaml",
@@ -20,6 +21,7 @@ REL_PATH_FILES = [
 
 REPO_PATH = Path(__file__).parent.parent
 ATLAS_INIT_PATH = REPO_PATH / "atlas_init"
+ATLAS_INIT_CONFIG_PATH = REPO_PATH / "atlas_init.yaml"
 TF_SRC_PATH = REPO_PATH / "tf"
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,10 @@ def _copy():
 
 @app.command()
 def generate():
+    generate_env_vars_modules()
+
+
+def generate_env_vars_modules():
     module_name_env_vars: dict[str, list[str]] = {}
     for tf_path in TF_SRC_PATH.glob("modules/*/*.tf"):
         if env_vars := read_block_attribute_object_keys(
@@ -68,6 +74,16 @@ def generate():
 
 @app.command()
 def check():
+    old = ATLAS_INIT_CONFIG_PATH.read_text()
+    config = parse_model(ATLAS_INIT_CONFIG_PATH, t=AtlasInitConfig)
+    config.test_suites = sorted(config.test_suites)
+    config_raw = config.model_dump(exclude_defaults=True, exclude_none=True)
+    new = dump(config_raw, "yaml")
+    if old == new:
+        typer.echo(f"config is sorted ✅ @ {ATLAS_INIT_CONFIG_PATH.name}")
+    else:
+        typer.echo(f"config is not sorted ❌ {ATLAS_INIT_CONFIG_PATH.name}")
+        ATLAS_INIT_CONFIG_PATH.write_text(new)
     repo_path_cfn = getenv("REPO_PATH_CFN")
     if not repo_path_cfn:
         logger.warning("REPO_PATH_CFN not set")
