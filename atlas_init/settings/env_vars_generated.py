@@ -63,9 +63,3 @@ class RealmSettings(_EnvVarsGenerated):
 
 class AtlasSettingsWithProject(AtlasSettings):
     MONGODB_ATLAS_PROJECT_ID: str
-
-
-class TFModuleCluster(_EnvVarsGenerated):
-    MONGODB_ATLAS_CLUSTER_NAME: str
-    MONGODB_ATLAS_CONTAINER_ID: str
-    MONGODB_URL: str

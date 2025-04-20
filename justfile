@@ -1,11 +1,14 @@
 default:
     just --list
-pre-push: lint fmt-config fmt-check test
+pre-push: lint fmt-config fmt-check file-generate test
   @echo "All checks passed"
 build:
-  uv run scripts/file_copy.py copy
+  uv run scripts/file_utils.py copy
+  uv run scripts/file_utils.py generate
   uv build
-  uv run scripts/file_copy.py clean
+  uv run scripts/file_utils.py clean
+file-generate:
+  uv run scripts/file_utils.py generate
 fix:
   uv run ruff check --fix .
 fix-unsafe:

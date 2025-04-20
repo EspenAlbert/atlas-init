@@ -6,11 +6,11 @@ from zero_3rdparty.id_creator import simple_id
 
 from atlas_init.settings.env_vars import init_settings
 from atlas_init.settings.env_vars_generated import (
-    AWSSettings,
     AtlasSettingsWithProject,
+    AWSSettings,
     RealmSettings,
-    TFModuleCluster,
 )
+from atlas_init.settings.env_vars_modules import TFModuleCluster
 from atlas_init.settings.path import dump_dotenv
 from atlas_init.typer_app import app_command
 
