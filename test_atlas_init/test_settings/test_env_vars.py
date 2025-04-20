@@ -11,15 +11,7 @@ from atlas_init.settings.env_vars import (
 )
 from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import repo_path_rel_path
-from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required_vars
-
-
-REQUIRED_FIELDS = [
-    "MONGODB_ATLAS_BASE_URL",
-    "MONGODB_ATLAS_ORG_ID",
-    "MONGODB_ATLAS_PRIVATE_KEY",
-    "MONGODB_ATLAS_PUBLIC_KEY",
-]
+from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required_vars, REQUIRED_FIELDS
 
 
 def test_set_profiles_path(settings, tmp_path):

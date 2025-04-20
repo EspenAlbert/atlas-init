@@ -61,7 +61,7 @@ class RealmSettings(_EnvVarsGenerated):
     RANDOM_INT_100K: str = Field(default_factory=lambda: str(random.randint(0, 100_000)))  # noqa: S311 # not used for cryptographic purposes # nosec
 
 
-class EnvVarsGenerated(AtlasSettings):
+class AtlasSettingsWithProject(AtlasSettings):
     MONGODB_ATLAS_PROJECT_ID: str
 
 

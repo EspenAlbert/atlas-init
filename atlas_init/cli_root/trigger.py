@@ -6,7 +6,8 @@ from zero_3rdparty.id_creator import simple_id
 
 from atlas_init.settings.env_vars import init_settings
 from atlas_init.settings.env_vars_generated import (
-    EnvVarsGenerated,
+    AWSSettings,
+    AtlasSettingsWithProject,
     RealmSettings,
     TFModuleCluster,
 )
@@ -23,11 +24,14 @@ def trigger_app():
 
 def create_realm_app():
     settings = init_settings()
-    base_url = settings.realm_url
-    project_id = settings.env_vars_cls(EnvVarsGenerated).MONGODB_ATLAS_PROJECT_ID
-    cluster_name = settings.env_vars_cls(TFModuleCluster).MONGODB_ATLAS_CLUSTER_NAME
+    atlas_settings = settings.env_vars_cls(AtlasSettingsWithProject)
+    cluster_settings = settings.env_vars_cls(TFModuleCluster)
+    project_id = atlas_settings.MONGODB_ATLAS_PROJECT_ID
+    base_url = atlas_settings.realm_url
+    cluster_name = cluster_settings.MONGODB_ATLAS_CLUSTER_NAME
     auth_headers = login_to_realm(settings, base_url)
     realm_settings = settings.env_vars_cls_or_none(RealmSettings, path=settings.env_vars_trigger)
+    aws_settings = settings.env_vars_cls(AWSSettings)
     if realm_settings and function_exists(
         base_url,
         auth_headers,
@@ -44,7 +48,7 @@ def create_realm_app():
         app_id = apps[0]["_id"]
     else:
         logger.info("no apps found, creating one")
-        app = create_app(base_url, auth_headers, project_id, cluster_name, settings.AWS_REGION)
+        app = create_app(base_url, auth_headers, project_id, cluster_name, aws_settings.AWS_REGION)
         logger.info(f"created app: {app}")
         app_id = app["_id"]
     logger.info(f"using app_id: {app_id}")
@@ -109,7 +113,11 @@ _cloud_deployment_regions = {
 
 
 def create_app(
-    base_url: str, auth_headers: dict[str, str], project_id: str, cluster_name: str, aws_region: str
+    base_url: str,
+    auth_headers: dict[str, str],
+    project_id: str,
+    cluster_name: str,
+    aws_region: str,
 ) -> dict:
     provider_region = f"aws-{aws_region}"
     location = _cloud_deployment_regions.get(provider_region)
@@ -229,7 +237,12 @@ class _RetryPostRequestError(Exception):
     reraise=True,
 )
 def _request_post_call(
-    url: str, data: dict, headers: dict[str, str], timeout: int, *, log_data_on_failure: bool = False
+    url: str,
+    data: dict,
+    headers: dict[str, str],
+    timeout: int,
+    *,
+    log_data_on_failure: bool = False,
 ) -> dict:
     response = requests.post(url, json=data, headers=headers, timeout=timeout)
     if response.status_code >= 500:  # noqa: PLR2004

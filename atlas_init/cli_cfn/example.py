@@ -107,7 +107,7 @@ def example_cmd(
         type_name=type_name or infer_cfn_type_name(),
         example_name=example_name,
         delete_stack_first=delete_first,
-        region_filter=region or settings.cfn_region,
+        region_filter=region or settings.cfn_region(),
         stack_name=stack_name or f"{settings.cfn_profile}-{example_name or 'atlas-init'}",
         operation=operation,  # type: ignore
         resource_params=resource_params,  # type: ignore

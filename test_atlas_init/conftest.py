@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Literal, Protocol, TypeAlias
+from typing import Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
@@ -22,27 +22,42 @@ from atlas_init.repos.path import (
 from atlas_init.settings.env_vars import (
     ENV_PROJECT_NAME,
     AtlasInitSettings,
-    init_settings,
 )
 from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import current_dir, dump_dotenv
 
+logger = logging.getLogger(__name__)
+REQUIRED_FIELDS = [
+    "MONGODB_ATLAS_BASE_URL",
+    "MONGODB_ATLAS_ORG_ID",
+    "MONGODB_ATLAS_PRIVATE_KEY",
+    "MONGODB_ATLAS_PUBLIC_KEY",
+]
 
-@pytest.fixture
+
+@pytest.fixture(
+    autouse=True,
+    scope="function"
+)  # autouse to avoid any test modifying the os.environ and leaving side effects for next test
 def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
-    static_dir = tmp_path/ "static"
+    if existing_in_env := {
+        key: os.environ[key] for key in REQUIRED_FIELDS if key in os.environ
+    }:
+        for k, v in existing_in_env.items():
+            logger.warning(f"Environment variables already set: {k}={v}")
+    static_dir = tmp_path / "static"
     monkeypatch.setenv("STATIC_DIR", str(static_dir))
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("CACHE_DIR", str(cache_dir))
     static_dir.mkdir()
     cache_dir.mkdir()
-    yield AtlasInitSettings.from_env() # type: ignore
+    yield AtlasInitSettings.from_env()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def api_spec_path_transformed() -> Path:
     return resolve_admin_api_path(os.environ.get("SDK_REPO_PATH", ""), "main", "")
 
@@ -116,9 +131,10 @@ def extract_node_subdir(node_name: str) -> str:
     """
     return node_name.split("[", 1)[1].split("]")[0] if "[" in node_name else ""
 
+
 class ConfigureSignature(Protocol):
-    def __call__(self, args: CLIArgs | None = None) -> AtlasInitSettings:
-        ...
+    def __call__(self, args: CLIArgs | None = None) -> AtlasInitSettings: ...
+
 
 @pytest.fixture
 def cli_configure(
@@ -135,7 +151,6 @@ def cli_configure(
         write_required_vars(settings, args.env_vars_in_file, args.project_name)
         if not args.skip_generated_vars:
             write_generated_vars(settings, args.env_vars_in_file)
-        settings = init_settings()
         repo = args.repo
         if repo is None:
             return settings
@@ -164,7 +179,7 @@ def cli_configure(
             ensure_parents_write_text(cwd / "cmd/main.go", "")
         monkeypatch.chdir(cwd)
         return settings
-    
+
     return _cli_configure
 
 
@@ -188,7 +203,9 @@ def cli_assertions(file_regression, caplog, tmp_path):
                 case RunAssertion(substring):
                     for log_text in caplog.messages:
                         if substring in log_text:
-                            output.commands_run[substring] = normalize_cmd(substring, log_text)
+                            output.commands_run[substring] = normalize_cmd(
+                                substring, log_text
+                            )
                             break
                     else:
                         output.commands_missing.append(

@@ -20,6 +20,7 @@ def test_resolve_env_vars(cli_configure, capture_mode, capture_env_vars):
     )
     expected = {
         "ATLAS_INIT_PROJECT_NAME": "test_resolve_env_vars",
+        "MONGODB_ATLAS_BASE_URL": "value_MONGODB_ATLAS_BASE_URL",
         "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "true",
         "MONGODB_ATLAS_ORG_ID": "value_MONGODB_ATLAS_ORG_ID",
         "MONGODB_ATLAS_PRIVATE_KEY": "value_MONGODB_ATLAS_PRIVATE_KEY",
