@@ -232,33 +232,48 @@ class EnvVarsError(Exception):
         return f"missing: {self.missing}, ambiguous: {self.ambiguous}"
 
 
-def init_settings(
-    *settings_classes: type[BaseModel],
-) -> AtlasInitSettings:
-    settings = AtlasInitSettings.from_env()
-    manual_env_vars = settings.manual_env_vars
+def collect_required_env_vars(settings_classes: list[type[BaseModel]]) -> list[str]:
     cls_required_env_vars: dict[str, list[str]] = {}
     for cls in settings_classes:
         try:
             cls()
         except ValidationError as error:
             cls_required_env_vars[cls.__name__] = [".".join(str(loc) for loc in e["loc"]) for e in error.errors()]
+    return list(iter_utils.flat_map(cls_required_env_vars.values()))
 
-    required_env_vars = list(iter_utils.flat_map(cls_required_env_vars.values()))
+
+def detect_ambiguous_env_vars(manual_env_vars: dict[str, str]) -> list[str]:
     ambiguous: list[str] = []
     for env_name, manual_value in manual_env_vars.items():
         env_value = read_from_env(env_name)
         if env_value and manual_value != env_value:
             ambiguous.append(env_name)
-    missing_env_vars = sorted(
+    return ambiguous
+
+
+def find_missing_env_vars(required_env_vars: list[str], manual_env_vars: dict[str, str]) -> list[str]:
+    return sorted(
         env_name for env_name in required_env_vars if read_from_env(env_name) == "" and env_name not in manual_env_vars
     )
+
+
+def init_settings(
+    *settings_classes: type[BaseModel],
+) -> AtlasInitSettings:
+    settings = AtlasInitSettings.from_env()
+    manual_env_vars = settings.manual_env_vars
+
+    required_env_vars = collect_required_env_vars(list(settings_classes))
+    ambiguous = detect_ambiguous_env_vars(manual_env_vars)
+    missing_env_vars = find_missing_env_vars(required_env_vars, manual_env_vars)
+
     if ambiguous:
         logger.warning(
-            f"amiguous env_vars: {ambiguous} (specified both in cli/env & in .env-manual file with different values)"
+            f"ambiguous env_vars: {ambiguous} (specified both in cli/env & in .env-manual file with different values)"
         )
     if missing_env_vars or ambiguous:
         raise EnvVarsError(missing_env_vars, ambiguous)
+
     settings.load_profile_manual_env_vars()
     for cls in settings_classes:
         cls()  # ensure any errors are raised
