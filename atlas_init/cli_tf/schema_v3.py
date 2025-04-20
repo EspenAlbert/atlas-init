@@ -210,12 +210,12 @@ class Schema(BaseModelLocal):
 
 
 class Resource(BaseModelLocal):
-    schema: Schema  # pyright: ignore
+    local_schema: Schema = Field(alias="schema")
     name: SnakeCaseString
 
     @property
     def use_timeout(self) -> bool:
-        return any(a.timeouts for a in self.schema.attributes)
+        return any(a.timeouts for a in self.local_schema.attributes)
 
 
 ResourceSchemaV3 = Resource

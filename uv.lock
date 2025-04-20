@@ -65,7 +65,7 @@ requires-dist = [
     { name = "orjson", specifier = "==3.10.13" },
     { name = "pydantic-settings", specifier = "==2.7.1" },
     { name = "pygithub", specifier = "==2.6.1" },
-    { name = "python-hcl2", specifier = "==6.1.0" },
+    { name = "python-hcl2", specifier = "==7.1.0" },
     { name = "requests", specifier = "==2.32.2" },
     { name = "rich", specifier = "==14.0.0" },
     { name = "stringcase", specifier = "==1.2.0" },
@@ -710,14 +710,14 @@ wheels = [
 
 [[package]]
 name = "python-hcl2"
-version = "6.1.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lark" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/59/881b1644b748079c01d51b6c422cd625802c7690c34ff59660433295c88d/python-hcl2-6.1.0.tar.gz", hash = "sha256:c06c0547e731dcb2453d68470a0f1e38869d6b5115a833e44c50d7083ce2423e", size = 30741 }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/18/e88dec05969a4f5775bdc073137cf81ddfe6f14bd278b188b386c2838faa/python_hcl2-7.1.0.tar.gz", hash = "sha256:23a447d3d40001ad707f883a88900d72ae14ae56a820a83687355cce7c75d33b", size = 33539 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/61/89df286726599f6839757f312cf42ed9178f3617ebb94480514cca416200/python_hcl2-6.1.0-py3-none-any.whl", hash = "sha256:6ee4bbaf9abf813e65fbcad514278d387d0a3d57e53dd16c413154e6989b0d71", size = 20550 },
+    { url = "https://files.pythonhosted.org/packages/e2/90/825d3f9f505c937511286356c55727f97d5558eec6152c2116f348dd5766/python_hcl2-7.1.0-py3-none-any.whl", hash = "sha256:6ed0b0c2bd59c87f4a86c657348e65d35077635e0ac71c495d07cff4509a1b08", size = 21423 },
 ]
 
 [[package]]
