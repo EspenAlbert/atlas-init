@@ -41,7 +41,7 @@ def schema_attributes(root: object) -> list[Attribute]:
 
 @schema_attributes.register
 def _resource_attributes(root: Resource) -> list[Attribute]:
-    return root.schema.attributes
+    return root.local_schema.attributes
 
 
 @schema_attributes.register

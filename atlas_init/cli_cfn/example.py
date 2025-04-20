@@ -24,6 +24,8 @@ from atlas_init.cli_cfn.cfn_parameter_finder import (
 from atlas_init.repos.cfn import CfnType, Operation, infer_cfn_type_name
 from atlas_init.repos.path import Repo, find_paths
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
+from atlas_init.settings.env_vars_generated import AWSSettings
+from atlas_init.settings.env_vars_modules import TFModuleCfn
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +101,9 @@ def example_cmd(
     ),
     register_all_types_in_example: bool = typer.Option(False, "--reg-all", help="Check all types"),
 ):
-    settings = init_settings()
+    settings = init_settings(TFModuleCfn, AWSSettings)
+    cfn_settings = TFModuleCfn.from_env()
+    aws_settings = AWSSettings.from_env()
     assert settings.tf_vars, "no cfn config found, re-run atlas_init apply with CFN flags"
     repo_path, resource_path, _ = find_paths(Repo.CFN)
     env_vars_generated = settings.load_env_vars_full()
@@ -107,8 +111,8 @@ def example_cmd(
         type_name=type_name or infer_cfn_type_name(),
         example_name=example_name,
         delete_stack_first=delete_first,
-        region_filter=region or settings.cfn_region(),
-        stack_name=stack_name or f"{settings.cfn_profile}-{example_name or 'atlas-init'}",
+        region_filter=region or settings.cfn_region(aws_settings.AWS_REGION),
+        stack_name=stack_name or f"{cfn_settings.MONGODB_ATLAS_PROFILE}-{example_name or 'atlas-init'}",
         operation=operation,  # type: ignore
         resource_params=resource_params,  # type: ignore
         stack_timeout_s=stack_timeout_s,
