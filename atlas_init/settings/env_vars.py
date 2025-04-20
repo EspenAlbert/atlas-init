@@ -212,6 +212,10 @@ class EnvVarsCheck(NamedTuple):
     missing: list[str]
     ambiguous: list[str]
 
+    @property
+    def is_ok(self) -> bool:
+        return not self.missing and not self.ambiguous
+
 
 def active_suites(settings: AtlasInitSettings) -> list[TestSuite]:  # type: ignore
     repo_path, cwd_rel_path = repo_path_rel_path()
