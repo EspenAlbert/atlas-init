@@ -29,7 +29,7 @@ from atlas_init.settings.path import current_dir, dump_dotenv
 
 
 @pytest.fixture
-def tmp_paths(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
+def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
     static_dir = tmp_path/ "static"
     monkeypatch.setenv("STATIC_DIR", str(static_dir))
@@ -122,7 +122,7 @@ class ConfigureSignature(Protocol):
 
 @pytest.fixture
 def cli_configure(
-    original_datadir: Path, request, monkeypatch, tmp_path, tmp_paths: AtlasInitSettings
+    original_datadir: Path, request, monkeypatch, tmp_path, settings: AtlasInitSettings
 ) -> ConfigureSignature:
     def _cli_configure(
         args: CLIArgs | None = None,
@@ -132,9 +132,9 @@ def cli_configure(
         function_name = request.function.__name__
         if not args.project_name:
             args.project_name = function_name
-        write_required_vars(tmp_paths, args.env_vars_in_file, args.project_name)
+        write_required_vars(settings, args.env_vars_in_file, args.project_name)
         if not args.skip_generated_vars:
-            write_generated_vars(tmp_paths, args.env_vars_in_file)
+            write_generated_vars(settings, args.env_vars_in_file)
         settings = init_settings()
         repo = args.repo
         if repo is None:

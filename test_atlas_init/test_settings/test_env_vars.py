@@ -22,10 +22,11 @@ REQUIRED_FIELDS = [
 ]
 
 
-def test_set_profiles_path(tmp_paths, tmp_path):
-    assert str(tmp_paths.profiles_path) == str(
-        tmp_paths.static_root / "profiles"
+def test_set_profiles_path(settings, tmp_path):
+    assert str(settings.profiles_path) == str(
+        settings.static_root / "profiles"
     )
+    assert str(settings.profiles_path).startswith(str(tmp_path))
 
 
 @dataclass
@@ -76,10 +77,10 @@ ENV_VARS_CHECKS = [
 @pytest.mark.parametrize(
     "test_case", ENV_VARS_CHECKS, ids=[test_case.name for test_case in ENV_VARS_CHECKS]
 )
-def test_check_env_vars(monkeypatch, test_case, tmp_paths):
+def test_check_env_vars(monkeypatch, test_case, settings):
     # sourcery skip: no-conditionals-in-tests
     if env_vars_in_file := test_case.env_vars_in_file:
-        write_required_vars(tmp_paths, env_vars_in_file)
+        write_required_vars(settings, env_vars_in_file)
     test_case.load_env_vars(monkeypatch)
     if test_case.expected.is_ok:
         init_settings(AtlasSettings)

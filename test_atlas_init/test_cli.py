@@ -42,21 +42,21 @@ def test_normal_help_command_is_ok():
     run("--help", exit_code=0)
 
 
-def test_missing_env_vars(tmp_paths):
+def test_missing_env_vars(settings):
     error = run_expect_error("plan", error=EnvVarsError)
     assert error.missing == ['AWS_REGION', 'MONGODB_ATLAS_BASE_URL', 'MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY']
 
-def test_cli_project_name(tmp_paths):
-    write_required_vars(tmp_paths)
+def test_cli_project_name(settings):
+    write_required_vars(settings)
     name = test_cli_project_name.__name__
     run(f"--project {name} cfn")
     assert init_settings().project_name == name
 
 
-def test_override_profile_with_env_var(tmp_paths, monkeypatch):
+def test_override_profile_with_env_var(settings, monkeypatch):
     different_profile = "other-profile"
     monkeypatch.setenv(ENV_PROFILE, different_profile)
-    new_paths = copy_and_validate(tmp_paths, atlas_init_profile=different_profile)
+    new_paths = copy_and_validate(settings, atlas_init_profile=different_profile)
     project_name = "some-project"
     write_required_vars(new_paths, project_name=project_name)
     run("cfn")
@@ -66,9 +66,9 @@ def test_override_profile_with_env_var(tmp_paths, monkeypatch):
     assert settings.project_name == project_name
 
 
-def test_override_profile_with_cli(tmp_paths):
+def test_override_profile_with_cli(settings):
     different_profile = "cli-profile"
-    new_paths = copy_and_validate(tmp_paths, atlas_init_profile=different_profile)
+    new_paths = copy_and_validate(settings, atlas_init_profile=different_profile)
     project_name = test_override_profile_with_cli.__name__
     write_required_vars(new_paths, project_name=project_name)
 
@@ -78,10 +78,10 @@ def test_override_profile_with_cli(tmp_paths):
     assert settings.project_name == project_name
 
 
-def test_destroy_no_state_dir(tmp_paths: AtlasInitSettings, caplog):
-    assert not tmp_paths.tf_state_path.exists()
+def test_destroy_no_state_dir(settings: AtlasInitSettings, caplog):
+    assert not settings.tf_state_path.exists()
     caplog.set_level(logging.INFO)
-    write_required_vars(tmp_paths, project_name=test_destroy_no_state_dir.__name__)
+    write_required_vars(settings, project_name=test_destroy_no_state_dir.__name__)
     run("destroy")
     messages = caplog.messages
     assert any("no terraform state found" in message for message in messages)
