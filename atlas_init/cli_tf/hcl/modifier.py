@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
+from typing import Callable
 
 import hcl2
 from lark import Token, Tree, UnexpectedToken
@@ -51,6 +52,8 @@ def update_description(tree: Tree, new_descriptions: dict[str, str], existing_na
 def token_name(token: Token | Tree) -> str:
     if isinstance(token, Token):
         return token.value.strip('"')
+    if isinstance(token, Tree) and token.data == "identifier":
+        return token.children[0].value.strip('"')  # type: ignore
     err_msg = f"unexpected token type {type(token)} for token name"
     raise ValueError(err_msg)
 
@@ -102,6 +105,24 @@ def create_description_attribute(description_value: str) -> Tree:
     return Tree(Token("RULE", "attribute"), children)
 
 
+def process_generic(
+    node: Tree,
+    tree_match: Callable[[Tree], bool],
+    tree_call: Callable[[Tree], Tree],
+    depth=0,
+):
+    new_children = []
+    logger.debug(f"[{depth}] (tree)\t|", " " * depth, node.data)
+    for child in node.children:
+        if isinstance(child, Tree):
+            if tree_match(child):
+                child = tree_call(child)
+            new_children.append(process_generic(child, tree_match, tree_call, depth + 1))
+        else:
+            new_children.append(process_token(child, depth + 1))
+    return Tree(node.data, new_children)
+
+
 def process_descriptions(
     node: Tree,
     name_updates: dict[str, str],
@@ -110,21 +131,18 @@ def process_descriptions(
     *,
     block_type: str,
 ) -> Tree:
-    new_children = []
-    logger.debug(f"[{depth}] (tree)\t|", " " * depth, node.data)
-    for child in node.children:
-        if isinstance(child, Tree):
-            if is_block_type(child, block_type):
-                child = update_description(  # noqa: PLW2901
-                    child, name_updates, existing_names
-                )
-            new_children.append(
-                process_descriptions(child, name_updates, existing_names, depth + 1, block_type=block_type)
-            )
-        else:
-            new_children.append(process_token(child, depth + 1))
+    def tree_match(tree: Tree) -> bool:
+        return is_block_type(tree, block_type)
 
-    return Tree(node.data, new_children)
+    def tree_call(tree: Tree) -> Tree:
+        return update_description(tree, name_updates, existing_names)
+
+    return process_generic(
+        node,
+        tree_match,
+        tree_call,
+        depth=depth,
+    )
 
 
 def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: str) -> tuple[str, dict[str, list[str]]]:
@@ -142,3 +160,86 @@ def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: st
     )
     new_tf = hcl2.writes(new_tree)  # type: ignore
     return new_tf, existing_descriptions
+
+
+def _block_name_body(tree: Tree) -> tuple[str, Tree]:
+    try:
+        _, name_token, body = tree.children
+        name = token_name(name_token)
+    except (IndexError, AttributeError) as e:
+        raise ValueError("unexpected block structure") from e
+    return name, body
+
+
+def _read_attribute(tree_body: Tree, attribute_name: str) -> Tree | None:
+    for attribute in tree_body.children:
+        if not isinstance(attribute, Tree):
+            continue
+        if attribute.data != "attribute":
+            continue
+        attr_identifier, _, attr_value = attribute.children
+        if token_name(attr_identifier.children[0]) != attribute_name:
+            continue
+        return attr_value
+
+
+def _is_object(tree_body: Tree) -> bool:
+    if not isinstance(tree_body, Tree):
+        return False
+    if len(tree_body.children) != 1:
+        return False
+    if not isinstance(tree_body.children[0], Tree):
+        return False
+    return tree_body.children[0].data == "object"
+
+
+def _read_object_elems(tree_body: Tree) -> list[Tree]:
+    object_elements = []
+    for obj_child in tree_body.children[0].children:
+        if not isinstance(obj_child, Tree):
+            continue
+        if obj_child.data != "object_elem":
+            continue
+        object_elements.append(obj_child)
+    return object_elements
+
+
+def _read_object_elem_key(tree_body: Tree) -> str:
+    name_tree, _, _ = tree_body.children
+    return token_name(name_tree.children[0])
+
+
+def read_block_attribute_object_keys(tf_path: Path, block_type: str, block_name: str, block_key: str) -> list[str]:
+    try:
+        tree = hcl2.parses(tf_path.read_text())  # type: ignore
+    except UnexpectedToken as e:
+        logger.warning(f"failed to parse {tf_path}: {e}")
+        return []
+    env_vars = []
+
+    def extract_env_vars(tree: Tree) -> bool:
+        if not is_block_type(tree, block_type):
+            return False
+        name, body = _block_name_body(tree)
+        if name != block_name:
+            return False
+        attribute_value = _read_attribute(body, block_key)
+        if not attribute_value:
+            return False
+        if not _is_object(attribute_value):
+            return False
+        object_elements = _read_object_elems(attribute_value)
+        for obj_elem in object_elements:
+            key = _read_object_elem_key(obj_elem)
+            env_vars.append(key)
+        return False
+
+    def tree_call(tree: Tree) -> Tree:
+        return tree
+
+    process_generic(
+        tree,
+        extract_env_vars,
+        tree_call,
+    )
+    return env_vars

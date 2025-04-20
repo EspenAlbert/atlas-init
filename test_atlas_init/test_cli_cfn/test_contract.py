@@ -22,6 +22,9 @@ def test_contract_test(resource_name, cli_configure, cli_assertions):
         aws_profile="test",
         commands_expected=commands,
         files_glob_expected=files,
+        env_vars_in_file={
+            "AWS_REGION": "us-east-1",
+        }
     )
     cli_configure(args)
     contract_test()

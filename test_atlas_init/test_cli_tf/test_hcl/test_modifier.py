@@ -1,6 +1,6 @@
 import pytest
 
-from atlas_init.cli_tf.hcl.modifier import BLOCK_TYPE_OUTPUT, BLOCK_TYPE_VARIABLE, update_descriptions
+from atlas_init.cli_tf.hcl.modifier import BLOCK_TYPE_OUTPUT, BLOCK_TYPE_VARIABLE, read_block_attribute_object_keys, update_descriptions
 
 example_variables_tf = """variable "cluster_name" {
   type = string
@@ -93,3 +93,30 @@ def test_process_variables(tmp_path, file_regression, block_type, new_names, exi
     new_tf, existing_descriptions = update_descriptions(example_tf_path, new_names, block_type=block_type)
     file_regression.check(new_tf, extension=".tf")
     assert dict(existing_descriptions.items()) == existing_descriptions
+
+
+out_example_env_vars = """\
+output "env_vars" {
+  value = {
+    MONGODB_ATLAS_PROFILE         = var.cfn_profile
+    MONGODB_ATLAS_PUBLIC_API_KEY  = var.atlas_public_key
+    MONGODB_ATLAS_PRIVATE_API_KEY = var.atlas_private_key
+    # cfn-e2e
+    MONGODB_ATLAS_SECRET_PROFILE = var.cfn_profile
+    CFN_EXAMPLE_EXECUTION_ROLE   = aws_iam_role.execution_role.arn
+  }
+  description = "Environment variables for the example"
+}
+"""
+
+def test_output_env_vars_keys(tmp_path):
+    example_tf_path = tmp_path / "example.tf"
+    example_tf_path.write_text(out_example_env_vars)
+    env_vars = read_block_attribute_object_keys(example_tf_path, block_type=BLOCK_TYPE_OUTPUT, block_name="env_vars", block_key="value")
+    assert env_vars == [
+        "MONGODB_ATLAS_PROFILE",
+        "MONGODB_ATLAS_PUBLIC_API_KEY",
+        "MONGODB_ATLAS_PRIVATE_API_KEY",
+        "MONGODB_ATLAS_SECRET_PROFILE",
+        "CFN_EXAMPLE_EXECUTION_ROLE",
+    ]

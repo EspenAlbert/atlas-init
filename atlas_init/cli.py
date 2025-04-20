@@ -45,6 +45,7 @@ from atlas_init.settings.env_vars import (
     active_suites,
     init_settings,
 )
+from atlas_init.settings.env_vars_generated import AWSSettings, AtlasSettings
 from atlas_init.settings.path import (
     CwdIsNoRepoPathError,
     dump_vscode_dotenv,
@@ -79,7 +80,7 @@ def apply(context: typer.Context, *, skip_outputs: bool = False):
 
 
 def _plan_or_apply(extra_args: list[str], command: Literal["plan", "apply"], *, skip_outputs: bool) -> list[TestSuite]:  # type: ignore
-    settings = init_settings()
+    settings = init_settings(AtlasSettings, AWSSettings)
     logger.info(f"using the '{command}' command, extra args: {extra_args}")
     try:
         suites = active_suites(settings)

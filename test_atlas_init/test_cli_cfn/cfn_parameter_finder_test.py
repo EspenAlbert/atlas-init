@@ -5,7 +5,6 @@ import pytest
 from model_lib import parse_payload
 
 from atlas_init.cli_cfn.cfn_parameter_finder import (
-    check_execution_role,
     decode_parameters,
     dump_resource_to_file,
     updated_template_path,
@@ -29,19 +28,6 @@ def test_decode_parameters_project():
     )
     assert team_roles_value == "FORCED"
     assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]  # type: ignore
-
-
-@pytest.mark.skipif(
-    os.environ.get("CFN_REPO_PATH", "") == "", reason="needs os.environ[CFN_REPO_PATH]"
-)
-def test_check_execution_role():
-    cfn_repo_path = Path(os.environ["CFN_REPO_PATH"])
-    some_arn = "arn:aws:iam::XXXX:role/cfn-execution-role"
-    assert (
-        check_execution_role(cfn_repo_path, {"CFN_EXAMPLE_EXECUTION_ROLE": some_arn})
-        == some_arn
-    )
-
 
 def test_updated_template_path():
     assert (

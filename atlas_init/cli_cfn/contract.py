@@ -16,6 +16,7 @@ from atlas_init.cli_helper.run_manager import RunManager
 from atlas_init.cli_root import is_dry_run
 from atlas_init.repos.path import Repo, ResourcePaths, find_paths
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
+from atlas_init.settings.env_vars_generated import AWSSettings
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ def contract_test(
     resource_paths: ResourcePaths | None = None,
     only_names: list[str] | None = None,
 ):
-    settings = settings or init_settings()
+    settings = settings or init_settings(AWSSettings)
     resource_paths = resource_paths or find_paths(Repo.CFN)
     resource_name = resource_paths.resource_name
     generated_env_vars = settings.load_env_vars_full()
@@ -122,11 +123,12 @@ def contract_test(
     )
     create_response = create_contract_test_inputs(create_inputs)
     create_response.log_input_files(logger)
+    aws_settings = AWSSettings.from_env()
     run_contract_test = RunContractTest(
         resource_path=resource_paths.resource_path,
         repo_path=resource_paths.repo_path,
-        aws_profile=settings.AWS_PROFILE,
-        cfn_region=settings.cfn_region,
+        aws_profile=aws_settings.AWS_PROFILE,
+        cfn_region=settings.cfn_region(aws_settings.AWS_REGION),
         only_names=only_names,
     )
     if run_contract_test.skip_build:

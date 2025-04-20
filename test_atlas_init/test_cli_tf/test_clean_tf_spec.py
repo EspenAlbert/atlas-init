@@ -33,13 +33,13 @@ def remove_nulls_and_nested(yaml_path: Path):
 def test_parse_resource_schema_v3(parse_resource_v3, resource_name):
     model = parse_resource_v3(resource_name)
     assert model
-    assert model.schema
-    assert model.schema.attributes
-    attribute_names = [attr.name for attr in model.schema.attributes]
+    assert model.local_schema
+    assert model.local_schema.attributes
+    attribute_names = [attr.name for attr in model.local_schema.attributes]
     assert attribute_names
     logger.info(f"attributes for {model.name}: {attribute_names}")
     nested_attributes = [
-        attr.name for attr in model.schema.attributes if attr.is_nested
+        attr.name for attr in model.local_schema.attributes if attr.is_nested
     ]
     logger.info(f"nested_attributes for {model.name}: {nested_attributes}")
 

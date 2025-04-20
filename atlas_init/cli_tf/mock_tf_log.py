@@ -33,7 +33,7 @@ from atlas_init.repos.go_sdk import (
     download_admin_api,
     parse_api_spec_paths,
 )
-from atlas_init.settings.path import DEFAULT_DOWNLOADS_DIR
+from atlas_init.settings.env_vars import init_settings
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,8 @@ def resolve_admin_api_path(sdk_repo_path_str: str, sdk_branch: str, admin_api_pa
         assert sdk_repo_path.exists(), f"not found sdk_repo_path={sdk_repo_path}"
         resolved_admin_api_path = api_spec_path_transformed(sdk_repo_path)
     else:
-        resolved_admin_api_path = DEFAULT_DOWNLOADS_DIR / "atlas-api-transformed.yaml"
+        settings = init_settings()
+        resolved_admin_api_path = settings.atlas_atlas_api_transformed_yaml
         if not is_cache_up_to_date(resolved_admin_api_path, 3600):
             download_admin_api(resolved_admin_api_path, sdk_branch)
     assert resolved_admin_api_path.exists(), f"unable to resolve admin_api_path={resolved_admin_api_path}"

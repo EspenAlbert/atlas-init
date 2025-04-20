@@ -20,17 +20,13 @@ from atlas_init.cli_tf.go_test_run import GoTestRun, parse
 from atlas_init.repos.path import (
     GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS,
 )
-from atlas_init.settings.path import (
-    DEFAULT_GITHUB_CI_RUN_LOGS,
-    DEFAULT_GITHUB_SUMMARY_DIR,
-)
+from atlas_init.settings.env_vars import init_settings
 
 logger = logging.getLogger(__name__)
 
 GH_TOKEN_ENV_NAME = "GH_TOKEN"  # noqa: S105 #nosec
-GITHUB_CI_RUN_LOGS_ENV_NAME = "GITHUB_CI_RUN_LOGS"
 GITHUB_CI_SUMMARY_DIR_ENV_NAME = "GITHUB_CI_SUMMARY_DIR_ENV_NAME"
-REQUIRED_GH_ENV_VARS = [GH_TOKEN_ENV_NAME, GITHUB_CI_RUN_LOGS_ENV_NAME]
+REQUIRED_GH_ENV_VARS = [GH_TOKEN_ENV_NAME]
 MAX_DOWNLOADS = 5
 
 
@@ -154,19 +150,11 @@ def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
 
 
 def logs_dir() -> Path:
-    logs_dir_str = os.environ.get(GITHUB_CI_RUN_LOGS_ENV_NAME)
-    if not logs_dir_str:
-        logger.info(f"using {DEFAULT_GITHUB_CI_RUN_LOGS} to store github ci logs!")
-        return DEFAULT_GITHUB_CI_RUN_LOGS
-    return Path(logs_dir_str)
+    return init_settings().github_ci_run_logs
 
 
 def summary_dir(summary_name: str) -> Path:
-    summary_dir_str = os.environ.get(GITHUB_CI_SUMMARY_DIR_ENV_NAME)
-    if not summary_dir_str:
-        logger.info(f"using {DEFAULT_GITHUB_SUMMARY_DIR / summary_name} to store summaries")
-        return DEFAULT_GITHUB_SUMMARY_DIR / summary_name
-    return Path(summary_dir_str) / summary_name
+    return init_settings().github_ci_summary_dir / summary_name
 
 
 def workflow_logs_dir(workflow: WorkflowRun) -> Path:

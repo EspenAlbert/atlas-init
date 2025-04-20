@@ -16,7 +16,7 @@ from atlas_init.cli_tf.go_test_run import (
 )
 from atlas_init.settings.config import TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
-from atlas_init.settings.path import DEFAULT_DOWNLOADS_DIR
+from atlas_init.settings.path import load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,7 @@ def env_vars_for_capture(mode: GoTestCaptureMode) -> dict[str, str]:
 
 
 class GoTestResult(Entity):
+    logs_dir: Path
     runs: dict[str, list[GoTestRun]] = Field(default_factory=dict)
     failure_names: set[str] = Field(default_factory=set)
 
@@ -66,7 +67,7 @@ class GoTestResult(Entity):
         if prev_test_results:
             logger.warning(f"2nd time test results for {test_name}")
         for result in test_results:
-            log_path = _log_path(test_name)
+            log_path = _log_path(self.logs_dir, test_name)
             result.log_path = log_path
         prev_test_results.extend(test_results)
         return all(run.is_pass for run in test_results)
@@ -95,7 +96,8 @@ def run_go_tests(
     )
     if ci_value := test_env.pop("CI", None):
         logger.warning(f"popped CI={ci_value}")
-    results = GoTestResult()
+    logs_dir = settings.go_test_logs_dir
+    results = GoTestResult(logs_dir=logs_dir)
     commands_to_run: dict[str, str] = {}
     for group in groups:
         if group.sequential_tests:
@@ -118,6 +120,7 @@ def run_go_tests(
     return _run_tests(
         results,
         repo_path,
+        logs_dir,
         commands_to_run,
         test_env,
         test_timeout_s=timeout_minutes * 60,
@@ -170,7 +173,7 @@ def resolve_env_vars(
     if env_vars == GoEnvVars.manual:
         test_env_vars = settings.load_profile_manual_env_vars(skip_os_update=True)
     elif env_vars == GoEnvVars.vscode:
-        test_env_vars = settings.load_env_vars(settings.env_vars_vs_code)
+        test_env_vars = load_dotenv(settings.env_vars_vs_code)
     else:
         raise NotImplementedError(f"don't know how to load env_vars={env_vars}")
     test_env_vars |= {
@@ -188,6 +191,7 @@ def resolve_env_vars(
 def _run_tests(
     results: GoTestResult,
     repo_path: Path,
+    logs_dir: Path,
     commands_to_run: dict[str, str],
     test_env: dict[str, str],
     test_timeout_s: int = 301 * 60,
@@ -199,11 +203,11 @@ def _run_tests(
     actual_workers = min(max_workers, len(commands_to_run)) or 1
     with ThreadPoolExecutor(max_workers=actual_workers) as pool:
         for name, command in sorted(commands_to_run.items()):
-            log_path = _log_path(name)
+            log_path = _log_path(logs_dir, name)
             if log_path.exists() and log_path.read_text():
                 if re_run:
                     logger.info(f"moving existing logs of {name} to old dir")
-                    move_logs_to_dir({name}, dir_name="old")
+                    move_logs_to_dir(logs_dir, {name}, dir_name="old")
                 else:
                     logger.info(f"skipping {name} because log exists")
                     continue
@@ -229,7 +233,7 @@ def _run_tests(
             continue
         context = GoTestContext(
             name=name,
-            html_url=f"file://{_log_path(name)}",
+            html_url=f"file://{_log_path(logs_dir, name)}",
             steps=[GoTestContextStep(name="local-run")],
         )
         try:
@@ -250,14 +254,14 @@ def _run_tests(
         if not results.add_test_results_all_pass(name, parsed_tests):
             results.failure_names.add(name)
     if failure_names := results.failure_names:
-        move_logs_to_dir(failure_names)
+        move_logs_to_dir(logs_dir, failure_names)
         logger.error(f"failed to run tests: {sorted(failure_names)}")
     return results
 
 
-def move_logs_to_dir(names: set[str], dir_name: str = "failures"):
-    new_dir = DEFAULT_DOWNLOADS_DIR / dir_name
-    for log in DEFAULT_DOWNLOADS_DIR.glob("*.log"):
+def move_logs_to_dir(logs_dir: Path, names: set[str], dir_name: str = "failures"):
+    new_dir = logs_dir / dir_name
+    for log in logs_dir.glob("*.log"):
         if log.stem in names:
             text = log.read_text()
             assert "\n" in text
@@ -266,5 +270,5 @@ def move_logs_to_dir(names: set[str], dir_name: str = "failures"):
             log.rename(new_dir / f"{ts}.{log.name}")
 
 
-def _log_path(name: str) -> Path:
-    return DEFAULT_DOWNLOADS_DIR / f"{name}.log"
+def _log_path(logs_dir: Path, name: str) -> Path:
+    return logs_dir / f"{name}.log"

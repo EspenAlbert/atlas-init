@@ -65,7 +65,7 @@ requires-dist = [
     { name = "orjson", specifier = "==3.10.13" },
     { name = "pydantic-settings", specifier = "==2.7.1" },
     { name = "pygithub", specifier = "==2.6.1" },
-    { name = "python-hcl2", specifier = "==6.1.0" },
+    { name = "python-hcl2", specifier = "==7.1.0" },
     { name = "requests", specifier = "==2.32.2" },
     { name = "rich", specifier = "==14.0.0" },
     { name = "stringcase", specifier = "==1.2.0" },
@@ -79,7 +79,7 @@ dev = [
     { name = "bandit", specifier = "==1.8.0" },
     { name = "hatchling", specifier = "==1.24.2" },
     { name = "pymongo", specifier = "==4.7.3" },
-    { name = "pyright", specifier = "==1.1.391" },
+    { name = "pyright", specifier = "==1.1.399" },
     { name = "pytest", specifier = "==8.3.4" },
     { name = "pytest-cov", specifier = "==6.0.0" },
     { name = "pytest-regressions", specifier = "==2.5.0" },
@@ -622,15 +622,15 @@ wheels = [
 
 [[package]]
 name = "pyright"
-version = "1.1.391"
+version = "1.1.399"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "nodeenv" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/05/4ea52a8a45cc28897edb485b4102d37cbfd5fce8445d679cdeb62bfad221/pyright-1.1.391.tar.gz", hash = "sha256:66b2d42cdf5c3cbab05f2f4b76e8bec8aa78e679bfa0b6ad7b923d9e027cadb2", size = 21965 }
+sdist = { url = "https://files.pythonhosted.org/packages/db/9d/d91d5f6d26b2db95476fefc772e2b9a16d54c6bd0ea6bb5c1b6d635ab8b4/pyright-1.1.399.tar.gz", hash = "sha256:439035d707a36c3d1b443aec980bc37053fbda88158eded24b8eedcf1c7b7a1b", size = 3856954 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/89/66f49552fbeb21944c8077d11834b2201514a56fd1b7747ffff9630f1bd9/pyright-1.1.391-py3-none-any.whl", hash = "sha256:54fa186f8b3e8a55a44ebfa842636635688670c6896dcf6cf4a7fc75062f4d15", size = 18579 },
+    { url = "https://files.pythonhosted.org/packages/2f/b5/380380c9e7a534cb1783c70c3e8ac6d1193c599650a55838d0557586796e/pyright-1.1.399-py3-none-any.whl", hash = "sha256:55f9a875ddf23c9698f24208c764465ffdfd38be6265f7faf9a176e1dc549f3b", size = 5592584 },
 ]
 
 [[package]]
@@ -710,14 +710,14 @@ wheels = [
 
 [[package]]
 name = "python-hcl2"
-version = "6.1.0"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lark" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/59/881b1644b748079c01d51b6c422cd625802c7690c34ff59660433295c88d/python-hcl2-6.1.0.tar.gz", hash = "sha256:c06c0547e731dcb2453d68470a0f1e38869d6b5115a833e44c50d7083ce2423e", size = 30741 }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/18/e88dec05969a4f5775bdc073137cf81ddfe6f14bd278b188b386c2838faa/python_hcl2-7.1.0.tar.gz", hash = "sha256:23a447d3d40001ad707f883a88900d72ae14ae56a820a83687355cce7c75d33b", size = 33539 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/61/89df286726599f6839757f312cf42ed9178f3617ebb94480514cca416200/python_hcl2-6.1.0-py3-none-any.whl", hash = "sha256:6ee4bbaf9abf813e65fbcad514278d387d0a3d57e53dd16c413154e6989b0d71", size = 20550 },
+    { url = "https://files.pythonhosted.org/packages/e2/90/825d3f9f505c937511286356c55727f97d5558eec6152c2116f348dd5766/python_hcl2-7.1.0-py3-none-any.whl", hash = "sha256:6ed0b0c2bd59c87f4a86c657348e65d35077635e0ac71c495d07cff4509a1b08", size = 21423 },
 ]
 
 [[package]]

@@ -5,18 +5,20 @@ import pytest
 from atlas_init.settings.env_vars import (
     ENV_PROJECT_NAME,
     ENV_TEST_SUITES,
-    PLACEHOLDER_VALUE,
-    REQUIRED_FIELDS,
-    AtlasInitSettings,
     EnvVarsCheck,
+    EnvVarsError,
     init_settings,
 )
+from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import repo_path_rel_path
-from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required_vars
+from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required_vars, REQUIRED_FIELDS
 
 
-def test_set_profiles_path(tmp_paths, tmp_path):
-    assert tmp_paths.profiles_path == tmp_path
+def test_set_profiles_path(settings, tmp_path):
+    assert str(settings.profiles_path) == str(
+        settings.static_root / "profiles"
+    )
+    assert str(settings.profiles_path).startswith(str(tmp_path))
 
 
 @dataclass
@@ -46,19 +48,8 @@ ENV_VARS_CHECKS = [
         expected_missing=REQUIRED_FIELDS,
     ),
     _TestCase(
-        "empty env-vars + project_name, should list all",
-        expected_missing=REQUIRED_FIELDS + [ENV_PROJECT_NAME],
-        required_extra=[ENV_PROJECT_NAME],
-    ),
-    _TestCase(
         "ok",
         env_vars_in_file=mongodb_atlas_required_vars(),
-    ),
-    _TestCase(
-        "missing project_name",
-        env_vars_in_file=mongodb_atlas_required_vars(),
-        required_extra=[ENV_PROJECT_NAME],
-        expected_missing=[ENV_PROJECT_NAME],
     ),
     _TestCase(
         "ok, project_name set",
@@ -78,23 +69,18 @@ ENV_VARS_CHECKS = [
 @pytest.mark.parametrize(
     "test_case", ENV_VARS_CHECKS, ids=[test_case.name for test_case in ENV_VARS_CHECKS]
 )
-def test_check_env_vars(monkeypatch, test_case, tmp_paths):
+def test_check_env_vars(monkeypatch, test_case, settings):
+    # sourcery skip: no-conditionals-in-tests
     if env_vars_in_file := test_case.env_vars_in_file:
-        write_required_vars(tmp_paths, env_vars_in_file)
+        write_required_vars(settings, env_vars_in_file)
     test_case.load_env_vars(monkeypatch)
-    assert (
-        AtlasInitSettings.check_env_vars(
-            required_env_vars=test_case.required_extra,
-        )
-        == test_case.expected
-    )
-
-
-def test_init_settings_non_required_use_placeholders(tmp_paths):
-    settings = init_settings(non_required=True)
-    settings_dict = settings.model_dump()
-    placehodler_values = [settings_dict.get(key, "") for key in REQUIRED_FIELDS]
-    assert placehodler_values == [PLACEHOLDER_VALUE] * len(REQUIRED_FIELDS)
+    if test_case.expected.is_ok:
+        init_settings(AtlasSettings)
+        return
+    with pytest.raises(EnvVarsError) as error:
+        init_settings(AtlasSettings)
+    assert error.value.ambiguous == test_case.expected.ambiguous
+    assert error.value.missing == test_case.expected.missing
 
 
 @pytest.mark.skip("needs a profile to exist")
