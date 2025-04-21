@@ -136,7 +136,6 @@ def example_handler(
     )
     type_name = inputs.type_name
     stack_name = inputs.stack_name
-    env_vars_generated = settings.load_env_vars_full()
     region = inputs.region
     operation = inputs.operation
     stack_timeout_s = inputs.stack_timeout_s
@@ -160,7 +159,6 @@ def example_handler(
             return
     template_path = infer_template_path(repo_path, type_name, stack_name, inputs.example_name)
     template_path, parameters, not_found = decode_parameters(
-        exported_env_vars=env_vars_generated,
         template_path=template_path,
         stack_name=stack_name,
         force_params=inputs.resource_params,

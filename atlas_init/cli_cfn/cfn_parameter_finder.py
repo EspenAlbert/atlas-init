@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -158,7 +159,6 @@ def updated_template_path(path: Path) -> Path:
 
 
 def decode_parameters(
-    exported_env_vars: dict[str, str],
     template_path: Path,
     type_name: str,
     stack_name: str,
@@ -186,7 +186,7 @@ def decode_parameters(
             parameters_dict[param_name] = type_default
             continue
         if env_key := parameters_exported_env_vars.get(param_name):  # noqa: SIM102
-            if env_value := exported_env_vars.get(env_key):
+            if env_value := os.environ.get(env_key):
                 logger.info(f"using {env_key} to fill parameter: {param_name}")
                 parameters_dict[param_name] = env_value
                 continue
