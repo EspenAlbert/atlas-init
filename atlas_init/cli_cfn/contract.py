@@ -53,7 +53,6 @@ class RunContractTestOutput(Entity):
 
 class CreateContractTestInputs(Entity):
     resource_path: Path
-    env_vars_generated: dict[str, str]
     log_group_name: str
 
 
@@ -115,10 +114,8 @@ def contract_test(
     settings = settings or init_settings(AWSSettings)
     resource_paths = resource_paths or find_paths(Repo.CFN)
     resource_name = resource_paths.resource_name
-    generated_env_vars = settings.load_env_vars_full()
     create_inputs = CreateContractTestInputs(
         resource_path=resource_paths.resource_path,
-        env_vars_generated=generated_env_vars,
         log_group_name=f"mongodb-atlas-{resource_name}-logs",
     )
     create_response = create_contract_test_inputs(create_inputs)
@@ -164,7 +161,7 @@ def create_contract_test_inputs(
     input_files = []
     for template in sorted(test_dir.glob("*.template.json")):
         template_file = template.read_text()
-        template_file = file_replacements(template_file, event.env_vars_generated, template.name)
+        template_file = file_replacements(template_file, template.name)
         inputs_file = inputs_dir / template.name.replace(".template", "")
         ensure_parents_write_text(inputs_file, template_file)
         input_files.append(inputs_file)
@@ -173,11 +170,11 @@ def create_contract_test_inputs(
     return CreateContractTestInputsResponse(input_files=input_files, sample_files=sample_files)
 
 
-def file_replacements(text: str, replacements: dict[str, str], file_name: str) -> str:
+def file_replacements(text: str, file_name: str) -> str:
     for match in re.finditer(r"\${(\w+)}", text):
         var_name = match.group(1)
-        if var_name in replacements:
-            text = text.replace(match.group(0), replacements[var_name])
+        if env_value := os.environ.get(var_name):
+            text = text.replace(match.group(0), env_value)
         else:
             logger.warning(f"found placeholder {match.group(0)} in {file_name} but no replacement")
     return text

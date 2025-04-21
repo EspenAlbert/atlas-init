@@ -4,7 +4,7 @@ import requests
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from zero_3rdparty.id_creator import simple_id
 
-from atlas_init.settings.env_vars import init_settings
+from atlas_init.settings.env_vars import env_vars_cls_or_none, init_settings
 from atlas_init.settings.env_vars_generated import (
     AtlasSettingsWithProject,
     AWSSettings,
@@ -23,15 +23,15 @@ def trigger_app():
 
 
 def create_realm_app():
-    settings = init_settings()
-    atlas_settings = settings.env_vars_cls(AtlasSettingsWithProject)
-    cluster_settings = settings.env_vars_cls(TFModuleCluster)
+    settings = init_settings(AtlasSettingsWithProject, TFModuleCluster, AWSSettings)
+    atlas_settings = AtlasSettingsWithProject.from_env()
+    cluster_settings = TFModuleCluster.from_env()
+    aws_settings = AWSSettings.from_env()
     project_id = atlas_settings.MONGODB_ATLAS_PROJECT_ID
     base_url = atlas_settings.realm_url
     cluster_name = cluster_settings.MONGODB_ATLAS_CLUSTER_NAME
     auth_headers = login_to_realm(settings, base_url)
-    realm_settings = settings.env_vars_cls_or_none(RealmSettings, path=settings.env_vars_trigger)
-    aws_settings = settings.env_vars_cls(AWSSettings)
+    realm_settings = env_vars_cls_or_none(RealmSettings, dotenv_path=settings.env_vars_trigger)
     if realm_settings and function_exists(
         base_url,
         auth_headers,

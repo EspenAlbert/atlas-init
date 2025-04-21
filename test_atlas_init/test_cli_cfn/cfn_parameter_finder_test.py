@@ -15,7 +15,6 @@ TEST_DATA = Path(__file__).parent / "test_data"
 
 def test_decode_parameters_project():
     template_path, params, missing_params = decode_parameters(  # type: ignore
-        {},
         TEST_DATA / "cfn_project_template.json",
         "MongoDB::Atlas::Project",
         "test-stack",

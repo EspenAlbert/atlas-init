@@ -53,8 +53,8 @@ def reg(
         if local:
             deregister_cfn_resource_type(type_name, deregister=not dry_run, region_filter=region)
     logger.info(f"ready to activate {type_name}")
-    settings = init_settings(TFModuleCfn)
-    cfn_execution_role = settings.env_vars_cls(TFModuleCfn).CFN_EXAMPLE_EXECUTION_ROLE
+    init_settings(TFModuleCfn)
+    cfn_execution_role = TFModuleCfn.from_env().CFN_EXAMPLE_EXECUTION_ROLE
     last_third_party = get_last_cfn_type(type_name, region, is_third_party=True)
     assert last_third_party, f"no 3rd party extension found for {type_name} in {region}"
     if dry_run:
@@ -100,7 +100,6 @@ def inputs(
     cwd = current_dir()
     suite = suites[0]
     assert suite.cwd_is_repo_go_pkg(cwd, repo_alias="cfn")
-    env_extra = settings.load_env_vars_full()
     CREATE_FILENAME = "cfn-test-create-inputs.sh"  # noqa: N806
     create_dirs = ["test/contract-testing", "test"]
     parent_dir = None
@@ -113,7 +112,7 @@ def inputs(
     if not run_command_is_ok(
         cwd=cwd,
         cmd=f"./{parent_dir}/{CREATE_FILENAME}" + " ".join(context.args),
-        env={**os.environ} | env_extra,
+        env={**os.environ},
         logger=logger,
     ):
         logger.critical("failed to create cfn contract input files")
