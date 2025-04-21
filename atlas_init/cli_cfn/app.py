@@ -100,7 +100,6 @@ def inputs(
     cwd = current_dir()
     suite = suites[0]
     assert suite.cwd_is_repo_go_pkg(cwd, repo_alias="cfn")
-    env_extra = settings.load_env_vars_full()
     CREATE_FILENAME = "cfn-test-create-inputs.sh"  # noqa: N806
     create_dirs = ["test/contract-testing", "test"]
     parent_dir = None
@@ -113,7 +112,7 @@ def inputs(
     if not run_command_is_ok(
         cwd=cwd,
         cmd=f"./{parent_dir}/{CREATE_FILENAME}" + " ".join(context.args),
-        env={**os.environ} | env_extra,
+        env={**os.environ},
         logger=logger,
     ):
         logger.critical("failed to create cfn contract input files")

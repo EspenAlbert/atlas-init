@@ -144,11 +144,6 @@ class AtlasInitSettings(StaticSettings):
     def cfn_region(self, default: str) -> str:
         return self.atlas_init_cfn_region or default
 
-    def load_env_vars_full(self) -> dict[str, str]:
-        env_path = self.env_vars_vs_code
-        assert env_path.exists(), f"no env-vars exist {env_path} have you forgotten apply?"
-        return load_dotenv(env_path)
-
     def include_extra_env_vars_in_vscode(self, extra_env_vars: dict[str, str]) -> None:
         extra_name = ", ".join(extra_env_vars.keys())
         original_env_vars = load_dotenv(self.env_vars_vs_code)
@@ -241,13 +236,13 @@ def init_settings(
     *settings_classes: type[BaseModel],
 ) -> AtlasInitSettings:
     settings = AtlasInitSettings.from_env()
-    env_vars = settings.manual_env_vars
+    profile_env_vars = settings.manual_env_vars
     vscode_env_vars = settings.env_vars_vs_code
     if vscode_env_vars.exists():
-        env_vars |= load_dotenv(vscode_env_vars)
+        profile_env_vars |= load_dotenv(vscode_env_vars)
     required_env_vars = collect_required_env_vars(list(settings_classes))
-    ambiguous = detect_ambiguous_env_vars(env_vars)
-    missing_env_vars = find_missing_env_vars(required_env_vars, env_vars)
+    ambiguous = detect_ambiguous_env_vars(profile_env_vars)
+    missing_env_vars = find_missing_env_vars(required_env_vars, profile_env_vars)
 
     if ambiguous:
         logger.warning(
@@ -256,9 +251,9 @@ def init_settings(
     if missing_env_vars or ambiguous:
         raise EnvVarsError(missing_env_vars, ambiguous)
 
-    if new_updates := {k: v for k, v in env_vars.items() if k not in os.environ}:
+    if new_updates := {k: v for k, v in profile_env_vars.items() if k not in os.environ}:
         logger.info(f"loading env-vars {','.join(sorted(new_updates))}")
-        os.environ.update(new_updates)
+        os.environ |= new_updates
     for cls in settings_classes:
         cls()  # ensure any errors are raised
     return AtlasInitSettings.from_env()
