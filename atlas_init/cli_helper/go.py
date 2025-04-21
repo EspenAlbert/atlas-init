@@ -171,7 +171,7 @@ def resolve_env_vars(
     skip_os: bool = False,
 ) -> dict[str, str]:
     if env_vars == GoEnvVars.manual:
-        test_env_vars = settings.load_profile_manual_env_vars(skip_os_update=True)
+        test_env_vars = settings.manual_env_vars
     elif env_vars == GoEnvVars.vscode:
         test_env_vars = load_dotenv(settings.env_vars_vs_code)
     else:
