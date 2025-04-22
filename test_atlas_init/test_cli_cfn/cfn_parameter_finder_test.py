@@ -5,35 +5,26 @@ import pytest
 from model_lib import parse_payload
 
 from atlas_init.cli_cfn.cfn_parameter_finder import (
-    decode_parameters,
+    CfnTemplateUnknownParametersError,
     dump_resource_to_file,
-    updated_template_path,
+    infer_template_parameters,
 )
 
 TEST_DATA = Path(__file__).parent / "test_data"
 
 
-def test_decode_parameters_project():
-    template_path, params, missing_params = decode_parameters(  # type: ignore
-        TEST_DATA / "cfn_project_template.json",
-        "MongoDB::Atlas::Project",
-        "test-stack",
-        {"TeamRoles": "FORCED"},  # type: ignore
-    )
-    print(params)
-    assert missing_params
-    team_roles_value = next(
-        (p["ParameterValue"] for p in params if p["ParameterKey"] == "TeamRoles"), ""  # type: ignore
-    )
-    assert team_roles_value == "FORCED"
-    assert sorted(missing_params) == ["KeyId", "OrgId", "TeamId"]  # type: ignore
-
-def test_updated_template_path():
-    assert (
-        str(updated_template_path(Path("free-tier-M0-cluster.json")))
-        == "free-tier-M0-cluster-updated.json"
-    )
-
+def test_infer_template_parameters(tmp_path):
+    original_template = TEST_DATA / "cfn_project_template.json"
+    template_path = tmp_path / "cfn_project_template.json"
+    template_path.write_text(original_template.read_text())
+    with pytest.raises(CfnTemplateUnknownParametersError) as exc:
+        infer_template_parameters(
+            template_path,
+            "MongoDB::Atlas::Project",
+            "test-stack",
+            {"TeamRoles": "FORCED"},
+        )
+    assert exc.value.unknown_params == ["KeyId", "OrgId", "TeamId"]
 
 @pytest.mark.skipif(
     any(os.environ.get(name, "") == "" for name in ["SRC_TEMPLATE", "DEST_TEMPLATE"]),

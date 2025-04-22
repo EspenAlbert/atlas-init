@@ -15,9 +15,9 @@ from atlas_init.cli_cfn.aws import (
 from atlas_init.cli_cfn.aws import delete_stack as delete_stack_aws
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     CfnTemplate,
-    decode_parameters,
     dump_resource_to_file,
     dump_sample_file,
+    infer_template_parameters,
     infer_template_path,
 )
 from atlas_init.repos.cfn import CfnType, Operation, infer_cfn_type_name
@@ -142,6 +142,13 @@ def example_handler(
     delete_first = inputs.delete_stack_first
     force_deregister = inputs.force_deregister
     execution_role = inputs.execution_role
+
+    template_path = infer_template_path(repo_path, type_name, stack_name, inputs.example_name)
+    parameters = infer_template_parameters(template_path, type_name, stack_name, inputs.resource_params or {})
+    logger.info(f"parameters: {parameters}")
+    if not prompt.Confirm("parameters 👆looks good?")():
+        raise typer.Abort
+
     logger.info(f"using execution role: {execution_role}")
     if not inputs.is_export and not inputs.force_keep:
         ensure_resource_type_activated(
@@ -157,14 +164,6 @@ def example_handler(
         delete_stack_aws(region, stack_name, execution_role)
         if not delete_first:
             return
-    template_path = infer_template_path(repo_path, type_name, stack_name, inputs.example_name)
-    template_path, parameters, not_found = decode_parameters(
-        template_path=template_path,
-        stack_name=stack_name,
-        force_params=inputs.resource_params,
-        resource_params=inputs.resource_params,
-        type_name=type_name,
-    )
     if inputs.register_all_types_in_example:
         extra_example_types = [t for t in CfnTemplate.read_template_types(template_path) if t != type_name]
         for extra_type in extra_example_types:
@@ -177,13 +176,6 @@ def example_handler(
                 resource_path,
                 execution_role,
             )
-    logger.info(f"parameters: {parameters}")
-    if not_found:
-        # TODO: support specifying these extra
-        logger.critical(f"need to fill out parameters manually: {not_found} for {type_name}")
-        raise typer.Exit(1)
-    if not prompt.Confirm("parameters 👆looks good?")():
-        raise typer.Abort
     if inputs.export_example_to_inputs:
         out_inputs = dump_resource_to_file(resource_path / "inputs", template_path, type_name, parameters)
         logger.info(f"dumped to {out_inputs} ✅")

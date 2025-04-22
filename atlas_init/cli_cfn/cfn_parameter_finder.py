@@ -8,12 +8,14 @@ from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
 from zero_3rdparty.file_utils import clean_dir
+from zero_3rdparty.dict_nested import iter_nested_key_values, update
 
 from atlas_init.cli_cfn.files import create_sample_file, default_log_group_name
 from atlas_init.cloud.aws import PascalAlias
 from atlas_init.repos.cfn import CfnType, cfn_examples_dir, cfn_type_normalized
 
 logger = logging.getLogger(__name__)
+UNKNOWN_PLACEHOLDER = "UNKNOWN"
 
 
 class TemplatePathNotFoundError(Exception):
@@ -35,19 +37,23 @@ def infer_template_path(repo_path: Path, type_name: str, stack_name: str, exampl
     if not template_paths:
         raise TemplatePathNotFoundError(type_name, examples_dir)
     if len(template_paths) > 1:
-        expected_folder = cfn_type_normalized(type_name)
-        if (expected_folders := [p for p in template_paths if p.parent.name == expected_folder]) and len(
-            expected_folders
-        ) == 1:
-            logger.info(f"using template: {expected_folders[0]}")
-            return expected_folders[0]
-        choices = {p.stem: p for p in template_paths}
-        if stack_path := choices.get(stack_name):
-            logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
-            return stack_path
-        selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
-        return choices[selected_path]
+        return choose_template_path(type_name, template_paths, stack_name)
     return template_paths[0]
+
+
+def choose_template_path(type_name: str, template_paths: list[Path], stack_name: str) -> Path:
+    expected_folder = cfn_type_normalized(type_name)
+    if (expected_folders := [p for p in template_paths if p.parent.name == expected_folder]) and len(
+        expected_folders
+    ) == 1:
+        logger.info(f"using template: {expected_folders[0]}")
+        return expected_folders[0]
+    choices = {p.stem: p for p in template_paths}
+    if stack_path := choices.get(stack_name):
+        logger.info(f"using template @ {stack_path} based on stack name: {stack_name}")
+        return stack_path
+    selected_path = prompt.Prompt("Choose example template: ", choices=list(choices))()
+    return choices[selected_path]
 
 
 parameters_exported_env_vars = {
@@ -122,10 +128,6 @@ class CfnTemplate(Entity):
         assert self.find_resource(type_name)
         return cfn_type_normalized(type_name)
 
-    def add_resource_params(self, type_name: str, resources: dict[str, Any]):
-        resource = self.find_resource(type_name)
-        resource.properties.update(resources)
-
     def get_resource_properties(self, type_name: str, parameters: list[ParameterTypeDef]) -> dict:
         resource = self.find_resource(type_name)
         properties = resource.properties
@@ -152,40 +154,30 @@ class CfnTemplate(Entity):
         return properties
 
 
-def updated_template_path(path: Path) -> Path:
-    old_stem = path.stem
-    new_name = path.name.replace(old_stem, f"{old_stem}-updated")
-    return path.with_name(new_name)
+class CfnTemplateUnknownParametersError(Exception):
+    def __init__(self, unknown_params: list[str]) -> None:
+        self.unknown_params = unknown_params
 
 
-def decode_parameters(
-    template_path: Path,
-    type_name: str,
-    stack_name: str,
-    force_params: dict[str, Any] | None = None,
-    resource_params: dict[str, Any] | None = None,
-) -> tuple[Path, list[ParameterTypeDef], set[str]]:
-    cfn_template = parse_model(template_path, t=CfnTemplate)
-    if resource_params:
-        cfn_template.add_resource_params(type_name, resource_params)
-        template_path = updated_template_path(template_path)
-        logger.info(f"updating template {template_path} with {resource_params}")
-        raw_dict = cfn_template.model_dump(by_alias=True, exclude_unset=True)
-        file_extension = template_path.suffix.lstrip(".")
-        dump_format = "pretty_json" if file_extension == "json" else file_extension
-        template_str = dump(raw_dict, format=dump_format)
-        template_path.write_text(template_str)
-    parameters_dict: dict[str, Any] = {}
+def infer_template_parameters(
+    path: Path, type_name: str, stack_name: str, explicit_params: dict[str, Any]
+) -> list[ParameterTypeDef]:
+    cfn_template = parse_model(path, t=CfnTemplate)
+    parameters_dict: dict[str, Any] = {key: UNKNOWN_PLACEHOLDER for key in cfn_template.parameters.keys()}
     type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
         type_defaults[stack_name_param] = stack_name
-
     for param_name, param in cfn_template.parameters.items():
+        explicit_value = explicit_params.get(param_name)
+        if explicit_value is not None:
+            logger.info(f"using explicit value for {param_name}={explicit_value}")
+            parameters_dict[param_name] = explicit_value
+            continue
         if type_default := type_defaults.get(param_name):
             logger.info(f"using type default for {param_name}={type_default}")
             parameters_dict[param_name] = type_default
             continue
-        if env_key := parameters_exported_env_vars.get(param_name):  # noqa: SIM102
+        if env_key := parameters_exported_env_vars.get(param_name):
             if env_value := os.environ.get(env_key):
                 logger.info(f"using {env_key} to fill parameter: {param_name}")
                 parameters_dict[param_name] = env_value
@@ -195,19 +187,12 @@ def decode_parameters(
             parameters_dict[param_name] = "false"
             continue
         if default := param.default:
+            logger.info(f"using default for {param_name}={default}")
             parameters_dict[param_name] = default
             continue
-        logger.warning(f"unable to auto-filll param: {param_name}")
-        parameters_dict[param_name] = "UNKNOWN"
-
-    if force_params:
-        logger.warning(f"overiding params: {force_params} for {stack_name}")
-        parameters_dict |= force_params
-    unknown_params = {key for key, value in parameters_dict.items() if value == "UNKNOWN"}
-    parameters: list[ParameterTypeDef] = [
-        {"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()
-    ]
-    return template_path, parameters, unknown_params
+    if unknown_params := {key for key, value in parameters_dict.items() if value == UNKNOWN_PLACEHOLDER}:
+        raise CfnTemplateUnknownParametersError(sorted(unknown_params))
+    return [{"ParameterKey": key, "ParameterValue": value} for key, value in parameters_dict.items()]
 
 
 def dump_resource_to_file(
@@ -240,3 +225,26 @@ def dump_sample_file(
         prev_resource_state={},
     )
     return samples_path
+
+
+def modify_resource_with_params(resource: CfnResource, resource_params: dict[str, Any]) -> None:
+    updates: dict[str, tuple[str, Any]] = {}
+    resource_properties = resource.properties
+    for path, value in iter_nested_key_values(resource_properties, include_list_indexes=True):
+        if not isinstance(value, dict):
+            continue
+        if "Ref" not in value:
+            continue
+        param_name = value["Ref"]
+        assert isinstance(param_name, str), f"Ref must be a string, {path}, got={param_name!r}"
+        if param_value := resource_params.get(param_name):
+            updates[param_name] = (path, param_value)
+        else:
+            logger.warning(f"unable to find parameter {param_name} in resource params, path={path}")
+
+    for param_name, param_value in resource_params.items():
+        if update_path_value := updates.get(param_name):
+            update(resource_properties, *update_path_value)
+        else:
+            logger.warning(f"No ref found for {param_name} assumming top level on resource")
+            resource_properties[param_name] = param_value
