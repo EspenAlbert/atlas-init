@@ -4,6 +4,8 @@ default:
     just --list
 pre-push: lint fmt-check build test
   @echo "All checks passed"
+quick: fmt fix lint
+  @echo "All quick checks passed"
 build:
   uv run scripts/file_utils.py check
   uv run scripts/file_utils.py copy

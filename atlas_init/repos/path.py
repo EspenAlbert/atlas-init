@@ -1,13 +1,17 @@
+import logging
+from collections import defaultdict
 from collections.abc import Callable
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
+import re
 from typing import NamedTuple
 
 from git import Repo as _GitRepo
 
 from atlas_init.settings.path import current_dir, repo_path_rel_path
 
+logger = logging.getLogger(__name__)
 GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS = "mongodb/terraform-provider-mongodbatlas"
 GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES = "mongodb/mongodbatlas-cloudformation-resources"
 _KNOWN_OWNER_PROJECTS = {
@@ -59,10 +63,10 @@ def is_resource_call(repo_path: Path) -> Callable[[Path], bool]:
 
 
 def resource_dir(repo_path: Path, full_path: Path) -> Path:
-    dir_name = resource_name(repo_path, full_path)
-    if not dir_name:
+    if dir_name := resource_name(repo_path, full_path):
+        return resource_root(repo_path) / dir_name
+    else:
         raise ValueError(f"no resource name for {full_path}")
-    return resource_root(repo_path) / dir_name
 
 
 class Repo(StrEnum):
@@ -116,10 +120,10 @@ def resource_name(repo_path: Path, full_path: Path) -> str:
     is_resource = is_resource_call(repo_path)
     if not root.exists():
         raise ValueError(f"no resource root found for {repo_path}")
-    for parent in [full_path, *full_path.parents]:
-        if parent.parent == root and is_resource(parent):
-            return parent.name
-    return ""
+    return next(
+        (parent.name for parent in [full_path, *full_path.parents] if parent.parent == root and is_resource(parent)),
+        "",
+    )
 
 
 def find_paths(assert_repo: Repo | None = None) -> ResourcePaths:
@@ -153,3 +157,77 @@ def find_go_mod_dir(repo_path: Path):
             return go_mod.parent
     msg = "go.mod not found or more than 1 level deep"
     raise ValueError(msg)
+
+
+def find_test_names(file: Path, prefix: str = "Test") -> list[str]:
+    test_names = []
+    with file.open("r") as f:
+        for line in f:
+            if line.startswith(f"func {prefix}"):
+                test_name = line.split("(")[0].strip().removeprefix("func ")
+                test_names.append(test_name)
+    return sorted(test_names)
+
+
+class MultipleResourceNames(ValueError):
+    def __init__(self, names: list[str]):
+        super().__init__(f"multiple resource names found: {names}")
+        self.names = names
+
+
+def find_tf_resource_name_in_test(path: Path, provider_prefix: str = "mongodbatlas_") -> str:
+    candidates = []
+    candidates.extend(
+        match.group(1) for match in re.finditer(rf"=\s\"{provider_prefix}([a-zA-Z0-9_]+)\.?", path.read_text())
+    )
+    if len(candidates) > 1:
+        pkg_name = path.parent.name
+        for candidate in candidates:
+            if candidate.replace("_", "") == pkg_name:
+                return candidate
+        logger.warning(f"multiple resource names found in {path}: {candidates}")
+        raise MultipleResourceNames(candidates)
+    return candidates[0] if candidates else ""
+
+
+def terraform_resource_test_names(
+    repo_path: Path, prefix: str = "Test", package_path: str = "internal/service"
+) -> dict[str, list[str]]:
+    """find all test names in the given package path"""
+    pkg_path = terraform_package_path(repo_path, package_path)
+    resource_dirs, _ = find_resource_dirs(pkg_path)
+    test_names = defaultdict(list)
+    for name, pkg_dir in resource_dirs.items():
+        for test_file in pkg_dir.glob("*_test.go"):
+            test_names[name].extend(find_test_names(test_file, prefix))
+    return test_names
+
+
+def terraform_package_path(repo_path: Path, package_path: str = "internal/service"):
+    pkg_path = repo_path / package_path
+    if not pkg_path.exists():
+        raise ValueError(f"package path not found: {pkg_path}")
+    return pkg_path
+
+
+def find_resource_dirs(pkg_path: Path) -> tuple[dict[str, Path], list[Path]]:
+    resource_dirs: dict[str, Path] = {}
+    non_resource_dirs: list[Path] = []
+    for pkg_dir in pkg_path.iterdir():
+        if not pkg_dir.is_dir():
+            continue
+        if pkg_dir.name == "testdata":
+            continue
+        found = False
+        for test_file in pkg_dir.glob("*_test.go"):
+            try:
+                if name := find_tf_resource_name_in_test(test_file):
+                    resource_dirs[name] = pkg_dir
+                    found = True
+            except MultipleResourceNames as e:
+                for name in e.names:
+                    resource_dirs[name] = pkg_dir
+                found = True
+        if not found:
+            non_resource_dirs.append(pkg_dir)
+    return resource_dirs, non_resource_dirs

@@ -254,3 +254,14 @@ def write_generated_vars(paths: AtlasInitSettings, env_vars_in_file: dict[str, s
 def cfn_resource_path(repo_path: Path, resource_name: str) -> Path:
     root = resource_root(repo_path)
     return root / resource_name
+
+
+@pytest.fixture()
+def tf_repo_path() -> Path:
+    repo_path = os.environ.get("REPO_PATH_TF", "")
+    if repo_path == "":
+        pytest.skip("REPO_PATH_TF not set")
+        return
+    tf_repo_path = Path(repo_path)
+    assert tf_repo_path.exists(), f"REPO_PATH_TF does not exist: {tf_repo_path}"
+    return tf_repo_path
