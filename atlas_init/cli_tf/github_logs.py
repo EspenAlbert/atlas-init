@@ -133,6 +133,10 @@ def parse_job_logs(job: WorkflowJob, logs_path: Path) -> list[GoTestRun]:
 
 
 def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
+    if job.conclusion in {"skipped", "cancelled", None}:
+        logger.info(f"not downloading job: {job.html_url}, conclusion: {job.conclusion}")
+        return None
+
     path = logs_file(workflow_dir, job)
     job_summary = f"found test job: {job.name}, attempt {job.run_attempt}, {job.created_at}, url: {job.html_url}"
     if path.exists():
