@@ -1,0 +1,329 @@
+from __future__ import annotations
+
+import logging
+import os
+import re
+from concurrent.futures import Future, ThreadPoolExecutor, wait
+from datetime import date, timedelta
+from pathlib import Path
+
+import typer
+from model_lib import Entity, Event
+from pydantic import Field, model_validator
+from pydantic_core import Url
+from zero_3rdparty.datetime_utils import utc_now
+
+from atlas_init.cli_helper.run import run_command_receive_result
+from atlas_init.cli_tf.github_logs import (
+    GH_TOKEN_ENV_NAME,
+    download_job_safely,
+    is_test_job,
+    tf_repo,
+)
+from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
+from atlas_init.cli_tf.go_test_tf_error import (
+    ErrorDetails,
+    GoTestError,
+    GoTestErrorClass,
+    extract_error_details,
+)
+from atlas_init.crud.tf_resource import (
+    TFErrors,
+    TFResources,
+    add_tf_error,
+    increase_tf_error_count,
+    read_tf_errors,
+    read_tf_resources,
+)
+from atlas_init.repos.path import Repo, current_repo_path
+from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
+
+logger = logging.getLogger(__name__)
+
+
+class TFCITestInput(Event):
+    settings: AtlasInitSettings = Field(default_factory=init_settings)
+    repo_path: Path = Field(default_factory=lambda: current_repo_path(Repo.TF))
+    test_group_name: str = ""
+    max_days_ago: int = 1
+    branch: str = "master"
+    workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
+    names: set[str] = Field(default_factory=set)
+    summary_name: str = ""
+
+    @model_validator(mode="after")
+    def set_workflow_file_stems(self) -> TFCITestInput:
+        if not self.workflow_file_stems:
+            self.workflow_file_stems = set(_TEST_STEMS)
+        return self
+
+
+def ci_tests(
+    test_group_name: str = typer.Option("", "-g"),
+    max_days_ago: int = typer.Option(1, "-d", "--days"),
+    branch: str = typer.Option("master", "-b", "--branch"),
+    workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
+    names: str = typer.Option(
+        "",
+        "-n",
+        "--test-names",
+        help="comma separated list of test names to filter, e.g., TestAccCloudProviderAccessAuthorizationAzure_basic,TestAccBackupSnapshotExportBucket_basicAzure",
+    ),
+    summary_name: str = typer.Option(
+        "",
+        "-s",
+        "--summary",
+        help="the name of the summary directory to store detailed test results",
+    ),
+):  # sourcery skip: use-named-expression
+    names_set: set[str] = set()
+    if names:
+        names_set.update(names.split(","))
+        logger.info(f"filtering tests by names: {names_set} (todo: support this)")
+    if test_group_name:
+        logger.warning(f"test_group_name is not supported yet: {test_group_name}")
+    if summary_name:
+        logger.warning(f"summary_name is not supported yet: {summary_name}")
+    event = TFCITestInput(
+        test_group_name=test_group_name,
+        max_days_ago=max_days_ago,
+        branch=branch,
+        workflow_file_stems=set(workflow_file_stems.split(",")),
+        names=names_set,
+        summary_name=summary_name,
+    )
+    out = run_ci_tests(event)
+    logger.info(f"found {len(out.log_paths)} log files")
+    for error, test in out.found_errors:
+        logger.info(
+            f"Test: {test.name} failed, error class: (bot={error.bot_error_class}, human={error.human_error_class})\n{test.output_lines_str}"
+        )
+
+
+class TFCITestOutput(Event):
+    log_paths: list[Path] = Field(default_factory=list)
+    found_errors: list[tuple[GoTestError, GoTestRun]] = Field(default_factory=list)
+
+
+def run_ci_tests(event: TFCITestInput) -> TFCITestOutput:
+    repo_path = event.repo_path
+    branch = event.branch
+    token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
+    os.environ[GH_TOKEN_ENV_NAME] = token
+    settings = event.settings
+    download_input = DownloadJobLogsInput(
+        branch=branch,
+        max_days_ago=event.max_days_ago,
+        workflow_file_stems=event.workflow_file_stems,
+    )
+    log_paths = download_logs(download_input, settings)
+    resources = read_tf_resources(settings, repo_path, branch)
+    parse_job_output = parse_job_logs(
+        ParseJobLogsInput(
+            settings=settings,
+            log_paths=log_paths,
+            resources=resources,
+        )
+    )
+    out = TFCITestOutput(log_paths=log_paths)
+    known_errors: TFErrors = read_tf_errors(settings, branch)
+    for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):
+        classify_input = ClassifyTestErrorInput(test=test, errors=known_errors)
+        classify_output = classify_test_error(classify_input)
+        if classify_output.is_new:
+            add_tf_error(test, classify_output.error)
+        else:
+            increase_tf_error_count(test, classify_output.error)
+        out.found_errors.append((classify_output.error, test))
+    return out
+
+
+class DownloadJobLogsInput(Event):
+    branch: str = "master"
+    workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
+    max_days_ago: int = 1
+
+
+def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
+    end_test_date = utc_now()
+    start_test_date = end_test_date - timedelta(days=event.max_days_ago)
+    log_paths = []
+    while start_test_date < end_test_date:
+        event_out = download_gh_job_logs(settings, DownloadJobRunsInput(branch=event.branch, run_date=start_test_date))
+        log_paths.extend(event_out.log_paths)
+        if errors := event_out.log_errors():
+            logger.warning(errors)
+        start_test_date += timedelta(days=1)
+    return log_paths
+
+
+_TEST_STEMS = {
+    "test-suite",
+    "terraform-compatibility-matrix",
+    "acceptance-tests",
+}
+
+
+class DownloadJobRunsInput(Event):
+    branch: str = "master"
+    run_date: date
+    workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
+    worker_count: int = 10
+    max_wait_seconds: int = 300
+
+
+class DownloadJobRunsOutput(Event):
+    job_download_timeouts: int = 0
+    job_download_empty: int = 0
+    job_download_errors: int = 0
+    log_paths: list[Path] = Field(default_factory=list)
+
+    def log_errors(self) -> str:
+        if not (self.job_download_timeouts or self.job_download_empty or self.job_download_errors):
+            return ""
+        return f"job_download_timeouts: {self.job_download_timeouts}, job_download_empty: {self.job_download_empty}, job_download_errors: {self.job_download_errors}"
+
+
+def created_on_day(create: date) -> str:
+    date_fmt = year_month_day(create)
+    return f"{date_fmt}T00:00:00Z..{date_fmt}T23:59:59Z"
+
+
+def year_month_day(create: date) -> str:
+    return create.strftime("%Y-%m-%d")
+
+
+def download_gh_job_logs(settings: AtlasInitSettings, event: DownloadJobRunsInput) -> DownloadJobRunsOutput:
+    repository = tf_repo()
+    branch = event.branch
+    futures: list[Future[Path | None]] = []
+    run_date = event.run_date
+    out = DownloadJobRunsOutput()
+    with ThreadPoolExecutor(max_workers=event.worker_count) as pool:
+        for workflow in repository.get_workflow_runs(
+            created=created_on_day(run_date),
+            branch=branch,  # type: ignore
+        ):
+            workflow_stem = Path(workflow.path).stem
+            if workflow_stem not in event.workflow_file_stems:
+                continue
+            workflow_dir = (
+                settings.github_ci_run_logs / branch / year_month_day(run_date) / f"{workflow.id}_{workflow_stem}"
+            )
+            if workflow_dir.exists():
+                logger.info(f"skipping existing workflow dir: {workflow_dir}")
+                continue
+            futures.extend(
+                pool.submit(download_job_safely, workflow_dir, job)
+                for job in workflow.jobs("all")
+                if is_test_job(job.name)
+            )
+        done, not_done = wait(futures, timeout=event.max_wait_seconds)
+        out.job_download_timeouts = len(not_done)
+        for future in done:
+            try:
+                if log_path := future.result():
+                    out.log_paths.append(log_path)
+                else:
+                    out.job_download_empty += 1
+            except Exception as e:
+                logger.error(f"failed to download job logs: {e}")
+                out.job_download_errors += 1
+    return out
+
+
+class ParseJobLogsInput(Event):
+    settings: AtlasInitSettings
+    log_paths: list[Path]
+    resources: TFResources
+
+
+class ParseJobLogsOutput(Event):
+    test_runs: list[GoTestRun] = Field(default_factory=list)
+
+    def tests_with_status(self, status: GoTestStatus) -> list[GoTestRun]:
+        return [test for test in self.test_runs if test.status == status]
+
+
+def parse_job_logs(
+    event: ParseJobLogsInput,
+) -> ParseJobLogsOutput:
+    out = ParseJobLogsOutput()
+    for log_path in event.log_paths:
+        log_text = log_path.read_text()
+        env = find_env_of_mongodb_base_url(log_text)
+        result = parse_tests(log_text.splitlines())
+        for test in result:
+            test.log_path = log_path
+            test.env = env or "unknown"
+            test.resources = event.resources.find_test_resources(test)
+    return out
+
+
+def find_env_of_mongodb_base_url(log_text: str) -> str:
+    for match in re.finditer(r"MONGODB_ATLAS_BASE_URL: (.*)$", log_text, re.MULTILINE):
+        full_url = match.group(1)
+        parsed = BaseURLEnvironment(url=Url(full_url))
+        return parsed.env
+    return ""
+
+
+class BaseURLEnvironment(Entity):
+    """
+    >>> BaseURLEnvironment(url="https://cloud-dev.mongodb.com/").env
+    'dev'
+    """
+
+    url: Url
+    env: str = ""
+
+    @model_validator(mode="after")
+    def set_env(self) -> BaseURLEnvironment:
+        host = self.url.host
+        assert host, f"host not found in url: {self.url}"
+        cloud_env = host.split(".")[0]
+        self.env = cloud_env.removeprefix("cloud-")
+        return self
+
+
+class ClassifyTestErrorInput(Event):
+    test: GoTestRun
+    errors: TFErrors
+
+
+class ClassifyTestErrorOutput(Event):
+    test: GoTestRun
+    error: GoTestError
+    is_new: bool = False
+
+
+def classify_test_error(event: ClassifyTestErrorInput) -> ClassifyTestErrorOutput:
+    error_test = event.test
+    details = extract_error_details(error_test)
+    if existing := event.errors.find_existing(details, error_test):
+        logger.info(f"found existing error: {existing}")
+        return ClassifyTestErrorOutput(
+            test=event.test,
+            error=existing,
+            is_new=False,
+        )
+    bot_class = event.errors.classify(details, error_test)
+    human_class = ask_user_to_classify_error(details, error_test, bot_class)
+    new_error = GoTestError(
+        details=details,
+        bot_error_class=bot_class,
+        human_error_class=human_class,
+    )
+    return ClassifyTestErrorOutput(
+        test=event.test,
+        error=new_error,
+        is_new=True,
+    )
+
+
+def ask_user_to_classify_error(
+    details: ErrorDetails, test: GoTestRun, bot_class: GoTestErrorClass
+) -> GoTestErrorClass | None:
+    logger.info(f"todo: choose manual classification for {test.name} {details}")
+    return None
+    # choose_dict()

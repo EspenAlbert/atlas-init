@@ -1,0 +1,106 @@
+resources:
+- name: project
+  provider_spec_attributes:
+    - name: tags
+      map:
+        computed_optional_required: computed_optional
+        element_type:
+          string: {}
+        description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project. Maximum 50 tags
+  schema:
+    ignores:
+      - pretty
+      - envelope
+      - links
+      - tags
+    attributes:
+      aliases:
+        groupId: project_id
+  create:
+    path: /api/atlas/v2/groups
+    method: POST
+  read:
+    path: /api/atlas/v2/groups/{groupId}
+    method: GET
+  update:
+    path: /api/atlas/v2/groups/{groupId}
+    method: PATCH
+  delete:
+    path: /api/atlas/v2/groups/{groupId}
+    method: DELETE
+- name: streamprocessor
+  extensions:
+  - type: rename_attribute
+    from_name: _id
+    to_name: id
+  - type: ignore_nested
+    path: "*.links"
+  - type: change_attribute_type
+    path: processor_name
+    new_value: required
+  - type: change_attribute_type
+    path: project_id
+    new_value: required
+  - type: skip_validators
+  provider_spec_attributes: []
+  schema:
+    ignores:
+      - name
+      - pretty
+      - envelope
+      - links
+    attributes: # (only works on path attributes)
+      aliases:
+        # _id: id
+        # name: processor_name
+        groupId: project_id
+        tenantName: instance_name
+  create:
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor
+    method: POST
+  read:
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}
+    method: GET
+  delete:
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}
+    method: DELETE
+  # update: not implemented yet
+  #   path: api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor
+  #   method: PATCH
+data_sources:
+- name: stream_processor
+  extensions:
+  - type: rename_attribute
+    from_name: _id
+    to_name: id
+  - type: rename_attribute
+    from_name: tenant_name
+    to_name: instance_name
+  - type: ignore_nested
+    path: "*.links"
+  - type: change_attribute_type
+    path: processor_name
+    new_value: required
+  - type: change_attribute_type
+    path: project_id
+    new_value: required
+  - type: skip_validators
+  # pagination attributes
+  # generating test files
+  read:
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processor/{processorName}
+    method: GET
+  schema:
+    ignores:
+      - name
+      - pretty
+      - envelope
+      - links
+    attributes: # (only works on path attributes)
+      aliases:
+        groupId: project_id
+- name: stream_processors
+  read:
+    # unable to extract the description here
+    path: /api/atlas/v2/groups/{groupId}/streams/{tenantName}/processors
+    method: GET

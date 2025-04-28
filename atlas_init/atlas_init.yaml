@@ -1,0 +1,105 @@
+repo_aliases:
+  mongodb/terraform-provider-mongodbatlas: tf
+  mongodb/mongodbatlas-cloudformation-resources: cfn
+test_suites:
+- name: cluster
+  repo_go_packages:
+    cfn:
+    - cfn-resources/cluster
+- name: cluster_sdk
+  repo_go_packages:
+    tf:
+    - internal/service/advancedcluster
+- name: clusterm10
+  vars:
+    cluster_info_m10: true
+- name: encryption_at_rest
+  vars:
+    use_encryption_at_rest: true
+- name: federated
+  repo_go_packages:
+    tf:
+    - internal/service/federatedsettingsorgrolemapping
+  vars:
+    use_federated_vars: true
+- name: network
+  repo_go_packages:
+    tf:
+    - internal/service/privatelinkendpointservicedatafederationonlinearchive
+  vars:
+    use_private_link: true
+- name: network_peering
+  repo_go_packages:
+    tf:
+    - internal/service/networkpeering
+  vars:
+    use_vpc_peering: true
+    use_aws_vars: true
+    use_aws_vpc: true
+- name: private_endpoint_regional_mode
+  repo_go_packages:
+    tf:
+    - internal/service/privateendpointregionalmode
+  vars:
+    use_aws_vars: true
+- name: privatelink
+  repo_go_packages:
+    cfn:
+    - cfn-resources/cfn-private-endpoint-aws
+    tf:
+    - internal/service/privatelinkendpointservice
+  vars:
+    use_aws_vars: true
+    use_aws_vpc: true
+- name: project
+  repo_go_packages:
+    cfn:
+    - cfn-resources/project
+    tf:
+    - internal/service/project
+  vars:
+    use_project_extra: true
+- name: resource_policy
+  sequential_tests: true
+  repo_go_packages:
+    cfn:
+    - cfn-resources/resource-policy
+    tf:
+    - internal/service/resourcepolicy
+- name: s3
+  repo_go_packages:
+    tf:
+    - internal/service/cloudbackupsnapshotexportbucket
+  vars:
+    use_aws_s3: true
+- name: s3_with_cluster
+  repo_go_packages:
+    tf:
+    - internal/service/cloudbackupsnapshotexportjob
+  vars:
+    cluster_info_m10: true
+    use_aws_s3: true
+- name: search_index
+  repo_go_packages:
+    tf:
+    - internal/service/searchindex
+  vars:
+    cluster_info: true
+- name: stream_connection
+  repo_go_packages:
+    tf:
+    - internal/service/streamconnection
+    cfn:
+    - cfn-resources/stream-connection
+  vars:
+    cluster_info_m10: true
+    stream_instance: true
+- name: trigger
+  repo_go_packages:
+    cfn:
+    - cfn-resources/trigger
+  vars:
+    cluster_info_m10: true
+  post_apply_hooks:
+  - name: create_realm_resources
+    locate: atlas_init.cli_root.trigger.create_realm_app

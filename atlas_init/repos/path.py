@@ -1,10 +1,12 @@
+from __future__ import annotations
 import logging
+import re
 from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-import re
 from typing import NamedTuple
 
 from git import Repo as _GitRepo
@@ -190,6 +192,13 @@ def find_tf_resource_name_in_test(path: Path, provider_prefix: str = "mongodbatl
     return candidates[0] if candidates else ""
 
 
+def find_pkg_test_names(pkg_path: Path, prefix: str = "Test") -> list[str]:
+    test_names = []
+    for test_file in pkg_path.glob("*_test.go"):
+        test_names.extend(find_test_names(test_file, prefix))
+    return sorted(test_names)
+
+
 def terraform_resource_test_names(
     repo_path: Path, prefix: str = "Test", package_path: str = "internal/service"
 ) -> dict[str, list[str]]:
@@ -201,6 +210,16 @@ def terraform_resource_test_names(
         for test_file in pkg_dir.glob("*_test.go"):
             test_names[name].extend(find_test_names(test_file, prefix))
     return test_names
+
+
+def terraform_resources(repo_path: Path, package_path: str = "internal/service") -> list[TFResoure]:
+    pkg_path = terraform_package_path(repo_path, package_path)
+    resource_dirs, _ = find_resource_dirs(pkg_path)
+    resources = []
+    for name, pkg_dir in resource_dirs.items():
+        test_names = find_pkg_test_names(pkg_dir)
+        resources.append(TFResoure(name=name, package_rel_path=str(pkg_dir.relative_to(repo_path)), tests=test_names))
+    return resources
 
 
 def terraform_package_path(repo_path: Path, package_path: str = "internal/service"):
@@ -231,3 +250,10 @@ def find_resource_dirs(pkg_path: Path) -> tuple[dict[str, Path], list[Path]]:
         if not found:
             non_resource_dirs.append(pkg_dir)
     return resource_dirs, non_resource_dirs
+
+
+@dataclass
+class TFResoure:
+    name: str
+    package_rel_path: str
+    tests: list[str]

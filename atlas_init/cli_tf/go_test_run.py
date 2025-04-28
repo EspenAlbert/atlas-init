@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Iterable
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import StrEnum
-from functools import total_ordering
 from pathlib import Path
+from typing import TypeAlias
 
 import humanize
-from github.WorkflowJob import WorkflowJob
 from model_lib import Entity, Event, utc_datetime
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 from zero_3rdparty.datetime_utils import utc_now
+
+from atlas_init.repos.path import go_package_prefix
 
 logger = logging.getLogger(__name__)
 
@@ -23,20 +26,11 @@ class GoTestStatus(StrEnum):
     PASS = "PASS"  # noqa: S105 #nosec
     FAIL = "FAIL"
     SKIP = "SKIP"
+    PKG_OK = "ok"
 
-
-class Classification(StrEnum):
-    OUT_OF_CAPACITY = "OUT_OF_CAPACITY"
-    # DANGLING_RESOURCES = "DANGLING_RESOURCES"
-    # PERFORMANCE_REGRESSION = "PERFORMANCE_REGRESSION"
-    FIRST_TIME_ERROR = "FIRST_TIME_ERROR"
-    LEGIT_ERROR = "LEGIT_ERROR"
-    PANIC = "PANIC"
-
-
-class LineInfo(Event):
-    number: int
-    text: str
+    @classmethod
+    def is_running(cls, status: GoTestStatus) -> bool:
+        return status in {cls.RUN, cls.PAUSE, cls.NAME}
 
 
 class GoTestContextStep(Entity):
@@ -76,30 +70,32 @@ def extract_group_name(log_path: Path | None) -> str:
     return "_".join(last_part.split("_")[1:]) if "_" in last_part else last_part
 
 
-@total_ordering
+def parse_tests(
+    log_lines: list[str],
+) -> list[GoTestRun]:
+    context = ParseContext()
+    parser = wait_for_relvant_line
+    for line in log_lines:
+        parser = parser(line, context)
+    result = context.finish_parsing()
+    return result.tests
+
+
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
-    start_line: LineInfo
     ts: utc_datetime
     finish_ts: utc_datetime | None = None
-    job: GoTestContext | WorkflowJob
-    test_step: int
-    log_path: Path | None = None
+    output_lines: list[str] = Field(default_factory=list)
 
-    finish_line: LineInfo | None = None
-    context_lines: list[str] = Field(default_factory=list)
-    run_seconds: float | None = None
+    package_url: str | None = Field(default=None, init=False)
+    run_seconds: float | None = Field(default=None, init=False)
 
-    classifications: set[Classification] = Field(default_factory=set)
-
-    def finish_summary(self) -> str:
-        finish_line = self.finish_line
-        lines = [
-            self.start_line.text if finish_line is None else finish_line.text,
-            self.url,
-        ]
-        return "\n".join(lines + self.context_lines)
+    log_path: Path | None = Field(default=None, init=False)
+    env: str | None = Field(default=None, init=False)
+    branch: str | None = Field(default=None, init=False)
+    resources: list[str] = Field(default_factory=list, init=False)
+    job_url: str | None = Field(default=None, init=False)
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, GoTestRun):
@@ -117,13 +113,8 @@ class GoTestRun(Entity):
         return "unknown"
 
     @property
-    def context_lines_str(self) -> str:
-        return "\n".join(self.context_lines)
-
-    @property
-    def url(self) -> str:
-        line = self.finish_line or self.start_line
-        return f"{self.job.html_url}#step:{self.test_step}:{line.number}"
+    def output_lines_str(self) -> str:
+        return "\n".join(self.output_lines)
 
     @property
     def is_failure(self) -> bool:
@@ -137,113 +128,164 @@ class GoTestRun(Entity):
     def group_name(self) -> str:
         return extract_group_name(self.log_path)
 
-    def add_line_match(self, match: LineMatch, line: str, line_number: int) -> None:
-        self.run_seconds = match.run_seconds or self.run_seconds
-        self.finish_line = LineInfo(number=line_number, text=line)
-        self.status = match.status
-        self.finish_ts = match.ts
+    def package_rel_path(self, repo_path: Path) -> str:
+        if url := self.package_url:
+            prefix = go_package_prefix(repo_path)
+            return url.removeprefix(prefix).rstrip("/")
+        return ""
 
-    @classmethod
-    def from_line_match(
-        cls,
-        match: LineMatch,
-        line: str,
-        line_number: int,
-        job: WorkflowJob | GoTestContext,
-        test_step_nr: int,
-    ) -> GoTestRun:
-        start_line = LineInfo(number=line_number, text=line)
-        return cls(
-            name=match.name,
-            status=match.status,
-            ts=match.ts,
-            run_seconds=match.run_seconds,
-            start_line=start_line,
-            job=job,
-            test_step=test_step_nr,
+
+class ParseResult(Event):
+    tests: list[GoTestRun] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def ensure_all_tests_completed(self) -> ParseResult:
+        incomplete_tests = []
+        incomplete_tests.extend(test for test in self.tests if test.finish_ts is None)
+        if incomplete_tests:
+            raise ValueError(f"some tests are not completed: {incomplete_tests}")
+        if no_package_tests := [test for test in self.tests if test.package_url is None]:
+            raise ValueError(f"some tests do not have package name: {no_package_tests}")
+        return self
+
+
+@dataclass
+class ParseContext:
+    tests: list[GoTestRun] = field(default_factory=list)
+
+    current_output: list[str] = field(default_factory=list, init=False)
+
+    def add_output_line(self, line: str) -> None:
+        self.current_output.append(line)
+
+    def start_test(self, test_name: str, start_line: str, ts: str) -> None:
+        run = GoTestRun(name=test_name, output_lines=[start_line], ts=ts)  # type: ignore
+        self.tests.append(run)
+        self.continue_test(test_name)
+
+    def continue_test(self, test_name: str) -> None:
+        test = self.find_unfinished_test(test_name)
+        self.current_output = test.output_lines
+
+    def find_unfinished_test(self, test_name: str) -> GoTestRun:
+        test = next(
+            (test for test in self.tests if test.name == test_name and GoTestStatus.is_running(test.status)),
+            None,
         )
+        assert test is not None, f"test {test_name} not found in context"
+        return test
+
+    def set_package(self, pkg_name: str) -> None:
+        for test in self.tests:
+            if test.package_url is None:
+                test.package_url = pkg_name
+
+    def finish_test(self, test_name: str, status: GoTestStatus, ts: str, end_line: str) -> None:
+        test = self.find_unfinished_test(test_name)
+        test.status = status
+        test.finish_ts = datetime.fromisoformat(ts)
+        test.output_lines.append(end_line)
+
+    def finish_parsing(self) -> ParseResult:
+        return ParseResult(tests=self.tests)
 
 
-class LineMatch(Event):
-    ts: utc_datetime = Field(default_factory=utc_now)
-    status: GoTestStatus
-    name: str
-    run_seconds: float | None = None
-
-    @field_validator("ts", mode="before")
-    @classmethod
-    def remove_none(cls, v):
-        return v or utc_now()
+LineParserT: TypeAlias = Callable[[str, ParseContext], "LineParserT"]
 
 
-_status_options = "|".join(list(GoTestStatus))
-line_result = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?\s?[-=]+\s"
-    + r"(?P<status>%s):?\s+" % _status_options  # noqa: UP031
-    + r"(?P<name>[\w_]+)"
-    + r"\s*\(?(?P<run_seconds>[\d\.]+)?s?\)?"
-)
+def ts_pattern(name: str) -> str:
+    return r"(?P<%s>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)\s*" % name
 
 
-def _test_name_is_nested(name: str, line: str) -> bool:
-    return f"{name}/" in line
+runtime_pattern = r"\((?P<runtime>\d+\.\d+s)\)"
+runtime_pattern_no_parenthesis = r"(?P<runtime>\d+\.\d+s)"
 
 
-def match_line(line: str) -> LineMatch | None:
-    """
-    2024-06-26T04:41:47.7209465Z === RUN   TestAccNetworkDSPrivateLinkEndpoint_basic
-    2024-06-26T04:41:47.7228652Z --- PASS: TestAccNetworkRSPrivateLinkEndpointGCP_basic (424.50s)
-    """
-    if match := line_result.match(line):
-        line_match = LineMatch(**match.groupdict())  # type: ignore
-        return None if _test_name_is_nested(line_match.name, line) else line_match
+ignore_line_pattern = [re.compile(ts_pattern("ts") + r"\s" + ts_pattern("ts2"))]
+
+status_patterns = [
+    (GoTestStatus.RUN, re.compile(ts_pattern("ts") + r"=== RUN\s+(?P<name>\S+)")),
+    (GoTestStatus.PAUSE, re.compile(ts_pattern("ts") + r"=== PAUSE\s+(?P<name>\S+)")),
+    (GoTestStatus.NAME, re.compile(ts_pattern("ts") + r"=== NAME\s+(?P<name>\S+)")),
+    (
+        GoTestStatus.PASS,
+        re.compile(ts_pattern("ts") + r"--- PASS: (?P<name>\S+)\s+" + runtime_pattern),
+    ),
+    (
+        GoTestStatus.FAIL,
+        re.compile(ts_pattern("ts") + r"--- FAIL: (?P<name>\S+)\s" + runtime_pattern),
+    ),
+    (
+        GoTestStatus.SKIP,
+        re.compile(ts_pattern("ts") + r"--- SKIP: (?P<name>\S+)\s+" + runtime_pattern),
+    ),
+]
+package_patterns = [
+    (
+        GoTestStatus.FAIL,
+        re.compile(ts_pattern("ts") + r"FAIL\s+(?P<package_url>\S+)\s+" + runtime_pattern_no_parenthesis),
+    ),
+    (
+        GoTestStatus.PKG_OK,
+        re.compile(ts_pattern("ts") + r"ok\s+(?P<package_url>\S+)\s+" + runtime_pattern_no_parenthesis),
+    ),
+]
+
+
+def line_match_status_pattern(
+    line: str,
+    context: ParseContext,
+) -> GoTestStatus | None:
+    for status, pattern in status_patterns:
+        if pattern_match := pattern.match(line):
+            test_name = pattern_match.group("name")
+            assert test_name, f"test name not found in line: {line} when pattern matched {pattern}"
+            ts = pattern_match.group("ts")
+            assert ts, f"timestamp not found in line: {line} when pattern matched {pattern}"
+            match status:
+                case GoTestStatus.RUN:
+                    context.start_test(test_name, line, ts)
+                case GoTestStatus.NAME:
+                    context.continue_test(test_name)
+                case GoTestStatus.PAUSE:
+                    return status  # do nothing
+                case GoTestStatus.PASS:
+                    context.finish_test(test_name, status, ts, line)
+                case GoTestStatus.FAIL:
+                    context.finish_test(test_name, status, ts, line)
+                case GoTestStatus.SKIP:
+                    context.finish_test(test_name, status, ts, line)
+            return status
+    for pkg_status, pattern in package_patterns:
+        if pattern_match := pattern.match(line):
+            pkg_name = pattern_match.group("package_url")
+            assert pkg_name, f"package_url not found in line: {line} when pattern matched {pattern}"
+            context.set_package(pkg_name)
+            return pkg_status
     return None
 
 
-context_start_pattern = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?\s?[-=]+\s" r"NAME\s+" r"(?P<name>[\w_]+)"
-)
+def wait_for_relvant_line(
+    line: str,
+    context: ParseContext,
+) -> LineParserT:
+    status = line_match_status_pattern(line, context)
+    if status in {GoTestStatus.RUN, GoTestStatus.NAME}:
+        return add_output_line
+    return wait_for_relvant_line
 
 
-def context_start_match(line: str) -> str:
-    if match := context_start_pattern.match(line):
-        return match.groupdict()["name"]
-    return ""
-
-
-context_line_pattern = re.compile(
-    r"(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)?" r"\s{5}" r"(?P<indent>\s*)" r"(?P<relevant_line>.*)"
-)
-
-
-def extract_context(line: str) -> str:
-    if match := context_line_pattern.match(line):
-        match_vars = match.groupdict()
-        return match_vars["indent"] + match_vars["relevant_line"].strip()
-    return ""
-
-
-def parse(test_lines: list[str], job: WorkflowJob | GoTestContext, test_step_nr: int) -> Iterable[GoTestRun]:
-    tests: dict[str, GoTestRun] = {}
-    context_lines: list[str] = []
-    current_context_test = ""
-    for line_nr, line in enumerate(test_lines, start=0):  # possibly an extra line in the log files we download
-        if current_context_test:
-            if more_context := extract_context(line):
-                context_lines.append(more_context)
-                continue
-            else:
-                tests[current_context_test].context_lines.extend(context_lines)
-                context_lines.clear()
-                current_context_test = ""
-        if new_context_test := context_start_match(line):
-            current_context_test = new_context_test
-            continue
-        if line_match := match_line(line):
-            if existing := tests.pop(line_match.name, None):
-                existing.add_line_match(line_match, line, line_nr)
-                yield existing
-            else:
-                tests[line_match.name] = GoTestRun.from_line_match(line_match, line, line_nr, job, test_step_nr)
-    if tests:
-        logger.warning(f"unfinished tests: {sorted(tests.keys())}")
+def add_output_line(
+    line: str,
+    context: ParseContext,
+) -> LineParserT:
+    for pattern in ignore_line_pattern:
+        if pattern.match(line):
+            return wait_for_relvant_line(line, context)
+    status = line_match_status_pattern(line, context)
+    if status is None:
+        context.add_output_line(line)
+        return add_output_line
+    if status in {GoTestStatus.RUN, GoTestStatus.NAME}:
+        return add_output_line
+    return wait_for_relvant_line

@@ -1,46 +1,1628 @@
-ï»¿2024-09-17T00:20:37.2689623Z Current runner version: '2.319.1'
-2024-09-17T00:20:37.2714271Z ##[group]Operating System
-2024-09-17T00:20:37.2715095Z Ubuntu
-2024-09-17T00:20:37.2715475Z 22.04.4
-2024-09-17T00:20:37.2715934Z LTS
-2024-09-17T00:20:37.2716311Z ##[endgroup]
-2024-09-17T00:20:37.2716790Z ##[group]Runner Image
-2024-09-17T00:20:37.2717334Z Image: ubuntu-22.04
-2024-09-17T00:20:37.2717787Z Version: 20240908.1.0
-2024-09-17T00:20:37.2718935Z Included Software: https://github.com/actions/runner-images/blob/ubuntu22/20240908.1/images/ubuntu/Ubuntu2204-Readme.md
-2024-09-17T00:20:37.2720464Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu22%2F20240908.1
-2024-09-17T00:20:37.2721403Z ##[endgroup]
-2024-09-17T00:20:37.2721928Z ##[group]Runner Image Provisioner
-2024-09-17T00:20:37.2722451Z 2.0.384.1
-2024-09-17T00:20:37.2722840Z ##[endgroup]
-2024-09-17T00:20:37.2738106Z ##[group]GITHUB_TOKEN Permissions
-2024-09-17T00:20:37.2739807Z Metadata: read
-2024-09-17T00:20:37.2740576Z ##[endgroup]
-2024-09-17T00:20:37.2743303Z Secret source: Actions
+ï»¿2025-04-09T00:24:09.7771020Z Current runner version: '2.323.0'
+2025-04-09T00:24:09.7797059Z ##[group]Operating System
+2025-04-09T00:24:09.7798374Z Ubuntu
+2025-04-09T00:24:09.7799027Z 24.04.2
+2025-04-09T00:24:09.7799600Z LTS
+2025-04-09T00:24:09.7800320Z ##[endgroup]
+2025-04-09T00:24:09.7800954Z ##[group]Runner Image
+2025-04-09T00:24:09.7801706Z Image: ubuntu-24.04
+2025-04-09T00:24:09.7802404Z Version: 20250323.1.0
+2025-04-09T00:24:09.7803579Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250323.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-04-09T00:24:09.7805216Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250323.1
+2025-04-09T00:24:09.7806269Z ##[endgroup]
+2025-04-09T00:24:09.7806990Z ##[group]Runner Image Provisioner
+2025-04-09T00:24:09.7807771Z 2.0.422.1
+2025-04-09T00:24:09.7808704Z ##[endgroup]
+2025-04-09T00:24:09.7809877Z ##[group]GITHUB_TOKEN Permissions
+2025-04-09T00:24:09.7811858Z Metadata: read
+2025-04-09T00:24:09.7812554Z ##[endgroup]
+2025-04-09T00:24:09.7815377Z Secret source: Actions
+2025-04-09T00:24:09.7816311Z Prepare workflow directory
+2025-04-09T00:24:09.8331842Z Prepare all required actions
+2025-04-09T00:24:09.8368373Z Getting action download info
+2025-04-09T00:24:10.0142515Z Download action repository 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' (SHA:11bd71901bbe5b1630ceea73d27597364c9af683)
+2025-04-09T00:24:10.1199026Z Download action repository 'actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b' (SHA:0aaccfd150d50ccaeb58ebd88d36e91967a5f35b)
+2025-04-09T00:24:10.3336747Z Download action repository 'hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd' (SHA:b9cd54a3c349d3f38e8881555d616ced269862dd)
+2025-04-09T00:24:10.6003566Z Uses: mongodb/terraform-provider-mongodbatlas/.github/workflows/acceptance-tests-runner.yml@refs/heads/master (317ca9b559ed1aec33c6f69acdf5c05ed9942b6b)
+2025-04-09T00:24:10.6006513Z ##[group] Inputs
+2025-04-09T00:24:10.6007247Z   terraform_version: 1.11.x
+2025-04-09T00:24:10.6040183Z ##[endgroup]
+2025-04-09T00:24:10.6040935Z Complete job name: tests-1.11.x-latest / tests-1.11.x-latest-false / config
+2025-04-09T00:24:10.6742861Z ##[group]Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+2025-04-09T00:24:10.6744123Z with:
+2025-04-09T00:24:10.6744684Z   ref: refs/heads/master
+2025-04-09T00:24:10.6745419Z   repository: mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:10.6746365Z   token: ***
+2025-04-09T00:24:10.6746967Z   ssh-strict: true
+2025-04-09T00:24:10.6747515Z   ssh-user: git
+2025-04-09T00:24:10.6748356Z   persist-credentials: true
+2025-04-09T00:24:10.6749012Z   clean: true
+2025-04-09T00:24:10.6749592Z   sparse-checkout-cone-mode: true
+2025-04-09T00:24:10.6750231Z   fetch-depth: 1
+2025-04-09T00:24:10.6750800Z   fetch-tags: false
+2025-04-09T00:24:10.6751390Z   show-progress: true
+2025-04-09T00:24:10.6751970Z   lfs: false
+2025-04-09T00:24:10.6752525Z   submodules: false
+2025-04-09T00:24:10.6753100Z   set-safe-directory: true
+2025-04-09T00:24:10.6753992Z env:
+2025-04-09T00:24:10.6754519Z   TF_ACC: 1
+2025-04-09T00:24:10.6755064Z   TF_LOG: ERROR
+2025-04-09T00:24:10.6755674Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:10.6756286Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:10.6757053Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:10.6758863Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:10.6759666Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:10.6760368Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:10.6761263Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:10.6761982Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:10.6762795Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:10.6763591Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:10.6765167Z ##[endgroup]
+2025-04-09T00:24:10.9223296Z Syncing repository: mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:10.9225477Z ##[group]Getting Git version info
+2025-04-09T00:24:10.9226705Z Working directory is '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-09T00:24:10.9228621Z [command]/usr/bin/git version
+2025-04-09T00:24:10.9316592Z git version 2.49.0
+2025-04-09T00:24:10.9347420Z ##[endgroup]
+2025-04-09T00:24:10.9361257Z Temporarily overriding HOME='/home/runner/work/_temp/be083cda-7a2f-4463-84b0-50ecc84e4b97' before making global git config changes
+2025-04-09T00:24:10.9362882Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-09T00:24:10.9373982Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T00:24:10.9410936Z Deleting the contents of '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-09T00:24:10.9414539Z ##[group]Initializing the repository
+2025-04-09T00:24:10.9419247Z [command]/usr/bin/git init /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T00:24:10.9492764Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-04-09T00:24:10.9494258Z hint: is subject to change. To configure the initial branch name to use in all
+2025-04-09T00:24:10.9495318Z hint: of your new repositories, which will suppress this warning, call:
+2025-04-09T00:24:10.9496164Z hint:
+2025-04-09T00:24:10.9496876Z hint: 	git config --global init.defaultBranch <name>
+2025-04-09T00:24:10.9497676Z hint:
+2025-04-09T00:24:10.9498597Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-04-09T00:24:10.9499693Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-04-09T00:24:10.9500567Z hint:
+2025-04-09T00:24:10.9501155Z hint: 	git branch -m <name>
+2025-04-09T00:24:10.9503043Z Initialized empty Git repository in /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/.git/
+2025-04-09T00:24:10.9513690Z [command]/usr/bin/git remote add origin https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:10.9547869Z ##[endgroup]
+2025-04-09T00:24:10.9549763Z ##[group]Disabling automatic garbage collection
+2025-04-09T00:24:10.9553105Z [command]/usr/bin/git config --local gc.auto 0
+2025-04-09T00:24:10.9583100Z ##[endgroup]
+2025-04-09T00:24:10.9584893Z ##[group]Setting up auth
+2025-04-09T00:24:10.9591137Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-09T00:24:10.9623887Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-09T00:24:10.9963130Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-09T00:24:10.9995858Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-09T00:24:11.0225090Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-04-09T00:24:11.0265231Z ##[endgroup]
+2025-04-09T00:24:11.0267236Z ##[group]Fetching the repository
+2025-04-09T00:24:11.0275844Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/master:refs/remotes/origin/master
+2025-04-09T00:24:11.5757939Z From https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:11.5761254Z  * [new branch]      master     -> origin/master
+2025-04-09T00:24:11.5789772Z ##[endgroup]
+2025-04-09T00:24:11.5791227Z ##[group]Determining the checkout info
+2025-04-09T00:24:11.5792601Z ##[endgroup]
+2025-04-09T00:24:11.5796875Z [command]/usr/bin/git sparse-checkout disable
+2025-04-09T00:24:11.5838459Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-04-09T00:24:11.5865273Z ##[group]Checking out the ref
+2025-04-09T00:24:11.5869323Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2025-04-09T00:24:11.6726089Z Reset branch 'master'
+2025-04-09T00:24:11.6728257Z branch 'master' set up to track 'origin/master'.
+2025-04-09T00:24:11.6738508Z ##[endgroup]
+2025-04-09T00:24:11.6777157Z [command]/usr/bin/git log -1 --format=%H
+2025-04-09T00:24:11.6799799Z 317ca9b559ed1aec33c6f69acdf5c05ed9942b6b
+2025-04-09T00:24:11.7073318Z ##[group]Run actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
+2025-04-09T00:24:11.7075125Z with:
+2025-04-09T00:24:11.7076128Z   go-version-file: go.mod
+2025-04-09T00:24:11.7077316Z   check-latest: false
+2025-04-09T00:24:11.7078899Z   token: ***
+2025-04-09T00:24:11.7079911Z   cache: true
+2025-04-09T00:24:11.7080906Z env:
+2025-04-09T00:24:11.7081827Z   TF_ACC: 1
+2025-04-09T00:24:11.7082774Z   TF_LOG: ERROR
+2025-04-09T00:24:11.7083763Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:11.7084876Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:11.7086374Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:11.7089870Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:11.7091450Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:11.7092775Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:11.7094559Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:11.7095976Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:11.7097607Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:11.7099373Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:11.7102494Z ##[endgroup]
+2025-04-09T00:24:11.8680041Z Setup go version spec 1.24.1
+2025-04-09T00:24:11.8692497Z Attempting to download 1.24.1...
+2025-04-09T00:24:12.1059036Z matching 1.24.1...
+2025-04-09T00:24:12.1114221Z Acquiring 1.24.1 from https://github.com/actions/go-versions/releases/download/1.24.1-13667719799/go-1.24.1-linux-x64.tar.gz
+2025-04-09T00:24:12.6314413Z Extracting Go...
+2025-04-09T00:24:12.6446585Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/8d1cd83c-3d75-4785-bbd9-76b971950976 -f /home/runner/work/_temp/0ee8acca-2263-493c-b457-9c3c6f9b0229
+2025-04-09T00:24:14.4393400Z Successfully extracted go to /home/runner/work/_temp/8d1cd83c-3d75-4785-bbd9-76b971950976
+2025-04-09T00:24:14.4394309Z Adding to the cache ...
+2025-04-09T00:24:18.9892993Z Successfully cached go to /opt/hostedtoolcache/go/1.24.1/x64
+2025-04-09T00:24:18.9894787Z Added go to the path
+2025-04-09T00:24:18.9897639Z Successfully set up Go version 1.24.1
+2025-04-09T00:24:19.0116144Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOMODCACHE
+2025-04-09T00:24:19.0154508Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOCACHE
+2025-04-09T00:24:19.0187722Z /home/runner/go/pkg/mod
+2025-04-09T00:24:19.0201771Z /home/runner/.cache/go-build
+2025-04-09T00:24:19.0926169Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.24.1-9f1a6a4794311cf0a02a5503066292baa3f66becb0a872f76a0a6b8632bec774
+2025-04-09T00:24:20.1331342Z Received 201326592 of 471895081 (42.7%), 192.0 MBs/sec
+2025-04-09T00:24:21.1380212Z Received 423624704 of 471895081 (89.8%), 201.5 MBs/sec
+2025-04-09T00:24:21.3050796Z Received 471895081 of 471895081 (100.0%), 207.2 MBs/sec
+2025-04-09T00:24:21.3052141Z Cache Size: ~450 MB (471895081 B)
+2025-04-09T00:24:21.3094656Z [command]/usr/bin/tar -xf /home/runner/work/_temp/bf973a46-8fdf-4605-b38c-05585cc746fe/cache.tzst -P -C /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas --use-compress-program unzstd
+2025-04-09T00:24:25.8672396Z Cache restored successfully
+2025-04-09T00:24:25.9659521Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.24.1-9f1a6a4794311cf0a02a5503066292baa3f66becb0a872f76a0a6b8632bec774
+2025-04-09T00:24:25.9681406Z go version go1.24.1 linux/amd64
+2025-04-09T00:24:25.9681629Z 
+2025-04-09T00:24:25.9681939Z ##[group]go env
+2025-04-09T00:24:26.0156327Z AR='ar'
+2025-04-09T00:24:26.0156734Z CC='gcc'
+2025-04-09T00:24:26.0157155Z CGO_CFLAGS='-O2 -g'
+2025-04-09T00:24:26.0157570Z CGO_CPPFLAGS=''
+2025-04-09T00:24:26.0157961Z CGO_CXXFLAGS='-O2 -g'
+2025-04-09T00:24:26.0158635Z CGO_ENABLED='1'
+2025-04-09T00:24:26.0159025Z CGO_FFLAGS='-O2 -g'
+2025-04-09T00:24:26.0159413Z CGO_LDFLAGS='-O2 -g'
+2025-04-09T00:24:26.0159762Z CXX='g++'
+2025-04-09T00:24:26.0160281Z GCCGO='gccgo'
+2025-04-09T00:24:26.0160551Z GO111MODULE=''
+2025-04-09T00:24:26.0160841Z GOAMD64='v1'
+2025-04-09T00:24:26.0161096Z GOARCH='amd64'
+2025-04-09T00:24:26.0161319Z GOAUTH='netrc'
+2025-04-09T00:24:26.0161539Z GOBIN=''
+2025-04-09T00:24:26.0161789Z GOCACHE='/home/runner/.cache/go-build'
+2025-04-09T00:24:26.0162098Z GOCACHEPROG=''
+2025-04-09T00:24:26.0162321Z GODEBUG=''
+2025-04-09T00:24:26.0162578Z GOENV='/home/runner/.config/go/env'
+2025-04-09T00:24:26.0162858Z GOEXE=''
+2025-04-09T00:24:26.0163067Z GOEXPERIMENT=''
+2025-04-09T00:24:26.0163291Z GOFIPS140='off'
+2025-04-09T00:24:26.0163513Z GOFLAGS=''
+2025-04-09T00:24:26.0164585Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build1328960083=/tmp/go-build -gno-record-gcc-switches'
+2025-04-09T00:24:26.0165589Z GOHOSTARCH='amd64'
+2025-04-09T00:24:26.0165837Z GOHOSTOS='linux'
+2025-04-09T00:24:26.0166063Z GOINSECURE=''
+2025-04-09T00:24:26.0166687Z GOMOD='/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/go.mod'
+2025-04-09T00:24:26.0167229Z GOMODCACHE='/home/runner/go/pkg/mod'
+2025-04-09T00:24:26.0167573Z GONOPROXY=''
+2025-04-09T00:24:26.0167792Z GONOSUMDB=''
+2025-04-09T00:24:26.0168154Z GOOS='linux'
+2025-04-09T00:24:26.0168412Z GOPATH='/home/runner/go'
+2025-04-09T00:24:26.0168675Z GOPRIVATE=''
+2025-04-09T00:24:26.0169159Z GOPROXY='https://proxy.golang.org,direct'
+2025-04-09T00:24:26.0169746Z GOROOT='/opt/hostedtoolcache/go/1.24.1/x64'
+2025-04-09T00:24:26.0170192Z GOSUMDB='sum.golang.org'
+2025-04-09T00:24:26.0170521Z GOTELEMETRY='local'
+2025-04-09T00:24:26.0170843Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2025-04-09T00:24:26.0171190Z GOTMPDIR=''
+2025-04-09T00:24:26.0171425Z GOTOOLCHAIN='auto'
+2025-04-09T00:24:26.0171784Z GOTOOLDIR='/opt/hostedtoolcache/go/1.24.1/x64/pkg/tool/linux_amd64'
+2025-04-09T00:24:26.0172180Z GOVCS=''
+2025-04-09T00:24:26.0172404Z GOVERSION='go1.24.1'
+2025-04-09T00:24:26.0172656Z GOWORK=''
+2025-04-09T00:24:26.0172894Z PKG_CONFIG='pkg-config'
+2025-04-09T00:24:26.0173065Z 
+2025-04-09T00:24:26.0173405Z ##[endgroup]
+2025-04-09T00:24:26.0347360Z ##[group]Run hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+2025-04-09T00:24:26.0347798Z with:
+2025-04-09T00:24:26.0348222Z   terraform_version: 1.11.x
+2025-04-09T00:24:26.0348497Z   terraform_wrapper: false
+2025-04-09T00:24:26.0348796Z   cli_config_credentials_hostname: app.terraform.io
+2025-04-09T00:24:26.0349100Z env:
+2025-04-09T00:24:26.0349298Z   TF_ACC: 1
+2025-04-09T00:24:26.0349512Z   TF_LOG: ERROR
+2025-04-09T00:24:26.0349731Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:26.0349982Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:26.0350352Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:26.0351420Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:26.0351804Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:26.0352126Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:26.0352523Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:26.0352870Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:26.0353255Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:26.0353614Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:26.0354324Z ##[endgroup]
+2025-04-09T00:24:26.4529022Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/ff9197e7-115f-4e91-928a-1e36f4b4c45c
+2025-04-09T00:24:27.0691189Z ##[group]Run make testacc
+2025-04-09T00:24:27.0691537Z [36;1mmake testacc[0m
+2025-04-09T00:24:27.0742154Z shell: /usr/bin/bash -e {0}
+2025-04-09T00:24:27.0742457Z env:
+2025-04-09T00:24:27.0742658Z   TF_ACC: 1
+2025-04-09T00:24:27.0742873Z   TF_LOG: ERROR
+2025-04-09T00:24:27.0743104Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:27.0743357Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:27.0743716Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:27.0744462Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:27.0744824Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:27.0745123Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:27.0745518Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:27.0745820Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:27.0746190Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:27.0746575Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:27.0750206Z   AWS_ACCESS_KEY_ID: ***
+2025-04-09T00:24:27.0750535Z   AWS_SECRET_ACCESS_KEY: ***
+2025-04-09T00:24:27.0750851Z   AWS_S3_BUCKET: ***
+2025-04-09T00:24:27.0751100Z   MONGODB_ATLAS_LAST_VERSION: 1.31.0
+2025-04-09T00:24:27.0753001Z   ACCTEST_PACKAGES: ./internal/service/alertconfiguration
+./internal/service/atlasuser
+./internal/service/cloudprovideraccess
+./internal/service/customdbrole
+./internal/service/customdnsconfigurationclusteraws
+./internal/service/databaseuser
+./internal/service/maintenancewindow
+./internal/service/organization
+./internal/service/orginvitation
+./internal/service/projectapikey
+./internal/service/apikey
+./internal/service/rolesorgid
+./internal/service/team
+./internal/service/thirdpartyintegration
 
-2024-09-17T00:22:05.6663121Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations
-2024-09-17T00:22:05.6664583Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
-2024-09-17T00:22:05.6666516Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
-2024-09-17T00:22:05.6668559Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
-2024-09-17T00:22:05.6670430Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
-2024-09-17T00:22:05.6672390Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
-2024-09-17T00:22:05.6674348Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
-2024-09-17T00:22:05.6676147Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
-2024-09-17T00:22:05.6677877Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
-2024-09-17T00:22:05.6679853Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
-2024-09-17T00:22:05.6681682Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
-2024-09-17T00:22:05.6683433Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
-2024-09-17T00:22:05.6685140Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
-2024-09-17T00:22:05.6686931Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
-2024-09-17T00:22:05.6688816Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
-2024-09-17T00:22:05.6690801Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
-2024-09-17T00:22:05.6787019Z --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations (0.00s)
-2024-09-17T00:22:05.6789009Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined (0.46s)
-2024-09-17T00:22:05.6791348Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined (0.49s)
-2024-09-17T00:22:05.6793760Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined (0.51s)
-2024-09-17T00:22:05.6796045Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined (0.54s)
-2024-09-17T00:22:05.6798774Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined (0.54s)
-2024-09-17T00:22:05.6800282Z === CONT  TestAccConfigDSAtlasUser_InvalidAttrCombination
-2024-09-17T00:22:05.6801303Z === CONT  TestAccConfigDSAtlasUsers_ByTeamID
-2024-09-17T00:22:05.6802368Z === CONT  TestAccConfigDSAtlasUsers_UsingPagination
-2024-09-17T00:22:05.6803421Z === CONT  TestAccConfigDSAtlasUsers_ByProjectID
+2025-04-09T00:24:27.0754903Z ##[endgroup]
+2025-04-09T00:24:27.0944975Z ==> Checking that code complies with gofmt requirements...
+2025-04-09T00:24:27.3590123Z TF_ACC=1 go test ./internal/service/alertconfiguration ./internal/service/atlasuser ./internal/service/cloudprovideraccess ./internal/service/customdbrole ./internal/service/customdnsconfigurationclusteraws ./internal/service/databaseuser ./internal/service/maintenancewindow ./internal/service/organization ./internal/service/orginvitation ./internal/service/projectapikey ./internal/service/apikey ./internal/service/rolesorgid ./internal/service/team ./internal/service/thirdpartyintegration -run '^Test(Acc|Mig)' -v -parallel 50  -timeout 300m -ldflags="-s -w -X 'github.com/mongodb/terraform-provider-mongodbatlas/version.ProviderVersion=317ca9b'"
+2025-04-09T00:24:27.3780723Z go: downloading github.com/hashicorp/terraform-plugin-testing v1.12.0
+2025-04-09T00:24:27.3889863Z go: downloading github.com/stretchr/testify v1.10.0
+2025-04-09T00:24:27.7335918Z go: downloading github.com/davecgh/go-spew v1.1.1
+2025-04-09T00:24:27.7410146Z go: downloading github.com/pmezard/go-difflib v1.0.0
+2025-04-09T00:24:27.7411400Z go: downloading github.com/stretchr/objx v0.5.2
+2025-04-09T00:24:27.7795099Z go: downloading github.com/hashicorp/hc-install v0.9.1
+2025-04-09T00:24:27.7804174Z go: downloading github.com/hashicorp/terraform-exec v0.22.0
+2025-04-09T00:24:27.8026360Z go: downloading github.com/hashicorp/terraform-json v0.24.0
+2025-04-09T00:24:27.8623789Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2025-04-09T00:24:28.2284626Z go: downloading github.com/hashicorp/go-checkpoint v0.5.0
+2025-04-09T00:24:28.2308971Z go: downloading golang.org/x/mod v0.22.0
+2025-04-09T00:24:28.2309891Z go: downloading github.com/ProtonMail/go-crypto v1.1.3
+2025-04-09T00:24:28.2381712Z go: downloading github.com/hashicorp/go-retryablehttp v0.7.7
+2025-04-09T00:24:28.3600767Z go: downloading github.com/cloudflare/circl v1.3.7
+2025-04-09T00:26:07.2331405Z === RUN   TestMigConfigRSAlertConfiguration_withNotificationsMetricThreshold
+2025-04-09T00:26:07.2378769Z     resource_migration_test.go:14: Creating execution project: test-acc-tf-p-4540182527529427898
+2025-04-09T00:26:07.2379831Z === PAUSE TestMigConfigRSAlertConfiguration_withNotificationsMetricThreshold
+2025-04-09T00:26:07.2380597Z === RUN   TestMigConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2381227Z === PAUSE TestMigConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2381907Z === RUN   TestMigConfigRSAlertConfiguration_withEmptyOptionalBlocks
+2025-04-09T00:26:07.2382692Z === PAUSE TestMigConfigRSAlertConfiguration_withEmptyOptionalBlocks
+2025-04-09T00:26:07.2383409Z === RUN   TestMigConfigRSAlertConfiguration_withMultipleMatchers
+2025-04-09T00:26:07.2384103Z === PAUSE TestMigConfigRSAlertConfiguration_withMultipleMatchers
+2025-04-09T00:26:07.2385140Z === RUN   TestMigConfigRSAlertConfiguration_withEmptyOptionalAttributes
+2025-04-09T00:26:07.2385944Z === PAUSE TestMigConfigRSAlertConfiguration_withEmptyOptionalAttributes
+2025-04-09T00:26:07.2386627Z === RUN   TestMigConfigRSAlertConfiguration_withDataDog
+2025-04-09T00:26:07.2387308Z --- PASS: TestMigConfigRSAlertConfiguration_withDataDog (8.69s)
+2025-04-09T00:26:07.2387961Z === RUN   TestAccConfigRSAlertConfiguration_basic
+2025-04-09T00:26:07.2388884Z === PAUSE TestAccConfigRSAlertConfiguration_basic
+2025-04-09T00:26:07.2389804Z === RUN   TestAccConfigRSAlertConfiguration_withEmptyMetricThresholdConfig
+2025-04-09T00:26:07.2390819Z === PAUSE TestAccConfigRSAlertConfiguration_withEmptyMetricThresholdConfig
+2025-04-09T00:26:07.2391949Z === RUN   TestAccConfigRSAlertConfiguration_withEmptyMatcherMetricThresholdConfig
+2025-04-09T00:26:07.2393067Z === PAUSE TestAccConfigRSAlertConfiguration_withEmptyMatcherMetricThresholdConfig
+2025-04-09T00:26:07.2394029Z === RUN   TestAccConfigRSAlertConfiguration_withNotifications
+2025-04-09T00:26:07.2394862Z === PAUSE TestAccConfigRSAlertConfiguration_withNotifications
+2025-04-09T00:26:07.2395555Z === RUN   TestAccConfigRSAlertConfiguration_withMatchers
+2025-04-09T00:26:07.2396233Z === PAUSE TestAccConfigRSAlertConfiguration_withMatchers
+2025-04-09T00:26:07.2397013Z === RUN   TestAccConfigRSAlertConfiguration_withMetricUpdated
+2025-04-09T00:26:07.2397789Z === PAUSE TestAccConfigRSAlertConfiguration_withMetricUpdated
+2025-04-09T00:26:07.2398764Z === RUN   TestAccConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2399485Z === PAUSE TestAccConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2400178Z === RUN   TestAccConfigRSAlertConfiguration_withoutRoles
+2025-04-09T00:26:07.2400893Z === PAUSE TestAccConfigRSAlertConfiguration_withoutRoles
+2025-04-09T00:26:07.2401682Z === RUN   TestAccConfigRSAlertConfiguration_withoutOptionalAttributes
+2025-04-09T00:26:07.2402588Z === PAUSE TestAccConfigRSAlertConfiguration_withoutOptionalAttributes
+2025-04-09T00:26:07.2403413Z === RUN   TestAccConfigRSAlertConfiguration_importIncorrectId
+2025-04-09T00:26:07.2404168Z === PAUSE TestAccConfigRSAlertConfiguration_importIncorrectId
+2025-04-09T00:26:07.2405017Z === RUN   TestAccConfigRSAlertConfiguration_updatePagerDutyWithNotifierId
+2025-04-09T00:26:07.2405963Z === PAUSE TestAccConfigRSAlertConfiguration_updatePagerDutyWithNotifierId
+2025-04-09T00:26:07.2406775Z === RUN   TestAccConfigRSAlertConfiguration_withDataDog
+2025-04-09T00:26:07.2407529Z --- PASS: TestAccConfigRSAlertConfiguration_withDataDog (4.44s)
+2025-04-09T00:26:07.2409132Z === RUN   TestAccConfigRSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2409884Z === PAUSE TestAccConfigRSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2411294Z === RUN   TestAccConfigRSAlertConfiguration_withEmailToPagerDuty
+2025-04-09T00:26:07.2412622Z === PAUSE TestAccConfigRSAlertConfiguration_withEmailToPagerDuty
+2025-04-09T00:26:07.2413397Z === RUN   TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID
+2025-04-09T00:26:07.2414170Z === PAUSE TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID
+2025-04-09T00:26:07.2414845Z === RUN   TestAccConfigRSAlertConfiguration_withOpsGenie
+2025-04-09T00:26:07.2415449Z === PAUSE TestAccConfigRSAlertConfiguration_withOpsGenie
+2025-04-09T00:26:07.2416052Z === RUN   TestAccConfigRSAlertConfiguration_withVictorOps
+2025-04-09T00:26:07.2416701Z === PAUSE TestAccConfigRSAlertConfiguration_withVictorOps
+2025-04-09T00:26:07.2417304Z === RUN   TestAccConfigDSAlertConfiguration_withOutput
+2025-04-09T00:26:07.2417880Z === PAUSE TestAccConfigDSAlertConfiguration_withOutput
+2025-04-09T00:26:07.2418637Z === RUN   TestAccConfigDSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2419250Z === PAUSE TestAccConfigDSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2419836Z === RUN   TestAccConfigDSAlertConfigurations_basic
+2025-04-09T00:26:07.2420433Z --- PASS: TestAccConfigDSAlertConfigurations_basic (4.50s)
+2025-04-09T00:26:07.2421293Z === RUN   TestAccConfigDSAlertConfigurations_withOutputTypes
+2025-04-09T00:26:07.2422005Z --- PASS: TestAccConfigDSAlertConfigurations_withOutputTypes (21.93s)
+2025-04-09T00:26:07.2422751Z === RUN   TestAccConfigDSAlertConfigurations_invalidOutputTypeValue
+2025-04-09T00:26:07.2426115Z 2025-04-09T00:25:36.310Z [ERROR] sdk.proto: Response contains error diagnostic: tf_proto_version=6.8 tf_rpc=ValidateDataResourceConfig tf_req_id=82d0f441-579c-ac3e-d8f9-c4cf1541fa46 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_data_source_type=mongodbatlas_alert_configurations diagnostic_detail="Attribute output_type[1] value must be one of: [\"resource_hcl\" \"resource_import\"], got: \"invalid_type\"" diagnostic_severity=ERROR diagnostic_summary="Invalid Attribute Value Match" diagnostic_attribute="AttributeName(\"output_type\").ElementKeyInt(1)"
+2025-04-09T00:26:07.2431560Z --- PASS: TestAccConfigDSAlertConfigurations_invalidOutputTypeValue (0.54s)
+2025-04-09T00:26:07.2432311Z === RUN   TestAccConfigDSAlertConfigurations_totalCount
+2025-04-09T00:26:07.2432972Z --- PASS: TestAccConfigDSAlertConfigurations_totalCount (6.42s)
+2025-04-09T00:26:07.2433752Z === CONT  TestMigConfigRSAlertConfiguration_withNotificationsMetricThreshold
+2025-04-09T00:26:07.2434498Z === CONT  TestAccConfigRSAlertConfiguration_withoutRoles
+2025-04-09T00:26:07.2435216Z === CONT  TestAccConfigRSAlertConfiguration_withEmptyMetricThresholdConfig
+2025-04-09T00:26:07.2435946Z === CONT  TestAccConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2436586Z === CONT  TestAccConfigRSAlertConfiguration_withNotifications
+2025-04-09T00:26:07.2437512Z === CONT  TestAccConfigRSAlertConfiguration_withEmptyMatcherMetricThresholdConfig
+2025-04-09T00:26:07.2438544Z === CONT  TestAccConfigDSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2439243Z === CONT  TestAccConfigRSAlertConfiguration_basic
+2025-04-09T00:26:07.2439968Z === CONT  TestAccConfigRSAlertConfiguration_withMetricUpdated
+2025-04-09T00:26:07.2440774Z === CONT  TestAccConfigRSAlertConfiguration_withEmailToPagerDuty
+2025-04-09T00:26:07.2441550Z === CONT  TestAccConfigDSAlertConfiguration_withOutput
+2025-04-09T00:26:07.2442258Z === CONT  TestAccConfigRSAlertConfiguration_withVictorOps
+2025-04-09T00:26:07.2442977Z === CONT  TestAccConfigRSAlertConfiguration_withMatchers
+2025-04-09T00:26:07.2443813Z === CONT  TestMigConfigRSAlertConfiguration_withEmptyOptionalAttributes
+2025-04-09T00:26:07.2444636Z === CONT  TestAccConfigRSAlertConfiguration_withOpsGenie
+2025-04-09T00:26:07.2445408Z === CONT  TestMigConfigRSAlertConfiguration_withMultipleMatchers
+2025-04-09T00:26:07.2446180Z === CONT  TestAccConfigRSAlertConfiguration_withPagerDuty
+2025-04-09T00:26:07.2446928Z === CONT  TestAccConfigRSAlertConfiguration_importIncorrectId
+2025-04-09T00:26:07.2447954Z === CONT  TestMigConfigRSAlertConfiguration_withEmptyOptionalBlocks
+2025-04-09T00:26:07.2448977Z === CONT  TestAccConfigRSAlertConfiguration_withoutOptionalAttributes
+2025-04-09T00:26:07.2449873Z === CONT  TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID
+2025-04-09T00:26:07.2450789Z === CONT  TestAccConfigRSAlertConfiguration_updatePagerDutyWithNotifierId
+2025-04-09T00:26:07.2451627Z === CONT  TestMigConfigRSAlertConfiguration_withThreshold
+2025-04-09T00:26:07.2456896Z 2025-04-09T00:25:51.257Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" tf_resource_type=mongodbatlas_project tf_rpc=ApplyResourceChange tf_req_id=ee9c1e9b-8105-579e-7a63-f8ea1664fea4 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 diagnostic_detail="error deleting project (67f5be8bac5f3766222b28f0): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-09T00:26:07.2480458Z 2025-04-09T00:25:51.309Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest1776356960 test_step_number=1
+2025-04-09T00:26:07.2482582Z   error=
+2025-04-09T00:26:07.2483024Z   | Error running apply: exit status 1
+2025-04-09T00:26:07.2483490Z   | 
+2025-04-09T00:26:07.2484090Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:07.2484710Z   | 
+2025-04-09T00:26:07.2485128Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:07.2485937Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:07.2486809Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:07.2487320Z   | 
+2025-04-09T00:26:07.2487828Z   | error deleting project (67f5be8bac5f3766222b28f0):
+2025-04-09T00:26:07.2488968Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings
+2025-04-09T00:26:07.2490007Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:07.2490995Z   | find resource /api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings. Reason:
+2025-04-09T00:26:07.2492004Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings],
+2025-04-09T00:26:07.2492708Z   | BadRequestDetail: 
+2025-04-09T00:26:07.2493101Z   
+2025-04-09T00:26:07.2493650Z === NAME  TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID
+2025-04-09T00:26:07.2494748Z     resource_test.go:508: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:07.2495414Z         
+2025-04-09T00:26:07.2496192Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:07.2496850Z         
+2025-04-09T00:26:07.2497412Z           with mongodbatlas_project.test,
+2025-04-09T00:26:07.2498681Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:07.2499709Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:07.2500245Z         
+2025-04-09T00:26:07.2500859Z         error deleting project (67f5be8bac5f3766222b28f0):
+2025-04-09T00:26:07.2501998Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings
+2025-04-09T00:26:07.2503219Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:07.2504411Z         find resource /api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings. Reason:
+2025-04-09T00:26:07.2505623Z         Not Found. Params: [/api/atlas/v2/groups/67f5be8bac5f3766222b28f0/settings],
+2025-04-09T00:26:07.2506403Z         BadRequestDetail: 
+2025-04-09T00:26:07.2507386Z --- FAIL: TestAccConfigAlertConfiguration_PagerDutyUsingIntegrationID (9.20s)
+2025-04-09T00:26:07.2537398Z --- PASS: TestAccConfigRSAlertConfiguration_withEmptyMetricThresholdConfig (10.64s)
+2025-04-09T00:26:07.2538713Z --- PASS: TestAccConfigRSAlertConfiguration_withoutOptionalAttributes (11.22s)
+2025-04-09T00:26:07.2539659Z --- PASS: TestAccConfigRSAlertConfiguration_withOpsGenie (11.37s)
+2025-04-09T00:26:07.2540510Z --- PASS: TestAccConfigRSAlertConfiguration_withVictorOps (11.66s)
+2025-04-09T00:26:07.2541554Z --- PASS: TestAccConfigRSAlertConfiguration_withEmptyMatcherMetricThresholdConfig (11.74s)
+2025-04-09T00:26:07.2544957Z 2025-04-09T00:25:54.709Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="import format error" diagnostic_detail="to import an alert configuration, use the format {project_id}-{alert_configuration_id}" tf_req_id=c565530a-4f6c-31da-fc65-6d15b27c7715 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ImportResourceState tf_resource_type=mongodbatlas_alert_configuration diagnostic_severity=ERROR
+2025-04-09T00:26:07.2547971Z --- PASS: TestAccConfigRSAlertConfiguration_withoutRoles (12.02s)
+2025-04-09T00:26:07.2548979Z --- PASS: TestAccConfigDSAlertConfiguration_withOutput (12.04s)
+2025-04-09T00:26:07.2550115Z --- PASS: TestAccConfigDSAlertConfiguration_withPagerDuty (12.21s)
+2025-04-09T00:26:07.2550958Z --- PASS: TestAccConfigRSAlertConfiguration_withPagerDuty (13.88s)
+2025-04-09T00:26:07.2551828Z --- PASS: TestAccConfigRSAlertConfiguration_importIncorrectId (14.09s)
+2025-04-09T00:26:07.2552839Z --- PASS: TestAccConfigRSAlertConfiguration_updatePagerDutyWithNotifierId (17.09s)
+2025-04-09T00:26:07.2553816Z --- PASS: TestAccConfigRSAlertConfiguration_withMatchers (17.35s)
+2025-04-09T00:26:07.2554660Z --- PASS: TestAccConfigRSAlertConfiguration_withMetricUpdated (17.44s)
+2025-04-09T00:26:07.2555589Z --- PASS: TestAccConfigRSAlertConfiguration_withEmailToPagerDuty (18.60s)
+2025-04-09T00:26:07.2556531Z --- PASS: TestAccConfigRSAlertConfiguration_withNotifications (19.25s)
+2025-04-09T00:26:07.2557412Z --- PASS: TestAccConfigRSAlertConfiguration_withThreshold (19.63s)
+2025-04-09T00:26:07.2558367Z --- PASS: TestAccConfigRSAlertConfiguration_basic (20.44s)
+2025-04-09T00:26:07.2559296Z --- PASS: TestMigConfigRSAlertConfiguration_withEmptyOptionalAttributes (23.04s)
+2025-04-09T00:26:07.2560348Z --- PASS: TestMigConfigRSAlertConfiguration_withMultipleMatchers (23.23s)
+2025-04-09T00:26:07.2561293Z --- PASS: TestMigConfigRSAlertConfiguration_withEmptyOptionalBlocks (23.37s)
+2025-04-09T00:26:07.2562222Z --- PASS: TestMigConfigRSAlertConfiguration_withThreshold (23.37s)
+2025-04-09T00:26:07.2563215Z --- PASS: TestMigConfigRSAlertConfiguration_withNotificationsMetricThreshold (27.40s)
+2025-04-09T00:26:07.2619367Z FAIL
+2025-04-09T00:26:07.2620176Z Deleting execution project: test-acc-tf-p-4540182527529427898, id: 67f5be55e7455b55f206b106
+2025-04-09T00:26:07.2623157Z Project deletion failed: 67f5be55e7455b55f206b106, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be55e7455b55f206b106 DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be55e7455b55f206b106. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be55e7455b55f206b106], BadRequestDetail: 
+2025-04-09T00:26:07.2626133Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/alertconfiguration	73.977s
+2025-04-09T00:26:07.2627109Z === RUN   TestAccConfigDSAtlasUser_ByUserID
+2025-04-09T00:26:07.2627735Z --- PASS: TestAccConfigDSAtlasUser_ByUserID (1.53s)
+2025-04-09T00:26:07.2628492Z === RUN   TestAccConfigDSAtlasUser_ByUsername
+2025-04-09T00:26:07.2629130Z --- PASS: TestAccConfigDSAtlasUser_ByUsername (0.92s)
+2025-04-09T00:26:07.2629841Z === RUN   TestAccConfigDSAtlasUser_InvalidAttrCombination
+2025-04-09T00:26:07.2630563Z === PAUSE TestAccConfigDSAtlasUser_InvalidAttrCombination
+2025-04-09T00:26:07.2631220Z === RUN   TestAccConfigDSAtlasUsers_ByOrgID
+2025-04-09T00:26:07.2631837Z --- PASS: TestAccConfigDSAtlasUsers_ByOrgID (1.13s)
+2025-04-09T00:26:07.2632776Z === RUN   TestAccConfigDSAtlasUsers_ByProjectID
+2025-04-09T00:26:07.2633434Z === PAUSE TestAccConfigDSAtlasUsers_ByProjectID
+2025-04-09T00:26:07.2634050Z === RUN   TestAccConfigDSAtlasUsers_ByTeamID
+2025-04-09T00:26:07.2634659Z === PAUSE TestAccConfigDSAtlasUsers_ByTeamID
+2025-04-09T00:26:07.2635282Z === RUN   TestAccConfigDSAtlasUsers_UsingPagination
+2025-04-09T00:26:07.2635940Z === PAUSE TestAccConfigDSAtlasUsers_UsingPagination
+2025-04-09T00:26:07.2636652Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations
+2025-04-09T00:26:07.2637625Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2025-04-09T00:26:07.2638986Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2025-04-09T00:26:07.2640293Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2025-04-09T00:26:07.2641651Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2025-04-09T00:26:07.2642989Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2025-04-09T00:26:07.2644580Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2025-04-09T00:26:07.2645833Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2025-04-09T00:26:07.2646997Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2025-04-09T00:26:07.2748420Z === RUN   TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2025-04-09T00:26:07.2749579Z === PAUSE TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2025-04-09T00:26:07.2750722Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined
+2025-04-09T00:26:07.2751832Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined
+2025-04-09T00:26:07.2752991Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined
+2025-04-09T00:26:07.2754130Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined
+2025-04-09T00:26:07.2755291Z === CONT  TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined
+2025-04-09T00:26:07.2759080Z 2025-04-09T00:24:58.527Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ValidateDataResourceConfig tf_req_id=08de4bb5-539d-f13a-e9f2-2ab327e8cbc0 tf_proto_version=6.8 diagnostic_summary="Invalid Attribute Combination" diagnostic_detail="Attribute \"project_id\" cannot be specified when \"org_id\" is specified" tf_data_source_type=mongodbatlas_atlas_users tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_attribute="AttributeName(\"org_id\")" diagnostic_severity=ERROR
+2025-04-09T00:26:07.2764841Z 2025-04-09T00:24:58.527Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=08de4bb5-539d-f13a-e9f2-2ab327e8cbc0 tf_rpc=ValidateDataResourceConfig tf_data_source_type=mongodbatlas_atlas_users diagnostic_severity=ERROR diagnostic_summary="Invalid Attribute Combination" tf_proto_version=6.8 diagnostic_detail="Attribute \"org_id\" cannot be specified when \"project_id\" is specified" diagnostic_attribute="AttributeName(\"project_id\")"
+2025-04-09T00:26:07.2770685Z 2025-04-09T00:24:58.527Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_attribute="AttributeName(\"project_id\")" tf_req_id=08de4bb5-539d-f13a-e9f2-2ab327e8cbc0 tf_proto_version=6.8 tf_rpc=ValidateDataResourceConfig diagnostic_detail="Attribute \"team_id\" cannot be specified when \"project_id\" is specified" diagnostic_summary="Invalid Attribute Combination" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_data_source_type=mongodbatlas_atlas_users diagnostic_severity=ERROR
+2025-04-09T00:26:07.2776626Z 2025-04-09T00:24:58.527Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=08de4bb5-539d-f13a-e9f2-2ab327e8cbc0 tf_rpc=ValidateDataResourceConfig tf_data_source_type=mongodbatlas_atlas_users tf_proto_version=6.8 diagnostic_summary="Invalid Attribute Combination" diagnostic_attribute="AttributeName(\"team_id\")" diagnostic_detail="Attribute \"project_id\" cannot be specified when \"team_id\" is specified" diagnostic_severity=ERROR
+2025-04-09T00:26:07.2822171Z 2025-04-09T00:24:58.538Z [ERROR] sdk.proto: Response contains error diagnostic: tf_data_source_type=mongodbatlas_atlas_users diagnostic_summary="missing required attributes for data source" diagnostic_detail="either org_id, project_id, or team_id with org_id must be configured" diagnostic_severity=ERROR tf_req_id=ba97e2d7-1da0-d724-ec2f-d4f264421532 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ReadDataSource
+2025-04-09T00:26:07.2827663Z 2025-04-09T00:24:58.547Z [ERROR] sdk.proto: Response contains error diagnostic: tf_proto_version=6.8 diagnostic_attribute="AttributeName(\"project_id\")" diagnostic_detail="Attribute \"team_id\" cannot be specified when \"project_id\" is specified" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ValidateDataResourceConfig tf_req_id=862d2a54-bf32-eaf4-4f2e-47140b3eaa3e diagnostic_summary="Invalid Attribute Combination" diagnostic_severity=ERROR tf_data_source_type=mongodbatlas_atlas_users
+2025-04-09T00:26:07.2834078Z 2025-04-09T00:24:58.547Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=862d2a54-bf32-eaf4-4f2e-47140b3eaa3e tf_data_source_type=mongodbatlas_atlas_users diagnostic_summary="Invalid Attribute Combination" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_attribute="AttributeName(\"team_id\")" diagnostic_detail="Attribute \"project_id\" cannot be specified when \"team_id\" is specified" diagnostic_severity=ERROR tf_proto_version=6.8 tf_rpc=ValidateDataResourceConfig
+2025-04-09T00:26:07.2839954Z 2025-04-09T00:24:58.549Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ValidateDataResourceConfig tf_req_id=2559e73b-8fb5-0597-f852-d1d8669e103a tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 diagnostic_attribute="AttributeName(\"org_id\")" diagnostic_summary="Invalid Attribute Combination" tf_data_source_type=mongodbatlas_atlas_users diagnostic_detail="Attribute \"project_id\" cannot be specified when \"org_id\" is specified" diagnostic_severity=ERROR
+2025-04-09T00:26:07.2845585Z 2025-04-09T00:24:58.549Z [ERROR] sdk.proto: Response contains error diagnostic: tf_proto_version=6.8 tf_data_source_type=mongodbatlas_atlas_users tf_req_id=2559e73b-8fb5-0597-f852-d1d8669e103a tf_rpc=ValidateDataResourceConfig diagnostic_severity=ERROR diagnostic_summary="Invalid Attribute Combination" diagnostic_attribute="AttributeName(\"project_id\")" diagnostic_detail="Attribute \"org_id\" cannot be specified when \"project_id\" is specified" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2025-04-09T00:26:07.2853394Z 2025-04-09T00:24:58.575Z [ERROR] sdk.proto: Response contains error diagnostic: tf_proto_version=6.8 tf_rpc=ReadDataSource tf_data_source_type=mongodbatlas_atlas_users diagnostic_severity=ERROR diagnostic_summary="missing required attributes for data source" diagnostic_detail="either org_id, project_id, or team_id with org_id must be configured" tf_req_id=598e54e4-6aef-cd6e-c2b9-e3862543fd26 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2025-04-09T00:26:07.2856243Z --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations (0.00s)
+2025-04-09T00:26:07.2857500Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_all_three_attributes_defined (0.51s)
+2025-04-09T00:26:07.2859282Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_project_and_team_attributes_defined (0.54s)
+2025-04-09T00:26:07.2861003Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_team_attribute_defined (0.54s)
+2025-04-09T00:26:07.2862374Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined (0.56s)
+2025-04-09T00:26:07.2863865Z     --- PASS: TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_org_and_project_attributes_defined (0.56s)
+2025-04-09T00:26:07.2864870Z === CONT  TestAccConfigDSAtlasUser_InvalidAttrCombination
+2025-04-09T00:26:07.2865522Z === CONT  TestAccConfigDSAtlasUsers_UsingPagination
+2025-04-09T00:26:07.2866099Z === CONT  TestAccConfigDSAtlasUsers_ByTeamID
+2025-04-09T00:26:07.2866646Z === CONT  TestAccConfigDSAtlasUsers_ByProjectID
+2025-04-09T00:26:07.2870084Z 2025-04-09T00:24:59.334Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_attribute="AttributeName(\"user_id\")" tf_req_id=1f4e987d-5384-b172-d87a-9e9eec37820b tf_proto_version=6.8 tf_rpc=ValidateDataResourceConfig tf_data_source_type=mongodbatlas_atlas_user diagnostic_detail="Attribute \"username\" cannot be specified when \"user_id\" is specified" diagnostic_severity=ERROR diagnostic_summary="Invalid Attribute Combination"
+2025-04-09T00:26:07.2875993Z 2025-04-09T00:24:59.334Z [ERROR] sdk.proto: Response contains error diagnostic: tf_data_source_type=mongodbatlas_atlas_user diagnostic_severity=ERROR diagnostic_summary="Invalid Attribute Combination" diagnostic_attribute="AttributeName(\"username\")" tf_req_id=1f4e987d-5384-b172-d87a-9e9eec37820b tf_rpc=ValidateDataResourceConfig diagnostic_detail="Attribute \"user_id\" cannot be specified when \"username\" is specified" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8
+2025-04-09T00:26:07.2879311Z --- PASS: TestAccConfigDSAtlasUser_InvalidAttrCombination (0.86s)
+2025-04-09T00:26:07.2884548Z 2025-04-09T00:25:01.945Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project tf_req_id=4eb154b4-0269-40a9-eddd-0b1e6bbf4230 diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5ce7455b55f206b522): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings], BadRequestDetail: " tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8
+2025-04-09T00:26:07.2889665Z 2025-04-09T00:25:01.955Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1
+2025-04-09T00:26:07.2890333Z   error=
+2025-04-09T00:26:07.2890711Z   | Error running apply: exit status 1
+2025-04-09T00:26:07.2891137Z   | 
+2025-04-09T00:26:07.2891665Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:07.2892224Z   | 
+2025-04-09T00:26:07.2892602Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:07.2893330Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:07.2894088Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:07.2894553Z   | 
+2025-04-09T00:26:07.2894984Z   | error deleting project (67f5be5ce7455b55f206b522):
+2025-04-09T00:26:07.2895824Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings
+2025-04-09T00:26:07.2896762Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:07.2897648Z   | find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings. Reason:
+2025-04-09T00:26:07.2898710Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings],
+2025-04-09T00:26:07.2899361Z   | BadRequestDetail: 
+2025-04-09T00:26:07.2901116Z    test_name=TestAccConfigDSAtlasUsers_ByProjectID test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest838587297
+2025-04-09T00:26:07.2902513Z === NAME  TestAccConfigDSAtlasUsers_ByProjectID
+2025-04-09T00:26:07.2903484Z     data_source_atlas_users_test.go:48: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:07.2904185Z         
+2025-04-09T00:26:07.2904903Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:07.2905509Z         
+2025-04-09T00:26:07.2906008Z           with mongodbatlas_project.test,
+2025-04-09T00:26:07.2907050Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:07.2907968Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:07.2908589Z         
+2025-04-09T00:26:07.2909164Z         error deleting project (67f5be5ce7455b55f206b522):
+2025-04-09T00:26:07.2910586Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings
+2025-04-09T00:26:07.2911740Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:07.2912852Z         find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings. Reason:
+2025-04-09T00:26:07.2913980Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b522/settings],
+2025-04-09T00:26:07.2914881Z         BadRequestDetail: 
+2025-04-09T00:26:07.2915374Z --- FAIL: TestAccConfigDSAtlasUsers_ByProjectID (3.55s)
+2025-04-09T00:26:07.2915981Z --- PASS: TestAccConfigDSAtlasUsers_ByTeamID (3.89s)
+2025-04-09T00:26:07.2916628Z --- PASS: TestAccConfigDSAtlasUsers_UsingPagination (4.08s)
+2025-04-09T00:26:07.2917164Z FAIL
+2025-04-09T00:26:07.2917830Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/atlasuser	8.255s
+2025-04-09T00:26:47.2878822Z === RUN   TestAccCloudProviderAccessAuthorizationAWS_basic
+2025-04-09T00:26:47.2880106Z     resource_cloud_provider_access_authorization_test.go:17: Creating execution project: test-acc-tf-p-295662253186013206
+2025-04-09T00:26:47.2881224Z === PAUSE TestAccCloudProviderAccessAuthorizationAWS_basic
+2025-04-09T00:26:47.2882038Z === RUN   TestAccCloudProviderAccessAuthorizationAzure_basic
+2025-04-09T00:26:47.2882946Z --- PASS: TestAccCloudProviderAccessAuthorizationAzure_basic (3.07s)
+2025-04-09T00:26:47.2883776Z === RUN   TestMigCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2884482Z === PAUSE TestMigCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2885374Z === RUN   TestAccCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2886024Z === PAUSE TestAccCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2886679Z === RUN   TestAccCloudProviderAccessSetupAzure_basic
+2025-04-09T00:26:47.2887336Z === PAUSE TestAccCloudProviderAccessSetupAzure_basic
+2025-04-09T00:26:47.2888269Z === CONT  TestAccCloudProviderAccessAuthorizationAWS_basic
+2025-04-09T00:26:47.2888966Z === CONT  TestAccCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2889498Z === CONT  TestAccCloudProviderAccessSetupAzure_basic
+2025-04-09T00:26:47.2890199Z === CONT  TestMigCloudProviderAccessSetupAWS_basic
+2025-04-09T00:26:47.2890954Z --- PASS: TestAccCloudProviderAccessSetupAzure_basic (3.31s)
+2025-04-09T00:26:47.2891729Z --- PASS: TestAccCloudProviderAccessSetupAWS_basic (4.05s)
+2025-04-09T00:26:47.2892478Z --- PASS: TestMigCloudProviderAccessSetupAWS_basic (7.95s)
+2025-04-09T00:26:47.2895251Z 2025/04/09 00:25:13 warning issue performing authorize: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be56e7455b55f206b1ca/cloudProviderAccess/67f5be68ac5f3766222b1fd3 PATCH: HTTP 400 Bad Request (Error code: "CANNOT_ASSUME_ROLE") Detail: Atlas cannot assume the specified role (arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-1930698046211628399). Reason: Bad Request. Params: [arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-1930698046211628399], BadRequestDetail:  
+2025-04-09T00:26:47.2897238Z 2025/04/09 00:25:13 retrying
+2025-04-09T00:26:47.2901432Z 2025/04/09 00:26:17 warning issue performing authorize: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be56e7455b55f206b1ca/cloudProviderAccess/67f5be68ac5f3766222b1fd3 PATCH: HTTP 400 Bad Request (Error code: "CANNOT_ASSUME_ROLE") Detail: Atlas cannot assume the specified role (arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-5129221804255509046). Reason: Bad Request. Params: [arn:aws:iam::358363220050:role/mongodb-atlas-test-acc-tf-5129221804255509046], BadRequestDetail:  
+2025-04-09T00:26:47.2903305Z 2025/04/09 00:26:17 retrying
+2025-04-09T00:26:47.2903713Z --- PASS: TestAccCloudProviderAccessAuthorizationAWS_basic (109.62s)
+2025-04-09T00:26:47.2904100Z PASS
+2025-04-09T00:26:47.2904489Z Deleting execution project: test-acc-tf-p-295662253186013206, id: 67f5be56e7455b55f206b1ca
+2025-04-09T00:26:47.2906080Z Project deletion failed: 67f5be56e7455b55f206b1ca, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be56e7455b55f206b1ca DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be56e7455b55f206b1ca. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be56e7455b55f206b1ca], BadRequestDetail: 
+2025-04-09T00:26:47.2907667Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cloudprovideraccess	112.752s
+2025-04-09T00:26:47.2909485Z === RUN   TestAccConfigDSCustomDBRole_basic
+2025-04-09T00:26:47.2909828Z === PAUSE TestAccConfigDSCustomDBRole_basic
+2025-04-09T00:26:47.2910161Z === RUN   TestAccConfigDSCustomDBRoles_basic
+2025-04-09T00:26:47.2910488Z === PAUSE TestAccConfigDSCustomDBRoles_basic
+2025-04-09T00:26:47.2910813Z === RUN   TestMigConfigCustomDBRoles_Basic
+2025-04-09T00:26:47.2911127Z === PAUSE TestMigConfigCustomDBRoles_Basic
+2025-04-09T00:26:47.2911449Z === RUN   TestAccConfigRSCustomDBRoles_Basic
+2025-04-09T00:26:47.2911766Z === PAUSE TestAccConfigRSCustomDBRoles_Basic
+2025-04-09T00:26:47.2912125Z === RUN   TestAccConfigRSCustomDBRoles_WithInheritedRoles
+2025-04-09T00:26:47.2912525Z === PAUSE TestAccConfigRSCustomDBRoles_WithInheritedRoles
+2025-04-09T00:26:47.2912920Z === RUN   TestAccConfigRSCustomDBRoles_MultipleCustomRoles
+2025-04-09T00:26:47.2913328Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleCustomRoles
+2025-04-09T00:26:47.2913734Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources
+2025-04-09T00:26:47.2914211Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0
+2025-04-09T00:26:47.2914771Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0
+2025-04-09T00:26:47.2915320Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1
+2025-04-09T00:26:47.2915857Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1
+2025-04-09T00:26:47.2916396Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-2
+2025-04-09T00:26:47.2916931Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-2
+2025-04-09T00:26:47.2917470Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3
+2025-04-09T00:26:47.2918149Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3
+2025-04-09T00:26:47.2918714Z === RUN   TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4
+2025-04-09T00:26:47.2919255Z === PAUSE TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4
+2025-04-09T00:26:47.2919797Z === CONT  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0
+2025-04-09T00:26:47.2920337Z === CONT  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3
+2025-04-09T00:26:47.2920868Z === CONT  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4
+2025-04-09T00:26:47.2921399Z === CONT  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1
+2025-04-09T00:26:47.2921933Z === CONT  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-2
+2025-04-09T00:26:47.2925040Z 2025-04-09T00:24:57.149Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=0336ff31-9591-d4de-7181-8c8b94520888 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be57ac5f3766222b1021): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings"
+2025-04-09T00:26:47.2927803Z 2025-04-09T00:24:57.156Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-09T00:26:47.2928325Z   error=
+2025-04-09T00:26:47.2928582Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.2928843Z   | 
+2025-04-09T00:26:47.2929170Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2929521Z   | 
+2025-04-09T00:26:47.2929755Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.2930213Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2930676Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2931085Z   | 
+2025-04-09T00:26:47.2931361Z   | error deleting project (67f5be57ac5f3766222b1021):
+2025-04-09T00:26:47.2931869Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings
+2025-04-09T00:26:47.2932437Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2932982Z   | find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings. Reason:
+2025-04-09T00:26:47.2933533Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings],
+2025-04-09T00:26:47.2933931Z   | BadRequestDetail: 
+2025-04-09T00:26:47.2935055Z    test_name=TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-2 test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest1095032805 test_step_number=1
+2025-04-09T00:26:47.2936271Z     resource_custom_db_role_test.go:389: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.2936696Z         
+2025-04-09T00:26:47.2937137Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2937501Z         
+2025-04-09T00:26:47.2937810Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.2938596Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2939154Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2939451Z         
+2025-04-09T00:26:47.2939802Z         error deleting project (67f5be57ac5f3766222b1021):
+2025-04-09T00:26:47.2940441Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings
+2025-04-09T00:26:47.2941111Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2941764Z         find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings. Reason:
+2025-04-09T00:26:47.2942428Z         Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1021/settings],
+2025-04-09T00:26:47.2942871Z         BadRequestDetail: 
+2025-04-09T00:26:47.2945811Z 2025-04-09T00:24:57.192Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be57e7455b55f206b245): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be57e7455b55f206b245/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_req_id=a2997e2e-f7b7-1c1a-d983-f279886a3394
+2025-04-09T00:26:47.2949063Z 2025-04-09T00:24:57.204Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.2949684Z   error=
+2025-04-09T00:26:47.2949929Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.2950190Z   | 
+2025-04-09T00:26:47.2950515Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2950864Z   | 
+2025-04-09T00:26:47.2951098Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.2951551Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2952017Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2952297Z   | 
+2025-04-09T00:26:47.2952569Z   | error deleting project (67f5be57e7455b55f206b245):
+2025-04-09T00:26:47.2953095Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings
+2025-04-09T00:26:47.2953671Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2954210Z   | find resource /api/atlas/v2/groups/67f5be57e7455b55f206b245/settings. Reason:
+2025-04-09T00:26:47.2954889Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings],
+2025-04-09T00:26:47.2955289Z   | BadRequestDetail: 
+2025-04-09T00:26:47.2956041Z    test_working_directory=/tmp/plugintest3344387617 test_name=TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1 test_step_number=1
+2025-04-09T00:26:47.2956850Z === NAME  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1
+2025-04-09T00:26:47.2957523Z     resource_custom_db_role_test.go:389: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.2957928Z         
+2025-04-09T00:26:47.2958559Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2958924Z         
+2025-04-09T00:26:47.2959230Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.2959842Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2960394Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2960700Z         
+2025-04-09T00:26:47.2961043Z         error deleting project (67f5be57e7455b55f206b245):
+2025-04-09T00:26:47.2961671Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings
+2025-04-09T00:26:47.2962374Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2963018Z         find resource /api/atlas/v2/groups/67f5be57e7455b55f206b245/settings. Reason:
+2025-04-09T00:26:47.2963687Z         Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b245/settings],
+2025-04-09T00:26:47.2964119Z         BadRequestDetail: 
+2025-04-09T00:26:47.2966961Z 2025-04-09T00:24:58.143Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="error deleting project (67f5be57ac5f3766222b1025): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings], BadRequestDetail: " tf_req_id=08a83ea6-8da8-f8d7-941d-2d0693ca23e7 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings"
+2025-04-09T00:26:47.2970541Z 2025-04-09T00:24:58.152Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3 test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_step_number=1
+2025-04-09T00:26:47.2971511Z   error=
+2025-04-09T00:26:47.2971911Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.2972177Z   | 
+2025-04-09T00:26:47.2972507Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2972850Z   | 
+2025-04-09T00:26:47.2973086Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.2973541Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2974028Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2974314Z   | 
+2025-04-09T00:26:47.2974583Z   | error deleting project (67f5be57ac5f3766222b1025):
+2025-04-09T00:26:47.2975088Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings
+2025-04-09T00:26:47.2975657Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2976203Z   | find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings. Reason:
+2025-04-09T00:26:47.2976755Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings],
+2025-04-09T00:26:47.2977154Z   | BadRequestDetail: 
+2025-04-09T00:26:47.2977478Z    test_working_directory=/tmp/plugintest2255908497
+2025-04-09T00:26:47.2977943Z === NAME  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3
+2025-04-09T00:26:47.2978933Z     resource_custom_db_role_test.go:389: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.2979344Z         
+2025-04-09T00:26:47.2979780Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2980145Z         
+2025-04-09T00:26:47.2980452Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.2981055Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2981611Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2981908Z         
+2025-04-09T00:26:47.2982261Z         error deleting project (67f5be57ac5f3766222b1025):
+2025-04-09T00:26:47.2982895Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings
+2025-04-09T00:26:47.2983563Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2984212Z         find resource /api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings. Reason:
+2025-04-09T00:26:47.2984880Z         Not Found. Params: [/api/atlas/v2/groups/67f5be57ac5f3766222b1025/settings],
+2025-04-09T00:26:47.2985317Z         BadRequestDetail: 
+2025-04-09T00:26:47.2988304Z 2025-04-09T00:24:58.566Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="error deleting project (67f5be57e7455b55f206b244): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be57e7455b55f206b244/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_req_id=30304fd0-41b0-27e3-8765-828ff365a8c1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project
+2025-04-09T00:26:47.2991889Z 2025-04-09T00:24:58.574Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest1224409934 test_step_number=1 test_name=TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4
+2025-04-09T00:26:47.2993025Z   error=
+2025-04-09T00:26:47.2993272Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.2993532Z   | 
+2025-04-09T00:26:47.2993856Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.2994204Z   | 
+2025-04-09T00:26:47.2994438Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.2994887Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.2995489Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.2995793Z   | 
+2025-04-09T00:26:47.2996084Z   | error deleting project (67f5be57e7455b55f206b244):
+2025-04-09T00:26:47.2996615Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings
+2025-04-09T00:26:47.2997189Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.2997739Z   | find resource /api/atlas/v2/groups/67f5be57e7455b55f206b244/settings. Reason:
+2025-04-09T00:26:47.2998470Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings],
+2025-04-09T00:26:47.2998875Z   | BadRequestDetail: 
+2025-04-09T00:26:47.2999105Z   
+2025-04-09T00:26:47.2999461Z === NAME  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4
+2025-04-09T00:26:47.3000136Z     resource_custom_db_role_test.go:389: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3000545Z         
+2025-04-09T00:26:47.3000986Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3001350Z         
+2025-04-09T00:26:47.3001657Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3002399Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3002953Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3003246Z         
+2025-04-09T00:26:47.3003595Z         error deleting project (67f5be57e7455b55f206b244):
+2025-04-09T00:26:47.3004225Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings
+2025-04-09T00:26:47.3004892Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3005533Z         find resource /api/atlas/v2/groups/67f5be57e7455b55f206b244/settings. Reason:
+2025-04-09T00:26:47.3006200Z         Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b244/settings],
+2025-04-09T00:26:47.3006636Z         BadRequestDetail: 
+2025-04-09T00:26:47.3009638Z 2025-04-09T00:24:58.616Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=30c9a3cb-682b-026d-0b43-d0a18958c6aa tf_rpc=ApplyResourceChange tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be57e7455b55f206b243): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be57e7455b55f206b243/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_proto_version=6.8
+2025-04-09T00:26:47.3013243Z 2025-04-09T00:24:58.632Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest852833558 test_step_number=1 test_name=TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0
+2025-04-09T00:26:47.3014376Z   error=
+2025-04-09T00:26:47.3014618Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3014875Z   | 
+2025-04-09T00:26:47.3015209Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3015564Z   | 
+2025-04-09T00:26:47.3015797Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3016247Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3016712Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3016991Z   | 
+2025-04-09T00:26:47.3017262Z   | error deleting project (67f5be57e7455b55f206b243):
+2025-04-09T00:26:47.3017771Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings
+2025-04-09T00:26:47.3018518Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3019180Z   | find resource /api/atlas/v2/groups/67f5be57e7455b55f206b243/settings. Reason:
+2025-04-09T00:26:47.3019745Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings],
+2025-04-09T00:26:47.3020150Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3020364Z   
+2025-04-09T00:26:47.3020713Z === NAME  TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0
+2025-04-09T00:26:47.3021382Z     resource_custom_db_role_test.go:389: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3021785Z         
+2025-04-09T00:26:47.3022218Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3022579Z         
+2025-04-09T00:26:47.3022889Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3023498Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3024054Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3024354Z         
+2025-04-09T00:26:47.3024716Z         error deleting project (67f5be57e7455b55f206b243):
+2025-04-09T00:26:47.3025346Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings
+2025-04-09T00:26:47.3026143Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3026786Z         find resource /api/atlas/v2/groups/67f5be57e7455b55f206b243/settings. Reason:
+2025-04-09T00:26:47.3027450Z         Not Found. Params: [/api/atlas/v2/groups/67f5be57e7455b55f206b243/settings],
+2025-04-09T00:26:47.3027889Z         BadRequestDetail: 
+2025-04-09T00:26:47.3028445Z --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources (0.00s)
+2025-04-09T00:26:47.3029081Z     --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-2 (2.48s)
+2025-04-09T00:26:47.3029776Z     --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-1 (2.53s)
+2025-04-09T00:26:47.3030464Z     --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-3 (3.50s)
+2025-04-09T00:26:47.3031152Z     --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-4 (3.96s)
+2025-04-09T00:26:47.3031832Z     --- FAIL: TestAccConfigRSCustomDBRoles_MultipleResources/test-acc-custom_role-0 (4.02s)
+2025-04-09T00:26:47.3032345Z === RUN   TestAccConfigRSCustomDBRoles_UpdatedInheritRoles
+2025-04-09T00:26:47.3032751Z === PAUSE TestAccConfigRSCustomDBRoles_UpdatedInheritRoles
+2025-04-09T00:26:47.3033127Z === CONT  TestAccConfigDSCustomDBRole_basic
+2025-04-09T00:26:47.3033496Z === CONT  TestAccConfigRSCustomDBRoles_WithInheritedRoles
+2025-04-09T00:26:47.3033858Z === CONT  TestMigConfigCustomDBRoles_Basic
+2025-04-09T00:26:47.3034184Z === CONT  TestAccConfigRSCustomDBRoles_Basic
+2025-04-09T00:26:47.3034516Z === CONT  TestAccConfigDSCustomDBRoles_basic
+2025-04-09T00:26:47.3034876Z === CONT  TestAccConfigRSCustomDBRoles_UpdatedInheritRoles
+2025-04-09T00:26:47.3035280Z === CONT  TestAccConfigRSCustomDBRoles_MultipleCustomRoles
+2025-04-09T00:26:47.3038373Z 2025-04-09T00:25:02.560Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=dd65ddff-f6ee-35dc-8a3a-89c63b8cd7c2 tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be5cac5f3766222b162c): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_rpc=ApplyResourceChange
+2025-04-09T00:26:47.3042022Z 2025-04-09T00:25:02.572Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest2064289296 test_step_number=1 test_name=TestAccConfigRSCustomDBRoles_WithInheritedRoles
+2025-04-09T00:26:47.3043080Z   error=
+2025-04-09T00:26:47.3043326Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3043590Z   | 
+2025-04-09T00:26:47.3043920Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3044261Z   | 
+2025-04-09T00:26:47.3044495Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3044946Z   |   on terraform_plugin_test.tf line 13, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3045405Z   |   13: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3045692Z   | 
+2025-04-09T00:26:47.3045965Z   | error deleting project (67f5be5cac5f3766222b162c):
+2025-04-09T00:26:47.3046476Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings
+2025-04-09T00:26:47.3047048Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3047592Z   | find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings. Reason:
+2025-04-09T00:26:47.3048332Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings],
+2025-04-09T00:26:47.3049012Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3049450Z   
+2025-04-09T00:26:47.3049840Z === NAME  TestAccConfigRSCustomDBRoles_WithInheritedRoles
+2025-04-09T00:26:47.3050517Z     resource_custom_db_role_test.go:137: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3051126Z         
+2025-04-09T00:26:47.3051660Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3052216Z         
+2025-04-09T00:26:47.3052675Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3053373Z           on terraform_plugin_test.tf line 13, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3054120Z           13: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3054529Z         
+2025-04-09T00:26:47.3055021Z         error deleting project (67f5be5cac5f3766222b162c):
+2025-04-09T00:26:47.3070287Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings
+2025-04-09T00:26:47.3071569Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3072661Z         find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings. Reason:
+2025-04-09T00:26:47.3073766Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162c/settings],
+2025-04-09T00:26:47.3074397Z         BadRequestDetail: 
+2025-04-09T00:26:47.3074782Z --- FAIL: TestAccConfigRSCustomDBRoles_WithInheritedRoles (3.90s)
+2025-04-09T00:26:47.3077744Z 2025-04-09T00:25:02.832Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange diagnostic_detail="error deleting project (67f5be5cac5f3766222b162b): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_req_id=781ad070-1afc-6844-0490-b0464bab24c0 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_project
+2025-04-09T00:26:47.3080759Z 2025-04-09T00:25:02.849Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-09T00:26:47.3081126Z   error=
+2025-04-09T00:26:47.3081386Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3081649Z   | 
+2025-04-09T00:26:47.3081987Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3082334Z   | 
+2025-04-09T00:26:47.3082572Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3083016Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3083691Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3083992Z   | 
+2025-04-09T00:26:47.3084276Z   | error deleting project (67f5be5cac5f3766222b162b):
+2025-04-09T00:26:47.3084793Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings
+2025-04-09T00:26:47.3085377Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3085935Z   | find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings. Reason:
+2025-04-09T00:26:47.3086491Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings],
+2025-04-09T00:26:47.3086901Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3087870Z    test_step_number=1 test_name=TestAccConfigDSCustomDBRoles_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest3047345057
+2025-04-09T00:26:47.3088900Z === NAME  TestAccConfigDSCustomDBRoles_basic
+2025-04-09T00:26:47.3089494Z     data_source_custom_db_roles_test.go:22: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3089926Z         
+2025-04-09T00:26:47.3090372Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3090884Z         
+2025-04-09T00:26:47.3091199Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3091808Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3092365Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3092666Z         
+2025-04-09T00:26:47.3093019Z         error deleting project (67f5be5cac5f3766222b162b):
+2025-04-09T00:26:47.3093655Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings
+2025-04-09T00:26:47.3094322Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3094970Z         find resource /api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings. Reason:
+2025-04-09T00:26:47.3095642Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b162b/settings],
+2025-04-09T00:26:47.3096093Z         BadRequestDetail: 
+2025-04-09T00:26:47.3099104Z 2025-04-09T00:25:02.912Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR tf_resource_type=mongodbatlas_project tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=6f26d3f4-b90b-d968-9ee3-aeae94f37283 tf_rpc=ApplyResourceChange diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5cac5f3766222b1540): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings], BadRequestDetail: "
+2025-04-09T00:26:47.3101834Z 2025-04-09T00:25:02.927Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-09T00:26:47.3102193Z   error=
+2025-04-09T00:26:47.3102451Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3102716Z   | 
+2025-04-09T00:26:47.3103048Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3103396Z   | 
+2025-04-09T00:26:47.3103642Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3104098Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3104562Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3104847Z   | 
+2025-04-09T00:26:47.3105120Z   | error deleting project (67f5be5cac5f3766222b1540):
+2025-04-09T00:26:47.3105635Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings
+2025-04-09T00:26:47.3106211Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3106761Z   | find resource /api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings. Reason:
+2025-04-09T00:26:47.3107445Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings],
+2025-04-09T00:26:47.3107855Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3108980Z    test_working_directory=/tmp/plugintest730185096 test_name=TestAccConfigRSCustomDBRoles_Basic test_step_number=1 test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.3109814Z === NAME  TestAccConfigRSCustomDBRoles_Basic
+2025-04-09T00:26:47.3110364Z     resource_custom_db_role_test.go:28: Step 1/3 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3110772Z         
+2025-04-09T00:26:47.3111203Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3111569Z         
+2025-04-09T00:26:47.3111875Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3112478Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3113031Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3113336Z         
+2025-04-09T00:26:47.3113690Z         error deleting project (67f5be5cac5f3766222b1540):
+2025-04-09T00:26:47.3114321Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings
+2025-04-09T00:26:47.3115123Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3115773Z         find resource /api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings. Reason:
+2025-04-09T00:26:47.3116434Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5cac5f3766222b1540/settings],
+2025-04-09T00:26:47.3116869Z         BadRequestDetail: 
+2025-04-09T00:26:47.3117182Z --- FAIL: TestAccConfigDSCustomDBRoles_basic (4.25s)
+2025-04-09T00:26:47.3117554Z --- FAIL: TestAccConfigRSCustomDBRoles_Basic (4.31s)
+2025-04-09T00:26:47.3120580Z 2025-04-09T00:25:03.154Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5ce7455b55f206b682): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings], BadRequestDetail: " tf_req_id=c735043a-0196-1f97-af59-e2b2984c9096 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_severity=ERROR
+2025-04-09T00:26:47.3124040Z 2025-04-09T00:25:03.163Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1 test_name=TestAccConfigRSCustomDBRoles_MultipleCustomRoles test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest3841143934
+2025-04-09T00:26:47.3125084Z   error=
+2025-04-09T00:26:47.3125339Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3125602Z   | 
+2025-04-09T00:26:47.3125933Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3126287Z   | 
+2025-04-09T00:26:47.3126532Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3127095Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3127559Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3127847Z   | 
+2025-04-09T00:26:47.3128267Z   | error deleting project (67f5be5ce7455b55f206b682):
+2025-04-09T00:26:47.3128790Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings
+2025-04-09T00:26:47.3129351Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3129893Z   | find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings. Reason:
+2025-04-09T00:26:47.3130443Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings],
+2025-04-09T00:26:47.3130977Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3131218Z   
+2025-04-09T00:26:47.3131498Z === NAME  TestAccConfigRSCustomDBRoles_MultipleCustomRoles
+2025-04-09T00:26:47.3132089Z     resource_custom_db_role_test.go:328: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3132500Z         
+2025-04-09T00:26:47.3132930Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3133295Z         
+2025-04-09T00:26:47.3133599Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3134201Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3134750Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3135048Z         
+2025-04-09T00:26:47.3135407Z         error deleting project (67f5be5ce7455b55f206b682):
+2025-04-09T00:26:47.3136033Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings
+2025-04-09T00:26:47.3136709Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3137358Z         find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings. Reason:
+2025-04-09T00:26:47.3138394Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b682/settings],
+2025-04-09T00:26:47.3138844Z         BadRequestDetail: 
+2025-04-09T00:26:47.3141639Z 2025-04-09T00:25:03.271Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5ce7455b55f206b654): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings], BadRequestDetail: " tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=961bf560-619f-9eb3-5177-0ff75ddb02c3
+2025-04-09T00:26:47.3145052Z 2025-04-09T00:25:03.289Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccConfigDSCustomDBRole_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest4151546938 test_step_number=1
+2025-04-09T00:26:47.3146058Z   error=
+2025-04-09T00:26:47.3146310Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3146581Z   | 
+2025-04-09T00:26:47.3146923Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3147270Z   | 
+2025-04-09T00:26:47.3147507Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3147961Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3148641Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3148935Z   | 
+2025-04-09T00:26:47.3149210Z   | error deleting project (67f5be5ce7455b55f206b654):
+2025-04-09T00:26:47.3149732Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings
+2025-04-09T00:26:47.3150305Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3150847Z   | find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings. Reason:
+2025-04-09T00:26:47.3151405Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings],
+2025-04-09T00:26:47.3151834Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3152062Z   
+2025-04-09T00:26:47.3152302Z === NAME  TestAccConfigDSCustomDBRole_basic
+2025-04-09T00:26:47.3152855Z     data_source_custom_db_role_test.go:22: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3153279Z         
+2025-04-09T00:26:47.3153718Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3154080Z         
+2025-04-09T00:26:47.3154526Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3155135Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3155692Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3155999Z         
+2025-04-09T00:26:47.3156350Z         error deleting project (67f5be5ce7455b55f206b654):
+2025-04-09T00:26:47.3156987Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings
+2025-04-09T00:26:47.3157656Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3158489Z         find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings. Reason:
+2025-04-09T00:26:47.3159172Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b654/settings],
+2025-04-09T00:26:47.3159613Z         BadRequestDetail: 
+2025-04-09T00:26:47.3159982Z --- FAIL: TestAccConfigRSCustomDBRoles_MultipleCustomRoles (4.49s)
+2025-04-09T00:26:47.3160415Z --- FAIL: TestAccConfigDSCustomDBRole_basic (4.60s)
+2025-04-09T00:26:47.3161517Z 2025-04-09T00:25:04.760Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1 test_name=TestMigConfigCustomDBRoles_Basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest1635519371
+2025-04-09T00:26:47.3162696Z   error=
+2025-04-09T00:26:47.3162945Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3163214Z   | 
+2025-04-09T00:26:47.3163542Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3163885Z   | 
+2025-04-09T00:26:47.3164126Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3164570Z   |   on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3165030Z   |   14: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3165319Z   | 
+2025-04-09T00:26:47.3165589Z   | error deleting project (67f5be5ee7455b55f206b9c8):
+2025-04-09T00:26:47.3166116Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings
+2025-04-09T00:26:47.3166690Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3167238Z   | find resource /api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings. Reason:
+2025-04-09T00:26:47.3167797Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings],
+2025-04-09T00:26:47.3168364Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3168589Z   
+2025-04-09T00:26:47.3168831Z === NAME  TestMigConfigCustomDBRoles_Basic
+2025-04-09T00:26:47.3169412Z     resource_custom_db_role_migration_test.go:21: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3169855Z         
+2025-04-09T00:26:47.3170418Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3170784Z         
+2025-04-09T00:26:47.3171098Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3171704Z           on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3172255Z           14: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3172560Z         
+2025-04-09T00:26:47.3172914Z         error deleting project (67f5be5ee7455b55f206b9c8):
+2025-04-09T00:26:47.3173553Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings
+2025-04-09T00:26:47.3174220Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3174865Z         find resource /api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings. Reason:
+2025-04-09T00:26:47.3175532Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5ee7455b55f206b9c8/settings],
+2025-04-09T00:26:47.3175974Z         BadRequestDetail: 
+2025-04-09T00:26:47.3176286Z --- FAIL: TestMigConfigCustomDBRoles_Basic (6.21s)
+2025-04-09T00:26:47.3179479Z 2025-04-09T00:25:05.407Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be5ce7455b55f206b673): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_req_id=102b66e7-81c0-8265-9326-a4ba4d064c0e
+2025-04-09T00:26:47.3182458Z 2025-04-09T00:25:05.423Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccConfigRSCustomDBRoles_UpdatedInheritRoles
+2025-04-09T00:26:47.3182994Z   error=
+2025-04-09T00:26:47.3183247Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3183510Z   | 
+2025-04-09T00:26:47.3183847Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3184198Z   | 
+2025-04-09T00:26:47.3184436Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3184882Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3185462Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3185746Z   | 
+2025-04-09T00:26:47.3186022Z   | error deleting project (67f5be5ce7455b55f206b673):
+2025-04-09T00:26:47.3186543Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings
+2025-04-09T00:26:47.3187110Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3187658Z   | find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings. Reason:
+2025-04-09T00:26:47.3188386Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings],
+2025-04-09T00:26:47.3188790Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3189561Z    test_step_number=1 test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest474117917
+2025-04-09T00:26:47.3190290Z === NAME  TestAccConfigRSCustomDBRoles_UpdatedInheritRoles
+2025-04-09T00:26:47.3190887Z     resource_custom_db_role_test.go:490: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3191300Z         
+2025-04-09T00:26:47.3191733Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3192099Z         
+2025-04-09T00:26:47.3192411Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3193015Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3193567Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3193861Z         
+2025-04-09T00:26:47.3194216Z         error deleting project (67f5be5ce7455b55f206b673):
+2025-04-09T00:26:47.3194856Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings
+2025-04-09T00:26:47.3195525Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3196172Z         find resource /api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings. Reason:
+2025-04-09T00:26:47.3196841Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5ce7455b55f206b673/settings],
+2025-04-09T00:26:47.3197281Z         BadRequestDetail: 
+2025-04-09T00:26:47.3197642Z --- FAIL: TestAccConfigRSCustomDBRoles_UpdatedInheritRoles (6.72s)
+2025-04-09T00:26:47.3197994Z FAIL
+2025-04-09T00:26:47.3198578Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/customdbrole	10.763s
+2025-04-09T00:26:47.3199120Z === RUN   TestAccConfigDSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3199530Z === PAUSE TestAccConfigDSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3199929Z === RUN   TestMigConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3200322Z === PAUSE TestMigConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3200855Z === RUN   TestAccConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3201253Z === PAUSE TestAccConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3201658Z === CONT  TestAccConfigDSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3202065Z === CONT  TestAccConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3202462Z === CONT  TestMigConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3205359Z 2025-04-09T00:25:09.437Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="error deleting project (67f5be63e7455b55f206bd59): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_req_id=966c37d8-da8f-614a-7a41-2fba1ee4a658 tf_resource_type=mongodbatlas_project tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange tf_proto_version=6.8
+2025-04-09T00:26:47.3209123Z 2025-04-09T00:25:09.444Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest2986679729 test_step_number=1 test_name=TestAccConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3210162Z   error=
+2025-04-09T00:26:47.3210410Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3210683Z   | 
+2025-04-09T00:26:47.3211009Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3211356Z   | 
+2025-04-09T00:26:47.3211607Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3212063Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3212537Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3212824Z   | 
+2025-04-09T00:26:47.3213101Z   | error deleting project (67f5be63e7455b55f206bd59):
+2025-04-09T00:26:47.3213622Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings
+2025-04-09T00:26:47.3214296Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3214999Z   | find resource /api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings. Reason:
+2025-04-09T00:26:47.3215645Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings],
+2025-04-09T00:26:47.3216092Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3216316Z   
+2025-04-09T00:26:47.3216602Z === NAME  TestAccConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3217278Z     resource_custom_dns_configuration_cluster_aws_test.go:22: Step 1/4 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3217763Z         
+2025-04-09T00:26:47.3218549Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3219185Z         
+2025-04-09T00:26:47.3219630Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3220245Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3220837Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3221149Z         
+2025-04-09T00:26:47.3221510Z         error deleting project (67f5be63e7455b55f206bd59):
+2025-04-09T00:26:47.3222152Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings
+2025-04-09T00:26:47.3222827Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3223481Z         find resource /api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings. Reason:
+2025-04-09T00:26:47.3224142Z         Not Found. Params: [/api/atlas/v2/groups/67f5be63e7455b55f206bd59/settings],
+2025-04-09T00:26:47.3224578Z         BadRequestDetail: 
+2025-04-09T00:26:47.3225104Z --- FAIL: TestAccConfigRSCustomDNSConfigurationAWS_basic (3.05s)
+2025-04-09T00:26:47.3228221Z 2025-04-09T00:25:09.961Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" tf_rpc=ApplyResourceChange tf_req_id=8cd31f84-6a02-02ab-8042-9b84ea0245e1 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be63ac5f3766222b1c14): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-09T00:26:47.3231021Z 2025-04-09T00:25:09.969Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-09T00:26:47.3231379Z   error=
+2025-04-09T00:26:47.3231641Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3231908Z   | 
+2025-04-09T00:26:47.3232255Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3233247Z   | 
+2025-04-09T00:26:47.3233514Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3234343Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3234860Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3235157Z   | 
+2025-04-09T00:26:47.3235435Z   | error deleting project (67f5be63ac5f3766222b1c14):
+2025-04-09T00:26:47.3235959Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings
+2025-04-09T00:26:47.3236536Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3237080Z   | find resource /api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings. Reason:
+2025-04-09T00:26:47.3237644Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings],
+2025-04-09T00:26:47.3238225Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3239264Z    test_name=TestAccConfigDSCustomDNSConfigurationAWS_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest3212753339 test_step_number=1
+2025-04-09T00:26:47.3240220Z === NAME  TestAccConfigDSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3240903Z     data_source_custom_dns_configuration_cluster_aws_test.go:18: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3241391Z         
+2025-04-09T00:26:47.3241827Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3242191Z         
+2025-04-09T00:26:47.3242507Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3243106Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3243658Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3243967Z         
+2025-04-09T00:26:47.3244321Z         error deleting project (67f5be63ac5f3766222b1c14):
+2025-04-09T00:26:47.3244955Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings
+2025-04-09T00:26:47.3245634Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3246289Z         find resource /api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings. Reason:
+2025-04-09T00:26:47.3246952Z         Not Found. Params: [/api/atlas/v2/groups/67f5be63ac5f3766222b1c14/settings],
+2025-04-09T00:26:47.3247384Z         BadRequestDetail: 
+2025-04-09T00:26:47.3247746Z --- FAIL: TestAccConfigDSCustomDNSConfigurationAWS_basic (3.57s)
+2025-04-09T00:26:47.3248445Z 2025-04-09T00:25:11.393Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1
+2025-04-09T00:26:47.3248854Z   error=
+2025-04-09T00:26:47.3249100Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3249366Z   | 
+2025-04-09T00:26:47.3249861Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3250218Z   | 
+2025-04-09T00:26:47.3250456Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3250904Z   |   on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3251366Z   |   14: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3251648Z   | 
+2025-04-09T00:26:47.3252094Z   | error deleting project (67f5be64e7455b55f206be70):
+2025-04-09T00:26:47.3252616Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be64e7455b55f206be70/settings
+2025-04-09T00:26:47.3253563Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3254116Z   | find resource /api/atlas/v2/groups/67f5be64e7455b55f206be70/settings. Reason:
+2025-04-09T00:26:47.3254721Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be64e7455b55f206be70/settings],
+2025-04-09T00:26:47.3255122Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3256085Z    test_name=TestMigConfigRSCustomDNSConfigurationAWS_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest983254099
+2025-04-09T00:26:47.3257112Z === NAME  TestMigConfigRSCustomDNSConfigurationAWS_basic
+2025-04-09T00:26:47.3257838Z     resource_custom_dns_configuration_cluster_aws_migration_test.go:19: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3258586Z         
+2025-04-09T00:26:47.3259029Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3259400Z         
+2025-04-09T00:26:47.3259709Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3260317Z           on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3260866Z           14: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3261163Z         
+2025-04-09T00:26:47.3261518Z         error deleting project (67f5be64e7455b55f206be70):
+2025-04-09T00:26:47.3262155Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be64e7455b55f206be70/settings
+2025-04-09T00:26:47.3262858Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3263515Z         find resource /api/atlas/v2/groups/67f5be64e7455b55f206be70/settings. Reason:
+2025-04-09T00:26:47.3264179Z         Not Found. Params: [/api/atlas/v2/groups/67f5be64e7455b55f206be70/settings],
+2025-04-09T00:26:47.3264620Z         BadRequestDetail: 
+2025-04-09T00:26:47.3264978Z --- FAIL: TestMigConfigRSCustomDNSConfigurationAWS_basic (5.16s)
+2025-04-09T00:26:47.3265327Z FAIL
+2025-04-09T00:26:47.3265832Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/customdnsconfigurationclusteraws	5.217s
+2025-04-09T00:26:47.3266417Z === RUN   TestAccConfigDSDatabaseUser_basic
+2025-04-09T00:26:47.3267019Z     data_source_database_user_test.go:13: Creating execution project: test-acc-tf-p-1140568270814271824
+2025-04-09T00:26:47.3267509Z === PAUSE TestAccConfigDSDatabaseUser_basic
+2025-04-09T00:26:47.3267841Z === RUN   TestAccConfigDSDatabaseUsers_basic
+2025-04-09T00:26:47.3268411Z --- PASS: TestAccConfigDSDatabaseUsers_basic (1.72s)
+2025-04-09T00:26:47.3268780Z === RUN   TestMigConfigRSDatabaseUser_Basic
+2025-04-09T00:26:47.3269105Z === PAUSE TestMigConfigRSDatabaseUser_Basic
+2025-04-09T00:26:47.3269478Z === RUN   TestMigConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3269885Z === PAUSE TestMigConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3270274Z === RUN   TestMigConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3270647Z === PAUSE TestMigConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3271008Z === RUN   TestMigConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3271363Z === PAUSE TestMigConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3271846Z === RUN   TestMigConfigRSDatabaseUser_withEmptyLabels
+2025-04-09T00:26:47.3272306Z === PAUSE TestMigConfigRSDatabaseUser_withEmptyLabels
+2025-04-09T00:26:47.3272805Z === RUN   TestMigConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3273152Z === PAUSE TestMigConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3273495Z === RUN   TestMigConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3273842Z === PAUSE TestMigConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3274196Z === RUN   TestMigConfigRSDatabaseUser_withEmptyScopes
+2025-04-09T00:26:47.3274560Z === PAUSE TestMigConfigRSDatabaseUser_withEmptyScopes
+2025-04-09T00:26:47.3274933Z === RUN   TestMigConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3275307Z === PAUSE TestMigConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3275666Z === RUN   TestAccConfigRSDatabaseUser_basic
+2025-04-09T00:26:47.3275990Z === PAUSE TestAccConfigRSDatabaseUser_basic
+2025-04-09T00:26:47.3276356Z === RUN   TestAccConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3276757Z === PAUSE TestAccConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3277155Z === RUN   TestAccConfigRSDatabaseUser_withX509TypeManaged
+2025-04-09T00:26:47.3277557Z === PAUSE TestAccConfigRSDatabaseUser_withX509TypeManaged
+2025-04-09T00:26:47.3277935Z === RUN   TestAccConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3278492Z === PAUSE TestAccConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3279042Z === RUN   TestAccConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3279385Z === PAUSE TestAccConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3279728Z === RUN   TestAccConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3280063Z === PAUSE TestAccConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3280398Z === RUN   TestAccConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3280743Z === PAUSE TestAccConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3281108Z === RUN   TestAccConfigRSDatabaseUser_updateToEmptyScopes
+2025-04-09T00:26:47.3281506Z === PAUSE TestAccConfigRSDatabaseUser_updateToEmptyScopes
+2025-04-09T00:26:47.3281906Z === RUN   TestAccConfigRSDatabaseUser_updateToEmptyLabels
+2025-04-09T00:26:47.3282299Z === PAUSE TestAccConfigRSDatabaseUser_updateToEmptyLabels
+2025-04-09T00:26:47.3282686Z === RUN   TestAccConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3283058Z === PAUSE TestAccConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3283439Z === RUN   TestAccCOnfigRSDatabaseUser_withOIDCAuthType
+2025-04-09T00:26:47.3283825Z === PAUSE TestAccCOnfigRSDatabaseUser_withOIDCAuthType
+2025-04-09T00:26:47.3284183Z === CONT  TestAccConfigDSDatabaseUser_basic
+2025-04-09T00:26:47.3284526Z === CONT  TestAccConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3284900Z === CONT  TestAccConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3285249Z === CONT  TestAccConfigRSDatabaseUser_basic
+2025-04-09T00:26:47.3285625Z === CONT  TestAccConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3286032Z === CONT  TestAccConfigRSDatabaseUser_updateToEmptyLabels
+2025-04-09T00:26:47.3286425Z === CONT  TestAccCOnfigRSDatabaseUser_withOIDCAuthType
+2025-04-09T00:26:47.3286816Z === CONT  TestAccConfigRSDatabaseUser_updateToEmptyScopes
+2025-04-09T00:26:47.3287202Z === CONT  TestMigConfigRSDatabaseUser_withLDAPAuthType
+2025-04-09T00:26:47.3287577Z === CONT  TestMigConfigRSDatabaseUser_withEmptyScopes
+2025-04-09T00:26:47.3287935Z === CONT  TestMigConfigRSDatabaseUser_withScopes
+2025-04-09T00:26:47.3288466Z === CONT  TestAccConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3288817Z === CONT  TestAccConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3289159Z === CONT  TestMigConfigRSDatabaseUser_withRoles
+2025-04-09T00:26:47.3289527Z === CONT  TestMigConfigRSDatabaseUser_withX509TypeCustomer
+2025-04-09T00:26:47.3289927Z === CONT  TestAccConfigRSDatabaseUser_withX509TypeManaged
+2025-04-09T00:26:47.3290289Z === CONT  TestMigConfigRSDatabaseUser_withLabels
+2025-04-09T00:26:47.3290649Z === CONT  TestMigConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3290995Z === CONT  TestMigConfigRSDatabaseUser_Basic
+2025-04-09T00:26:47.3291338Z === CONT  TestAccConfigRSDatabaseUser_withAWSIAMType
+2025-04-09T00:26:47.3291834Z === CONT  TestMigConfigRSDatabaseUser_withEmptyLabels
+2025-04-09T00:26:47.3292258Z --- PASS: TestAccConfigRSDatabaseUser_withX509TypeManaged (8.56s)
+2025-04-09T00:26:47.3292675Z --- PASS: TestAccConfigDSDatabaseUser_basic (11.40s)
+2025-04-09T00:26:47.3293083Z --- PASS: TestAccConfigRSDatabaseUser_withAWSIAMType (10.69s)
+2025-04-09T00:26:47.3293519Z --- PASS: TestAccConfigRSDatabaseUser_withLDAPAuthType (11.29s)
+2025-04-09T00:26:47.3293987Z --- PASS: TestAccConfigRSDatabaseUser_withX509TypeCustomer (11.46s)
+2025-04-09T00:26:47.3294420Z --- PASS: TestAccConfigRSDatabaseUser_withRoles (13.94s)
+2025-04-09T00:26:47.3294815Z --- PASS: TestAccConfigRSDatabaseUser_withScopes (13.98s)
+2025-04-09T00:26:47.3295252Z --- PASS: TestAccConfigRSDatabaseUser_updateToEmptyLabels (14.04s)
+2025-04-09T00:26:47.3295715Z --- PASS: TestAccConfigRSDatabaseUser_updateToEmptyScopes (14.15s)
+2025-04-09T00:26:47.3296163Z --- PASS: TestAccCOnfigRSDatabaseUser_withOIDCAuthType (15.81s)
+2025-04-09T00:26:47.3296570Z --- PASS: TestAccConfigRSDatabaseUser_basic (15.98s)
+2025-04-09T00:26:47.3296957Z --- PASS: TestAccConfigRSDatabaseUser_withLabels (17.64s)
+2025-04-09T00:26:47.3297362Z --- PASS: TestMigConfigRSDatabaseUser_withLabels (21.00s)
+2025-04-09T00:26:47.3297893Z --- PASS: TestMigConfigRSDatabaseUser_withAWSIAMType (21.37s)
+2025-04-09T00:26:47.3298538Z --- PASS: TestMigConfigRSDatabaseUser_withLDAPAuthType (21.52s)
+2025-04-09T00:26:47.3298987Z --- PASS: TestMigConfigRSDatabaseUser_withEmptyScopes (21.73s)
+2025-04-09T00:26:47.3299383Z --- PASS: TestMigConfigRSDatabaseUser_Basic (21.86s)
+2025-04-09T00:26:47.3299784Z --- PASS: TestMigConfigRSDatabaseUser_withEmptyLabels (21.87s)
+2025-04-09T00:26:47.3300195Z --- PASS: TestMigConfigRSDatabaseUser_withRoles (21.91s)
+2025-04-09T00:26:47.3300586Z --- PASS: TestMigConfigRSDatabaseUser_withScopes (21.93s)
+2025-04-09T00:26:47.3301025Z --- PASS: TestMigConfigRSDatabaseUser_withX509TypeCustomer (21.94s)
+2025-04-09T00:26:47.3301382Z PASS
+2025-04-09T00:26:47.3301774Z Deleting execution project: test-acc-tf-p-1140568270814271824, id: 67f5be66e7455b55f206c060
+2025-04-09T00:26:47.3303367Z Project deletion failed: 67f5be66e7455b55f206c060, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be66e7455b55f206c060 DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be66e7455b55f206c060. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be66e7455b55f206c060], BadRequestDetail: 
+2025-04-09T00:26:47.3304892Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/databaseuser	26.040s
+2025-04-09T00:26:47.3305407Z === RUN   TestAccConfigDSMaintenanceWindow_basic
+2025-04-09T00:26:47.3305768Z === PAUSE TestAccConfigDSMaintenanceWindow_basic
+2025-04-09T00:26:47.3306124Z === RUN   TestMigConfigMaintenanceWindow_basic
+2025-04-09T00:26:47.3306467Z === PAUSE TestMigConfigMaintenanceWindow_basic
+2025-04-09T00:26:47.3306808Z === RUN   TestAccConfigRSMaintenanceWindow_basic
+2025-04-09T00:26:47.3307159Z === PAUSE TestAccConfigRSMaintenanceWindow_basic
+2025-04-09T00:26:47.3307533Z === RUN   TestAccConfigRSMaintenanceWindow_emptyHourOfDay
+2025-04-09T00:26:47.3307932Z === PAUSE TestAccConfigRSMaintenanceWindow_emptyHourOfDay
+2025-04-09T00:26:47.3308573Z === RUN   TestAccConfigRSMaintenanceWindow_autoDeferActivated
+2025-04-09T00:26:47.3309002Z === PAUSE TestAccConfigRSMaintenanceWindow_autoDeferActivated
+2025-04-09T00:26:47.3309398Z === CONT  TestAccConfigDSMaintenanceWindow_basic
+2025-04-09T00:26:47.3309770Z === CONT  TestAccConfigRSMaintenanceWindow_emptyHourOfDay
+2025-04-09T00:26:47.3310178Z === CONT  TestAccConfigRSMaintenanceWindow_autoDeferActivated
+2025-04-09T00:26:47.3310561Z === CONT  TestAccConfigRSMaintenanceWindow_basic
+2025-04-09T00:26:47.3310904Z === CONT  TestMigConfigMaintenanceWindow_basic
+2025-04-09T00:26:47.3313858Z 2025-04-09T00:25:22.460Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_resource_type=mongodbatlas_project tf_req_id=f652d37f-20d4-b0bf-3aae-cd275a80ed3c tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange diagnostic_detail="error deleting project (67f5be6fe7455b55f206c471): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings], BadRequestDetail: "
+2025-04-09T00:26:47.3317094Z 2025-04-09T00:25:22.481Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest1808467975 test_step_number=1
+2025-04-09T00:26:47.3317949Z   error=
+2025-04-09T00:26:47.3318391Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3318663Z   | 
+2025-04-09T00:26:47.3319002Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3319349Z   | 
+2025-04-09T00:26:47.3319591Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3320069Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3320661Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3320951Z   | 
+2025-04-09T00:26:47.3321226Z   | error deleting project (67f5be6fe7455b55f206c471):
+2025-04-09T00:26:47.3321749Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings
+2025-04-09T00:26:47.3322317Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3322860Z   | find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings. Reason:
+2025-04-09T00:26:47.3323418Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings],
+2025-04-09T00:26:47.3323813Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3324186Z    test_name=TestAccConfigRSMaintenanceWindow_emptyHourOfDay
+2025-04-09T00:26:47.3324624Z === NAME  TestAccConfigRSMaintenanceWindow_emptyHourOfDay
+2025-04-09T00:26:47.3325230Z     resource_maintenance_window_test.go:67: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3325674Z         
+2025-04-09T00:26:47.3326104Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3326466Z         
+2025-04-09T00:26:47.3326778Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3327375Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3327930Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3328472Z         
+2025-04-09T00:26:47.3328824Z         error deleting project (67f5be6fe7455b55f206c471):
+2025-04-09T00:26:47.3329462Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings
+2025-04-09T00:26:47.3330127Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3330771Z         find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings. Reason:
+2025-04-09T00:26:47.3331435Z         Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c471/settings],
+2025-04-09T00:26:47.3331872Z         BadRequestDetail: 
+2025-04-09T00:26:47.3334814Z 2025-04-09T00:25:22.776Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=91808cd1-7f6b-699a-ae80-4a2b36aee51f tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be6fe7455b55f206c475): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings"
+2025-04-09T00:26:47.3337686Z 2025-04-09T00:25:22.784Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest3658394043
+2025-04-09T00:26:47.3338395Z   error=
+2025-04-09T00:26:47.3338646Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3338919Z   | 
+2025-04-09T00:26:47.3339249Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3339592Z   | 
+2025-04-09T00:26:47.3339833Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3340286Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3340748Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3341039Z   | 
+2025-04-09T00:26:47.3341310Z   | error deleting project (67f5be6fe7455b55f206c475):
+2025-04-09T00:26:47.3341828Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings
+2025-04-09T00:26:47.3342405Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3342949Z   | find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings. Reason:
+2025-04-09T00:26:47.3343634Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings],
+2025-04-09T00:26:47.3344030Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3344793Z    test_step_number=1 test_name=TestAccConfigRSMaintenanceWindow_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.3345508Z === NAME  TestAccConfigRSMaintenanceWindow_basic
+2025-04-09T00:26:47.3346084Z     resource_maintenance_window_test.go:29: Step 1/5 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3346516Z         
+2025-04-09T00:26:47.3346947Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3347314Z         
+2025-04-09T00:26:47.3347628Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3348414Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3348976Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3349283Z         
+2025-04-09T00:26:47.3349633Z         error deleting project (67f5be6fe7455b55f206c475):
+2025-04-09T00:26:47.3350269Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings
+2025-04-09T00:26:47.3350934Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3351578Z         find resource /api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings. Reason:
+2025-04-09T00:26:47.3352244Z         Not Found. Params: [/api/atlas/v2/groups/67f5be6fe7455b55f206c475/settings],
+2025-04-09T00:26:47.3352679Z         BadRequestDetail: 
+2025-04-09T00:26:47.3353041Z --- FAIL: TestAccConfigRSMaintenanceWindow_emptyHourOfDay (5.83s)
+2025-04-09T00:26:47.3353477Z --- FAIL: TestAccConfigRSMaintenanceWindow_basic (6.11s)
+2025-04-09T00:26:47.3356359Z 2025-04-09T00:25:23.509Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be6fac5f3766222b23e9): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings], BadRequestDetail: " tf_req_id=a986f9c3-42b9-87fd-e94e-c9dd8b29a86f tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8
+2025-04-09T00:26:47.3359474Z 2025-04-09T00:25:23.525Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest2764374853 test_step_number=1
+2025-04-09T00:26:47.3360027Z   error=
+2025-04-09T00:26:47.3360391Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3360660Z   | 
+2025-04-09T00:26:47.3360992Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3361342Z   | 
+2025-04-09T00:26:47.3361584Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3362030Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3362521Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3362810Z   | 
+2025-04-09T00:26:47.3363083Z   | error deleting project (67f5be6fac5f3766222b23e9):
+2025-04-09T00:26:47.3363606Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings
+2025-04-09T00:26:47.3364177Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3364719Z   | find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings. Reason:
+2025-04-09T00:26:47.3365286Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings],
+2025-04-09T00:26:47.3365682Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3366438Z    test_name=TestAccConfigRSMaintenanceWindow_autoDeferActivated test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.3367322Z === NAME  TestAccConfigRSMaintenanceWindow_autoDeferActivated
+2025-04-09T00:26:47.3367949Z     resource_maintenance_window_test.go:87: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3368579Z         
+2025-04-09T00:26:47.3369011Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3369376Z         
+2025-04-09T00:26:47.3369687Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3370290Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3370838Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3371142Z         
+2025-04-09T00:26:47.3371495Z         error deleting project (67f5be6fac5f3766222b23e9):
+2025-04-09T00:26:47.3372133Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings
+2025-04-09T00:26:47.3372799Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3373456Z         find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings. Reason:
+2025-04-09T00:26:47.3374124Z         Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e9/settings],
+2025-04-09T00:26:47.3374561Z         BadRequestDetail: 
+2025-04-09T00:26:47.3377362Z 2025-04-09T00:25:23.996Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project tf_proto_version=6.8 tf_req_id=96e95b47-79fd-66fd-37a2-84c9da787696 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_detail="error deleting project (67f5be6fac5f3766222b23e6): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings"
+2025-04-09T00:26:47.3380988Z 2025-04-09T00:25:24.002Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccConfigDSMaintenanceWindow_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_working_directory=/tmp/plugintest787742007 test_step_number=1
+2025-04-09T00:26:47.3381999Z   error=
+2025-04-09T00:26:47.3382245Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3382512Z   | 
+2025-04-09T00:26:47.3382843Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3383189Z   | 
+2025-04-09T00:26:47.3383428Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3384005Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3384476Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3384759Z   | 
+2025-04-09T00:26:47.3385037Z   | error deleting project (67f5be6fac5f3766222b23e6):
+2025-04-09T00:26:47.3385560Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings
+2025-04-09T00:26:47.3386133Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3386683Z   | find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings. Reason:
+2025-04-09T00:26:47.3387243Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings],
+2025-04-09T00:26:47.3387641Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3387872Z   
+2025-04-09T00:26:47.3388316Z === NAME  TestAccConfigDSMaintenanceWindow_basic
+2025-04-09T00:26:47.3388906Z     data_source_maintenance_window_test.go:23: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3389345Z         
+2025-04-09T00:26:47.3389776Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3390142Z         
+2025-04-09T00:26:47.3390586Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3391190Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3391738Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3392039Z         
+2025-04-09T00:26:47.3392388Z         error deleting project (67f5be6fac5f3766222b23e6):
+2025-04-09T00:26:47.3393026Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings
+2025-04-09T00:26:47.3393696Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3394344Z         find resource /api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings. Reason:
+2025-04-09T00:26:47.3395022Z         Not Found. Params: [/api/atlas/v2/groups/67f5be6fac5f3766222b23e6/settings],
+2025-04-09T00:26:47.3395463Z         BadRequestDetail: 
+2025-04-09T00:26:47.3395849Z --- FAIL: TestAccConfigRSMaintenanceWindow_autoDeferActivated (6.96s)
+2025-04-09T00:26:47.3396303Z --- FAIL: TestAccConfigDSMaintenanceWindow_basic (7.28s)
+2025-04-09T00:26:47.3396961Z 2025-04-09T00:25:28.275Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest3139137951 test_step_number=1
+2025-04-09T00:26:47.3397525Z   error=
+2025-04-09T00:26:47.3397772Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3398208Z   | 
+2025-04-09T00:26:47.3398549Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3398896Z   | 
+2025-04-09T00:26:47.3399140Z   |   with mongodbatlas_project.test,
+2025-04-09T00:26:47.3399587Z   |   on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3400052Z   |   14: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3400484Z   | 
+2025-04-09T00:26:47.3401015Z   | error deleting project (67f5be76ac5f3766222b2617):
+2025-04-09T00:26:47.3401630Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings
+2025-04-09T00:26:47.3402412Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3403114Z   | find resource /api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings. Reason:
+2025-04-09T00:26:47.3403772Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings],
+2025-04-09T00:26:47.3404365Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3405159Z    test_name=TestMigConfigMaintenanceWindow_basic test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.3405981Z === NAME  TestMigConfigMaintenanceWindow_basic
+2025-04-09T00:26:47.3406717Z     resource_maintenance_window_migration_test.go:23: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3407298Z         
+2025-04-09T00:26:47.3408166Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3421378Z         
+2025-04-09T00:26:47.3421770Z           with mongodbatlas_project.test,
+2025-04-09T00:26:47.3422411Z           on terraform_plugin_test.tf line 14, in resource "mongodbatlas_project" "test":
+2025-04-09T00:26:47.3422985Z           14: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:26:47.3423302Z         
+2025-04-09T00:26:47.3423671Z         error deleting project (67f5be76ac5f3766222b2617):
+2025-04-09T00:26:47.3424318Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings
+2025-04-09T00:26:47.3424993Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3425629Z         find resource /api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings. Reason:
+2025-04-09T00:26:47.3426298Z         Not Found. Params: [/api/atlas/v2/groups/67f5be76ac5f3766222b2617/settings],
+2025-04-09T00:26:47.3426733Z         BadRequestDetail: 
+2025-04-09T00:26:47.3427065Z --- FAIL: TestMigConfigMaintenanceWindow_basic (11.81s)
+2025-04-09T00:26:47.3427381Z FAIL
+2025-04-09T00:26:47.3427817Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/maintenancewindow	11.888s
+2025-04-09T00:26:47.3428730Z === RUN   TestMigConfigRSOrganization_Basic
+2025-04-09T00:26:47.3429149Z     resource_organization_migration_test.go:14: 
+2025-04-09T00:26:47.3429521Z --- SKIP: TestMigConfigRSOrganization_Basic (0.00s)
+2025-04-09T00:26:47.3429889Z === RUN   TestAccConfigRSOrganization_Basic
+2025-04-09T00:26:47.3430256Z     resource_organization_test.go:24: 
+2025-04-09T00:26:47.3430591Z --- SKIP: TestAccConfigRSOrganization_Basic (0.00s)
+2025-04-09T00:26:47.3430969Z === RUN   TestAccConfigRSOrganization_BasicAccess
+2025-04-09T00:26:47.3431344Z     resource_organization_test.go:83: 
+2025-04-09T00:26:47.3431701Z --- SKIP: TestAccConfigRSOrganization_BasicAccess (0.00s)
+2025-04-09T00:26:47.3432074Z === RUN   TestAccConfigRSOrganization_Settings
+2025-04-09T00:26:47.3432446Z     resource_organization_test.go:120: 
+2025-04-09T00:26:47.3432804Z --- SKIP: TestAccConfigRSOrganization_Settings (0.00s)
+2025-04-09T00:26:47.3433185Z === RUN   TestAccConfigRSOrganizationCreate_Errors
+2025-04-09T00:26:47.3433573Z     resource_organization_test.go:184: 
+2025-04-09T00:26:47.3433941Z --- SKIP: TestAccConfigRSOrganizationCreate_Errors (0.00s)
+2025-04-09T00:26:47.3434310Z === RUN   TestAccConfigDSOrganization_basic
+2025-04-09T00:26:47.3434637Z === PAUSE TestAccConfigDSOrganization_basic
+2025-04-09T00:26:47.3434994Z === RUN   TestAccConfigDSOrganization_noAccessShouldFail
+2025-04-09T00:26:47.3435393Z === PAUSE TestAccConfigDSOrganization_noAccessShouldFail
+2025-04-09T00:26:47.3435761Z === RUN   TestAccConfigDSOrganizations_basic
+2025-04-09T00:26:47.3436088Z === PAUSE TestAccConfigDSOrganizations_basic
+2025-04-09T00:26:47.3436439Z === RUN   TestAccConfigDSOrganizations_withPagination
+2025-04-09T00:26:47.3436820Z === PAUSE TestAccConfigDSOrganizations_withPagination
+2025-04-09T00:26:47.3437173Z === CONT  TestAccConfigDSOrganization_basic
+2025-04-09T00:26:47.3437499Z === CONT  TestAccConfigDSOrganizations_basic
+2025-04-09T00:26:47.3437837Z === CONT  TestAccConfigDSOrganizations_withPagination
+2025-04-09T00:26:47.3438393Z === CONT  TestAccConfigDSOrganization_noAccessShouldFail
+2025-04-09T00:26:47.3440958Z 2025-04-09T00:25:38.262Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 diagnostic_severity=ERROR diagnostic_summary="error getting organization settings (orgID: 64808d5f33a0c71e882ef19c, org Name: Terraform Test GitHub): https://cloud-dev.mongodb.com/api/atlas/v2/orgs/64808d5f33a0c71e882ef19c/settings GET: HTTP 401 Unauthorized (Error code: \"USER_UNAUTHORIZED\") Detail: Current user is not authorized to perform this action. Reason: Unauthorized. Params: [], BadRequestDetail: " diagnostic_detail="" tf_req_id=da065e7f-8626-9038-b259-e9db7e9576ef tf_data_source_type=mongodbatlas_organizations tf_rpc=ReadDataSource
+2025-04-09T00:26:47.3443532Z --- PASS: TestAccConfigDSOrganization_noAccessShouldFail (0.84s)
+2025-04-09T00:26:47.3443993Z --- PASS: TestAccConfigDSOrganizations_withPagination (2.03s)
+2025-04-09T00:26:47.3444401Z --- PASS: TestAccConfigDSOrganization_basic (2.10s)
+2025-04-09T00:26:47.3444781Z --- PASS: TestAccConfigDSOrganizations_basic (2.14s)
+2025-04-09T00:26:47.3445081Z PASS
+2025-04-09T00:26:47.3445485Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/organization	2.163s
+2025-04-09T00:26:47.3445991Z === RUN   TestAccConfigDSOrgInvitation_basic
+2025-04-09T00:26:47.3446329Z === PAUSE TestAccConfigDSOrgInvitation_basic
+2025-04-09T00:26:47.3446656Z === RUN   TestMigConfigOrgInvitation_basic
+2025-04-09T00:26:47.3446976Z === PAUSE TestMigConfigOrgInvitation_basic
+2025-04-09T00:26:47.3447294Z === RUN   TestAccConfigRSOrgInvitation_basic
+2025-04-09T00:26:47.3447621Z === PAUSE TestAccConfigRSOrgInvitation_basic
+2025-04-09T00:26:47.3447940Z === CONT  TestAccConfigDSOrgInvitation_basic
+2025-04-09T00:26:47.3448473Z === CONT  TestMigConfigOrgInvitation_basic
+2025-04-09T00:26:47.3448799Z === CONT  TestAccConfigRSOrgInvitation_basic
+2025-04-09T00:26:47.3449143Z --- PASS: TestAccConfigDSOrgInvitation_basic (4.42s)
+2025-04-09T00:26:47.3449653Z --- PASS: TestAccConfigRSOrgInvitation_basic (9.73s)
+2025-04-09T00:26:47.3450018Z --- PASS: TestMigConfigOrgInvitation_basic (18.63s)
+2025-04-09T00:26:47.3450311Z PASS
+2025-04-09T00:26:47.3450723Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/orginvitation	18.674s
+2025-04-09T00:26:47.3451207Z === RUN   TestMigProjectAPIKey_basic
+2025-04-09T00:26:47.3451826Z     resource_project_api_key_migration_test.go:10: Creating execution project: test-acc-tf-p-5263529382418506060
+2025-04-09T00:26:47.3452335Z === PAUSE TestMigProjectAPIKey_basic
+2025-04-09T00:26:47.3452629Z === RUN   TestAccProjectAPIKey_basic
+2025-04-09T00:26:47.3452920Z === PAUSE TestAccProjectAPIKey_basic
+2025-04-09T00:26:47.3453241Z === RUN   TestAccProjectAPIKey_changingSingleProject
+2025-04-09T00:26:47.3453613Z === PAUSE TestAccProjectAPIKey_changingSingleProject
+2025-04-09T00:26:47.3453984Z === RUN   TestAccProjectAPIKey_updateDescription
+2025-04-09T00:26:47.3454337Z === PAUSE TestAccProjectAPIKey_updateDescription
+2025-04-09T00:26:47.3454670Z === RUN   TestAccProjectAPIKey_updateRole
+2025-04-09T00:26:47.3454992Z === PAUSE TestAccProjectAPIKey_updateRole
+2025-04-09T00:26:47.3455318Z === RUN   TestAccProjectAPIKey_duplicateProject
+2025-04-09T00:26:47.3455660Z === PAUSE TestAccProjectAPIKey_duplicateProject
+2025-04-09T00:26:47.3456041Z === RUN   TestAccProjectAPIKey_recreateWhenDeletedExternally
+2025-04-09T00:26:47.3456465Z === PAUSE TestAccProjectAPIKey_recreateWhenDeletedExternally
+2025-04-09T00:26:47.3456881Z === RUN   TestAccProjectAPIKey_deleteProjectAndAssignment
+2025-04-09T00:26:47.3457278Z === PAUSE TestAccProjectAPIKey_deleteProjectAndAssignment
+2025-04-09T00:26:47.3457638Z === RUN   TestAccProjectAPIKey_invalidRole
+2025-04-09T00:26:47.3457965Z === PAUSE TestAccProjectAPIKey_invalidRole
+2025-04-09T00:26:47.3458501Z === CONT  TestMigProjectAPIKey_basic
+2025-04-09T00:26:47.3458822Z === CONT  TestAccProjectAPIKey_duplicateProject
+2025-04-09T00:26:47.3459144Z === CONT  TestAccProjectAPIKey_invalidRole
+2025-04-09T00:26:47.3459500Z === CONT  TestAccProjectAPIKey_deleteProjectAndAssignment
+2025-04-09T00:26:47.3459907Z === CONT  TestAccProjectAPIKey_recreateWhenDeletedExternally
+2025-04-09T00:26:47.3460284Z === CONT  TestAccProjectAPIKey_updateDescription
+2025-04-09T00:26:47.3460608Z === CONT  TestAccProjectAPIKey_updateRole
+2025-04-09T00:26:47.3460955Z === CONT  TestAccProjectAPIKey_changingSingleProject
+2025-04-09T00:26:47.3461284Z === CONT  TestAccProjectAPIKey_basic
+2025-04-09T00:26:47.3462971Z 2025-04-09T00:25:57.557Z [ERROR] sdk.proto: Response contains error diagnostic: tf_proto_version=6.8 tf_rpc=ApplyResourceChange diagnostic_summary="duplicated projectID in assignments: 67f5be8fac5f3766222b29b3" diagnostic_detail="" diagnostic_severity=ERROR tf_resource_type=mongodbatlas_project_api_key tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_req_id=f763f0c5-3199-c326-a251-d5ed74594247
+2025-04-09T00:26:47.3466336Z 2025-04-09T00:25:57.685Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR diagnostic_summary="https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be8fac5f3766222b29b3/apiKeys POST: HTTP 400 Bad Request (Error code: \"INVALID_ENUM_VALUE\") Detail: An invalid enumeration value INVALID_ROLE was specified. Reason: Bad Request. Params: [INVALID_ROLE], BadRequestDetail: " tf_resource_type=mongodbatlas_project_api_key tf_req_id=37eebb57-8c78-600d-3ef0-a5c904fc7a61 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange diagnostic_detail=""
+2025-04-09T00:26:47.3468697Z --- PASS: TestAccProjectAPIKey_duplicateProject (3.44s)
+2025-04-09T00:26:47.3469077Z --- PASS: TestAccProjectAPIKey_invalidRole (3.48s)
+2025-04-09T00:26:47.3471953Z 2025-04-09T00:25:59.637Z [ERROR] sdk.proto: Response contains error diagnostic: tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be95e7455b55f206cbd0): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" tf_rpc=ApplyResourceChange tf_req_id=977a31c3-36d0-ec1c-84a4-6b8fbd31b2a9 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8
+2025-04-09T00:26:47.3475561Z 2025-04-09T00:25:59.649Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest2289498170 test_step_number=1 test_name=TestAccProjectAPIKey_deleteProjectAndAssignment test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform
+2025-04-09T00:26:47.3476601Z   error=
+2025-04-09T00:26:47.3476856Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3477129Z   | 
+2025-04-09T00:26:47.3477464Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3477818Z   | 
+2025-04-09T00:26:47.3478247Z   |   with mongodbatlas_project.project2,
+2025-04-09T00:26:47.3478734Z   |   on terraform_plugin_test.tf line 13, in resource "mongodbatlas_project" "project2":
+2025-04-09T00:26:47.3479229Z   |   13: \t\tresource "mongodbatlas_project" "project2" {
+2025-04-09T00:26:47.3479521Z   | 
+2025-04-09T00:26:47.3479795Z   | error deleting project (67f5be95e7455b55f206cbd0):
+2025-04-09T00:26:47.3480328Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings
+2025-04-09T00:26:47.3480896Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3481439Z   | find resource /api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings. Reason:
+2025-04-09T00:26:47.3481997Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings],
+2025-04-09T00:26:47.3482397Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3482634Z   
+2025-04-09T00:26:47.3482915Z === NAME  TestAccProjectAPIKey_deleteProjectAndAssignment
+2025-04-09T00:26:47.3483494Z     resource_project_api_key_test.go:194: Step 1/2 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3483915Z         
+2025-04-09T00:26:47.3484350Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3484716Z         
+2025-04-09T00:26:47.3485043Z           with mongodbatlas_project.project2,
+2025-04-09T00:26:47.3485667Z           on terraform_plugin_test.tf line 13, in resource "mongodbatlas_project" "project2":
+2025-04-09T00:26:47.3486241Z           13: 		resource "mongodbatlas_project" "project2" {
+2025-04-09T00:26:47.3486554Z         
+2025-04-09T00:26:47.3486902Z         error deleting project (67f5be95e7455b55f206cbd0):
+2025-04-09T00:26:47.3487667Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings
+2025-04-09T00:26:47.3488544Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3489199Z         find resource /api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings. Reason:
+2025-04-09T00:26:47.3489862Z         Not Found. Params: [/api/atlas/v2/groups/67f5be95e7455b55f206cbd0/settings],
+2025-04-09T00:26:47.3490298Z         BadRequestDetail: 
+2025-04-09T00:26:47.3493112Z 2025-04-09T00:25:59.918Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" tf_req_id=26157f38-0bfc-a0ee-1cee-8a4b69c3b1b2 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project diagnostic_detail="error deleting project (67f5be95ac5f3766222b2ae1): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-09T00:26:47.3496706Z 2025-04-09T00:25:59.938Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c93c68fc-fa99-459c-a012-b24f6a96b6b7/terraform test_step_number=1 test_working_directory=/tmp/plugintest390713318 test_name=TestAccProjectAPIKey_changingSingleProject
+2025-04-09T00:26:47.3497727Z   error=
+2025-04-09T00:26:47.3497970Z   | Error running apply: exit status 1
+2025-04-09T00:26:47.3498529Z   | 
+2025-04-09T00:26:47.3498884Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3499234Z   | 
+2025-04-09T00:26:47.3499478Z   |   with mongodbatlas_project.proj2,
+2025-04-09T00:26:47.3499937Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "proj2":
+2025-04-09T00:26:47.3500414Z   |   12: \t\tresource "mongodbatlas_project" "proj2" {
+2025-04-09T00:26:47.3500707Z   | 
+2025-04-09T00:26:47.3500979Z   | error deleting project (67f5be95ac5f3766222b2ae1):
+2025-04-09T00:26:47.3501498Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings
+2025-04-09T00:26:47.3502075Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3502617Z   | find resource /api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings. Reason:
+2025-04-09T00:26:47.3503174Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings],
+2025-04-09T00:26:47.3503570Z   | BadRequestDetail: 
+2025-04-09T00:26:47.3503793Z   
+2025-04-09T00:26:47.3504059Z === NAME  TestAccProjectAPIKey_changingSingleProject
+2025-04-09T00:26:47.3504617Z     resource_project_api_key_test.go:63: Step 1/4 error: Error running apply: exit status 1
+2025-04-09T00:26:47.3505028Z         
+2025-04-09T00:26:47.3505462Z         Error: error during project deletion when getting project settings
+2025-04-09T00:26:47.3505826Z         
+2025-04-09T00:26:47.3506201Z           with mongodbatlas_project.proj2,
+2025-04-09T00:26:47.3506809Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "proj2":
+2025-04-09T00:26:47.3507376Z           12: 		resource "mongodbatlas_project" "proj2" {
+2025-04-09T00:26:47.3507682Z         
+2025-04-09T00:26:47.3508213Z         error deleting project (67f5be95ac5f3766222b2ae1):
+2025-04-09T00:26:47.3508854Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings
+2025-04-09T00:26:47.3509520Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:26:47.3510161Z         find resource /api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings. Reason:
+2025-04-09T00:26:47.3510822Z         Not Found. Params: [/api/atlas/v2/groups/67f5be95ac5f3766222b2ae1/settings],
+2025-04-09T00:26:47.3511379Z         BadRequestDetail: 
+2025-04-09T00:26:47.3511743Z --- FAIL: TestAccProjectAPIKey_deleteProjectAndAssignment (5.55s)
+2025-04-09T00:26:47.3512210Z --- FAIL: TestAccProjectAPIKey_changingSingleProject (5.79s)
+2025-04-09T00:26:47.3512684Z --- PASS: TestAccProjectAPIKey_recreateWhenDeletedExternally (12.26s)
+2025-04-09T00:26:47.3513110Z --- PASS: TestAccProjectAPIKey_basic (12.44s)
+2025-04-09T00:26:47.3513460Z --- PASS: TestAccProjectAPIKey_updateRole (15.10s)
+2025-04-09T00:26:47.3513840Z --- PASS: TestAccProjectAPIKey_updateDescription (15.18s)
+2025-04-09T00:26:47.3514212Z --- PASS: TestMigProjectAPIKey_basic (22.24s)
+2025-04-09T00:26:47.3514491Z FAIL
+2025-04-09T00:26:47.3514863Z Deleting execution project: test-acc-tf-p-5263529382418506060, id: 67f5be8fac5f3766222b29b3
+2025-04-09T00:26:47.3516445Z Project deletion failed: 67f5be8fac5f3766222b29b3, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be8fac5f3766222b29b3 DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be8fac5f3766222b29b3. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be8fac5f3766222b29b3], BadRequestDetail: 
+2025-04-09T00:26:47.3517994Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/projectapikey	22.365s
+2025-04-09T00:26:47.3518816Z === RUN   TestAccConfigDSAPIKey_basic
+2025-04-09T00:26:47.3519123Z === PAUSE TestAccConfigDSAPIKey_basic
+2025-04-09T00:26:47.3519428Z === RUN   TestAccConfigDSAPIKeys_basic
+2025-04-09T00:26:47.3519731Z === PAUSE TestAccConfigDSAPIKeys_basic
+2025-04-09T00:26:47.3520028Z === RUN   TestMigConfigAPIKey_basic
+2025-04-09T00:26:47.3520323Z === PAUSE TestMigConfigAPIKey_basic
+2025-04-09T00:26:47.3520613Z === RUN   TestAccConfigRSAPIKey_basic
+2025-04-09T00:26:47.3520905Z === PAUSE TestAccConfigRSAPIKey_basic
+2025-04-09T00:26:47.3521200Z === CONT  TestAccConfigDSAPIKey_basic
+2025-04-09T00:26:47.3521482Z === CONT  TestMigConfigAPIKey_basic
+2025-04-09T00:26:47.3521771Z === CONT  TestAccConfigRSAPIKey_basic
+2025-04-09T00:26:47.3522071Z === CONT  TestAccConfigDSAPIKeys_basic
+2025-04-09T00:26:47.3522390Z --- PASS: TestAccConfigDSAPIKey_basic (3.09s)
+2025-04-09T00:26:47.3522733Z --- PASS: TestAccConfigDSAPIKeys_basic (3.14s)
+2025-04-09T00:26:47.3523069Z --- PASS: TestAccConfigRSAPIKey_basic (4.92s)
+2025-04-09T00:26:47.3523394Z --- PASS: TestMigConfigAPIKey_basic (7.88s)
+2025-04-09T00:26:47.3523671Z PASS
+2025-04-09T00:26:47.3524053Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/apikey	7.911s
+2025-04-09T00:26:47.3524517Z === RUN   TestAccConfigDSOrgID_basic
+2025-04-09T00:26:47.3524825Z === PAUSE TestAccConfigDSOrgID_basic
+2025-04-09T00:26:47.3525113Z === CONT  TestAccConfigDSOrgID_basic
+2025-04-09T00:26:47.3525425Z --- PASS: TestAccConfigDSOrgID_basic (1.25s)
+2025-04-09T00:26:47.3525708Z PASS
+2025-04-09T00:26:47.3526096Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/rolesorgid	1.287s
+2025-04-09T00:26:47.3526579Z === RUN   TestAccConfigDSTeam_basic
+2025-04-09T00:26:47.3526874Z === PAUSE TestAccConfigDSTeam_basic
+2025-04-09T00:26:47.3527175Z === RUN   TestAccConfigDSTeamByName_basic
+2025-04-09T00:26:47.3527502Z === PAUSE TestAccConfigDSTeamByName_basic
+2025-04-09T00:26:47.3527816Z === RUN   TestMigConfigTeams_basic
+2025-04-09T00:26:47.3528313Z --- PASS: TestMigConfigTeams_basic (5.47s)
+2025-04-09T00:26:47.3528624Z === RUN   TestAccConfigRSTeam_basic
+2025-04-09T00:26:47.3528909Z === PAUSE TestAccConfigRSTeam_basic
+2025-04-09T00:26:47.3529223Z === RUN   TestAccConfigRSTeam_updatingUsernames
+2025-04-09T00:26:47.3529565Z === PAUSE TestAccConfigRSTeam_updatingUsernames
+2025-04-09T00:26:47.3529891Z === RUN   TestAccConfigRSTeam_legacyName
+2025-04-09T00:26:47.3530209Z === PAUSE TestAccConfigRSTeam_legacyName
+2025-04-09T00:26:47.3530509Z === CONT  TestAccConfigDSTeam_basic
+2025-04-09T00:26:47.3530821Z === CONT  TestAccConfigRSTeam_updatingUsernames
+2025-04-09T00:26:47.3531134Z === CONT  TestAccConfigRSTeam_basic
+2025-04-09T00:26:47.3531435Z === CONT  TestAccConfigDSTeamByName_basic
+2025-04-09T00:26:47.3531869Z === CONT  TestAccConfigRSTeam_legacyName
+2025-04-09T00:26:47.3532206Z --- PASS: TestAccConfigRSTeam_legacyName (3.25s)
+2025-04-09T00:26:47.3532562Z --- PASS: TestAccConfigDSTeamByName_basic (3.30s)
+2025-04-09T00:26:47.3532912Z --- PASS: TestAccConfigDSTeam_basic (3.41s)
+2025-04-09T00:26:47.3533230Z --- PASS: TestAccConfigRSTeam_basic (5.62s)
+2025-04-09T00:26:47.3533582Z --- PASS: TestAccConfigRSTeam_updatingUsernames (6.63s)
+2025-04-09T00:26:47.3533895Z PASS
+2025-04-09T00:26:47.3534264Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/team	12.130s
+2025-04-09T00:26:47.3534738Z === RUN   TestMigThirdPartyIntegration_basic
+2025-04-09T00:26:47.3535414Z     resource_third_party_integration_migration_test.go:11: Creating execution project: test-acc-tf-p-5920508207324082176
+2025-04-09T00:26:47.3535984Z --- PASS: TestMigThirdPartyIntegration_basic (8.53s)
+2025-04-09T00:26:47.3536361Z === RUN   TestAccThirdPartyIntegration_basicPagerDuty
+2025-04-09T00:26:47.3536767Z --- PASS: TestAccThirdPartyIntegration_basicPagerDuty (3.79s)
+2025-04-09T00:26:47.3537157Z === RUN   TestAccThirdPartyIntegration_opsGenie
+2025-04-09T00:26:47.3537505Z === PAUSE TestAccThirdPartyIntegration_opsGenie
+2025-04-09T00:26:47.3537963Z === RUN   TestAccThirdPartyIntegration_victorOps
+2025-04-09T00:26:47.3538529Z === PAUSE TestAccThirdPartyIntegration_victorOps
+2025-04-09T00:26:47.3538872Z === RUN   TestAccThirdPartyIntegration_datadog
+2025-04-09T00:26:47.3539204Z === PAUSE TestAccThirdPartyIntegration_datadog
+2025-04-09T00:26:47.3539549Z === RUN   TestAccThirdPartyIntegration_prometheus
+2025-04-09T00:26:47.3539899Z === PAUSE TestAccThirdPartyIntegration_prometheus
+2025-04-09T00:26:47.3540256Z === RUN   TestAccThirdPartyIntegration_microsoftTeams
+2025-04-09T00:26:47.3540626Z === PAUSE TestAccThirdPartyIntegration_microsoftTeams
+2025-04-09T00:26:47.3540976Z === RUN   TestAccThirdPartyIntegration_webhook
+2025-04-09T00:26:47.3541309Z === PAUSE TestAccThirdPartyIntegration_webhook
+2025-04-09T00:26:47.3541647Z === CONT  TestAccThirdPartyIntegration_opsGenie
+2025-04-09T00:26:47.3541986Z === CONT  TestAccThirdPartyIntegration_prometheus
+2025-04-09T00:26:47.3542328Z === CONT  TestAccThirdPartyIntegration_webhook
+2025-04-09T00:26:47.3542662Z === CONT  TestAccThirdPartyIntegration_datadog
+2025-04-09T00:26:47.3543002Z === CONT  TestAccThirdPartyIntegration_microsoftTeams
+2025-04-09T00:26:47.3543361Z === CONT  TestAccThirdPartyIntegration_victorOps
+2025-04-09T00:26:47.3543734Z --- PASS: TestAccThirdPartyIntegration_prometheus (5.67s)
+2025-04-09T00:26:47.3544134Z --- PASS: TestAccThirdPartyIntegration_webhook (5.88s)
+2025-04-09T00:26:47.3544518Z --- PASS: TestAccThirdPartyIntegration_opsGenie (5.89s)
+2025-04-09T00:26:47.3544911Z --- PASS: TestAccThirdPartyIntegration_victorOps (5.90s)
+2025-04-09T00:26:47.3545329Z --- PASS: TestAccThirdPartyIntegration_microsoftTeams (5.91s)
+2025-04-09T00:26:47.3545735Z --- PASS: TestAccThirdPartyIntegration_datadog (5.92s)
+2025-04-09T00:26:47.3546038Z PASS
+2025-04-09T00:26:47.3546424Z Deleting execution project: test-acc-tf-p-5920508207324082176, id: 67f5beb4ac5f3766222b2c9c
+2025-04-09T00:26:47.3548153Z Project deletion failed: 67f5beb4ac5f3766222b2c9c, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5beb4ac5f3766222b2c9c DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5beb4ac5f3766222b2c9c. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5beb4ac5f3766222b2c9c], BadRequestDetail: 
+2025-04-09T00:26:47.3549826Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/thirdpartyintegration	18.299s
+2025-04-09T00:26:47.3550304Z FAIL
+2025-04-09T00:26:47.4512671Z make: *** [Makefile:78: testacc] Error 1
+2025-04-09T00:26:47.4532536Z ##[error]Process completed with exit code 2.
+2025-04-09T00:26:47.4609114Z Post job cleanup.
+2025-04-09T00:26:47.5553804Z [command]/usr/bin/git version
+2025-04-09T00:26:47.5591047Z git version 2.49.0
+2025-04-09T00:26:47.5643526Z Temporarily overriding HOME='/home/runner/work/_temp/9f921344-09e0-4cb2-a551-4fdf1de68fba' before making global git config changes
+2025-04-09T00:26:47.5644972Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-09T00:26:47.5658474Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T00:26:47.5694632Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-09T00:26:47.5728880Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-09T00:26:47.5975795Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-09T00:26:47.5999372Z http.https://github.com/.extraheader
+2025-04-09T00:26:47.6013148Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-04-09T00:26:47.6045373Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-09T00:26:47.6383214Z Cleaning up orphan processes
