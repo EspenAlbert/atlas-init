@@ -37,6 +37,7 @@ from atlas_init.crud.tf_resource import (
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
+from atlas_init.settings.interactive2 import select_list
 
 logger = logging.getLogger(__name__)
 
@@ -341,6 +342,8 @@ def parse_test_error(event: ParseTestErrorInput) -> GoTestError:
 def ask_user_to_classify_error(error: GoTestError) -> GoTestErrorClass | None:
     test = error.run
     details = error.details
-    logger.info(f"todo: choose manual classification for {test.name} {details}")
-    return None
-    # choose_dict()
+    return select_list(
+        f"choose classification for {test.name} {details}",
+        choices=list(GoTestErrorClass),
+        default=error.bot_error_class,
+    )
