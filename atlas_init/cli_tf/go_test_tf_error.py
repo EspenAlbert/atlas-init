@@ -51,7 +51,7 @@ class GoTestAPIError(Entity):
     tf_resource_type: str
     step_nr: int = -1
 
-    api_path_normalized: str = Field(init=False)
+    api_path_normalized: str = Field(init=False, default="")
 
     def add_info_fields(self, info: DetailsInfo) -> None:
         path = self.api_path

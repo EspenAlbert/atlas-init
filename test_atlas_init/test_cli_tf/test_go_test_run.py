@@ -18,8 +18,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     GoTestAPIError,
     GoTestCheckError,
-    details_api_id,
-    extract_error_details,
+    parse_error_details,
 )
 from zero_3rdparty.datetime_utils import utc_now
 
@@ -274,23 +273,8 @@ api_error_project_not_found = GoTestAPIError(
 )
 def test_extract_error_details(logs_str, expected_details):
     run = dummy_run(logs_str, "extract-error-details")
-    assert expected_details == extract_error_details(run)
+    assert expected_details == parse_error_details(run)
 
 
 def dummy_run(logs_str: str, name: str):
     return GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=utc_now())
-
-
-def test_details_api_id():
-    assert (
-        details_api_id(
-            api_error_project_not_found,
-            DetailsInfo(
-                run=dummy_run(
-                    _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
-                    "details_api_id",
-                )
-            ),
-        )
-        == "GET__404__RESOURCE_NOT_FOUND__/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings"
-    )

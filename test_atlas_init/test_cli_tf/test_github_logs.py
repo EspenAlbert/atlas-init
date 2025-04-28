@@ -8,7 +8,6 @@ from zero_3rdparty.datetime_utils import utc_now
 
 from atlas_init.cli_tf.github_logs import (
     REQUIRED_GH_ENV_VARS,
-    find_test_runs,
     include_test_jobs,
     is_test_job,
     select_step_and_log_content,

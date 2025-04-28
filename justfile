@@ -12,6 +12,8 @@ build:
   uv run scripts/file_utils.py generate
   uv build
   uv run scripts/file_utils.py clean
+clean:
+  uv run scripts/file_utils.py clean
 file-check:
   uv run scripts/file_utils.py check
 file-generate:
