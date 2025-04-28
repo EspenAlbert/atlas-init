@@ -101,6 +101,28 @@ class GoTestError(Entity):
     bot_error_class: GoTestErrorClass | None = None
     human_error_class: GoTestErrorClass | None = None
 
+    @property
+    def classifications(self) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:
+        if self.bot_error_class and self.human_error_class:
+            return self.bot_error_class, self.human_error_class
+        return None
+
+    def match(self, other: GoTestError) -> bool:
+        if type(self.details) is type(other.details):
+            return False
+        details = self.details
+        if isinstance(details, GoTestAPIError):
+            other_details = other.details
+            assert isinstance(other_details, GoTestAPIError)
+            return (
+                details.api_path_normalized == other_details.api_path_normalized
+                and details.tf_resource_type == other_details.tf_resource_type
+                and details.api_response_code == other_details.api_response_code
+                and details.api_method == other_details.api_method
+                and details.api_response_code == other_details.api_response_code
+            )
+        return False
+
 
 one_of_methods = "|".join(API_METHODS)
 
