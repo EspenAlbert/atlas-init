@@ -35,6 +35,7 @@ from atlas_init.crud.tf_resource import (
     read_tf_errors,
     read_tf_resources,
 )
+from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
 
@@ -50,6 +51,7 @@ class TFCITestInput(Event):
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     names: set[str] = Field(default_factory=set)
     summary_name: str = ""
+    admin_api_path: Path | None = None
 
     @model_validator(mode="after")
     def set_workflow_file_stems(self) -> TFCITestInput:
@@ -127,8 +129,11 @@ def run_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     )
     out = TFCITestOutput(log_paths=log_paths)
     known_errors: TFErrors = read_tf_errors(settings, branch)
+    spec_paths = None
+    if admin_api_path := event.admin_api_path:
+        spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
     for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):
-        classify_input = ClassifyTestErrorInput(test=test, errors=known_errors)
+        classify_input = ClassifyTestErrorInput(test=test, errors=known_errors, api_spec_paths=spec_paths)
         classify_output = classify_test_error(classify_input)
         if classify_output.is_new:
             add_tf_error(test, classify_output.error)
@@ -289,6 +294,7 @@ class BaseURLEnvironment(Entity):
 class ClassifyTestErrorInput(Event):
     test: GoTestRun
     errors: TFErrors
+    api_spec_paths: ApiSpecPaths | None = None
 
 
 class ClassifyTestErrorOutput(Event):

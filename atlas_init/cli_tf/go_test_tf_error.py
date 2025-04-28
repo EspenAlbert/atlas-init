@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import singledispatch
 import re
@@ -7,6 +8,7 @@ from model_lib import Entity
 from pydantic import Field
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
+from atlas_init.repos.go_sdk import ApiSpecPaths
 
 
 class GoTestErrorClass(StrEnum):
@@ -64,15 +66,36 @@ class GoTestCheckError(Entity):
     check_errors: list[CheckError] = Field(default_factory=list)
 
 
+@dataclass
+class DetailsInfo:
+    run: GoTestRun
+    paths: ApiSpecPaths | None = None
+
+
 @singledispatch
-def details_test_id(details: object, run: GoTestRun) -> str:
+def details_test_id(details: object, info: DetailsInfo) -> str:
     return ""
 
 
 @details_test_id.register
-def _check_test_id(details: GoTestCheckError, run: GoTestRun) -> str:
+def _check_test_id(details: GoTestCheckError, info: DetailsInfo) -> str:
+    run = info.run
     check_nrs = ",".join(str(check.check_nr) for check in details.check_errors)
     return f"{run.package_rel_path}/{run.name}#Step={details.step_nr}Checks={check_nrs}"
+
+
+@singledispatch
+def details_api_id(details: object, info: DetailsInfo) -> str:
+    return ""
+
+
+@details_api_id.register
+def _go_test_api_id(details: GoTestAPIError, info: DetailsInfo) -> str:
+    path = details.api_path
+    method = details.api_method
+    if api_paths := info.paths:
+        path = api_paths.normalize_path(method, path)
+    return "__".join([method, str(details.api_response_code), details.api_error_code_str, path])
 
 
 class GoTestDefaultError(Entity):

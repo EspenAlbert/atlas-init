@@ -13,7 +13,14 @@ from atlas_init.cli_tf.go_test_run import (
 )
 
 from atlas_init.cli_tf.go_test_run import GoTestStatus, parse_tests
-from atlas_init.cli_tf.go_test_tf_error import CheckError, GoTestAPIError, GoTestCheckError, extract_error_details
+from atlas_init.cli_tf.go_test_tf_error import (
+    CheckError,
+    DetailsInfo,
+    GoTestAPIError,
+    GoTestCheckError,
+    details_api_id,
+    extract_error_details,
+)
 from zero_3rdparty.datetime_utils import utc_now
 
 _logs_TestAccCluster_create_RedactClientLogData = """\
@@ -102,13 +109,16 @@ _ci_logs_test_data = [
             "TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined": GoTestStatus.PASS,
             "TestAccProjectAPIKey_changingSingleProject": GoTestStatus.FAIL,
         },
-        {}
+        {},
     ),
     (
         "backup_logs_multiple_failures_with_context",
         {},
-        {"TestAccBackupRSOnlineArchive": _logs_TestAccBackupRSOnlineArchive, "TestAccBackupRSOnlineArchiveWithProcessRegion": _logs_TestAccBackupRSOnlineArchiveWithProcessRegion}
-    )
+        {
+            "TestAccBackupRSOnlineArchive": _logs_TestAccBackupRSOnlineArchive,
+            "TestAccBackupRSOnlineArchiveWithProcessRegion": _logs_TestAccBackupRSOnlineArchiveWithProcessRegion,
+        },
+    ),
 ]
 
 
@@ -146,6 +156,7 @@ def test_find_env_of_mongodb_base_url(github_ci_logs_dir):
     logs_path = github_ci_logs_dir / f"{_CLUSTER_LOGS_FILENAME}.txt"
     assert find_env_of_mongodb_base_url(logs_path.read_text()) == "dev"
 
+
 def check_status_counts(
     tests: list[GoTestRun],
     fail_count: int,
@@ -164,7 +175,6 @@ def check_status_counts(
         assert (
             len(group_tests) == count
         ), f"wrong count for {status}, got {len(group_tests)} expected {count}"
-
 
 
 _expected_pass_names = {
@@ -197,6 +207,8 @@ _expected_pass_names = {
 _network_logs_one_failure = (
     Path(__file__).parent / "test_data/network_logs_one_failure.txt"
 )
+
+
 def test_parse():
     tests = parse_tests(_network_logs_one_failure.read_text().splitlines())
     missing_passing = _expected_pass_names - {
@@ -230,14 +242,55 @@ def test_extract_group_name():
     )
 
 
+api_error_project_not_found = GoTestAPIError(
+    api_error_code_str="RESOURCE_NOT_FOUND",
+    api_method="GET",
+    api_response_code=404,
+    tf_resource_name="test",
+    tf_resource_type="project",
+    step_nr=1,
+    api_path="/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings",
+)
+
+
 @pytest.mark.parametrize(
     "logs_str,expected_details",
     [
-       (_logs_TestAccCluster_tenant, GoTestCheckError(tf_resource_name="tenant", tf_resource_type="cluster",step_nr=2, check_errors=[CheckError(check_nr=4)])),
-       (_logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade, GoTestAPIError(api_error_code_str="RESOURCE_NOT_FOUND", api_method="GET", api_response_code=404, tf_resource_name="test", tf_resource_type="project", step_nr=1, api_path="/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings")),
+        (
+            _logs_TestAccCluster_tenant,
+            GoTestCheckError(
+                tf_resource_name="tenant",
+                tf_resource_type="cluster",
+                step_nr=2,
+                check_errors=[CheckError(check_nr=4)],
+            ),
+        ),
+        (
+            _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
+            api_error_project_not_found,
+        ),
     ],
-    ids=["tenant should create GoTestCheckError", "api error should be parsed"]
+    ids=["tenant should create GoTestCheckError", "api error should be parsed"],
 )
 def test_extract_error_details(logs_str, expected_details):
-    run = GoTestRun(name="extract-error-details", output_lines=logs_str.splitlines(), ts=utc_now())
+    run = dummy_run(logs_str, "extract-error-details")
     assert expected_details == extract_error_details(run)
+
+
+def dummy_run(logs_str: str, name: str):
+    return GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=utc_now())
+
+
+def test_details_api_id():
+    assert (
+        details_api_id(
+            api_error_project_not_found,
+            DetailsInfo(
+                run=dummy_run(
+                    _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
+                    "details_api_id",
+                )
+            ),
+        )
+        == "GET__404__RESOURCE_NOT_FOUND__/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings"
+    )
