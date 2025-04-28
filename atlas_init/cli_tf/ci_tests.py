@@ -22,18 +22,17 @@ from atlas_init.cli_tf.github_logs import (
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
 from atlas_init.cli_tf.go_test_tf_error import (
-    ErrorDetails,
+    DetailsInfo,
     GoTestError,
     GoTestErrorClass,
-    extract_error_details,
+    parse_error_details,
 )
 from atlas_init.crud.tf_resource import (
     TFErrors,
     TFResources,
-    add_tf_error,
-    increase_tf_error_count,
     read_tf_errors,
     read_tf_resources,
+    store_or_update_tf_errors,
 )
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
@@ -96,7 +95,12 @@ def ci_tests(
     )
     out = run_ci_tests(event)
     logger.info(f"found {len(out.log_paths)} log files")
-    for error, test in out.found_errors:
+    errors = out.found_errors
+    if not errors:
+        logger.info("no errors found 🎉")
+        return
+    for error in out.found_errors:
+        test = error.run
         logger.info(
             f"Test: {test.name} failed, error class: (bot={error.bot_error_class}, human={error.human_error_class})\n{test.output_lines_str}"
         )
@@ -104,7 +108,7 @@ def ci_tests(
 
 class TFCITestOutput(Event):
     log_paths: list[Path] = Field(default_factory=list)
-    found_errors: list[tuple[GoTestError, GoTestRun]] = Field(default_factory=list)
+    found_errors: list[GoTestError] = Field(default_factory=list)
 
 
 def run_ci_tests(event: TFCITestInput) -> TFCITestOutput:
@@ -120,7 +124,7 @@ def run_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     )
     log_paths = download_logs(download_input, settings)
     resources = read_tf_resources(settings, repo_path, branch)
-    parse_job_output = parse_job_logs(
+    parse_job_output = parse_job_tf_test_logs(
         ParseJobLogsInput(
             settings=settings,
             log_paths=log_paths,
@@ -128,19 +132,45 @@ def run_ci_tests(event: TFCITestInput) -> TFCITestOutput:
         )
     )
     out = TFCITestOutput(log_paths=log_paths)
-    known_errors: TFErrors = read_tf_errors(settings, branch)
     spec_paths = None
     if admin_api_path := event.admin_api_path:
         spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
-    for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):
-        classify_input = ClassifyTestErrorInput(test=test, errors=known_errors, api_spec_paths=spec_paths)
-        classify_output = classify_test_error(classify_input)
-        if classify_output.is_new:
-            add_tf_error(test, classify_output.error)
-        else:
-            increase_tf_error_count(test, classify_output.error)
-        out.found_errors.append((classify_output.error, test))
+    out.found_errors = test_errors = parse_errors(parse_job_output, spec_paths)
+    classify_errors(test_errors, settings)
+    store_or_update_tf_errors(settings, test_errors)
     return out
+
+
+def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> None:
+    known_errors: TFErrors = read_tf_errors(settings)
+    needs_classification = []
+    for error in errors:
+        if existing_classifications := known_errors.look_for_existing_classifications(error):
+            error.bot_error_class, error.human_error_class = existing_classifications
+        else:
+            needs_classification.append(error)
+    add_bot_classification(needs_classification, settings)
+    store_or_update_tf_errors(settings, needs_classification)
+    for newly_classified in needs_classification:
+        if new_class := ask_user_to_classify_error(newly_classified):
+            newly_classified.human_error_class = new_class
+            store_or_update_tf_errors(settings, [newly_classified])
+
+
+def add_bot_classification(needs_classification_errors: list[GoTestError], settings: AtlasInitSettings) -> None:
+    """Todo: Use LLM"""
+    example_errors = read_tf_errors(settings).classified_errors()
+    if not example_errors:
+        logger.warning("no example of classified errors found, the bot cannot classify errors without examples")
+        return None
+
+
+def parse_errors(parse_job_output: ParseJobLogsOutput, spec_paths: ApiSpecPaths | None) -> list[GoTestError]:
+    test_errors: list[GoTestError] = []
+    for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):
+        test_error_input = ParseTestErrorInput(test=test, api_spec_paths=spec_paths)
+        test_errors.append(parse_test_error(test_error_input))
+    return test_errors
 
 
 class DownloadJobLogsInput(Event):
@@ -154,7 +184,10 @@ def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> l
     start_test_date = end_test_date - timedelta(days=event.max_days_ago)
     log_paths = []
     while start_test_date < end_test_date:
-        event_out = download_gh_job_logs(settings, DownloadJobRunsInput(branch=event.branch, run_date=start_test_date))
+        event_out = download_gh_job_logs(
+            settings,
+            DownloadJobRunsInput(branch=event.branch, run_date=start_test_date),
+        )
         log_paths.extend(event_out.log_paths)
         if errors := event_out.log_errors():
             logger.warning(errors)
@@ -250,7 +283,7 @@ class ParseJobLogsOutput(Event):
         return [test for test in self.test_runs if test.status == status]
 
 
-def parse_job_logs(
+def parse_job_tf_test_logs(
     event: ParseJobLogsInput,
 ) -> ParseJobLogsOutput:
     out = ParseJobLogsOutput()
@@ -291,45 +324,23 @@ class BaseURLEnvironment(Entity):
         return self
 
 
-class ClassifyTestErrorInput(Event):
+class ParseTestErrorInput(Event):
     test: GoTestRun
-    errors: TFErrors
     api_spec_paths: ApiSpecPaths | None = None
 
 
-class ClassifyTestErrorOutput(Event):
-    test: GoTestRun
-    error: GoTestError
-    is_new: bool = False
+def parse_test_error(event: ParseTestErrorInput) -> GoTestError:
+    run = event.test
+    assert run.is_failure, f"test is not failed: {run.name}"
+    details = parse_error_details(run)
+    info = DetailsInfo(run=run, paths=event.api_spec_paths)
+    details.add_info_fields(info)
+    return GoTestError(details=details, run=run)
 
 
-def classify_test_error(event: ClassifyTestErrorInput) -> ClassifyTestErrorOutput:
-    error_test = event.test
-    details = extract_error_details(error_test)
-    if existing := event.errors.find_existing(details, error_test):
-        logger.info(f"found existing error: {existing}")
-        return ClassifyTestErrorOutput(
-            test=event.test,
-            error=existing,
-            is_new=False,
-        )
-    bot_class = event.errors.classify(details, error_test)
-    human_class = ask_user_to_classify_error(details, error_test, bot_class)
-    new_error = GoTestError(
-        details=details,
-        bot_error_class=bot_class,
-        human_error_class=human_class,
-    )
-    return ClassifyTestErrorOutput(
-        test=event.test,
-        error=new_error,
-        is_new=True,
-    )
-
-
-def ask_user_to_classify_error(
-    details: ErrorDetails, test: GoTestRun, bot_class: GoTestErrorClass
-) -> GoTestErrorClass | None:
+def ask_user_to_classify_error(error: GoTestError) -> GoTestErrorClass | None:
+    test = error.run
+    details = error.details
     logger.info(f"todo: choose manual classification for {test.name} {details}")
     return None
     # choose_dict()

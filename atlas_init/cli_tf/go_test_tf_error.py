@@ -1,7 +1,8 @@
+from __future__ import annotations
+
+import re
 from dataclasses import dataclass
 from enum import StrEnum
-from functools import singledispatch
-import re
 from typing import Literal, TypeAlias
 
 from model_lib import Entity
@@ -50,6 +51,14 @@ class GoTestAPIError(Entity):
     tf_resource_type: str
     step_nr: int = -1
 
+    api_path_normalized: str = Field(init=False)
+
+    def add_info_fields(self, info: DetailsInfo) -> None:
+        path = self.api_path
+        method = self.api_method
+        if api_paths := info.paths:
+            self.api_path_normalized = api_paths.normalize_path(method, path)
+
 
 class CheckError(Entity):
     attribute: str = ""
@@ -65,6 +74,9 @@ class GoTestCheckError(Entity):
     step_nr: int = -1
     check_errors: list[CheckError] = Field(default_factory=list)
 
+    def add_info_fields(self, _: DetailsInfo) -> None:
+        pass
+
 
 @dataclass
 class DetailsInfo:
@@ -72,35 +84,12 @@ class DetailsInfo:
     paths: ApiSpecPaths | None = None
 
 
-@singledispatch
-def details_test_id(details: object, info: DetailsInfo) -> str:
-    return ""
-
-
-@details_test_id.register
-def _check_test_id(details: GoTestCheckError, info: DetailsInfo) -> str:
-    run = info.run
-    check_nrs = ",".join(str(check.check_nr) for check in details.check_errors)
-    return f"{run.package_rel_path}/{run.name}#Step={details.step_nr}Checks={check_nrs}"
-
-
-@singledispatch
-def details_api_id(details: object, info: DetailsInfo) -> str:
-    return ""
-
-
-@details_api_id.register
-def _go_test_api_id(details: GoTestAPIError, info: DetailsInfo) -> str:
-    path = details.api_path
-    method = details.api_method
-    if api_paths := info.paths:
-        path = api_paths.normalize_path(method, path)
-    return "__".join([method, str(details.api_response_code), details.api_error_code_str, path])
-
-
 class GoTestDefaultError(Entity):
     type: Literal["default_error"] = "default_error"
     error_str: str
+
+    def add_info_fields(self, _: DetailsInfo) -> None:
+        pass
 
 
 ErrorDetails: TypeAlias = GoTestAPIError | GoTestCheckError | GoTestDefaultError
@@ -108,7 +97,8 @@ ErrorDetails: TypeAlias = GoTestAPIError | GoTestCheckError | GoTestDefaultError
 
 class GoTestError(Entity):
     details: ErrorDetails
-    bot_error_class: GoTestErrorClass
+    run: GoTestRun
+    bot_error_class: GoTestErrorClass | None = None
     human_error_class: GoTestErrorClass | None = None
 
 
@@ -126,7 +116,7 @@ detail_patterns: list[re.Pattern] = [
 ]
 
 
-def extract_error_details(run: GoTestRun) -> ErrorDetails:
+def parse_error_details(run: GoTestRun) -> ErrorDetails:
     kwargs = {}
     output = run.output_lines_str
     for pattern in detail_patterns:

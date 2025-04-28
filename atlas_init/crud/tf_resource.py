@@ -3,10 +3,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
-from atlas_init.cli_tf.go_test_tf_error import ErrorDetails, GoTestError, GoTestErrorClass
+from atlas_init.cli_tf.go_test_tf_error import (
+    GoTestError,
+    GoTestErrorClass,
+)
 from atlas_init.repos.path import TFResoure, terraform_resources
 from atlas_init.settings.env_vars import AtlasInitSettings
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,16 +38,20 @@ def store_resource_tests(settings: AtlasInitSettings, tests: list[GoTestRun]):
 class TFErrors:
     errors: list[GoTestError] = field(default_factory=list)
 
-    def find_existing(self, details: ErrorDetails, test: GoTestRun) -> GoTestError | None:
+    def look_for_existing_classifications(self, error: GoTestError) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:
         return None
 
-    def classify(self, details: ErrorDetails, test: GoTestRun) -> GoTestErrorClass:
-        return GoTestErrorClass.UNKNOWN
+    def classified_errors(self) -> list[GoTestError]:
+        return [error for error in self.errors if error.human_error_class is not None]
 
 
-def read_tf_errors(settings: AtlasInitSettings, branch: str) -> TFErrors:
+def read_tf_errors(settings: AtlasInitSettings) -> TFErrors:
     logger.warning("error store not supported yet")
     return TFErrors()
+
+
+def store_or_update_tf_errors(settings: AtlasInitSettings, errors: list[GoTestError]):
+    logger.warning("error store not supported yet")
 
 
 def add_tf_error(test: GoTestRun, error: GoTestError):
