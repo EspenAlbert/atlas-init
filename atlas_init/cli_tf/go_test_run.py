@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import total_ordering
 import logging
 import re
 from collections.abc import Callable
@@ -81,6 +82,7 @@ def parse_tests(
     return result.tests
 
 
+@total_ordering
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN

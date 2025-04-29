@@ -96,7 +96,7 @@ def ci_tests(
         names=names_set,
         summary_name=summary_name,
     )
-    out = find_ci_tests(event)
+    out = analyze_ci_tests(event)
     logger.info(f"found {len(out.log_paths)} log files with a total of {len(out.found_tests)} tests")
     errors = out.found_errors
     if not errors:
@@ -115,7 +115,7 @@ class TFCITestOutput(Entity):
     found_errors: list[GoTestError] = Field(default_factory=list)
 
 
-def find_ci_tests(event: TFCITestInput) -> TFCITestOutput:
+def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     repo_path = event.repo_path
     branch = event.branch
     token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)

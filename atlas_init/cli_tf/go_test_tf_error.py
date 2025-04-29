@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import total_ordering
 import re
 from dataclasses import dataclass
 from enum import StrEnum
@@ -95,11 +96,17 @@ class GoTestDefaultError(Entity):
 ErrorDetails: TypeAlias = GoTestAPIError | GoTestCheckError | GoTestDefaultError
 
 
+@total_ordering
 class GoTestError(Entity):
     details: ErrorDetails
     run: GoTestRun
     bot_error_class: GoTestErrorClass | None = None
     human_error_class: GoTestErrorClass | None = None
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, GoTestError):
+            raise TypeError
+        return self.run < other.run
 
     @property
     def classifications(self) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:

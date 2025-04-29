@@ -110,5 +110,6 @@ dev = [
   "pytest==8.3.4",
   "pytest-cov==6.0.0",
   "pytest-regressions==2.5.0",
+  "pytest-subtests==0.14.1",
   "ruff>=0.11.5",
 ] # used to make it simpler to sync venv with IDE
