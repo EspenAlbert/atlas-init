@@ -59,10 +59,11 @@ app_command = partial(
 
 
 def extra_root_commands():
-    from atlas_init.cli_root import go_test, trigger
+    from atlas_init.cli_root import go_test, trigger, mms_released
 
     assert trigger
     assert go_test
+    assert mms_released
 
 
 @app.callback(invoke_without_command=True)
