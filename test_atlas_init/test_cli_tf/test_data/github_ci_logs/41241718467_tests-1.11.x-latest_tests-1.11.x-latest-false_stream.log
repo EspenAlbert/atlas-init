@@ -1,0 +1,1102 @@
+ï»¿2025-04-28T00:28:03.1022736Z Current runner version: '2.323.0'
+2025-04-28T00:28:03.1047664Z ##[group]Operating System
+2025-04-28T00:28:03.1048603Z Ubuntu
+2025-04-28T00:28:03.1049346Z 24.04.2
+2025-04-28T00:28:03.1049957Z LTS
+2025-04-28T00:28:03.1050636Z ##[endgroup]
+2025-04-28T00:28:03.1051261Z ##[group]Runner Image
+2025-04-28T00:28:03.1051970Z Image: ubuntu-24.04
+2025-04-28T00:28:03.1052595Z Version: 20250420.1.0
+2025-04-28T00:28:03.1053891Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250420.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-04-28T00:28:03.1055543Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250420.1
+2025-04-28T00:28:03.1056540Z ##[endgroup]
+2025-04-28T00:28:03.1057233Z ##[group]Runner Image Provisioner
+2025-04-28T00:28:03.1057913Z 2.0.422.1
+2025-04-28T00:28:03.1058463Z ##[endgroup]
+2025-04-28T00:28:03.1059606Z ##[group]GITHUB_TOKEN Permissions
+2025-04-28T00:28:03.1061505Z Metadata: read
+2025-04-28T00:28:03.1062202Z ##[endgroup]
+2025-04-28T00:28:03.1064781Z Secret source: Actions
+2025-04-28T00:28:03.1065787Z Prepare workflow directory
+2025-04-28T00:28:03.1672610Z Prepare all required actions
+2025-04-28T00:28:03.1710313Z Getting action download info
+2025-04-28T00:28:03.3554615Z Download action repository 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' (SHA:11bd71901bbe5b1630ceea73d27597364c9af683)
+2025-04-28T00:28:03.4227428Z Download action repository 'actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b' (SHA:0aaccfd150d50ccaeb58ebd88d36e91967a5f35b)
+2025-04-28T00:28:03.7961895Z Download action repository 'hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd' (SHA:b9cd54a3c349d3f38e8881555d616ced269862dd)
+2025-04-28T00:28:04.1652021Z Uses: mongodb/terraform-provider-mongodbatlas/.github/workflows/acceptance-tests-runner.yml@refs/heads/master (cd9d373da9f2b6c523b9c6d582e2e935e60dda32)
+2025-04-28T00:28:04.1655483Z ##[group] Inputs
+2025-04-28T00:28:04.1656141Z   terraform_version: 1.11.x
+2025-04-28T00:28:04.1656776Z   provider_version: 
+2025-04-28T00:28:04.1657332Z   test_group: 
+2025-04-28T00:28:04.1657845Z   test_name: 
+2025-04-28T00:28:04.1658333Z   ref: 
+2025-04-28T00:28:04.1659214Z   reduced_tests: false
+2025-04-28T00:28:04.1659863Z   mongodb_atlas_org_id: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:04.1660676Z   mongodb_atlas_base_url: https://cloud-dev.mongodb.com/
+2025-04-28T00:28:04.1661532Z   mongodb_atlas_project_owner_id: 5e4bc367c6b0f41bb9bbb178
+2025-04-28T00:28:04.1662644Z   mongodb_atlas_teams_ids: 6480a2369723d11c656c970d,6481aa9f2b0d93722d2a178f,6481aaac2b0d93722d2a179e
+2025-04-28T00:28:04.1663926Z   azure_atlas_app_id: 6f2deb0d-be72-4524-a403-df531868bac0
+2025-04-28T00:28:04.1664811Z   azure_service_principal_id: 48f1d2a6-d0e9-482a-83a4-b8dd7dddc5c1
+2025-04-28T00:28:04.1665692Z   azure_tenant_id: 91405384-d71e-47f5-92dd-759e272cdc1c
+2025-04-28T00:28:04.1666666Z   aws_secret_name: terraform-provider-mongodbatlas/acceptancetests/atlas-api-keys
+2025-04-28T00:28:04.1667600Z   aws_region_federation: us-east-1
+2025-04-28T00:28:04.1668362Z   mongodb_atlas_federation_settings_id: 65ba5f108c173e782d2ba9bc
+2025-04-28T00:28:04.1669258Z   mongodb_atlas_federated_okta_idp_id: 0oa10l49zjuBdjDT1358
+2025-04-28T00:28:04.1670125Z   mongodb_atlas_federated_idp_id: 65bbbf70102554435568fbe6
+2025-04-28T00:28:04.1671263Z   mongodb_atlas_federated_sso_url: https://dev-7jf9gvz6.us.auth0.com/samlp/Ym6EAr3XN4DpUk9fyYwnttzcnE6agdKH
+2025-04-28T00:28:04.1672482Z   mongodb_atlas_federated_issuer_uri: urn:dev-7jf9gvz6.us.auth0.com
+2025-04-28T00:28:04.1673490Z   mongodb_atlas_federated_org_id: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:04.1674290Z   mongodb_atlas_gov_org_id: 66505f7d17317176e3f3bbf8
+2025-04-28T00:28:04.1675127Z   mongodb_atlas_gov_base_url: https://cloud-dev.mongodbgov.com
+2025-04-28T00:28:04.1675972Z   mongodb_atlas_rp_org_id: 66e1b7dafbd91d525db2a067
+2025-04-28T00:28:04.1676797Z   mongodb_atlas_gov_project_owner_id: 664c62f0c4391e7c9f58312e
+2025-04-28T00:28:04.1678112Z   mongodb_atlas_federated_settings_associated_domain: mdb-aws-cfn-publishing.com
+2025-04-28T00:28:04.1679288Z   mongodb_atlas_project_ear_pe_id: 66d83bcc1fe1835125c52422
+2025-04-28T00:28:04.1680083Z   azure_private_endpoint_region: US_EAST
+2025-04-28T00:28:04.1680813Z   confluent_cloud_network_id: n-dz0vk2
+2025-04-28T00:28:04.1681524Z   confluent_cloud_privatelink_access_id: pla-n1962k
+2025-04-28T00:28:04.1682271Z   aws_ear_role_id: 679243c15ec3be271d1d7952
+2025-04-28T00:28:04.1683430Z   mongodb_atlas_project_ear_pe_aws_id: 6790e57a9b41416f5c216fee
+2025-04-28T00:28:04.1684476Z   mongodb_atlas_asp_project_ear_pe_id: 6790e57a9b41416f5c216fee
+2025-04-28T00:28:04.1685896Z   mongodb_atlas_asp_project_aws_role_arn: arn:aws:iam::***:role/mongodb-atlas-test-acc-tf-7973337217371171538-git-ear
+2025-04-28T00:28:04.1686947Z ##[endgroup]
+2025-04-28T00:28:04.1687660Z Complete job name: tests-1.11.x-latest / tests-1.11.x-latest-false / stream
+2025-04-28T00:28:04.2382817Z ##[group]Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+2025-04-28T00:28:04.2384208Z with:
+2025-04-28T00:28:04.2384755Z   ref: refs/heads/master
+2025-04-28T00:28:04.2385421Z   repository: mongodb/terraform-provider-mongodbatlas
+2025-04-28T00:28:04.2386346Z   token: ***
+2025-04-28T00:28:04.2386838Z   ssh-strict: true
+2025-04-28T00:28:04.2387344Z   ssh-user: git
+2025-04-28T00:28:04.2387872Z   persist-credentials: true
+2025-04-28T00:28:04.2388437Z   clean: true
+2025-04-28T00:28:04.2388948Z   sparse-checkout-cone-mode: true
+2025-04-28T00:28:04.2389558Z   fetch-depth: 1
+2025-04-28T00:28:04.2390063Z   fetch-tags: false
+2025-04-28T00:28:04.2390585Z   show-progress: true
+2025-04-28T00:28:04.2391099Z   lfs: false
+2025-04-28T00:28:04.2391574Z   submodules: false
+2025-04-28T00:28:04.2392095Z   set-safe-directory: true
+2025-04-28T00:28:04.2392855Z env:
+2025-04-28T00:28:04.2393464Z   TF_ACC: 1
+2025-04-28T00:28:04.2393946Z   TF_LOG: ERROR
+2025-04-28T00:28:04.2394493Z   ACCTEST_TIMEOUT: 300m
+2025-04-28T00:28:04.2395054Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-28T00:28:04.2395788Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-28T00:28:04.2396576Z   MONGODB_ATLAS_ORG_ID: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:04.2397310Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-28T00:28:04.2398070Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-28T00:28:04.2398730Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-28T00:28:04.2399586Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-28T00:28:04.2400262Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-28T00:28:04.2401040Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-28T00:28:04.2401804Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-28T00:28:04.2402625Z   MONGODB_ATLAS_GOV_ORG_ID: 66505f7d17317176e3f3bbf8
+2025-04-28T00:28:04.2403451Z ##[endgroup]
+2025-04-28T00:28:04.4887029Z Syncing repository: mongodb/terraform-provider-mongodbatlas
+2025-04-28T00:28:04.4890973Z ##[group]Getting Git version info
+2025-04-28T00:28:04.4893138Z Working directory is '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-28T00:28:04.4896110Z [command]/usr/bin/git version
+2025-04-28T00:28:04.4927916Z git version 2.49.0
+2025-04-28T00:28:04.4959997Z ##[endgroup]
+2025-04-28T00:28:04.4976964Z Temporarily overriding HOME='/home/runner/work/_temp/8ec02518-7135-41e1-a779-9d7ee10f09d2' before making global git config changes
+2025-04-28T00:28:04.5059560Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-28T00:28:04.5062098Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-28T00:28:04.5065094Z Deleting the contents of '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-28T00:28:04.5066663Z ##[group]Initializing the repository
+2025-04-28T00:28:04.5067815Z [command]/usr/bin/git init /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-28T00:28:04.5106247Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-04-28T00:28:04.5108671Z hint: is subject to change. To configure the initial branch name to use in all
+2025-04-28T00:28:04.5110501Z hint: of your new repositories, which will suppress this warning, call:
+2025-04-28T00:28:04.5111975Z hint:
+2025-04-28T00:28:04.5112997Z hint: 	git config --global init.defaultBranch <name>
+2025-04-28T00:28:04.5114412Z hint:
+2025-04-28T00:28:04.5115363Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-04-28T00:28:04.5116519Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-04-28T00:28:04.5117549Z hint:
+2025-04-28T00:28:04.5118056Z hint: 	git branch -m <name>
+2025-04-28T00:28:04.5119261Z Initialized empty Git repository in /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/.git/
+2025-04-28T00:28:04.5124262Z [command]/usr/bin/git remote add origin https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-28T00:28:04.5161996Z ##[endgroup]
+2025-04-28T00:28:04.5164078Z ##[group]Disabling automatic garbage collection
+2025-04-28T00:28:04.5167747Z [command]/usr/bin/git config --local gc.auto 0
+2025-04-28T00:28:04.5208776Z ##[endgroup]
+2025-04-28T00:28:04.5210381Z ##[group]Setting up auth
+2025-04-28T00:28:04.5211853Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-28T00:28:04.5245755Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-28T00:28:04.5532496Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-28T00:28:04.5564270Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-28T00:28:04.5790347Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-04-28T00:28:04.5840932Z ##[endgroup]
+2025-04-28T00:28:04.5842723Z ##[group]Fetching the repository
+2025-04-28T00:28:04.5851359Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/master:refs/remotes/origin/master
+2025-04-28T00:28:05.0549976Z From https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-28T00:28:05.0551971Z  * [new branch]      master     -> origin/master
+2025-04-28T00:28:05.0583743Z ##[endgroup]
+2025-04-28T00:28:05.0585490Z ##[group]Determining the checkout info
+2025-04-28T00:28:05.0587039Z ##[endgroup]
+2025-04-28T00:28:05.0590847Z [command]/usr/bin/git sparse-checkout disable
+2025-04-28T00:28:05.0632866Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-04-28T00:28:05.0662789Z ##[group]Checking out the ref
+2025-04-28T00:28:05.0667048Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2025-04-28T00:28:05.1620550Z Reset branch 'master'
+2025-04-28T00:28:05.1623920Z branch 'master' set up to track 'origin/master'.
+2025-04-28T00:28:05.1636076Z ##[endgroup]
+2025-04-28T00:28:05.1675719Z [command]/usr/bin/git log -1 --format=%H
+2025-04-28T00:28:05.1697873Z cd9d373da9f2b6c523b9c6d582e2e935e60dda32
+2025-04-28T00:28:05.1973325Z ##[group]Run actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
+2025-04-28T00:28:05.1975232Z with:
+2025-04-28T00:28:05.1976263Z   go-version-file: go.mod
+2025-04-28T00:28:05.1977474Z   check-latest: false
+2025-04-28T00:28:05.1978886Z   token: ***
+2025-04-28T00:28:05.1979881Z   cache: true
+2025-04-28T00:28:05.1980852Z env:
+2025-04-28T00:28:05.1981758Z   TF_ACC: 1
+2025-04-28T00:28:05.1982727Z   TF_LOG: ERROR
+2025-04-28T00:28:05.1983940Z   ACCTEST_TIMEOUT: 300m
+2025-04-28T00:28:05.1985130Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-28T00:28:05.1986694Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-28T00:28:05.1988374Z   MONGODB_ATLAS_ORG_ID: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:05.1989882Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-28T00:28:05.1991778Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-28T00:28:05.1993692Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-28T00:28:05.1996372Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-28T00:28:05.1998717Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-28T00:28:05.2001423Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-28T00:28:05.2004191Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-28T00:28:05.2006752Z   MONGODB_ATLAS_GOV_ORG_ID: 66505f7d17317176e3f3bbf8
+2025-04-28T00:28:05.2008843Z ##[endgroup]
+2025-04-28T00:28:05.3735696Z Setup go version spec 1.24.1
+2025-04-28T00:28:05.3748326Z Attempting to download 1.24.1...
+2025-04-28T00:28:05.7385812Z matching 1.24.1...
+2025-04-28T00:28:05.7423757Z Acquiring 1.24.1 from https://github.com/actions/go-versions/releases/download/1.24.1-13667719799/go-1.24.1-linux-x64.tar.gz
+2025-04-28T00:28:06.3899892Z Extracting Go...
+2025-04-28T00:28:06.4004237Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/7cd7f254-cebb-4194-bc2e-4ecbe28e5c86 -f /home/runner/work/_temp/e23fae31-db9a-459e-b23c-dd38067043ef
+2025-04-28T00:28:08.1712851Z Successfully extracted go to /home/runner/work/_temp/7cd7f254-cebb-4194-bc2e-4ecbe28e5c86
+2025-04-28T00:28:08.1713882Z Adding to the cache ...
+2025-04-28T00:28:12.7283420Z Successfully cached go to /opt/hostedtoolcache/go/1.24.1/x64
+2025-04-28T00:28:12.7284767Z Added go to the path
+2025-04-28T00:28:12.7287485Z Successfully set up Go version 1.24.1
+2025-04-28T00:28:12.7478272Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOMODCACHE
+2025-04-28T00:28:12.7507548Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOCACHE
+2025-04-28T00:28:12.7539204Z /home/runner/go/pkg/mod
+2025-04-28T00:28:12.7553130Z /home/runner/.cache/go-build
+2025-04-28T00:28:12.8442357Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.24.1-8bd371313c1eec5c930ba38c7dde2b200ed5de40a26bb476ab3abc6a8085144e
+2025-04-28T00:28:13.9558289Z Received 134217728 of 473905152 (28.3%), 127.9 MBs/sec
+2025-04-28T00:28:14.9560190Z Received 364904448 of 473905152 (77.0%), 173.9 MBs/sec
+2025-04-28T00:28:15.5561033Z Received 473905152 of 473905152 (100.0%), 173.8 MBs/sec
+2025-04-28T00:28:15.5562366Z Cache Size: ~452 MB (473905152 B)
+2025-04-28T00:28:15.5600505Z [command]/usr/bin/tar -xf /home/runner/work/_temp/15f52681-2506-4c95-9b1b-ddc32d5a8dea/cache.tzst -P -C /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas --use-compress-program unzstd
+2025-04-28T00:28:19.9532212Z Cache restored successfully
+2025-04-28T00:28:20.0484499Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.24.1-8bd371313c1eec5c930ba38c7dde2b200ed5de40a26bb476ab3abc6a8085144e
+2025-04-28T00:28:20.0507595Z go version go1.24.1 linux/amd64
+2025-04-28T00:28:20.0507831Z 
+2025-04-28T00:28:20.0508160Z ##[group]go env
+2025-04-28T00:28:20.1160482Z AR='ar'
+2025-04-28T00:28:20.1161541Z CC='gcc'
+2025-04-28T00:28:20.1162084Z CGO_CFLAGS='-O2 -g'
+2025-04-28T00:28:20.1163503Z CGO_CPPFLAGS=''
+2025-04-28T00:28:20.1164056Z CGO_CXXFLAGS='-O2 -g'
+2025-04-28T00:28:20.1164532Z CGO_ENABLED='1'
+2025-04-28T00:28:20.1164953Z CGO_FFLAGS='-O2 -g'
+2025-04-28T00:28:20.1165386Z CGO_LDFLAGS='-O2 -g'
+2025-04-28T00:28:20.1165774Z CXX='g++'
+2025-04-28T00:28:20.1166352Z GCCGO='gccgo'
+2025-04-28T00:28:20.1166611Z GO111MODULE=''
+2025-04-28T00:28:20.1166834Z GOAMD64='v1'
+2025-04-28T00:28:20.1167057Z GOARCH='amd64'
+2025-04-28T00:28:20.1167381Z GOAUTH='netrc'
+2025-04-28T00:28:20.1167622Z GOBIN=''
+2025-04-28T00:28:20.1167875Z GOCACHE='/home/runner/.cache/go-build'
+2025-04-28T00:28:20.1168191Z GOCACHEPROG=''
+2025-04-28T00:28:20.1168405Z GODEBUG=''
+2025-04-28T00:28:20.1168663Z GOENV='/home/runner/.config/go/env'
+2025-04-28T00:28:20.1168935Z GOEXE=''
+2025-04-28T00:28:20.1169143Z GOEXPERIMENT=''
+2025-04-28T00:28:20.1169372Z GOFIPS140='off'
+2025-04-28T00:28:20.1169584Z GOFLAGS=''
+2025-04-28T00:28:20.1170248Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build3033333191=/tmp/go-build -gno-record-gcc-switches'
+2025-04-28T00:28:20.1171105Z GOHOSTARCH='amd64'
+2025-04-28T00:28:20.1171343Z GOHOSTOS='linux'
+2025-04-28T00:28:20.1171573Z GOINSECURE=''
+2025-04-28T00:28:20.1172043Z GOMOD='/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/go.mod'
+2025-04-28T00:28:20.1172568Z GOMODCACHE='/home/runner/go/pkg/mod'
+2025-04-28T00:28:20.1172854Z GONOPROXY=''
+2025-04-28T00:28:20.1173068Z GONOSUMDB=''
+2025-04-28T00:28:20.1173573Z GOOS='linux'
+2025-04-28T00:28:20.1173811Z GOPATH='/home/runner/go'
+2025-04-28T00:28:20.1174230Z GOPRIVATE=''
+2025-04-28T00:28:20.1174757Z GOPROXY='https://proxy.golang.org,direct'
+2025-04-28T00:28:20.1175135Z GOROOT='/opt/hostedtoolcache/go/1.24.1/x64'
+2025-04-28T00:28:20.1175453Z GOSUMDB='sum.golang.org'
+2025-04-28T00:28:20.1175719Z GOTELEMETRY='local'
+2025-04-28T00:28:20.1176028Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2025-04-28T00:28:20.1176343Z GOTMPDIR=''
+2025-04-28T00:28:20.1176558Z GOTOOLCHAIN='auto'
+2025-04-28T00:28:20.1176900Z GOTOOLDIR='/opt/hostedtoolcache/go/1.24.1/x64/pkg/tool/linux_amd64'
+2025-04-28T00:28:20.1177272Z GOVCS=''
+2025-04-28T00:28:20.1177480Z GOVERSION='go1.24.1'
+2025-04-28T00:28:20.1177714Z GOWORK=''
+2025-04-28T00:28:20.1177942Z PKG_CONFIG='pkg-config'
+2025-04-28T00:28:20.1178105Z 
+2025-04-28T00:28:20.1178442Z ##[endgroup]
+2025-04-28T00:28:20.1389869Z ##[group]Run hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+2025-04-28T00:28:20.1390493Z with:
+2025-04-28T00:28:20.1390736Z   terraform_version: 1.11.x
+2025-04-28T00:28:20.1391078Z   terraform_wrapper: false
+2025-04-28T00:28:20.1391381Z   cli_config_credentials_hostname: app.terraform.io
+2025-04-28T00:28:20.1391693Z env:
+2025-04-28T00:28:20.1391881Z   TF_ACC: 1
+2025-04-28T00:28:20.1392080Z   TF_LOG: ERROR
+2025-04-28T00:28:20.1392301Z   ACCTEST_TIMEOUT: 300m
+2025-04-28T00:28:20.1392544Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-28T00:28:20.1392902Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-28T00:28:20.1393513Z   MONGODB_ATLAS_ORG_ID: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:20.1394114Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-28T00:28:20.1394499Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-28T00:28:20.1394812Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-28T00:28:20.1395216Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-28T00:28:20.1395563Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-28T00:28:20.1395925Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-28T00:28:20.1396313Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-28T00:28:20.1396730Z   MONGODB_ATLAS_GOV_ORG_ID: 66505f7d17317176e3f3bbf8
+2025-04-28T00:28:20.1397033Z ##[endgroup]
+2025-04-28T00:28:20.9019682Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/e8cc64d8-893f-4326-baac-558c28844de9
+2025-04-28T00:28:21.6252684Z ##[group]Run make testacc
+2025-04-28T00:28:21.6253045Z [36;1mmake testacc[0m
+2025-04-28T00:28:21.6288047Z shell: /usr/bin/bash -e {0}
+2025-04-28T00:28:21.6288336Z env:
+2025-04-28T00:28:21.6288536Z   TF_ACC: 1
+2025-04-28T00:28:21.6288761Z   TF_LOG: ERROR
+2025-04-28T00:28:21.6288978Z   ACCTEST_TIMEOUT: 300m
+2025-04-28T00:28:21.6289220Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-28T00:28:21.6289581Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-28T00:28:21.6289953Z   MONGODB_ATLAS_ORG_ID: 64808d5f33a0c71e882ef19c
+2025-04-28T00:28:21.6290332Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-28T00:28:21.6290689Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-28T00:28:21.6290997Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-28T00:28:21.6291393Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-28T00:28:21.6291715Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-28T00:28:21.6292079Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-28T00:28:21.6292458Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-28T00:28:21.6292856Z   MONGODB_ATLAS_GOV_ORG_ID: 66505f7d17317176e3f3bbf8
+2025-04-28T00:28:21.6293475Z   MONGODB_ATLAS_LAST_VERSION: 1.33.0
+2025-04-28T00:28:21.6293791Z   AWS_ACCOUNT_ID: ***
+2025-04-28T00:28:21.6294310Z   CONFLUENT_CLOUD_API_KEY: ***
+2025-04-28T00:28:21.6294801Z   CONFLUENT_CLOUD_API_SECRET: ***
+2025-04-28T00:28:21.6295086Z   CONFLUENT_CLOUD_NETWORK_ID: n-dz0vk2
+2025-04-28T00:28:21.6295412Z   CONFLUENT_CLOUD_PRIVATELINK_ACCESS_ID: pla-n1962k
+2025-04-28T00:28:21.6295733Z   AWS_REGION: US_EAST_1
+2025-04-28T00:28:21.6295974Z   AWS_VPC_CIDR_BLOCK: 10.0.0.0/16
+2025-04-28T00:28:21.6296259Z   AWS_VPC_ID: vpc-0dc6e86407244e379
+2025-04-28T00:28:21.6296814Z   MONGODB_ATLAS_ASP_PROJECT_AWS_ROLE_ARN: arn:aws:iam::***:role/mongodb-atlas-test-acc-tf-7973337217371171538-git-ear
+2025-04-28T00:28:21.6297379Z   MONGODB_ATLAS_ASP_PROJECT_EAR_PE_ID: 6790e57a9b41416f5c216fee
+2025-04-28T00:28:21.6298214Z   ACCTEST_PACKAGES: ./internal/service/streamconnection
+./internal/service/streaminstance
+./internal/service/streamprocessor
+./internal/service/streamprivatelinkendpoint
+
+2025-04-28T00:28:21.6298955Z ##[endgroup]
+2025-04-28T00:28:21.8194849Z ==> Checking that code complies with gofmt requirements...
+2025-04-28T00:28:22.1498768Z TF_ACC=1 go test ./internal/service/streamconnection ./internal/service/streaminstance ./internal/service/streamprocessor ./internal/service/streamprivatelinkendpoint -run '^Test(Acc|Mig)' -v -parallel 50  -timeout 300m -ldflags="-s -w -X 'github.com/mongodb/terraform-provider-mongodbatlas/version.ProviderVersion=cd9d373'"
+2025-04-28T00:28:22.1653366Z go: downloading github.com/hashicorp/terraform-plugin-testing v1.12.0
+2025-04-28T00:28:22.1699721Z go: downloading github.com/stretchr/testify v1.10.0
+2025-04-28T00:28:22.4871186Z go: downloading github.com/hashicorp/terraform-json v0.24.0
+2025-04-28T00:28:22.5774020Z go: downloading github.com/davecgh/go-spew v1.1.1
+2025-04-28T00:28:22.5779710Z go: downloading github.com/pmezard/go-difflib v1.0.0
+2025-04-28T00:28:22.5804712Z go: downloading github.com/stretchr/objx v0.5.2
+2025-04-28T00:28:22.6399376Z go: downloading github.com/hashicorp/terraform-exec v0.23.0
+2025-04-28T00:28:22.6591145Z go: downloading github.com/hashicorp/hc-install v0.9.2
+2025-04-28T00:28:22.7073977Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2025-04-28T00:28:23.0196277Z go: downloading github.com/hashicorp/go-checkpoint v0.5.0
+2025-04-28T00:28:23.0230298Z go: downloading golang.org/x/mod v0.24.0
+2025-04-28T00:28:23.0231226Z go: downloading github.com/ProtonMail/go-crypto v1.1.6
+2025-04-28T00:28:23.0336599Z go: downloading github.com/hashicorp/go-retryablehttp v0.7.7
+2025-04-28T00:28:23.1020634Z go: downloading github.com/cloudflare/circl v1.6.0
+2025-04-28T00:45:17.1463665Z === RUN   TestAccStreamDSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1465181Z     data_source_stream_connection_test.go:14: Creating execution project: test-acc-tf-p-3412676503411277156
+2025-04-28T00:45:17.1466570Z === PAUSE TestAccStreamDSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1467306Z === RUN   TestAccStreamDSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1467967Z === PAUSE TestAccStreamDSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1468590Z === RUN   TestAccStreamDSStreamConnection_cluster
+2025-04-28T00:45:17.1469748Z     data_source_stream_connection_test.go:52: Creating execution cluster: test-acc-tf-c-884812972583994602
+2025-04-28T00:45:17.1470690Z 2025/04/28 00:29:00 [DEBUG] Waiting for state to become: [IDLE]
+2025-04-28T00:45:17.1471365Z 2025/04/28 00:32:01 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1471980Z 2025/04/28 00:33:01 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1472588Z 2025/04/28 00:33:11 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1473371Z 2025/04/28 00:34:11 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1474034Z 2025/04/28 00:34:21 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1474709Z 2025/04/28 00:35:21 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1475377Z 2025/04/28 00:35:31 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1475978Z 2025/04/28 00:36:31 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1476594Z 2025/04/28 00:36:41 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1477196Z 2025/04/28 00:37:42 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1478061Z 2025/04/28 00:37:52 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1478674Z === PAUSE TestAccStreamDSStreamConnection_cluster
+2025-04-28T00:45:17.1479283Z === RUN   TestAccStreamDSStreamConnection_sample
+2025-04-28T00:45:17.1479900Z === PAUSE TestAccStreamDSStreamConnection_sample
+2025-04-28T00:45:17.1480488Z === RUN   TestAccStreamDSStreamConnections_basic
+2025-04-28T00:45:17.1481069Z === PAUSE TestAccStreamDSStreamConnections_basic
+2025-04-28T00:45:17.1481699Z === RUN   TestAccStreamDSStreamConnections_withPageConfig
+2025-04-28T00:45:17.1482389Z === PAUSE TestAccStreamDSStreamConnections_withPageConfig
+2025-04-28T00:45:17.1483081Z === RUN   TestMigStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1484036Z === PAUSE TestMigStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1484686Z === RUN   TestMigStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1485297Z === PAUSE TestMigStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1485962Z === RUN   TestAccStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1486647Z === PAUSE TestAccStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1487341Z === RUN   TestAccStreamRSStreamConnection_kafkaNetworkingVPC
+2025-04-28T00:45:17.1491934Z 2025-04-28T00:39:42.023Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_connection diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbca4d42a434331cb0dc/streams/test-acc-tf-4696588081862581772/connections/test-acc-tf-4696588081862581772 DELETE: HTTP 500 Internal Server Error (Error code: \"UNEXPECTED_ERROR\") Detail: Unexpected error. Reason: Internal Server Error. Params: [], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error deleting resource" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=8275d662-4596-71ed-f228-4dde3a2969c3
+2025-04-28T00:45:17.1496946Z 2025-04-28T00:41:36.288Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources:
+2025-04-28T00:45:17.1497820Z   error=
+2025-04-28T00:45:17.1498167Z   | exit status 1
+2025-04-28T00:45:17.1498513Z   | 
+2025-04-28T00:45:17.1498898Z   | Error: error deleting resource
+2025-04-28T00:45:17.1499315Z   | 
+2025-04-28T00:45:17.1500615Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbca4d42a434331cb0dc/streams/test-acc-tf-4696588081862581772/connections/test-acc-tf-4696588081862581772
+2025-04-28T00:45:17.1502111Z   | DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR")
+2025-04-28T00:45:17.1503004Z   | Detail: Unexpected error. Reason: Internal Server Error. Params: [],
+2025-04-28T00:45:17.1504023Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1505955Z    test_working_directory=/tmp/plugintest2673655800 test_step_number=3 test_name=TestAccStreamRSStreamConnection_kafkaNetworkingVPC test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1508279Z     resource_stream_connection_test.go:86: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.1509193Z         
+2025-04-28T00:45:17.1509683Z         Error: error deleting resource
+2025-04-28T00:45:17.1510141Z         
+2025-04-28T00:45:17.1511849Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbca4d42a434331cb0dc/streams/test-acc-tf-4696588081862581772/connections/test-acc-tf-4696588081862581772
+2025-04-28T00:45:17.1513749Z         DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR")
+2025-04-28T00:45:17.1514837Z         Detail: Unexpected error. Reason: Internal Server Error. Params: [],
+2025-04-28T00:45:17.1515578Z         BadRequestDetail: 
+2025-04-28T00:45:17.1516221Z --- FAIL: TestAccStreamRSStreamConnection_kafkaNetworkingVPC (163.99s)
+2025-04-28T00:45:17.1517008Z === RUN   TestAccStreamRSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1517647Z === PAUSE TestAccStreamRSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1518463Z === RUN   TestAccStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1519076Z === PAUSE TestAccStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1519681Z === RUN   TestAccStreamRSStreamConnection_sample
+2025-04-28T00:45:17.1520280Z === PAUSE TestAccStreamRSStreamConnection_sample
+2025-04-28T00:45:17.1520876Z === RUN   TestAccStreamStreamConnection_https
+2025-04-28T00:45:17.1521443Z === PAUSE TestAccStreamStreamConnection_https
+2025-04-28T00:45:17.1522084Z === RUN   TestAccStreamPrivatelinkEndpoint_streamConnection
+2025-04-28T00:45:17.1522830Z     resource_stream_connection_test.go:247: 
+2025-04-28T00:45:17.1523752Z --- SKIP: TestAccStreamPrivatelinkEndpoint_streamConnection (0.00s)
+2025-04-28T00:45:17.1524512Z === RUN   TestAccStreamRSStreamConnection_AWSLambda
+2025-04-28T00:45:17.1525120Z === PAUSE TestAccStreamRSStreamConnection_AWSLambda
+2025-04-28T00:45:17.1525787Z === CONT  TestAccStreamDSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1526433Z === CONT  TestMigStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1527049Z === CONT  TestAccStreamRSStreamConnection_AWSLambda
+2025-04-28T00:45:17.1527653Z === CONT  TestAccStreamStreamConnection_https
+2025-04-28T00:45:17.1528239Z === CONT  TestAccStreamDSStreamConnections_basic
+2025-04-28T00:45:17.1528837Z === CONT  TestAccStreamDSStreamConnection_sample
+2025-04-28T00:45:17.1529483Z === CONT  TestMigStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1530103Z === CONT  TestAccStreamRSStreamConnection_sample
+2025-04-28T00:45:17.1530741Z === CONT  TestAccStreamDSStreamConnections_withPageConfig
+2025-04-28T00:45:17.1531390Z === CONT  TestAccStreamDSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1531991Z === CONT  TestAccStreamRSStreamConnection_cluster
+2025-04-28T00:45:17.1532602Z === CONT  TestAccStreamRSStreamConnection_kafkaSSL
+2025-04-28T00:45:17.1533357Z === CONT  TestAccStreamDSStreamConnection_cluster
+2025-04-28T00:45:17.1534001Z === CONT  TestAccStreamRSStreamConnection_kafkaPlaintext
+2025-04-28T00:45:17.1534707Z --- PASS: TestAccStreamDSStreamConnection_cluster (597.86s)
+2025-04-28T00:45:17.1535427Z --- PASS: TestAccStreamDSStreamConnection_kafkaSSL (5.85s)
+2025-04-28T00:45:17.1536186Z --- PASS: TestAccStreamDSStreamConnections_withPageConfig (5.87s)
+2025-04-28T00:45:17.1536933Z --- PASS: TestAccStreamRSStreamConnection_cluster (5.90s)
+2025-04-28T00:45:17.1537620Z --- PASS: TestAccStreamDSStreamConnection_sample (5.98s)
+2025-04-28T00:45:17.1538295Z --- PASS: TestAccStreamDSStreamConnections_basic (6.08s)
+2025-04-28T00:45:17.1539018Z --- PASS: TestAccStreamDSStreamConnection_kafkaPlaintext (8.25s)
+2025-04-28T00:45:17.1539759Z --- PASS: TestAccStreamRSStreamConnection_sample (6.21s)
+2025-04-28T00:45:17.1540631Z --- PASS: TestAccStreamRSStreamConnection_AWSLambda (6.29s)
+2025-04-28T00:45:17.1541386Z --- PASS: TestAccStreamRSStreamConnection_kafkaSSL (6.39s)
+2025-04-28T00:45:17.1542157Z --- PASS: TestAccStreamRSStreamConnection_kafkaPlaintext (7.26s)
+2025-04-28T00:45:17.1542930Z --- PASS: TestMigStreamRSStreamConnection_cluster (9.05s)
+2025-04-28T00:45:17.1543883Z --- PASS: TestMigStreamRSStreamConnection_kafkaPlaintext (9.20s)
+2025-04-28T00:45:17.1544605Z --- PASS: TestAccStreamStreamConnection_https (9.49s)
+2025-04-28T00:45:17.1545131Z FAIL
+2025-04-28T00:45:17.1545836Z Deleting execution cluster: test-acc-tf-c-884812972583994602, project id: 680ecbca4d42a434331cb0dc
+2025-04-28T00:45:17.1546932Z Deleting execution project: test-acc-tf-p-3412676503411277156, id: 680ecbca4d42a434331cb0dc
+2025-04-28T00:45:17.1550463Z Project deletion failed: 680ecbca4d42a434331cb0dc, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbca4d42a434331cb0dc DELETE: HTTP 409 Conflict (Error code: "CANNOT_CLOSE_GROUP_ACTIVE_STREAMS_RESOURCE") Detail: Cannot close group while there are Stream Processing instances or private networking connections; please terminate all Stream Processing instances private networking resources (e.g. Private Link, VPC Peering etc). Reason: Conflict. Params: [], BadRequestDetail: 
+2025-04-28T00:45:17.1554288Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/streamconnection	979.118s
+2025-04-28T00:45:17.1555220Z === RUN   TestAccStreamDSStreamInstance_basic
+2025-04-28T00:45:17.1556316Z     data_source_stream_instance_test.go:14: Creating execution project: test-acc-tf-p-4701147131143466089
+2025-04-28T00:45:17.1557216Z === PAUSE TestAccStreamDSStreamInstance_basic
+2025-04-28T00:45:17.1557802Z === RUN   TestAccStreamDSStreamInstances_basic
+2025-04-28T00:45:17.1558424Z === PAUSE TestAccStreamDSStreamInstances_basic
+2025-04-28T00:45:17.1559033Z === RUN   TestAccStreamDSStreamInstances_withPageConfig
+2025-04-28T00:45:17.1559694Z === PAUSE TestAccStreamDSStreamInstances_withPageConfig
+2025-04-28T00:45:17.1560328Z === RUN   TestMigStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1560900Z === PAUSE TestMigStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1561462Z === RUN   TestAccStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1562024Z === PAUSE TestAccStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1562642Z === RUN   TestAccStreamRSStreamInstance_withStreamConfig
+2025-04-28T00:45:17.1563567Z === PAUSE TestAccStreamRSStreamInstance_withStreamConfig
+2025-04-28T00:45:17.1564210Z === CONT  TestAccStreamDSStreamInstance_basic
+2025-04-28T00:45:17.1564782Z === CONT  TestMigStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1565392Z === CONT  TestAccStreamDSStreamInstances_withPageConfig
+2025-04-28T00:45:17.1566052Z === CONT  TestAccStreamRSStreamInstance_withStreamConfig
+2025-04-28T00:45:17.1566677Z === CONT  TestAccStreamDSStreamInstances_basic
+2025-04-28T00:45:17.1567243Z === CONT  TestAccStreamRSStreamInstance_basic
+2025-04-28T00:45:17.1567917Z --- PASS: TestAccStreamDSStreamInstances_withPageConfig (3.14s)
+2025-04-28T00:45:17.1568653Z --- PASS: TestAccStreamDSStreamInstances_basic (3.19s)
+2025-04-28T00:45:17.1569300Z --- PASS: TestAccStreamDSStreamInstance_basic (5.59s)
+2025-04-28T00:45:17.1569942Z --- PASS: TestAccStreamRSStreamInstance_basic (3.59s)
+2025-04-28T00:45:17.1570633Z --- PASS: TestAccStreamRSStreamInstance_withStreamConfig (3.63s)
+2025-04-28T00:45:17.1571344Z --- PASS: TestMigStreamRSStreamInstance_basic (7.18s)
+2025-04-28T00:45:17.1571854Z PASS
+2025-04-28T00:45:17.1572496Z Deleting execution project: test-acc-tf-p-4701147131143466089, id: 680ecbcb4d42a434331cb19f
+2025-04-28T00:45:17.1573803Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/streaminstance	9.834s
+2025-04-28T00:45:17.1574702Z === RUN   TestMigStreamProcessor_basic
+2025-04-28T00:45:17.1575804Z     resource_migration_test.go:11: Creating execution project: test-acc-tf-p-5438847005253412224
+2025-04-28T00:45:17.1576634Z === PAUSE TestMigStreamProcessor_basic
+2025-04-28T00:45:17.1577173Z === RUN   TestAccStreamProcessor_basic
+2025-04-28T00:45:17.1577900Z === PAUSE TestAccStreamProcessor_basic
+2025-04-28T00:45:17.1578507Z === RUN   TestAccStreamProcessor_JSONWhiteSpaceFormat
+2025-04-28T00:45:17.1579148Z === PAUSE TestAccStreamProcessor_JSONWhiteSpaceFormat
+2025-04-28T00:45:17.1579763Z === RUN   TestAccStreamProcessor_withOptions
+2025-04-28T00:45:17.1580707Z     resource_test.go:95: Creating execution cluster: test-acc-tf-c-5775702838467711096
+2025-04-28T00:45:17.1581527Z 2025/04/28 00:29:03 [DEBUG] Waiting for state to become: [IDLE]
+2025-04-28T00:45:17.1582175Z 2025/04/28 00:32:03 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1582787Z 2025/04/28 00:33:03 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1583557Z 2025/04/28 00:33:13 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1584159Z 2025/04/28 00:34:13 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1584755Z 2025/04/28 00:34:23 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1585345Z 2025/04/28 00:35:23 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1585960Z 2025/04/28 00:35:33 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1586572Z 2025/04/28 00:36:34 [TRACE] Waiting 10s before next try
+2025-04-28T00:45:17.1602947Z 2025/04/28 00:36:44 [TRACE] Waiting 1m0s before next try
+2025-04-28T00:45:17.1603995Z === PAUSE TestAccStreamProcessor_withOptions
+2025-04-28T00:45:17.1604636Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates
+2025-04-28T00:45:17.1605431Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/CreatedToCreated
+2025-04-28T00:45:17.1606799Z     resource_test.go:171: Testing: Verifies a processor in CREATED state can be updated while remaining in CREATED state
+2025-04-28T00:45:17.1607932Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/CreatedToCreated
+2025-04-28T00:45:17.1608852Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/CreatedToStarted
+2025-04-28T00:45:17.1610051Z     resource_test.go:171: Testing: Verifies a processor can transition from CREATED to STARTED state
+2025-04-28T00:45:17.1611092Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/CreatedToStarted
+2025-04-28T00:45:17.1611990Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StartedToStopped
+2025-04-28T00:45:17.1613331Z     resource_test.go:171: Testing: Verifies a processor can transition from STARTED to STOPPED state
+2025-04-28T00:45:17.1614377Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/StartedToStopped
+2025-04-28T00:45:17.1615283Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StartedToStarted
+2025-04-28T00:45:17.1616621Z     resource_test.go:171: Testing: Verifies a processor in STARTED state can be updated while remaining in STARTED state
+2025-04-28T00:45:17.1617744Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/StartedToStarted
+2025-04-28T00:45:17.1618656Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-28T00:45:17.1619829Z     resource_test.go:171: Testing: Verifies a processor can transition from STOPPED to STARTED state
+2025-04-28T00:45:17.1620833Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-28T00:45:17.1621722Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStopped
+2025-04-28T00:45:17.1623024Z     resource_test.go:171: Testing: Verifies a processor in STOPPED state can be updated while remaining in STOPPED state
+2025-04-28T00:45:17.1624325Z === PAUSE TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStopped
+2025-04-28T00:45:17.1625222Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/CreatedToCreated
+2025-04-28T00:45:17.1626117Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/StartedToStarted
+2025-04-28T00:45:17.1627006Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/StartedToStopped
+2025-04-28T00:45:17.1627881Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/CreatedToStarted
+2025-04-28T00:45:17.1628775Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStopped
+2025-04-28T00:45:17.1629840Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-28T00:45:17.1630715Z --- PASS: TestAccStreamProcessor_StateTransitionsUpdates (0.00s)
+2025-04-28T00:45:17.1631763Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/CreatedToCreated (6.80s)
+2025-04-28T00:45:17.1632913Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/CreatedToStarted (8.92s)
+2025-04-28T00:45:17.1634291Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/StartedToStopped (9.61s)
+2025-04-28T00:45:17.1635452Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStopped (11.09s)
+2025-04-28T00:45:17.1636619Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/StartedToStarted (12.84s)
+2025-04-28T00:45:17.1637773Z     --- PASS: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted (14.14s)
+2025-04-28T00:45:17.1638597Z === RUN   TestAccStreamProcessor_EmptyStateUpdates
+2025-04-28T00:45:17.1639331Z === RUN   TestAccStreamProcessor_EmptyStateUpdates/CreatedToEmptyState
+2025-04-28T00:45:17.1640878Z     resource_test.go:209: Testing: Verifies that a processor in CREATED state can be updated while remaining in a derived CREATED state from empty state
+2025-04-28T00:45:17.1642127Z === PAUSE TestAccStreamProcessor_EmptyStateUpdates/CreatedToEmptyState
+2025-04-28T00:45:17.1643325Z === RUN   TestAccStreamProcessor_EmptyStateUpdates/StartedToEmptyState
+2025-04-28T00:45:17.1644870Z     resource_test.go:209: Testing: Verifies that a processor in STARTED state can be updated while remaining in a derived STARTED state from empty state
+2025-04-28T00:45:17.1646120Z === PAUSE TestAccStreamProcessor_EmptyStateUpdates/StartedToEmptyState
+2025-04-28T00:45:17.1646965Z === RUN   TestAccStreamProcessor_EmptyStateUpdates/StoppedToEmptyState
+2025-04-28T00:45:17.1648506Z     resource_test.go:209: Testing: Verifies that a processor in STOPPED state can be updated while remaining in a derived STOPPED state from empty state
+2025-04-28T00:45:17.1649763Z === PAUSE TestAccStreamProcessor_EmptyStateUpdates/StoppedToEmptyState
+2025-04-28T00:45:17.1650634Z === CONT  TestAccStreamProcessor_EmptyStateUpdates/CreatedToEmptyState
+2025-04-28T00:45:17.1651474Z === CONT  TestAccStreamProcessor_EmptyStateUpdates/StoppedToEmptyState
+2025-04-28T00:45:17.1652335Z === CONT  TestAccStreamProcessor_EmptyStateUpdates/StartedToEmptyState
+2025-04-28T00:45:17.1653133Z --- PASS: TestAccStreamProcessor_EmptyStateUpdates (0.00s)
+2025-04-28T00:45:17.1654312Z     --- PASS: TestAccStreamProcessor_EmptyStateUpdates/CreatedToEmptyState (6.17s)
+2025-04-28T00:45:17.1655460Z     --- PASS: TestAccStreamProcessor_EmptyStateUpdates/StoppedToEmptyState (10.49s)
+2025-04-28T00:45:17.1656599Z     --- PASS: TestAccStreamProcessor_EmptyStateUpdates/StartedToEmptyState (12.01s)
+2025-04-28T00:45:17.1657469Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates
+2025-04-28T00:45:17.1658309Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped
+2025-04-28T00:45:17.1659577Z     resource_test.go:250: Testing: Verifies a processor cannot transition from CREATED to STOPPED state
+2025-04-28T00:45:17.1660663Z === PAUSE TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped
+2025-04-28T00:45:17.1661646Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-28T00:45:17.1662910Z     resource_test.go:250: Testing: Verifies a processor cannot transition from STOPPED to CREATED state
+2025-04-28T00:45:17.1664146Z === PAUSE TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-28T00:45:17.1665132Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-28T00:45:17.1666378Z     resource_test.go:250: Testing: Verifies a processor cannot transition from STARTED to CREATED state
+2025-04-28T00:45:17.1667448Z === PAUSE TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-28T00:45:17.1668436Z === CONT  TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped
+2025-04-28T00:45:17.1669579Z === CONT  TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-28T00:45:17.1670586Z === CONT  TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-28T00:45:17.1677401Z 2025-04-28T00:38:13.039Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_processor diagnostic_severity=ERROR diagnostic_summary="error creating resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (processor-stopped-to-created) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [processor-stopped-to-created failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " tf_req_id=165a1544-8d53-cae6-dbcd-59096761517d tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8
+2025-04-28T00:45:17.1685096Z 2025-04-28T00:38:13.043Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest2623988651 test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_step_number=1
+2025-04-28T00:45:17.1687384Z   error=
+2025-04-28T00:45:17.1687797Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.1688256Z   | 
+2025-04-28T00:45:17.1688639Z   | Error: error creating resource
+2025-04-28T00:45:17.1689059Z   | 
+2025-04-28T00:45:17.1689516Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1690441Z   |   on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1691391Z   |   28: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1691950Z   | 
+2025-04-28T00:45:17.1693358Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/processor
+2025-04-28T00:45:17.1694844Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1695832Z   | Detail: Streams Processor with this name (processor-stopped-to-created) had a
+2025-04-28T00:45:17.1696810Z   | problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1697763Z   | global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1698711Z   | [processor-stopped-to-created failed to acquire resources for stream
+2025-04-28T00:45:17.1699653Z   | processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1700337Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1700714Z   
+2025-04-28T00:45:17.1701402Z     resource_test.go:251: Step 1/3 error: Error running apply: exit status 1
+2025-04-28T00:45:17.1702036Z         
+2025-04-28T00:45:17.1702524Z         Error: error creating resource
+2025-04-28T00:45:17.1702982Z         
+2025-04-28T00:45:17.1703750Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1705019Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1706206Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1706796Z         
+2025-04-28T00:45:17.1708445Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/processor
+2025-04-28T00:45:17.1710141Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1711334Z         Detail: Streams Processor with this name (processor-stopped-to-created) had a
+2025-04-28T00:45:17.1712715Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1714327Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1715477Z         [processor-stopped-to-created failed to acquire resources for stream
+2025-04-28T00:45:17.1716614Z         processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1717356Z         BadRequestDetail: 
+2025-04-28T00:45:17.1722917Z 2025-04-28T00:38:13.250Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_req_id=16205fcd-c6a7-e590-827e-c4579c56690d tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_stream_connection diagnostic_summary="error deleting resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/connections/sample_stream_solar DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-28T00:45:17.1730480Z 2025-04-28T00:38:13.261Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_working_directory=/tmp/plugintest2623988651 test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1732660Z   error=
+2025-04-28T00:45:17.1733008Z   | exit status 1
+2025-04-28T00:45:17.1733509Z   | 
+2025-04-28T00:45:17.1733902Z   | Error: error deleting resource
+2025-04-28T00:45:17.1734320Z   | 
+2025-04-28T00:45:17.1735733Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/connections/sample_stream_solar
+2025-04-28T00:45:17.1737171Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1737953Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1738893Z   | name test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED has active
+2025-04-28T00:45:17.1739776Z   | processors, and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1740715Z   | [test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED], BadRequestDetail: 
+2025-04-28T00:45:17.1741452Z    test_step_number=1
+2025-04-28T00:45:17.1742354Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.1743350Z         
+2025-04-28T00:45:17.1743853Z         Error: error deleting resource
+2025-04-28T00:45:17.1744322Z         
+2025-04-28T00:45:17.1746176Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED/connections/sample_stream_solar
+2025-04-28T00:45:17.1747746Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1748743Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1749872Z         name test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED has active
+2025-04-28T00:45:17.1750941Z         processors, and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1752067Z         [test-acc-tf-5704481669552244857-STARTED-STOPPED-CREATED], BadRequestDetail: 
+2025-04-28T00:45:17.1758885Z 2025-04-28T00:38:13.406Z [ERROR] sdk.proto: Response contains error diagnostic: tf_resource_type=mongodbatlas_stream_processor tf_req_id=5779d68b-f26f-ee29-a42a-2f0fb43cbe1b tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_rpc=ApplyResourceChange diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (processor-created-to-stopped) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [processor-created-to-stopped failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error creating resource" tf_proto_version=6.8
+2025-04-28T00:45:17.1766649Z 2025-04-28T00:38:13.411Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_working_directory=/tmp/plugintest3718871404 test_step_number=1
+2025-04-28T00:45:17.1768699Z   error=
+2025-04-28T00:45:17.1769122Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.1769564Z   | 
+2025-04-28T00:45:17.1769951Z   | Error: error creating resource
+2025-04-28T00:45:17.1770384Z   | 
+2025-04-28T00:45:17.1770846Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1771782Z   |   on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1772922Z   |   28: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1773639Z   | 
+2025-04-28T00:45:17.1774828Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/processor
+2025-04-28T00:45:17.1776238Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1777208Z   | Detail: Streams Processor with this name (processor-created-to-stopped) had a
+2025-04-28T00:45:17.1778198Z   | problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1779149Z   | global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1780112Z   | [processor-created-to-stopped failed to acquire resources for stream
+2025-04-28T00:45:17.1781032Z   | processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1781702Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1782088Z   
+2025-04-28T00:45:17.1782694Z === NAME  TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped
+2025-04-28T00:45:17.1783930Z     resource_test.go:251: Step 1/2 error: Error running apply: exit status 1
+2025-04-28T00:45:17.1784561Z         
+2025-04-28T00:45:17.1785058Z         Error: error creating resource
+2025-04-28T00:45:17.1785525Z         
+2025-04-28T00:45:17.1786152Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1787407Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1788546Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1789121Z         
+2025-04-28T00:45:17.1790681Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/processor
+2025-04-28T00:45:17.1792279Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1793633Z         Detail: Streams Processor with this name (processor-created-to-stopped) had a
+2025-04-28T00:45:17.1794842Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1796017Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1797145Z         [processor-created-to-stopped failed to acquire resources for stream
+2025-04-28T00:45:17.1798239Z         processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1798982Z         BadRequestDetail: 
+2025-04-28T00:45:17.1804878Z 2025-04-28T00:38:13.613Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/connections/sample_stream_solar DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-7794305454962942696--CREATED-STOPPED has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-7794305454962942696--CREATED-STOPPED], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error deleting resource" tf_rpc=ApplyResourceChange tf_req_id=bd2acf52-42c0-4fe6-19ba-fc03d47be790 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_stream_connection
+2025-04-28T00:45:17.1811981Z 2025-04-28T00:38:13.618Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_working_directory=/tmp/plugintest3718871404 test_step_number=1 test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1814438Z   error=
+2025-04-28T00:45:17.1814790Z   | exit status 1
+2025-04-28T00:45:17.1815134Z   | 
+2025-04-28T00:45:17.1815707Z   | Error: error deleting resource
+2025-04-28T00:45:17.1816126Z   | 
+2025-04-28T00:45:17.1817503Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/connections/sample_stream_solar
+2025-04-28T00:45:17.1818884Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1819663Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1820654Z   | name test-acc-tf-7794305454962942696--CREATED-STOPPED has active processors,
+2025-04-28T00:45:17.1821484Z   | and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1822299Z   | [test-acc-tf-7794305454962942696--CREATED-STOPPED], BadRequestDetail: 
+2025-04-28T00:45:17.1822946Z   
+2025-04-28T00:45:17.1823980Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.1824740Z         
+2025-04-28T00:45:17.1825281Z         Error: error deleting resource
+2025-04-28T00:45:17.1825760Z         
+2025-04-28T00:45:17.1827514Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7794305454962942696--CREATED-STOPPED/connections/sample_stream_solar
+2025-04-28T00:45:17.1829039Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1830018Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1831193Z         name test-acc-tf-7794305454962942696--CREATED-STOPPED has active processors,
+2025-04-28T00:45:17.1832167Z         and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1833151Z         [test-acc-tf-7794305454962942696--CREATED-STOPPED], BadRequestDetail: 
+2025-04-28T00:45:17.1839739Z 2025-04-28T00:38:13.882Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error creating resource" tf_resource_type=mongodbatlas_stream_processor tf_req_id=75b8f8f6-bd24-1ef9-27e9-f8c6b4d4e499 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (processor-started-to-created) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [processor-started-to-created failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-28T00:45:17.1846974Z 2025-04-28T00:38:13.888Z [ERROR] sdk.helper_resource: Unexpected error: test_working_directory=/tmp/plugintest3560282341 test_step_number=1 test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-28T00:45:17.1848560Z   error=
+2025-04-28T00:45:17.1848975Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.1849425Z   | 
+2025-04-28T00:45:17.1849810Z   | Error: error creating resource
+2025-04-28T00:45:17.1850233Z   | 
+2025-04-28T00:45:17.1850677Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1851595Z   |   on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1852545Z   |   28: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1853104Z   | 
+2025-04-28T00:45:17.1854479Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/processor
+2025-04-28T00:45:17.1855890Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1856854Z   | Detail: Streams Processor with this name (processor-started-to-created) had a
+2025-04-28T00:45:17.1857850Z   | problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1858993Z   | global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1859946Z   | [processor-started-to-created failed to acquire resources for stream
+2025-04-28T00:45:17.1860866Z   | processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1861548Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1862388Z    test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1863577Z === NAME  TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-28T00:45:17.1864655Z     resource_test.go:251: Step 1/2 error: Error running apply: exit status 1
+2025-04-28T00:45:17.1865300Z         
+2025-04-28T00:45:17.1865798Z         Error: error creating resource
+2025-04-28T00:45:17.1866267Z         
+2025-04-28T00:45:17.1866906Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1868160Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1869342Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1869907Z         
+2025-04-28T00:45:17.1871458Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/processor
+2025-04-28T00:45:17.1873061Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1874526Z         Detail: Streams Processor with this name (processor-started-to-created) had a
+2025-04-28T00:45:17.1875722Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1876884Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1878020Z         [processor-started-to-created failed to acquire resources for stream
+2025-04-28T00:45:17.1879118Z         processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1879879Z         BadRequestDetail: 
+2025-04-28T00:45:17.1885658Z 2025-04-28T00:38:14.093Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error deleting resource" tf_resource_type=mongodbatlas_stream_connection tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_req_id=8d02e003-4054-9f7c-4fb7-d3ac8c92db61 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/connections/sample_stream_solar DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-7017334375181037402--STARTED-CREATED has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-7017334375181037402--STARTED-CREATED], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-28T00:45:17.1891625Z 2025-04-28T00:38:14.098Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_working_directory=/tmp/plugintest3560282341 test_step_number=1
+2025-04-28T00:45:17.1892846Z   error=
+2025-04-28T00:45:17.1893357Z   | exit status 1
+2025-04-28T00:45:17.1893902Z   | 
+2025-04-28T00:45:17.1894190Z   | Error: error deleting resource
+2025-04-28T00:45:17.1894479Z   | 
+2025-04-28T00:45:17.1895364Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/connections/sample_stream_solar
+2025-04-28T00:45:17.1896273Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1896771Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1897508Z   | name test-acc-tf-7017334375181037402--STARTED-CREATED has active processors,
+2025-04-28T00:45:17.1898046Z   | and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1898563Z   | [test-acc-tf-7017334375181037402--STARTED-CREATED], BadRequestDetail: 
+2025-04-28T00:45:17.1899912Z    test_name=TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1901085Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.1901587Z         
+2025-04-28T00:45:17.1901896Z         Error: error deleting resource
+2025-04-28T00:45:17.1902229Z         
+2025-04-28T00:45:17.1903478Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7017334375181037402--STARTED-CREATED/connections/sample_stream_solar
+2025-04-28T00:45:17.1904428Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1905046Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1905789Z         name test-acc-tf-7017334375181037402--STARTED-CREATED has active processors,
+2025-04-28T00:45:17.1906407Z         and cannot be changed. Reason: Forbidden. Params:
+2025-04-28T00:45:17.1907038Z         [test-acc-tf-7017334375181037402--STARTED-CREATED], BadRequestDetail: 
+2025-04-28T00:45:17.1907613Z --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates (0.00s)
+2025-04-28T00:45:17.1908346Z     --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated (2.82s)
+2025-04-28T00:45:17.1909142Z     --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates/CreatedToStopped (3.17s)
+2025-04-28T00:45:17.1909930Z     --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated (3.65s)
+2025-04-28T00:45:17.1910466Z === RUN   TestAccStreamProcessor_clusterType
+2025-04-28T00:45:17.1910808Z === PAUSE TestAccStreamProcessor_clusterType
+2025-04-28T00:45:17.1911150Z === RUN   TestAccStreamProcessor_createErrors
+2025-04-28T00:45:17.1911475Z === PAUSE TestAccStreamProcessor_createErrors
+2025-04-28T00:45:17.1911795Z === CONT  TestMigStreamProcessor_basic
+2025-04-28T00:45:17.1912106Z === CONT  TestAccStreamProcessor_withOptions
+2025-04-28T00:45:17.1912424Z === CONT  TestAccStreamProcessor_createErrors
+2025-04-28T00:45:17.1912743Z === CONT  TestAccStreamProcessor_clusterType
+2025-04-28T00:45:17.1913096Z === CONT  TestAccStreamProcessor_JSONWhiteSpaceFormat
+2025-04-28T00:45:17.1913569Z === CONT  TestAccStreamProcessor_basic
+2025-04-28T00:45:17.1914975Z 2025-04-28T00:38:14.425Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=3dcf3354-8c4b-6953-d327-3cd679c0f6af diagnostic_severity=ERROR tf_rpc=ValidateResourceConfig tf_resource_type=mongodbatlas_stream_processor tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 diagnostic_attribute="AttributeName(\"pipeline\")"
+2025-04-28T00:45:17.1916421Z   diagnostic_detail=
+2025-04-28T00:45:17.1916818Z   | A string value was provided that is not valid JSON string format (RFC 7159).
+2025-04-28T00:45:17.1917183Z   | 
+2025-04-28T00:45:17.1917395Z   | Path: pipeline
+2025-04-28T00:45:17.1917877Z   | Given Value: [{"$source":{"connectionName": "sample_stream_solar"},{"$emit":{"connectionName":"__testLog"}}]
+2025-04-28T00:45:17.1918424Z    diagnostic_summary="Invalid JSON String Value"
+2025-04-28T00:45:17.1920030Z 2025-04-28T00:38:15.205Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=fedadcd7-0290-5747-e4ad-3a1ae2dca1b5 tf_resource_type=mongodbatlas_stream_processor diagnostic_summary="When creating a stream processor, the only valid states are CREATED and STARTED" diagnostic_detail="" diagnostic_severity=ERROR tf_rpc=ApplyResourceChange
+2025-04-28T00:45:17.1921579Z --- PASS: TestAccStreamProcessor_createErrors (1.58s)
+2025-04-28T00:45:17.1925419Z 2025-04-28T00:38:17.920Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_req_id=48f31328-fcdd-22e1-9271-4b0edaca57a5 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_resource_type=mongodbatlas_stream_processor diagnostic_severity=ERROR diagnostic_summary="error creating resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (new-processor-json-unchanged) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [new-processor-json-unchanged failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " tf_proto_version=6.8
+2025-04-28T00:45:17.1929674Z 2025-04-28T00:38:17.924Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_working_directory=/tmp/plugintest2145754266 test_step_number=1 test_name=TestAccStreamProcessor_JSONWhiteSpaceFormat
+2025-04-28T00:45:17.1930724Z   error=
+2025-04-28T00:45:17.1930972Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.1931229Z   | 
+2025-04-28T00:45:17.1931457Z   | Error: error creating resource
+2025-04-28T00:45:17.1931703Z   | 
+2025-04-28T00:45:17.1931966Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1932502Z   |   on terraform_plugin_test.tf line 32, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1933049Z   |   32: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1933522Z   | 
+2025-04-28T00:45:17.1934110Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/processor
+2025-04-28T00:45:17.1934844Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1935400Z   | Detail: Streams Processor with this name (new-processor-json-unchanged) had a
+2025-04-28T00:45:17.1935963Z   | problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1936518Z   | global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1937057Z   | [new-processor-json-unchanged failed to acquire resources for stream
+2025-04-28T00:45:17.1937577Z   | processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1937972Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1938191Z   
+2025-04-28T00:45:17.1938458Z === NAME  TestAccStreamProcessor_JSONWhiteSpaceFormat
+2025-04-28T00:45:17.1938975Z     resource_test.go:81: Step 1/1 error: Error running apply: exit status 1
+2025-04-28T00:45:17.1939346Z         
+2025-04-28T00:45:17.1939633Z         Error: error creating resource
+2025-04-28T00:45:17.1939904Z         
+2025-04-28T00:45:17.1940389Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1941122Z           on terraform_plugin_test.tf line 32, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1941780Z           32: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1942132Z         
+2025-04-28T00:45:17.1942880Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/processor
+2025-04-28T00:45:17.1943820Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1944466Z         Detail: Streams Processor with this name (new-processor-json-unchanged) had a
+2025-04-28T00:45:17.1945130Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-28T00:45:17.1945770Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-28T00:45:17.1946404Z         [new-processor-json-unchanged failed to acquire resources for stream
+2025-04-28T00:45:17.1947019Z         processor validation: global resource manager returned no resources],
+2025-04-28T00:45:17.1947443Z         BadRequestDetail: 
+2025-04-28T00:45:17.1950315Z 2025-04-28T00:38:18.133Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=ad926118-ffdd-487a-2ef7-524db2ddd126 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_stream_connection diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/connections/sample_stream_solar DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-8833101340339081564 has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-8833101340339081564], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error deleting resource" tf_rpc=ApplyResourceChange
+2025-04-28T00:45:17.1954205Z 2025-04-28T00:38:18.137Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_step_number=1 test_name=TestAccStreamProcessor_JSONWhiteSpaceFormat test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_working_directory=/tmp/plugintest2145754266
+2025-04-28T00:45:17.1955398Z   error=
+2025-04-28T00:45:17.1955603Z   | exit status 1
+2025-04-28T00:45:17.1955806Z   | 
+2025-04-28T00:45:17.1956033Z   | Error: error deleting resource
+2025-04-28T00:45:17.1956279Z   | 
+2025-04-28T00:45:17.1956958Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/connections/sample_stream_solar
+2025-04-28T00:45:17.1957655Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1958096Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1958631Z   | name test-acc-tf-8833101340339081564 has active processors, and cannot be
+2025-04-28T00:45:17.1959152Z   | changed. Reason: Forbidden. Params: [test-acc-tf-8833101340339081564],
+2025-04-28T00:45:17.1959538Z   | BadRequestDetail: 
+2025-04-28T00:45:17.1959751Z   
+2025-04-28T00:45:17.1960231Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.1960674Z         
+2025-04-28T00:45:17.1960947Z         Error: error deleting resource
+2025-04-28T00:45:17.1961221Z         
+2025-04-28T00:45:17.1962085Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-8833101340339081564/connections/sample_stream_solar
+2025-04-28T00:45:17.1962844Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1963486Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.1964112Z         name test-acc-tf-8833101340339081564 has active processors, and cannot be
+2025-04-28T00:45:17.1964854Z         changed. Reason: Forbidden. Params: [test-acc-tf-8833101340339081564],
+2025-04-28T00:45:17.1965271Z         BadRequestDetail: 
+2025-04-28T00:45:17.1965604Z --- FAIL: TestAccStreamProcessor_JSONWhiteSpaceFormat (4.04s)
+2025-04-28T00:45:17.1969014Z 2025-04-28T00:38:18.250Z [ERROR] sdk.proto: Response contains error diagnostic: tf_resource_type=mongodbatlas_stream_processor diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (new-processor) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [new-processor failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error creating resource" tf_rpc=ApplyResourceChange tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_req_id=ffb9c57b-d12a-918b-ad2f-6a136887d7d4
+2025-04-28T00:45:17.1972265Z 2025-04-28T00:38:18.255Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1
+2025-04-28T00:45:17.1972777Z   error=
+2025-04-28T00:45:17.1973013Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.1973529Z   | 
+2025-04-28T00:45:17.1973772Z   | Error: error creating resource
+2025-04-28T00:45:17.1974031Z   | 
+2025-04-28T00:45:17.1974302Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1974844Z   |   on terraform_plugin_test.tf line 37, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1975386Z   |   37: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1975702Z   | 
+2025-04-28T00:45:17.1976288Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/processor
+2025-04-28T00:45:17.1977017Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1977584Z   | Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.1978139Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.1978704Z   | manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.1979251Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.1979709Z   | manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.1980676Z    test_working_directory=/tmp/plugintest2831496314 test_name=TestAccStreamProcessor_clusterType test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.1981469Z === NAME  TestAccStreamProcessor_clusterType
+2025-04-28T00:45:17.1981948Z     resource_test.go:264: Step 1/1 error: Error running apply: exit status 1
+2025-04-28T00:45:17.1982313Z         
+2025-04-28T00:45:17.1982595Z         Error: error creating resource
+2025-04-28T00:45:17.1982865Z         
+2025-04-28T00:45:17.1983331Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.1984031Z           on terraform_plugin_test.tf line 37, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.1984685Z           37: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.1985012Z         
+2025-04-28T00:45:17.1985764Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/processor
+2025-04-28T00:45:17.1986587Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.1987239Z         Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.1987909Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.1988681Z         manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.1989339Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.1989874Z         manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.1992862Z 2025-04-28T00:38:18.457Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_severity=ERROR tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_connection tf_req_id=5ef5013a-f8d0-c208-e4c5-d6bc893b5945 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_summary="error deleting resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/connections/ClusterConnectionSrc DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-443167174710704463 has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-443167174710704463], BadRequestDetail: "
+2025-04-28T00:45:17.1996235Z 2025-04-28T00:38:18.461Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_working_directory=/tmp/plugintest2831496314 test_name=TestAccStreamProcessor_clusterType
+2025-04-28T00:45:17.1997153Z   error=
+2025-04-28T00:45:17.1997356Z   | exit status 1
+2025-04-28T00:45:17.1997583Z   | 
+2025-04-28T00:45:17.1997807Z   | Error: error deleting resource
+2025-04-28T00:45:17.1998051Z   | 
+2025-04-28T00:45:17.1998747Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/connections/ClusterConnectionSrc
+2025-04-28T00:45:17.1999457Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.1999906Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2000436Z   | name test-acc-tf-443167174710704463 has active processors, and cannot be
+2025-04-28T00:45:17.2000956Z   | changed. Reason: Forbidden. Params: [test-acc-tf-443167174710704463],
+2025-04-28T00:45:17.2001343Z   | BadRequestDetail: 
+2025-04-28T00:45:17.2001892Z    test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_step_number=1
+2025-04-28T00:45:17.2002673Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.2003099Z         
+2025-04-28T00:45:17.2003477Z         Error: error deleting resource
+2025-04-28T00:45:17.2003746Z         
+2025-04-28T00:45:17.2004614Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-443167174710704463/connections/ClusterConnectionSrc
+2025-04-28T00:45:17.2005382Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2005936Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2006558Z         name test-acc-tf-443167174710704463 has active processors, and cannot be
+2025-04-28T00:45:17.2007179Z         changed. Reason: Forbidden. Params: [test-acc-tf-443167174710704463],
+2025-04-28T00:45:17.2007593Z         BadRequestDetail: 
+2025-04-28T00:45:17.2007906Z --- FAIL: TestAccStreamProcessor_clusterType (4.36s)
+2025-04-28T00:45:17.2011379Z 2025-04-28T00:38:18.641Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=4023c890-9b7c-2ee0-62e8-ba9c6fb4e03b tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_processor diagnostic_severity=ERROR diagnostic_summary="error creating resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (new-processor) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [new-processor failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: "
+2025-04-28T00:45:17.2015384Z 2025-04-28T00:38:18.645Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccStreamProcessor_basic test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_working_directory=/tmp/plugintest4186350347 test_step_number=1
+2025-04-28T00:45:17.2016372Z   error=
+2025-04-28T00:45:17.2016605Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.2016861Z   | 
+2025-04-28T00:45:17.2017089Z   | Error: error creating resource
+2025-04-28T00:45:17.2017348Z   | 
+2025-04-28T00:45:17.2017613Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2018144Z   |   on terraform_plugin_test.tf line 32, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2018688Z   |   32: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2019011Z   | 
+2025-04-28T00:45:17.2019593Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/processor
+2025-04-28T00:45:17.2020314Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2021003Z   | Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2021568Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2022117Z   | manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2022662Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2023128Z   | manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2023673Z   
+2025-04-28T00:45:17.2023896Z === NAME  TestAccStreamProcessor_basic
+2025-04-28T00:45:17.2024379Z     resource_test.go:40: Step 1/3 error: Error running apply: exit status 1
+2025-04-28T00:45:17.2024755Z         
+2025-04-28T00:45:17.2025031Z         Error: error creating resource
+2025-04-28T00:45:17.2025300Z         
+2025-04-28T00:45:17.2025657Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2026352Z           on terraform_plugin_test.tf line 32, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2027001Z           32: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2027327Z         
+2025-04-28T00:45:17.2028074Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/processor
+2025-04-28T00:45:17.2028895Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2029546Z         Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2030210Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2030856Z         manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2031508Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2032045Z         manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2035260Z 2025-04-28T00:38:18.858Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=7eaf432f-78da-9d82-6a18-deaf33dcc9be tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_resource_type=mongodbatlas_stream_connection tf_rpc=ApplyResourceChange diagnostic_severity=ERROR diagnostic_summary="error deleting resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/connections/sample_stream_solar DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-7466050308724611829 has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-7466050308724611829], BadRequestDetail: "
+2025-04-28T00:45:17.2038870Z 2025-04-28T00:38:18.863Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_working_directory=/tmp/plugintest4186350347 test_step_number=1 test_name=TestAccStreamProcessor_basic test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.2039980Z   error=
+2025-04-28T00:45:17.2040187Z   | exit status 1
+2025-04-28T00:45:17.2040382Z   | 
+2025-04-28T00:45:17.2040602Z   | Error: error deleting resource
+2025-04-28T00:45:17.2040848Z   | 
+2025-04-28T00:45:17.2041519Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/connections/sample_stream_solar
+2025-04-28T00:45:17.2042217Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2042661Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2043306Z   | name test-acc-tf-7466050308724611829 has active processors, and cannot be
+2025-04-28T00:45:17.2043830Z   | changed. Reason: Forbidden. Params: [test-acc-tf-7466050308724611829],
+2025-04-28T00:45:17.2044208Z   | BadRequestDetail: 
+2025-04-28T00:45:17.2044543Z   
+2025-04-28T00:45:17.2045015Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.2045446Z         
+2025-04-28T00:45:17.2045722Z         Error: error deleting resource
+2025-04-28T00:45:17.2045991Z         
+2025-04-28T00:45:17.2046850Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-7466050308724611829/connections/sample_stream_solar
+2025-04-28T00:45:17.2047615Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2048156Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2048792Z         name test-acc-tf-7466050308724611829 has active processors, and cannot be
+2025-04-28T00:45:17.2049404Z         changed. Reason: Forbidden. Params: [test-acc-tf-7466050308724611829],
+2025-04-28T00:45:17.2049823Z         BadRequestDetail: 
+2025-04-28T00:45:17.2050123Z --- FAIL: TestAccStreamProcessor_basic (4.76s)
+2025-04-28T00:45:17.2053574Z 2025-04-28T00:38:19.539Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_processor tf_req_id=8621c0a8-23dd-2d9a-9b4b-b38588178547 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/processor POST: HTTP 400 Bad Request (Error code: \"STREAM_PROCESSOR_GENERIC_ERROR\") Detail: Streams Processor with this name (new-processor) had a problem occur: failed to acquire resources for stream processor validation: global resource manager returned no resources. Reason: Bad Request. Params: [new-processor failed to acquire resources for stream processor validation: global resource manager returned no resources], BadRequestDetail: " diagnostic_severity=ERROR diagnostic_summary="error creating resource" tf_proto_version=6.8
+2025-04-28T00:45:17.2057305Z 2025-04-28T00:38:19.544Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1 test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_name=TestAccStreamProcessor_withOptions
+2025-04-28T00:45:17.2058147Z   error=
+2025-04-28T00:45:17.2058380Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.2058634Z   | 
+2025-04-28T00:45:17.2058858Z   | Error: error creating resource
+2025-04-28T00:45:17.2059103Z   | 
+2025-04-28T00:45:17.2059370Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2059901Z   |   on terraform_plugin_test.tf line 57, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2060444Z   |   57: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2060923Z   | 
+2025-04-28T00:45:17.2061508Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/processor
+2025-04-28T00:45:17.2062231Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2062778Z   | Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2063436Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2063985Z   | manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2064521Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2064982Z   | manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2065374Z    test_working_directory=/tmp/plugintest629232851
+2025-04-28T00:45:17.2065714Z === NAME  TestAccStreamProcessor_withOptions
+2025-04-28T00:45:17.2066197Z     resource_test.go:102: Step 1/2 error: Error running apply: exit status 1
+2025-04-28T00:45:17.2066554Z         
+2025-04-28T00:45:17.2066831Z         Error: error creating resource
+2025-04-28T00:45:17.2067101Z         
+2025-04-28T00:45:17.2067458Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2068269Z           on terraform_plugin_test.tf line 57, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2068910Z           57: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2069240Z         
+2025-04-28T00:45:17.2069979Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/processor
+2025-04-28T00:45:17.2070813Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2071464Z         Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2072131Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2072780Z         manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2073705Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2074250Z         manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2077205Z 2025-04-28T00:38:19.749Z [ERROR] sdk.proto: Response contains error diagnostic: tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_connection diagnostic_summary="error deleting resource" diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/ClusterConnectionSrc DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-4473970747540698679 has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679], BadRequestDetail: " diagnostic_severity=ERROR tf_proto_version=6.8 tf_req_id=57aed089-8630-48d5-a481-f835c3711531 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas
+2025-04-28T00:45:17.2082526Z 2025-04-28T00:38:19.759Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/KafkaConnectionDest DELETE: HTTP 403 Forbidden (Error code: \"STREAM_CONNECTION_HAS_STREAM_PROCESSORS\") Detail: Stream connection with name test-acc-tf-4473970747540698679 has active processors, and cannot be changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679], BadRequestDetail: " diagnostic_severity=ERROR tf_resource_type=mongodbatlas_stream_connection tf_req_id=0730d02c-1b53-6fb1-8e36-2a1f4549bf5f tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange diagnostic_summary="error deleting resource"
+2025-04-28T00:45:17.2086373Z 2025-04-28T00:38:19.764Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources: test_step_number=1 test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_name=TestAccStreamProcessor_withOptions test_working_directory=/tmp/plugintest629232851
+2025-04-28T00:45:17.2087520Z   error=
+2025-04-28T00:45:17.2087729Z   | exit status 1
+2025-04-28T00:45:17.2087925Z   | 
+2025-04-28T00:45:17.2088148Z   | Error: error deleting resource
+2025-04-28T00:45:17.2088396Z   | 
+2025-04-28T00:45:17.2089070Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/KafkaConnectionDest
+2025-04-28T00:45:17.2089776Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2090217Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2090780Z   | name test-acc-tf-4473970747540698679 has active processors, and cannot be
+2025-04-28T00:45:17.2091307Z   | changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679],
+2025-04-28T00:45:17.2091683Z   | BadRequestDetail: 
+2025-04-28T00:45:17.2091897Z   | 
+2025-04-28T00:45:17.2092114Z   | Error: error deleting resource
+2025-04-28T00:45:17.2092354Z   | 
+2025-04-28T00:45:17.2093246Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/ClusterConnectionSrc
+2025-04-28T00:45:17.2093955Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2094387Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2094908Z   | name test-acc-tf-4473970747540698679 has active processors, and cannot be
+2025-04-28T00:45:17.2095422Z   | changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679],
+2025-04-28T00:45:17.2095801Z   | BadRequestDetail: 
+2025-04-28T00:45:17.2096013Z   
+2025-04-28T00:45:17.2096485Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.2096917Z         
+2025-04-28T00:45:17.2097192Z         Error: error deleting resource
+2025-04-28T00:45:17.2097462Z         
+2025-04-28T00:45:17.2098324Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/KafkaConnectionDest
+2025-04-28T00:45:17.2099099Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2099641Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2100270Z         name test-acc-tf-4473970747540698679 has active processors, and cannot be
+2025-04-28T00:45:17.2100878Z         changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679],
+2025-04-28T00:45:17.2101290Z         BadRequestDetail: 
+2025-04-28T00:45:17.2101528Z         
+2025-04-28T00:45:17.2101806Z         Error: error deleting resource
+2025-04-28T00:45:17.2102068Z         
+2025-04-28T00:45:17.2102950Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-4473970747540698679/connections/ClusterConnectionSrc
+2025-04-28T00:45:17.2103935Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2104466Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2105099Z         name test-acc-tf-4473970747540698679 has active processors, and cannot be
+2025-04-28T00:45:17.2105702Z         changed. Reason: Forbidden. Params: [test-acc-tf-4473970747540698679],
+2025-04-28T00:45:17.2106112Z         BadRequestDetail: 
+2025-04-28T00:45:17.2106417Z --- FAIL: TestAccStreamProcessor_withOptions (527.49s)
+2025-04-28T00:45:17.2106835Z 2025-04-28T00:38:20.340Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-28T00:45:17.2107213Z   error=
+2025-04-28T00:45:17.2107444Z   | Error running apply: exit status 1
+2025-04-28T00:45:17.2107699Z   | 
+2025-04-28T00:45:17.2107918Z   | Error: error creating resource
+2025-04-28T00:45:17.2108159Z   | 
+2025-04-28T00:45:17.2108552Z   |   with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2109082Z   |   on terraform_plugin_test.tf line 34, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2109633Z   |   34: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2109952Z   | 
+2025-04-28T00:45:17.2110539Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-889103261143357594/processor
+2025-04-28T00:45:17.2111262Z   | POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2111802Z   | Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2112360Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2112901Z   | manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2113562Z   | failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2114035Z   | manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2115034Z    test_name=TestMigStreamProcessor_basic test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform test_working_directory=/tmp/plugintest3310634158 test_step_number=1
+2025-04-28T00:45:17.2115979Z === NAME  TestMigStreamProcessor_basic
+2025-04-28T00:45:17.2116487Z     resource_migration_test.go:11: Step 1/2 error: Error running apply: exit status 1
+2025-04-28T00:45:17.2116877Z         
+2025-04-28T00:45:17.2117157Z         Error: error creating resource
+2025-04-28T00:45:17.2117420Z         
+2025-04-28T00:45:17.2117781Z           with mongodbatlas_stream_processor.processor,
+2025-04-28T00:45:17.2118474Z           on terraform_plugin_test.tf line 34, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-28T00:45:17.2119110Z           34: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-28T00:45:17.2119440Z         
+2025-04-28T00:45:17.2120178Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-889103261143357594/processor
+2025-04-28T00:45:17.2121003Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-28T00:45:17.2121645Z         Detail: Streams Processor with this name (new-processor) had a problem occur:
+2025-04-28T00:45:17.2122317Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2122966Z         manager returned no resources. Reason: Bad Request. Params: [new-processor
+2025-04-28T00:45:17.2123876Z         failed to acquire resources for stream processor validation: global resource
+2025-04-28T00:45:17.2124426Z         manager returned no resources], BadRequestDetail: 
+2025-04-28T00:45:17.2124990Z 2025-04-28T00:38:20.861Z [ERROR] sdk.helper_resource: Error running post-test destroy, there may be dangling resources:
+2025-04-28T00:45:17.2125480Z   error=
+2025-04-28T00:45:17.2125688Z   | exit status 1
+2025-04-28T00:45:17.2125887Z   | 
+2025-04-28T00:45:17.2126116Z   | Error: error deleting resource
+2025-04-28T00:45:17.2126362Z   | 
+2025-04-28T00:45:17.2127033Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-889103261143357594/connections/sample_stream_solar
+2025-04-28T00:45:17.2127743Z   | DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2128183Z   | "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2128717Z   | name test-acc-tf-889103261143357594 has active processors, and cannot be
+2025-04-28T00:45:17.2129226Z   | changed. Reason: Forbidden. Params: [test-acc-tf-889103261143357594],
+2025-04-28T00:45:17.2129603Z   | BadRequestDetail: 
+2025-04-28T00:45:17.2130517Z    test_working_directory=/tmp/plugintest3310634158 test_step_number=1 test_name=TestMigStreamProcessor_basic test_terraform_path=/home/runner/work/_temp/c6c4c4bc-e0ba-48d7-8946-01b0db157b58/terraform
+2025-04-28T00:45:17.2131694Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:45:17.2132138Z         
+2025-04-28T00:45:17.2132413Z         Error: error deleting resource
+2025-04-28T00:45:17.2132680Z         
+2025-04-28T00:45:17.2133648Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8/streams/test-acc-tf-889103261143357594/connections/sample_stream_solar
+2025-04-28T00:45:17.2134413Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-28T00:45:17.2134953Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-28T00:45:17.2135573Z         name test-acc-tf-889103261143357594 has active processors, and cannot be
+2025-04-28T00:45:17.2136173Z         changed. Reason: Forbidden. Params: [test-acc-tf-889103261143357594],
+2025-04-28T00:45:17.2136585Z         BadRequestDetail: 
+2025-04-28T00:45:17.2136866Z --- FAIL: TestMigStreamProcessor_basic (9.83s)
+2025-04-28T00:45:17.2137147Z FAIL
+2025-04-28T00:45:17.2137556Z Deleting execution cluster: test-acc-tf-c-5775702838467711096, project id: 680ecbcb1ad7050ec5b1f1a8
+2025-04-28T00:45:17.2138194Z Deleting execution project: test-acc-tf-p-5438847005253412224, id: 680ecbcb1ad7050ec5b1f1a8
+2025-04-28T00:45:17.2140179Z Project deletion failed: 680ecbcb1ad7050ec5b1f1a8, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbcb1ad7050ec5b1f1a8 DELETE: HTTP 409 Conflict (Error code: "CANNOT_CLOSE_GROUP_ACTIVE_STREAMS_RESOURCE") Detail: Cannot close group while there are Stream Processing instances or private networking connections; please terminate all Stream Processing instances private networking resources (e.g. Private Link, VPC Peering etc). Reason: Conflict. Params: [], BadRequestDetail: 
+2025-04-28T00:45:17.2142257Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/streamprocessor	782.906s
+2025-04-28T00:45:17.2142818Z === RUN   TestMigStreamPrivatelinkEndpointConfluent_basic
+2025-04-28T00:45:17.2143317Z     resource_migration_test.go:11: 
+2025-04-28T00:45:17.2151391Z --- SKIP: TestMigStreamPrivatelinkEndpointConfluent_basic (0.00s)
+2025-04-28T00:45:17.2151906Z === RUN   TestMigStreamPrivatelinkEndpointMsk_basic
+2025-04-28T00:45:17.2152320Z     resource_migration_test.go:17: 
+2025-04-28T00:45:17.2152693Z --- SKIP: TestMigStreamPrivatelinkEndpointMsk_basic (0.00s)
+2025-04-28T00:45:17.2153130Z === RUN   TestAccStreamPrivatelinkEndpointConfluent_basic
+2025-04-28T00:45:17.2153669Z     resource_test.go:23: 
+2025-04-28T00:45:17.2154021Z --- SKIP: TestAccStreamPrivatelinkEndpointConfluent_basic (0.00s)
+2025-04-28T00:45:17.2154505Z === RUN   TestAccStreamPrivatelinkEndpointConfluent_noDNSsubdomains
+2025-04-28T00:45:17.2154920Z     resource_test.go:30: 
+2025-04-28T00:45:17.2155308Z --- SKIP: TestAccStreamPrivatelinkEndpointConfluent_noDNSsubdomains (0.00s)
+2025-04-28T00:45:17.2155859Z === RUN   TestAccStreamPrivatelinkEndpointConfluent_missingRequiredFields
+2025-04-28T00:45:17.2156287Z     resource_test.go:37: 
+2025-04-28T00:45:17.2156697Z --- SKIP: TestAccStreamPrivatelinkEndpointConfluent_missingRequiredFields (0.00s)
+2025-04-28T00:45:17.2157189Z === RUN   TestAccStreamPrivatelinkEndpointMsk_basic
+2025-04-28T00:45:17.2157539Z     resource_test.go:44: 
+2025-04-28T00:45:17.2157858Z --- SKIP: TestAccStreamPrivatelinkEndpointMsk_basic (0.00s)
+2025-04-28T00:45:17.2158265Z === RUN   TestAccStreamPrivatelinkEndpointMsk_fields
+2025-04-28T00:45:17.2158682Z === RUN   TestAccStreamPrivatelinkEndpointMsk_fields/missing_arn
+2025-04-28T00:45:17.2159143Z === PAUSE TestAccStreamPrivatelinkEndpointMsk_fields/missing_arn
+2025-04-28T00:45:17.2159612Z === RUN   TestAccStreamPrivatelinkEndpointMsk_fields/included_region
+2025-04-28T00:45:17.2160096Z === PAUSE TestAccStreamPrivatelinkEndpointMsk_fields/included_region
+2025-04-28T00:45:17.2160563Z === CONT  TestAccStreamPrivatelinkEndpointMsk_fields/missing_arn
+2025-04-28T00:45:17.2161023Z === CONT  TestAccStreamPrivatelinkEndpointMsk_fields/included_region
+2025-04-28T00:45:17.2162743Z 2025-04-28T00:29:09.707Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="arn is required for vendor MSK" diagnostic_detail="" diagnostic_severity=ERROR tf_req_id=f2b367f6-25fa-f22d-8ee5-eed38853fba9 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_stream_privatelink_endpoint
+2025-04-28T00:45:17.2165462Z 2025-04-28T00:29:09.764Z [ERROR] sdk.proto: Response contains error diagnostic: tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_resource_type=mongodbatlas_stream_privatelink_endpoint diagnostic_severity=ERROR diagnostic_summary="region cannot be set for vendor MSK" diagnostic_detail="" tf_rpc=ApplyResourceChange tf_req_id=6132c15f-fb68-3a67-02a8-2e137ed163c0 tf_proto_version=6.8
+2025-04-28T00:45:17.2166932Z --- PASS: TestAccStreamPrivatelinkEndpointMsk_fields (0.00s)
+2025-04-28T00:45:17.2167487Z     --- PASS: TestAccStreamPrivatelinkEndpointMsk_fields/missing_arn (10.51s)
+2025-04-28T00:45:17.2168109Z     --- PASS: TestAccStreamPrivatelinkEndpointMsk_fields/included_region (10.57s)
+2025-04-28T00:45:17.2168499Z PASS
+2025-04-28T00:45:17.2168976Z ok  	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/streamprivatelinkendpoint	10.591s
+2025-04-28T00:45:17.2169470Z FAIL
+2025-04-28T00:45:17.3271169Z make: *** [Makefile:78: testacc] Error 1
+2025-04-28T00:45:17.3293410Z ##[error]Process completed with exit code 2.
+2025-04-28T00:45:17.3369548Z Post job cleanup.
+2025-04-28T00:45:17.4295778Z [command]/usr/bin/git version
+2025-04-28T00:45:17.4332058Z git version 2.49.0
+2025-04-28T00:45:17.4377793Z Temporarily overriding HOME='/home/runner/work/_temp/c817eed8-b78d-4e35-b7f3-9f1e9a35de79' before making global git config changes
+2025-04-28T00:45:17.4379233Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-28T00:45:17.4384984Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-28T00:45:17.4424333Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-28T00:45:17.4456237Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-28T00:45:17.4680252Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-28T00:45:17.4699999Z http.https://github.com/.extraheader
+2025-04-28T00:45:17.4712197Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-04-28T00:45:17.4742405Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-28T00:45:17.5059329Z Cleaning up orphan processes

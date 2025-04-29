@@ -22,149 +22,77 @@ from atlas_init.cli_tf.go_test_tf_error import (
 )
 from zero_3rdparty.datetime_utils import utc_now
 
-_logs_TestAccCluster_create_RedactClientLogData = """\
-2025-04-09T00:25:01.8116397Z === RUN   TestAccCluster_create_RedactClientLogData
-2025-04-09T00:25:05.2244878Z     resource_cluster_test.go:1369: Step 1/1 error: Error running apply: exit status 1
-2025-04-09T00:25:05.2245585Z         
-2025-04-09T00:25:05.2246122Z         Error: error during project deletion when getting project settings
-2025-04-09T00:25:05.2246941Z         
-2025-04-09T00:25:05.2247261Z           with mongodbatlas_project.test,
-2025-04-09T00:25:05.2247996Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
-2025-04-09T00:25:05.2248557Z           12: \t\tresource "mongodbatlas_project" "test" {
-2025-04-09T00:25:05.2248852Z         
-2025-04-09T00:25:05.2249207Z         error deleting project (67f5be5fe7455b55f206ba40):
-2025-04-09T00:25:05.2249870Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings
-2025-04-09T00:25:05.2250562Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
-2025-04-09T00:25:05.2251214Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings. Reason:
-2025-04-09T00:25:05.2251888Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings],
-2025-04-09T00:25:05.2252329Z         BadRequestDetail: 
-2025-04-09T00:25:05.2744864Z --- FAIL: TestAccCluster_create_RedactClientLogData (3.46s)"""
-
-_logs_TestAccCluster_tenant = """\
-2025-04-09T00:25:01.8107100Z === RUN   TestAccCluster_tenant
-2025-04-09T00:59:12.0131855Z     resource_cluster_test.go:1029: Step 2/2 error: Check failed: Check 4/5 error: mongodbatlas_cluster.tenant: Attribute \'disk_size_gb\' expected "10", got "5"
-2025-04-09T01:00:42.6195226Z --- FAIL: TestAccCluster_tenant (2140.81s)"""
-_logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade = """\
-2025-04-09T00:25:01.8117740Z === RUN   TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
-2025-04-09T00:25:05.8150912Z     resource_cluster_test.go:1399: Step 1/7 error: Error running apply: exit status 1
-2025-04-09T00:25:05.8151338Z         
-2025-04-09T00:25:05.8151883Z         Error: error during project deletion when getting project settings
-2025-04-09T00:25:05.8152250Z         
-2025-04-09T00:25:05.8152658Z           with mongodbatlas_project.test,
-2025-04-09T00:25:05.8153361Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
-2025-04-09T00:25:05.8154373Z           12: \t\tresource "mongodbatlas_project" "test" {
-2025-04-09T00:25:05.8154679Z         
-2025-04-09T00:25:05.8155033Z         error deleting project (67f5be5fe7455b55f206ba3e):
-2025-04-09T00:25:05.8155686Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings
-2025-04-09T00:25:05.8156649Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
-2025-04-09T00:25:05.8157317Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings. Reason:
-2025-04-09T00:25:05.8157985Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings],
-2025-04-09T00:25:05.8158436Z         BadRequestDetail: 
-2025-04-09T00:25:05.8592892Z --- FAIL: TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade (4.05s)"""
+logger = logging.getLogger(__name__)
 _CLUSTER_LOGS_FILENAME = (
     "40216336752_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster"
 )
-_logs_TestAccBackupRSOnlineArchive = """\
-2024-06-26T00:58:20.7853337Z === RUN   TestAccBackupRSOnlineArchive
-2024-06-26T00:58:20.7918346Z     resource_online_archive_test.go:32: Step 2/7 error: Error running apply: exit status 1
-2024-06-26T00:58:20.7919682Z         
-2024-06-26T00:58:20.7920573Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
-2024-06-26T00:58:20.7921224Z         
-2024-06-26T00:58:20.7921829Z           with mongodbatlas_online_archive.users_archive,
-2024-06-26T00:58:20.7923085Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
-2024-06-26T00:58:20.7924127Z           52: \tresource "mongodbatlas_online_archive" "users_archive" {
-2024-06-26T00:58:20.7924792Z         
-2024-06-26T00:58:20.7946475Z --- FAIL: TestAccBackupRSOnlineArchive (1149.23s)"""
-_logs_TestAccBackupRSOnlineArchiveWithProcessRegion = """\
-2024-06-26T00:58:20.7859743Z === RUN   TestAccBackupRSOnlineArchiveWithProcessRegion
-2024-06-26T00:58:20.7939774Z     resource_online_archive_test.go:183: Step 2/4 error: Error running apply: exit status 1
-2024-06-26T00:58:20.7940563Z         
-2024-06-26T00:58:20.7941236Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
-2024-06-26T00:58:20.7941974Z         
-2024-06-26T00:58:20.7942499Z           with mongodbatlas_online_archive.users_archive,
-2024-06-26T00:58:20.7943507Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
-2024-06-26T00:58:20.7944500Z           52: \tresource "mongodbatlas_online_archive" "users_archive" {
-2024-06-26T00:58:20.7945036Z         
-2024-06-26T00:58:20.7945708Z --- FAIL: TestAccBackupRSOnlineArchiveWithProcessRegion (1139.13s)"""
-
-_logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted = """\
-2025-04-27T00:47:25.4407749Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
-2025-04-27T00:47:25.4408915Z     resource_test.go:171: Testing: Verifies a processor can transition from STOPPED to STARTED state
-2025-04-27T00:47:25.4434045Z     resource_test.go:172: Step 1/3 error: Error running apply: exit status 1
-2025-04-27T00:47:25.4434424Z         
-2025-04-27T00:47:25.4434818Z         Error: error creating resource
-2025-04-27T00:47:25.4435097Z         
-2025-04-27T00:47:25.4435552Z           with mongodbatlas_stream_processor.processor,
-2025-04-27T00:47:25.4436464Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
-2025-04-27T00:47:25.4437255Z           28: \t\tresource "mongodbatlas_stream_processor" "processor" {
-2025-04-27T00:47:25.4437596Z         
-2025-04-27T00:47:25.4438929Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/processor
-2025-04-27T00:47:25.4439967Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
-2025-04-27T00:47:25.4440616Z         Detail: Streams Processor with this name (processor-stopped-to-started) had a
-2025-04-27T00:47:25.4441404Z         problem occur: failed to acquire resources for stream processor validation:
-2025-04-27T00:47:25.4442041Z         global resource manager returned no resources. Reason: Bad Request. Params:
-2025-04-27T00:47:25.4442673Z         [processor-stopped-to-started failed to acquire resources for stream
-2025-04-27T00:47:25.4443301Z         processor validation: global resource manager returned no resources],
-2025-04-27T00:47:25.4443839Z         BadRequestDetail: 
-2025-04-27T00:47:25.4511892Z     --- FAIL: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted (4.03s)"""
-_logs_TestAccCluster_basicGCPRegionNameWesternUS = """\
-2025-04-28T00:28:58.3752937Z === RUN   TestAccCluster_basicGCPRegionNameWesternUS
-2025-04-28T00:29:00.9061129Z     resource_cluster_test.go:1088: Step 1/1 error: Error running apply: exit status 1
-2025-04-28T00:29:00.9061671Z         
-2025-04-28T00:29:00.9064275Z         Error: error creating MongoDB Cluster: POST https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters: 409 (request "OUT_OF_CAPACITY") The requested region is currently out of capacity for the requested instance size.
-2025-04-28T00:29:00.9065883Z         
-2025-04-28T00:29:00.9066209Z           with mongodbatlas_cluster.test,
-2025-04-28T00:29:00.9066852Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_cluster" "test":
-2025-04-28T00:29:00.9067533Z           12: \tresource "mongodbatlas_cluster" "test" {
-2025-04-28T00:29:00.9067841Z         
-2025-04-28T00:29:00.9610855Z --- FAIL: TestAccCluster_basicGCPRegionNameWesternUS (2.58s)"""
 
 _ci_logs_test_data = [
     (
         _CLUSTER_LOGS_FILENAME,
         {
-            "TestAccCluster_tenant": GoTestStatus.FAIL,
-            "TestAccCluster_ProviderRegionName": GoTestStatus.PASS,
-            "TestAccCluster_withPrivateEndpointLink": GoTestStatus.SKIP,
-            "TestAccCluster_create_RedactClientLogData": GoTestStatus.FAIL,
-            "TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade": GoTestStatus.FAIL,
+            "cluster/TestAccCluster_tenant": GoTestStatus.FAIL,
+            "cluster/TestAccCluster_ProviderRegionName": GoTestStatus.PASS,
+            "cluster/TestAccCluster_withPrivateEndpointLink": GoTestStatus.SKIP,
+            "cluster/TestAccCluster_create_RedactClientLogData": GoTestStatus.FAIL,
+            "cluster/TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade": GoTestStatus.FAIL,
         },
-        {
-            "TestAccCluster_create_RedactClientLogData": _logs_TestAccCluster_create_RedactClientLogData,
-            "TestAccCluster_tenant": _logs_TestAccCluster_tenant,
-            "TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade": _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
-        },
+        [
+            "cluster/TestAccCluster_create_RedactClientLogData",
+            "cluster/TestAccCluster_tenant",
+            "cluster/TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade",
+        ],
     ),
     (
         "30230451013_tests-1.9.x-latest_tests-1.9.x-latest-dev_config",
         {
-            "TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined": GoTestStatus.PASS,
-            "TestAccProjectAPIKey_changingSingleProject": GoTestStatus.FAIL,
+            "atlasuser/TestAccConfigDSAtlasUsers_InvalidAttrCombinations/invalid_empty_attributes_defined": GoTestStatus.PASS,
+            "projectapikey/TestAccProjectAPIKey_changingSingleProject": GoTestStatus.FAIL,
         },
-        {},
+        [],
     ),
     (
         "backup_logs_multiple_failures_with_context",
         {},
-        {
-            "TestAccBackupRSOnlineArchive": _logs_TestAccBackupRSOnlineArchive,
-            "TestAccBackupRSOnlineArchiveWithProcessRegion": _logs_TestAccBackupRSOnlineArchiveWithProcessRegion,
-        },
+        [
+            "onlinearchive/TestAccBackupRSOnlineArchive",
+            "onlinearchive/TestAccBackupRSOnlineArchiveWithProcessRegion",
+        ],
     ),
     (
         "41215865444_tests-1.11.x-latest_tests-1.11.x-latest-qa_stream",
         {},
-        {
-            "TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted": _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
-        }
+        [
+            "streamprocessor/TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted",
+            "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated",
+        ]
     ),
     (
         "41241715011_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster",
         {},
-        {"TestAccCluster_basicGCPRegionNameWesternUS": _logs_TestAccCluster_basicGCPRegionNameWesternUS}
+        ["cluster/TestAccCluster_basicGCPRegionNameWesternUS"]
+    ),
+    (
+        "41313624603_tests-1.11.x-latest_tests-1.11.x-latest-false_stream",
+        {},
+        [
+            "streamconnection/TestAccStreamRSStreamConnection_kafkaNetworkingVPC",
+            "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated",
+        ]
+    ),
+    (
+        "41241718467_tests-1.11.x-latest_tests-1.11.x-latest-false_stream",
+        {},
+        [
+            "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated"
+        ]
     )
 ]
+TEST_LINES_SPLIT_SYMBOL = "\nNEXT_TEST\n"
 
+def dump_test_output(run: GoTestRun) -> str:
+    assert run.is_failure, f"test output only for failures, got {run.status} for {run.name}"
+    return f"{run.name}\n{run.output_lines_str}"
 
 @pytest.mark.parametrize(
     "log_file,test_results,test_output",
@@ -176,11 +104,14 @@ def test_parsing_ci_logs(
     log_file,
     test_results,
     test_output,
+    file_regression,
 ):
     file_path = github_ci_logs_dir / f"{log_file}.log"
     found_tests = parse_tests(file_path.read_text().splitlines())
     assert found_tests
-    found_tests_by_name = {test.name: test for test in found_tests}
+    found_tests_by_name = {test.name_with_package: test for test in found_tests}
+    names = "\n".join(sorted(found_tests_by_name))
+    logger.info(f"found tests names: {names}")
     non_matching_statuses = [
         f"{test_name}: {found_tests_by_name[test_name].status} != {expected_status}"
         for test_name, expected_status in test_results.items()
@@ -190,11 +121,15 @@ def test_parsing_ci_logs(
         not non_matching_statuses
     ), f"Test statuses do not match: {non_matching_statuses}"
     # sourcery skip: no-loop-in-tests
-    for test_name, expected_output in test_output.items():
-        assert (
-            found_tests_by_name[test_name].output_lines_str == expected_output
-        ), f"Test output does not match for {test_name}"
-
+    # sourcery skip: no-conditionals-in-tests
+    if not test_output:
+        return
+    test_output_logs = [
+        dump_test_output(found_tests_by_name[test_name])
+        for test_name in test_output
+    ]
+    all_log_lines = TEST_LINES_SPLIT_SYMBOL.join(test_output_logs)
+    file_regression.check(all_log_lines, extension=".log")
 
 def test_find_env_of_mongodb_base_url(github_ci_logs_dir):
     logs_path = github_ci_logs_dir / f"{_CLUSTER_LOGS_FILENAME}.log"
@@ -315,14 +250,6 @@ api_error_out_of_capacity = GoTestAPIError(
     step_nr=1,
     api_path="/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters",
 )
-_logs_TestAccBackupCompliancePolicy_UpdateSetsAllAttributes = """\
-2025-04-28T00:41:49.0654998Z === RUN   TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
-2025-04-28T00:41:49.0683920Z === NAME  TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
-2025-04-28T00:41:49.0685493Z     resource_backup_compliance_policy_test.go:127: Error running post-test destroy, there may be dangling resources: exit status 1
-2025-04-28T00:41:49.0686699Z         
-2025-04-28T00:41:49.0699289Z         Error: error disabling the Backup Compliance Policy: 680ecbbe1ad7050ec5b1ebe3: https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR") Detail: Unexpected error. Reason: Internal Server Error. Params: [], BadRequestDetail: 
-2025-04-28T00:41:49.0701451Z         
-2025-04-28T00:41:49.0702222Z --- FAIL: TestAccBackupCompliancePolicy_UpdateSetsAllAttributes (9.42s)"""
 
 api_error_unexpected_error = GoTestAPIError(
     api_error_code_str="UNEXPECTED_ERROR",
@@ -334,11 +261,22 @@ api_error_unexpected_error = GoTestAPIError(
     api_path="/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy",
 )
 
+def read_test_logs(test_name: str) -> str:
+    test_file_path = Path(__file__)
+    logs_dir = test_file_path.parent / test_file_path.stem
+    test_logs = {}
+    for log_file in logs_dir.glob(f"{test_parsing_ci_logs.__name__}*.log"):
+        parts = log_file.read_text().split(TEST_LINES_SPLIT_SYMBOL)
+        for part in parts:
+            name, *log_lines = part.splitlines()
+            test_logs[name] = "\n".join(log_lines)
+    return test_logs[test_name]
+
 @pytest.mark.parametrize(
-    "logs_str,expected_details",
+    "test_name,expected_details",
     [
         (
-            _logs_TestAccCluster_tenant,
+            "TestAccCluster_tenant",
             GoTestCheckError(
                 tf_resource_name="tenant",
                 tf_resource_type="cluster",
@@ -347,25 +285,26 @@ api_error_unexpected_error = GoTestAPIError(
             ),
         ),
         (
-            _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
+            "TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade",
             api_error_project_not_found,
         ),
         (
-            _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
+            "TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted",
             api_error_stream_processor_generic,
         ),
         (
-            _logs_TestAccCluster_basicGCPRegionNameWesternUS,
+            "TestAccCluster_basicGCPRegionNameWesternUS",
             api_error_out_of_capacity,
         ),
         (
-            _logs_TestAccBackupCompliancePolicy_UpdateSetsAllAttributes,
+            "TestAccBackupCompliancePolicy_UpdateSetsAllAttributes",
             api_error_unexpected_error,
         ),
     ],
     ids=["tenant should create GoTestCheckError", "api error with params", "api error without params", "api error no details", "api error no TF resource or type"],
 )
-def test_extract_error_details(logs_str, expected_details):
+def test_extract_error_details(test_name, expected_details):
+    logs_str = read_test_logs(test_name)
     run = dummy_run(logs_str, "extract-error-details")
     assert expected_details == parse_error_details(run)
 

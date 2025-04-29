@@ -1,0 +1,46 @@
+TestAccStreamRSStreamConnection_kafkaNetworkingVPC
+2025-04-29T00:44:02.9960722Z === RUN   TestAccStreamRSStreamConnection_kafkaNetworkingVPC
+2025-04-29T00:44:02.9971778Z   
+2025-04-29T00:44:02.9972380Z     resource_stream_connection_test.go:86: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-29T00:44:02.9972891Z         
+2025-04-29T00:44:02.9973185Z         Error: error deleting resource
+2025-04-29T00:44:02.9973451Z         
+2025-04-29T00:44:02.9974548Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/68101d021955e763846db6b8/streams/test-acc-tf-4453087302472505704/connections/test-acc-tf-4453087302472505704
+2025-04-29T00:44:02.9975487Z         DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR")
+2025-04-29T00:44:02.9976089Z         Detail: Unexpected error. Reason: Internal Server Error. Params: [],
+2025-04-29T00:44:02.9976509Z         BadRequestDetail: 
+2025-04-29T00:44:02.9976881Z --- FAIL: TestAccStreamRSStreamConnection_kafkaNetworkingVPC (163.39s)
+NEXT_TEST
+TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-29T00:44:03.0052709Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-29T00:44:03.0053393Z     resource_test.go:250: Testing: Verifies a processor cannot transition from STARTED to CREATED state
+2025-04-29T00:44:03.0055462Z === CONT  TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-29T00:44:03.0076226Z === NAME  TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated
+2025-04-29T00:44:03.0076815Z     resource_test.go:251: Step 1/2 error: Error running apply: exit status 1
+2025-04-29T00:44:03.0077182Z         
+2025-04-29T00:44:03.0077457Z         Error: error creating resource
+2025-04-29T00:44:03.0077720Z         
+2025-04-29T00:44:03.0078083Z           with mongodbatlas_stream_processor.processor,
+2025-04-29T00:44:03.0078909Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-29T00:44:03.0079566Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-29T00:44:03.0079889Z         
+2025-04-29T00:44:03.0080730Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/68101d04494caf27baac3333/streams/test-acc-tf-8018030504128599525--STARTED-CREATED/processor
+2025-04-29T00:44:03.0081616Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-29T00:44:03.0082263Z         Detail: Streams Processor with this name (processor-started-to-created) had a
+2025-04-29T00:44:03.0082926Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-29T00:44:03.0083561Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-29T00:44:03.0084306Z         [processor-started-to-created failed to acquire resources for stream
+2025-04-29T00:44:03.0084937Z         processor validation: global resource manager returned no resources],
+2025-04-29T00:44:03.0085359Z         BadRequestDetail: 
+2025-04-29T00:44:03.0098774Z   
+2025-04-29T00:44:03.0099264Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-29T00:44:03.0099706Z         
+2025-04-29T00:44:03.0099991Z         Error: error deleting resource
+2025-04-29T00:44:03.0100256Z         
+2025-04-29T00:44:03.0101236Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/68101d04494caf27baac3333/streams/test-acc-tf-8018030504128599525--STARTED-CREATED/connections/sample_stream_solar
+2025-04-29T00:44:03.0102080Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-29T00:44:03.0102620Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-29T00:44:03.0103286Z         name test-acc-tf-8018030504128599525--STARTED-CREATED has active processors,
+2025-04-29T00:44:03.0104079Z         and cannot be changed. Reason: Forbidden. Params:
+2025-04-29T00:44:03.0104669Z         [test-acc-tf-8018030504128599525--STARTED-CREATED], BadRequestDetail: 
+2025-04-29T00:44:03.0108485Z     --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated (4.57s)

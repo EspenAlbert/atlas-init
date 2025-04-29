@@ -1,0 +1,8 @@
+TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
+2025-04-28T00:41:49.0654998Z === RUN   TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
+2025-04-28T00:41:49.0683920Z === NAME  TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
+2025-04-28T00:41:49.0685493Z     resource_backup_compliance_policy_test.go:127: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:41:49.0686699Z         
+2025-04-28T00:41:49.0699289Z         Error: error disabling the Backup Compliance Policy: 680ecbbe1ad7050ec5b1ebe3: https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR") Detail: Unexpected error. Reason: Internal Server Error. Params: [], BadRequestDetail: 
+2025-04-28T00:41:49.0701451Z         
+2025-04-28T00:41:49.0702222Z --- FAIL: TestAccBackupCompliancePolicy_UpdateSetsAllAttributes (9.42s)

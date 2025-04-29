@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import TypeAlias
 
 import humanize
-from model_lib import Entity, Event, utc_datetime
+from model_lib import Entity, utc_datetime
 from pydantic import Field, model_validator
 from zero_3rdparty.datetime_utils import utc_now
 
@@ -27,11 +27,16 @@ class GoTestStatus(StrEnum):
     PASS = "PASS"  # noqa: S105 #nosec
     FAIL = "FAIL"
     SKIP = "SKIP"
+    CONT = "CONT"
     PKG_OK = "ok"
 
     @classmethod
     def is_running(cls, status: GoTestStatus) -> bool:
-        return status in {cls.RUN, cls.PAUSE, cls.NAME}
+        return status in {cls.RUN, cls.PAUSE, cls.NAME, cls.CONT}
+
+    @classmethod
+    def is_running_but_not_paused(cls, status: GoTestStatus) -> bool:
+        return status != cls.PAUSE and cls.is_running(status)
 
 
 class GoTestContextStep(Entity):
@@ -140,8 +145,14 @@ class GoTestRun(Entity):
             return url.removeprefix(prefix).rstrip("/")
         return ""
 
+    @property
+    def name_with_package(self) -> str:
+        if self.package_url:
+            return f"{self.package_url.split('/')[-1]}/{self.name}"
+        return self.name
 
-class ParseResult(Event):
+
+class ParseResult(Entity):
     tests: list[GoTestRun] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -152,6 +163,9 @@ class ParseResult(Event):
             raise ValueError(f"some tests are not completed: {incomplete_tests}")
         if no_package_tests := [test.name for test in self.tests if test.package_url is None]:
             raise ValueError(f"some tests do not have package name: {no_package_tests}")
+        test_names = {test.name for test in self.tests}
+        test_group_names = {name.split("/")[0] for name in test_names if "/" in name}
+        self.tests = [test for test in self.tests if test.name not in test_group_names]
         return self
 
 
@@ -160,18 +174,27 @@ class ParseContext:
     tests: list[GoTestRun] = field(default_factory=list)
 
     current_output: list[str] = field(default_factory=list, init=False)
+    current_test_name: str = ""  # used for debugging and breakpoints
 
     def add_output_line(self, line: str) -> None:
+        if is_blank_line(line) and self.current_output and is_blank_line(self.current_output[-1]):
+            return  # avoid two blank lines in a row
+        self._add_line(line)
+
+    def _add_line(self, line: str) -> None:
+        logger.info(f"adding line to {self.current_test_name}: {line}")
         self.current_output.append(line)
 
     def start_test(self, test_name: str, start_line: str, ts: str) -> None:
-        run = GoTestRun(name=test_name, output_lines=[start_line], ts=ts)  # type: ignore
+        run = GoTestRun(name=test_name, ts=ts)  # type: ignore
         self.tests.append(run)
-        self.continue_test(test_name)
+        self.continue_test(test_name, start_line)
 
-    def continue_test(self, test_name: str) -> None:
+    def continue_test(self, test_name: str, line: str) -> None:
         test = self.find_unfinished_test(test_name)
         self.current_output = test.output_lines
+        self.current_test_name = test_name
+        self._add_line(line)
 
     def find_unfinished_test(self, test_name: str) -> GoTestRun:
         test = next(
@@ -203,6 +226,13 @@ def ts_pattern(name: str) -> str:
     return r"(?P<%s>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)\s*" % name
 
 
+blank_pattern = re.compile(ts_pattern("ts") + r"$", re.MULTILINE)
+
+
+def is_blank_line(line: str) -> bool:
+    return blank_pattern.match(line) is not None
+
+
 _one_or_more_digit_or_star_pattern = r"(\d|\*)+"  # due to Github secrets, some digits can be replaced with "*"
 runtime_pattern_no_parenthesis = (
     rf"(?P<runtime>{_one_or_more_digit_or_star_pattern}\.{_one_or_more_digit_or_star_pattern}s)"
@@ -210,12 +240,19 @@ runtime_pattern_no_parenthesis = (
 runtime_pattern = rf"\({runtime_pattern_no_parenthesis}\)"
 
 
-ignore_line_pattern = [re.compile(ts_pattern("ts") + r"\s" + ts_pattern("ts2"))]
+ignore_line_pattern = [
+    re.compile(ts_pattern("ts") + r"\s" + ts_pattern("ts2")),
+    # 2025-04-29T00:44:02.9968072Z   error=
+    # 2025-04-29T00:44:02.9968279Z   | exit status 1
+    re.compile(ts_pattern("ts") + r"error=\s*$", re.MULTILINE),
+    re.compile(ts_pattern("ts") + r"\|"),
+]
 
 status_patterns = [
     (GoTestStatus.RUN, re.compile(ts_pattern("ts") + r"=== RUN\s+(?P<name>\S+)")),
     (GoTestStatus.PAUSE, re.compile(ts_pattern("ts") + r"=== PAUSE\s+(?P<name>\S+)")),
     (GoTestStatus.NAME, re.compile(ts_pattern("ts") + r"=== NAME\s+(?P<name>\S+)")),
+    (GoTestStatus.CONT, re.compile(ts_pattern("ts") + r"=== CONT\s+(?P<name>\S+)")),
     (
         GoTestStatus.PASS,
         re.compile(ts_pattern("ts") + r"--- PASS: (?P<name>\S+)\s+" + runtime_pattern),
@@ -254,15 +291,11 @@ def line_match_status_pattern(
             match status:
                 case GoTestStatus.RUN:
                     context.start_test(test_name, line, ts)
-                case GoTestStatus.NAME:
-                    context.continue_test(test_name)
+                case GoTestStatus.NAME | GoTestStatus.CONT:
+                    context.continue_test(test_name, line)
                 case GoTestStatus.PAUSE:
                     return status  # do nothing
-                case GoTestStatus.PASS:
-                    context.finish_test(test_name, status, ts, line)
-                case GoTestStatus.FAIL:
-                    context.finish_test(test_name, status, ts, line)
-                case GoTestStatus.SKIP:
+                case GoTestStatus.PASS | GoTestStatus.FAIL | GoTestStatus.SKIP:
                     context.finish_test(test_name, status, ts, line)
             return status
     for pkg_status, pattern in package_patterns:
@@ -279,7 +312,7 @@ def wait_for_relvant_line(
     context: ParseContext,
 ) -> LineParserT:
     status = line_match_status_pattern(line, context)
-    if status in {GoTestStatus.RUN, GoTestStatus.NAME}:
+    if status and GoTestStatus.is_running_but_not_paused(status):
         return add_output_line
     return wait_for_relvant_line
 
@@ -288,13 +321,18 @@ def add_output_line(
     line: str,
     context: ParseContext,
 ) -> LineParserT:
+    if (
+        line
+        == "2025-04-28T00:45:17.1701402Z     resource_test.go:251: Step 1/3 error: Error running apply: exit status 1"
+    ):
+        logger.info("debugger hit")
     for pattern in ignore_line_pattern:
         if pattern.match(line):
-            return wait_for_relvant_line(line, context)
-    status = line_match_status_pattern(line, context)
+            return add_output_line
+    status: GoTestStatus | None = line_match_status_pattern(line, context)
     if status is None:
         context.add_output_line(line)
         return add_output_line
-    if status in {GoTestStatus.RUN, GoTestStatus.NAME}:
+    if status and GoTestStatus.is_running_but_not_paused(status):
         return add_output_line
     return wait_for_relvant_line
