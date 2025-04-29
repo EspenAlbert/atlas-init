@@ -181,7 +181,7 @@ def test_parsing_ci_logs(
 
 
 def test_find_env_of_mongodb_base_url(github_ci_logs_dir):
-    logs_path = github_ci_logs_dir / f"{_CLUSTER_LOGS_FILENAME}.txt"
+    logs_path = github_ci_logs_dir / f"{_CLUSTER_LOGS_FILENAME}.log"
     assert find_env_of_mongodb_base_url(logs_path.read_text()) == "dev"
 
 
