@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import Literal, TypeAlias
 
 from model_lib import Entity
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.repos.go_sdk import ApiSpecPaths
@@ -17,7 +17,7 @@ class GoTestErrorClass(StrEnum):
     """Goal of each error class to be actionable."""
 
     FLAKY_400 = "flaky_400"
-    FLAKY_500 = "flaky_400"
+    FLAKY_500 = "flaky_500"
     FLAKY_CHECK = "flaky_check"
     OUT_OF_CAPACITY = "out_of_capacity"
     PROJECT_LIMIT_EXCEEDED = "project_limit_exceeded"
@@ -37,6 +37,21 @@ class GoTestErrorClass(StrEnum):
         TIMEOUT: "investigate",
         UNKNOWN: "investigate",
     }
+    __CONTAINS_MAPPING__ = {
+        OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
+        FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
+    }
+
+    @classmethod
+    def auto_classification(cls, output: str) -> GoTestErrorClass | None:
+        return next(
+            (
+                error_class
+                for error_class, contains_list in cls.__CONTAINS_MAPPING__.items()
+                if all(contains in output for contains in contains_list)
+            ),
+            None,
+        )  # type: ignore
 
 
 API_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
@@ -48,11 +63,16 @@ class GoTestAPIError(Entity):
     api_path: str
     api_method: Literal["GET", "POST", "PUT", "DELETE", "PATCH"]
     api_response_code: int
-    tf_resource_name: str
-    tf_resource_type: str
+    tf_resource_name: str = ""
+    tf_resource_type: str = ""
     step_nr: int = -1
 
     api_path_normalized: str = Field(init=False, default="")
+
+    @model_validator(mode="after")
+    def strip_path_chars(self) -> GoTestAPIError:
+        self.api_path = self.api_path.rstrip(":/")
+        return self
 
     def add_info_fields(self, info: DetailsInfo) -> None:
         path = self.api_path
@@ -125,7 +145,6 @@ class GoTestError(Entity):
             assert isinstance(other_details, GoTestAPIError)
             return (
                 details.api_path_normalized == other_details.api_path_normalized
-                and details.tf_resource_type == other_details.tf_resource_type
                 and details.api_response_code == other_details.api_response_code
                 and details.api_method == other_details.api_method
                 and details.api_response_code == other_details.api_response_code
@@ -137,15 +156,22 @@ one_of_methods = "|".join(API_METHODS)
 
 
 check_pattern = re.compile(r"Check (?P<check_nr>\d+)/\d+")
+url_pattern = r"https://cloud(-dev|-qa)?\.mongodb\.com(?P<api_path>\S+)"
 detail_patterns: list[re.Pattern] = [
     re.compile(r"Step (?P<step_nr>\d+)/\d+"),
     check_pattern,
     re.compile(r"mongodbatlas_(?P<tf_resource_type>[^\.]+)\.(?P<tf_resource_name>[\w_-]+)"),
-    re.compile(r"Params: \[(?P<api_path>[^\]]+)\]"),
     re.compile(rf"(?P<api_method>{one_of_methods})" + r": HTTP (?P<api_response_code>\d+)"),
     re.compile(r'Error code: "(?P<api_error_code_str>[^"]+)"'),
-    re.compile(r"https://cloud(-dev|-qa)?\.mongodb\.com(?P<api_path_url>\S+)"),
+    re.compile(url_pattern),
 ]
+
+# Error: error creating MongoDB Cluster: POST https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters: 409 (request "OUT_OF_CAPACITY") The requested region is currently out of capacity for the requested instance size.
+api_error_pattern_missing_details = re.compile(
+    rf"(?P<api_method>{one_of_methods})\s+"
+    + url_pattern
+    + r'\s+(?P<api_response_code>\d+)\s\(request\s"(?P<api_error_code_str>[^"]+)"\)'
+)
 
 
 def parse_error_details(run: GoTestRun) -> ErrorDetails:
@@ -155,11 +181,10 @@ def parse_error_details(run: GoTestRun) -> ErrorDetails:
         if pattern_match := pattern.search(output):
             kwargs |= pattern_match.groupdict()
     match kwargs:
-        case {"api_path": _}:
-            kwargs.pop("api_path_url", None)
+        case {"api_path": _, "api_error_code_str": _}:
             return GoTestAPIError(**kwargs)
-        case {"api_path_url": _}:
-            kwargs["api_path"] = kwargs.pop("api_path_url")
+        case {"api_path": _} if pattern_match := api_error_pattern_missing_details.search(output):
+            kwargs |= pattern_match.groupdict()
             return GoTestAPIError(**kwargs)
         case {"check_nr": _}:
             kwargs.pop("check_nr")

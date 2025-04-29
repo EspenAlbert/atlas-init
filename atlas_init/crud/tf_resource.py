@@ -49,8 +49,9 @@ class TFErrors(Entity):
 
     def look_for_existing_classifications(self, error: GoTestError) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:
         for candidate in self.errors:
-            if error.match(candidate):
-                return candidate.classifications
+            if error.match(candidate) and (classifications := candidate.classifications):
+                logger.info(f"found existing classification for {error.run.name}: {classifications}")
+                return classifications
 
     def classified_errors(self) -> list[GoTestError]:
         return [error for error in self.errors if error.human_error_class is not None]

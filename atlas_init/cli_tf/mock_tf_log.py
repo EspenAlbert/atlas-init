@@ -154,7 +154,7 @@ def is_cache_up_to_date(cache_path: Path, cache_ttl: int) -> bool:
     return False
 
 
-def resolve_admin_api_path(sdk_repo_path_str: str, sdk_branch: str, admin_api_path: str) -> Path:
+def resolve_admin_api_path(sdk_repo_path_str: str = "", sdk_branch: str = "main", admin_api_path: str = "") -> Path:
     if admin_api_path:
         resolved_admin_api_path = Path(admin_api_path)
         if not resolved_admin_api_path.exists():

@@ -107,6 +107,17 @@ _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted = """\
 2025-04-27T00:47:25.4443301Z         processor validation: global resource manager returned no resources],
 2025-04-27T00:47:25.4443839Z         BadRequestDetail: 
 2025-04-27T00:47:25.4511892Z     --- FAIL: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted (4.03s)"""
+_logs_TestAccCluster_basicGCPRegionNameWesternUS = """\
+2025-04-28T00:28:58.3752937Z === RUN   TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-28T00:29:00.9061129Z     resource_cluster_test.go:1088: Step 1/1 error: Error running apply: exit status 1
+2025-04-28T00:29:00.9061671Z         
+2025-04-28T00:29:00.9064275Z         Error: error creating MongoDB Cluster: POST https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters: 409 (request "OUT_OF_CAPACITY") The requested region is currently out of capacity for the requested instance size.
+2025-04-28T00:29:00.9065883Z         
+2025-04-28T00:29:00.9066209Z           with mongodbatlas_cluster.test,
+2025-04-28T00:29:00.9066852Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_cluster" "test":
+2025-04-28T00:29:00.9067533Z           12: \tresource "mongodbatlas_cluster" "test" {
+2025-04-28T00:29:00.9067841Z         
+2025-04-28T00:29:00.9610855Z --- FAIL: TestAccCluster_basicGCPRegionNameWesternUS (2.58s)"""
 
 _ci_logs_test_data = [
     (
@@ -146,6 +157,11 @@ _ci_logs_test_data = [
         {
             "TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted": _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
         }
+    ),
+    (
+        "41241715011_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster",
+        {},
+        {"TestAccCluster_basicGCPRegionNameWesternUS": _logs_TestAccCluster_basicGCPRegionNameWesternUS}
     )
 ]
 
@@ -290,6 +306,33 @@ api_error_stream_processor_generic = GoTestAPIError(
     api_path="/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/processor",
 )
 
+api_error_out_of_capacity = GoTestAPIError(
+    api_error_code_str="OUT_OF_CAPACITY",
+    api_method="POST",
+    api_response_code=409,
+    tf_resource_name="test",
+    tf_resource_type="cluster",
+    step_nr=1,
+    api_path="/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters",
+)
+_logs_TestAccBackupCompliancePolicy_UpdateSetsAllAttributes = """\
+2025-04-28T00:41:49.0654998Z === RUN   TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
+2025-04-28T00:41:49.0683920Z === NAME  TestAccBackupCompliancePolicy_UpdateSetsAllAttributes
+2025-04-28T00:41:49.0685493Z     resource_backup_compliance_policy_test.go:127: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-28T00:41:49.0686699Z         
+2025-04-28T00:41:49.0699289Z         Error: error disabling the Backup Compliance Policy: 680ecbbe1ad7050ec5b1ebe3: https://cloud-dev.mongodb.com/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy DELETE: HTTP 500 Internal Server Error (Error code: "UNEXPECTED_ERROR") Detail: Unexpected error. Reason: Internal Server Error. Params: [], BadRequestDetail: 
+2025-04-28T00:41:49.0701451Z         
+2025-04-28T00:41:49.0702222Z --- FAIL: TestAccBackupCompliancePolicy_UpdateSetsAllAttributes (9.42s)"""
+
+api_error_unexpected_error = GoTestAPIError(
+    api_error_code_str="UNEXPECTED_ERROR",
+    api_method="DELETE",
+    api_response_code=500,
+    tf_resource_name="",
+    tf_resource_type="",
+    step_nr=-1,
+    api_path="/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy",
+)
 
 @pytest.mark.parametrize(
     "logs_str,expected_details",
@@ -310,9 +353,17 @@ api_error_stream_processor_generic = GoTestAPIError(
         (
             _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
             api_error_stream_processor_generic,
-        )
+        ),
+        (
+            _logs_TestAccCluster_basicGCPRegionNameWesternUS,
+            api_error_out_of_capacity,
+        ),
+        (
+            _logs_TestAccBackupCompliancePolicy_UpdateSetsAllAttributes,
+            api_error_unexpected_error,
+        ),
     ],
-    ids=["tenant should create GoTestCheckError", "api error with params", "api error without params"],
+    ids=["tenant should create GoTestCheckError", "api error with params", "api error without params", "api error no details", "api error no TF resource or type"],
 )
 def test_extract_error_details(logs_str, expected_details):
     run = dummy_run(logs_str, "extract-error-details")

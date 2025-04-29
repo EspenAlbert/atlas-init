@@ -27,6 +27,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     GoTestErrorClass,
     parse_error_details,
 )
+from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 from atlas_init.crud.tf_resource import (
     TFErrors,
     TFResources,
@@ -53,7 +54,6 @@ class TFCITestInput(Event):
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     names: set[str] = Field(default_factory=set)
     summary_name: str = ""
-    admin_api_path: Path | None = None
 
     @model_validator(mode="after")
     def set_workflow_file_stems(self) -> TFCITestInput:
@@ -137,9 +137,8 @@ def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     )
     found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=False)
     out = TFCITestOutput(log_paths=log_paths, found_tests=found_tests)
-    spec_paths = None
-    if admin_api_path := event.admin_api_path:
-        spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
+    admin_api_path = resolve_admin_api_path(sdk_branch="main")
+    spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
     out.found_errors = test_errors = parse_errors(parse_job_output, spec_paths, settings)
     classify_errors(test_errors, settings)
     return out
@@ -150,6 +149,12 @@ def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> N
     needs_classification = []
     for error in errors:
         if error.classifications:
+            continue
+        if auto_classification := GoTestErrorClass.auto_classification(error.run.output_lines_str):
+            logger.info(f"auto classification for {error.run.name}: {auto_classification}")
+            error.bot_error_class = auto_classification
+            error.human_error_class = auto_classification
+            store_or_update_tf_errors(settings, [error])
             continue
         if existing_classifications := known_errors.look_for_existing_classifications(error):
             error.bot_error_class, error.human_error_class = existing_classifications

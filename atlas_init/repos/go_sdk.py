@@ -25,6 +25,8 @@ class ApiSpecPaths(Entity):
     method_paths: dict[str, list[ApiSpecPath]]
 
     def normalize_path(self, method: str, path: str) -> str:
+        if path.startswith("/api/atlas/v1.0"):
+            return ""
         return find_normalized_path(path, self.method_paths[method]).path
 
 
