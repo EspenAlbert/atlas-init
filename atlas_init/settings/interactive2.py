@@ -61,8 +61,7 @@ def select_list(
     default: StrT | None = None,
 ) -> StrT:
     assert choices, "choices must not be empty"
-    selection = _question_asker(_select(prompt_text, default=default, choices=choices), str)
-    return selection
+    return _question_asker(_select(prompt_text, default=default, choices=choices), str)
 
 
 class KeyInput:
@@ -119,6 +118,7 @@ class question_patcher:
 
 
 if __name__ == "__main__":
+    print(select_list("Select an option:", ["Option 1", "Option 2", "Option 3"]))  # noqa: T201
     print(  # noqa: T201
         select_dict(
             "Select an option:",

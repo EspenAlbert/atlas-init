@@ -108,11 +108,13 @@ class GoTestError(Entity):
         return None
 
     def match(self, other: GoTestError) -> bool:
-        if type(self.details) is type(other.details):
-            return False
+        if self.run.id == other.run.id:
+            return True
         details = self.details
+        other_details = other.details
+        if type(self.details) is not type(other_details):
+            return False
         if isinstance(details, GoTestAPIError):
-            other_details = other.details
             assert isinstance(other_details, GoTestAPIError)
             return (
                 details.api_path_normalized == other_details.api_path_normalized
@@ -135,6 +137,7 @@ detail_patterns: list[re.Pattern] = [
     re.compile(r"Params: \[(?P<api_path>[^\]]+)\]"),
     re.compile(rf"(?P<api_method>{one_of_methods})" + r": HTTP (?P<api_response_code>\d+)"),
     re.compile(r'Error code: "(?P<api_error_code_str>[^"]+)"'),
+    re.compile(r"https://cloud(-dev|-qa)?\.mongodb\.com(?P<api_path_url>\S+)"),
 ]
 
 
@@ -146,6 +149,10 @@ def parse_error_details(run: GoTestRun) -> ErrorDetails:
             kwargs |= pattern_match.groupdict()
     match kwargs:
         case {"api_path": _}:
+            kwargs.pop("api_path_url", None)
+            return GoTestAPIError(**kwargs)
+        case {"api_path_url": _}:
+            kwargs["api_path"] = kwargs.pop("api_path_url")
             return GoTestAPIError(**kwargs)
         case {"check_nr": _}:
             kwargs.pop("check_nr")

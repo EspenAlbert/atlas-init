@@ -86,6 +86,28 @@ _logs_TestAccBackupRSOnlineArchiveWithProcessRegion = """\
 2024-06-26T00:58:20.7944500Z           52: \tresource "mongodbatlas_online_archive" "users_archive" {
 2024-06-26T00:58:20.7945036Z         
 2024-06-26T00:58:20.7945708Z --- FAIL: TestAccBackupRSOnlineArchiveWithProcessRegion (1139.13s)"""
+
+_logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted = """\
+2025-04-27T00:47:25.4407749Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-27T00:47:25.4408915Z     resource_test.go:171: Testing: Verifies a processor can transition from STOPPED to STARTED state
+2025-04-27T00:47:25.4434045Z     resource_test.go:172: Step 1/3 error: Error running apply: exit status 1
+2025-04-27T00:47:25.4434424Z         
+2025-04-27T00:47:25.4434818Z         Error: error creating resource
+2025-04-27T00:47:25.4435097Z         
+2025-04-27T00:47:25.4435552Z           with mongodbatlas_stream_processor.processor,
+2025-04-27T00:47:25.4436464Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-27T00:47:25.4437255Z           28: \t\tresource "mongodbatlas_stream_processor" "processor" {
+2025-04-27T00:47:25.4437596Z         
+2025-04-27T00:47:25.4438929Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/processor
+2025-04-27T00:47:25.4439967Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-27T00:47:25.4440616Z         Detail: Streams Processor with this name (processor-stopped-to-started) had a
+2025-04-27T00:47:25.4441404Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-27T00:47:25.4442041Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-27T00:47:25.4442673Z         [processor-stopped-to-started failed to acquire resources for stream
+2025-04-27T00:47:25.4443301Z         processor validation: global resource manager returned no resources],
+2025-04-27T00:47:25.4443839Z         BadRequestDetail: 
+2025-04-27T00:47:25.4511892Z     --- FAIL: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted (4.03s)"""
+
 _ci_logs_test_data = [
     (
         _CLUSTER_LOGS_FILENAME,
@@ -118,6 +140,13 @@ _ci_logs_test_data = [
             "TestAccBackupRSOnlineArchiveWithProcessRegion": _logs_TestAccBackupRSOnlineArchiveWithProcessRegion,
         },
     ),
+    (
+        "41215865444_tests-1.11.x-latest_tests-1.11.x-latest-qa_stream",
+        {},
+        {
+            "TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted": _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
+        }
+    )
 ]
 
 
@@ -132,7 +161,7 @@ def test_parsing_ci_logs(
     test_results,
     test_output,
 ):
-    file_path = github_ci_logs_dir / f"{log_file}.txt"
+    file_path = github_ci_logs_dir / f"{log_file}.log"
     found_tests = parse_tests(file_path.read_text().splitlines())
     assert found_tests
     found_tests_by_name = {test.name: test for test in found_tests}
@@ -251,6 +280,16 @@ api_error_project_not_found = GoTestAPIError(
     api_path="/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings",
 )
 
+api_error_stream_processor_generic = GoTestAPIError(
+    api_error_code_str="STREAM_PROCESSOR_GENERIC_ERROR",
+    api_method="POST",
+    api_response_code=400,
+    tf_resource_name="processor",
+    tf_resource_type="stream_processor",
+    step_nr=1,
+    api_path="/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/processor",
+)
+
 
 @pytest.mark.parametrize(
     "logs_str,expected_details",
@@ -268,8 +307,12 @@ api_error_project_not_found = GoTestAPIError(
             _logs_TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade,
             api_error_project_not_found,
         ),
+        (
+            _logs_TestAccStreamProcessor_StateTransitionsUpdates_StoppedToStarted,
+            api_error_stream_processor_generic,
+        )
     ],
-    ids=["tenant should create GoTestCheckError", "api error should be parsed"],
+    ids=["tenant should create GoTestCheckError", "api error with params", "api error without params"],
 )
 def test_extract_error_details(logs_str, expected_details):
     run = dummy_run(logs_str, "extract-error-details")

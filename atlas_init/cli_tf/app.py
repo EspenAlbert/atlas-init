@@ -10,6 +10,7 @@ from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
 )
+from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.changelog import convert_to_changelog
 from atlas_init.cli_tf.example_update import update_example_cmd
 from atlas_init.cli_tf.log_clean import log_clean
@@ -35,6 +36,7 @@ app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
 app.command(name="example-update")(update_example_cmd)
 app.command(name="log-clean")(log_clean)
+app.command(name="ci-tests")(ci_tests)
 logger = logging.getLogger(__name__)
 
 

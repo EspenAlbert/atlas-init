@@ -46,7 +46,6 @@ def download_job_safely(workflow_dir: Path, job: WorkflowJob) -> Path | None:
     if job.conclusion in {"skipped", "cancelled", None}:
         logger.info(f"not downloading job: {job.html_url}, conclusion: {job.conclusion}")
         return None
-
     path = logs_file(workflow_dir, job)
     job_summary = f"found test job: {job.name}, attempt {job.run_attempt}, {job.created_at}, url: {job.html_url}"
     if path.exists():
@@ -81,7 +80,7 @@ def workflow_logs_dir(workflow: WorkflowRun) -> Path:
 def logs_file(workflow_dir: Path, job: WorkflowJob) -> Path:
     if job.run_attempt != 1:
         workflow_dir = workflow_dir.with_name(f"{workflow_dir.name}_attempt{job.run_attempt}")
-    filename = f"{job.id}_" + job.name.replace(" ", "").replace("/", "_").replace("__", "_") + ".txt"
+    filename = f"{job.id}_" + job.name.replace(" ", "").replace("/", "_").replace("__", "_") + ".log"
     return workflow_dir / filename
 
 

@@ -50,9 +50,34 @@ class TFErrors(Entity):
 
 
 def read_tf_errors(settings: AtlasInitSettings) -> TFErrors:
-    return parse_model(crud_dir(settings) / "tf_errors.yaml", TFErrors)
+    path = crud_dir(settings) / "tf_errors.yaml"
+    return parse_model(path, TFErrors) if path.exists() else TFErrors()
 
 
 def store_or_update_tf_errors(settings: AtlasInitSettings, errors: list[GoTestError]):
-    yaml_dump = dump(TFErrors(errors=errors), "yaml")
+    existing = read_tf_errors(settings)
+    new_error_ids = {error.run.id for error in errors}
+    existing_without_new = [error for error in existing.errors if error.run.id not in new_error_ids]
+    all_errors = existing_without_new + errors
+    yaml_dump = dump(TFErrors(errors=all_errors), "yaml")
     ensure_parents_write_text(crud_dir(settings) / "tf_errors.yaml", yaml_dump)
+
+
+def read_tf_test_runs(settings: AtlasInitSettings) -> list[GoTestRun]:
+    path = crud_dir(settings) / "tf_test_runs.yaml"
+    return parse_model(path, list[GoTestRun]) if path.exists() else []
+
+
+def store_tf_test_runs(settings: AtlasInitSettings, test_runs: list[GoTestRun], *, overwrite: bool) -> list[GoTestRun]:
+    existing = read_tf_test_runs(settings)
+    new_ids = {run.id for run in test_runs}
+    existing_without_new = [run for run in existing if run.id not in new_ids]
+    path = crud_dir(settings) / "tf_test_runs.yaml"
+    all_runs = existing_without_new + test_runs
+    yaml_dump = dump(all_runs, "yaml")
+    ensure_parents_write_text(path, yaml_dump)
+
+
+def read_tf_error_by_run(settings: AtlasInitSettings, run: GoTestRun) -> GoTestError | None:
+    errors = read_tf_errors(settings)
+    return next((error for error in errors.errors if error.run.id == run.id), None)

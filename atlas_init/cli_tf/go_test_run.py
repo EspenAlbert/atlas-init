@@ -103,6 +103,10 @@ class GoTestRun(Entity):
         return (self.ts, self.name) < (other.ts, other.name)
 
     @property
+    def id(self) -> str:
+        return f"{self.ts.isoformat()}-{self.name}"
+
+    @property
     def when(self) -> str:
         return humanize.naturaltime(self.ts)
 
