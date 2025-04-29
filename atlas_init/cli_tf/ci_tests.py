@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 import logging
 import os
 import re
@@ -79,7 +80,7 @@ def ci_tests(
         "--summary",
         help="the name of the summary directory to store detailed test results",
     ),
-):  # sourcery skip: use-named-expression
+):
     names_set: set[str] = set()
     if names:
         names_set.update(names.split(","))
@@ -146,30 +147,44 @@ def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
 
 def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> None:
     known_errors: TFErrors = read_tf_errors(settings)
-    needs_classification = []
+    needs_classification: list[GoTestError] = []
     for error in errors:
         if error.classifications:
             continue
         if auto_classification := GoTestErrorClass.auto_classification(error.run.output_lines_str):
             logger.info(f"auto classification for {error.run.name}: {auto_classification}")
-            error.bot_error_class = auto_classification
-            error.human_error_class = auto_classification
+            error.set_human_and_bot_classification(auto_classification)
             store_or_update_tf_errors(settings, [error])
             continue
         if existing_classifications := known_errors.look_for_existing_classifications(error):
-            error.bot_error_class, error.human_error_class = existing_classifications
+            error.set_human_and_bot_classification(existing_classifications[-1])
             store_or_update_tf_errors(settings, [error])
         else:
             needs_classification.append(error)
     if add_bot_classification_changes(needs_classification, settings):
         store_or_update_tf_errors(settings, needs_classification)
-    for newly_classified in needs_classification:
-        if new_class := ask_user_to_classify_error(newly_classified):
-            newly_classified.human_error_class = new_class
-            store_or_update_tf_errors(settings, [newly_classified])
+    logger.info(f"found {len(needs_classification)} errors that need manual classification")
+    manual_classification(settings, needs_classification)
+
+
+def manual_classification(settings: AtlasInitSettings, needs_classification: list[GoTestError]):
+    remaining_work = deque(needs_classification)
+    while remaining_work:
+        logger.info(f"remaining work: {len(remaining_work)}")
+        error = remaining_work.popleft()
+        if new_class := ask_user_to_classify_error(error):
+            error.set_human_and_bot_classification(new_class)
+            updated_errors = [error]
+            if similar_matches := [similar_error for similar_error in remaining_work if similar_error.match(error)]:
+                updated_errors.extend(similar_matches)
+                logger.info(f"found {len(similar_matches)} similar matches for {error.run.name}, using {new_class}")
+                for similar_error in similar_matches:
+                    similar_error.set_human_and_bot_classification(new_class)
+                    remaining_work.remove(similar_error)
+            store_or_update_tf_errors(settings, [error])
         elif confirm("do you want to stop classifying errors?", default=True):
             logger.info("stopping classification")
-            break
+            return
 
 
 def add_bot_classification_changes(needs_classification_errors: list[GoTestError], settings: AtlasInitSettings) -> bool:

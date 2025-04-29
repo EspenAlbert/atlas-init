@@ -80,6 +80,12 @@ class GoTestAPIError(Entity):
         if api_paths := info.paths:
             self.api_path_normalized = api_paths.normalize_path(method, path)
 
+    def __str__(self) -> str:
+        resource_part = f"{self.tf_resource_type} " if self.tf_resource_type else ""
+        if self.api_path_normalized:
+            return f"{resource_part}{self.api_error_code_str} {self.api_method} {self.api_path_normalized} {self.api_response_code}"
+        return f"{resource_part}{self.api_error_code_str} {self.api_method} {self.api_path} {self.api_response_code}"
+
 
 class CheckError(Entity):
     attribute: str = ""
@@ -97,6 +103,9 @@ class GoTestCheckError(Entity):
 
     def add_info_fields(self, _: DetailsInfo) -> None:
         pass
+
+    def __str__(self) -> str:
+        return f"{self.tf_resource_type} {self.tf_resource_name} {self.step_nr} {self.check_errors}"
 
 
 @dataclass
@@ -133,6 +142,10 @@ class GoTestError(Entity):
         if self.bot_error_class and self.human_error_class:
             return self.bot_error_class, self.human_error_class
         return None
+
+    def set_human_and_bot_classification(self, chosen_class: GoTestErrorClass) -> None:
+        self.human_error_class = chosen_class
+        self.bot_error_class = chosen_class
 
     def match(self, other: GoTestError) -> bool:
         if self.run.id == other.run.id:
