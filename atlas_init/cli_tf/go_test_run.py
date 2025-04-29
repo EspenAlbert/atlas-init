@@ -146,11 +146,11 @@ class ParseResult(Event):
 
     @model_validator(mode="after")
     def ensure_all_tests_completed(self) -> ParseResult:
-        incomplete_tests = []
-        incomplete_tests.extend(test for test in self.tests if test.finish_ts is None)
-        if incomplete_tests:
+        if incomplete_tests := [
+            f"{test.name}-{test.status}" for test in self.tests if GoTestStatus.is_running(test.status)
+        ]:
             raise ValueError(f"some tests are not completed: {incomplete_tests}")
-        if no_package_tests := [test for test in self.tests if test.package_url is None]:
+        if no_package_tests := [test.name for test in self.tests if test.package_url is None]:
             raise ValueError(f"some tests do not have package name: {no_package_tests}")
         return self
 
@@ -203,8 +203,11 @@ def ts_pattern(name: str) -> str:
     return r"(?P<%s>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z?)\s*" % name
 
 
-runtime_pattern = r"\((?P<runtime>\d+\.\d+s)\)"
-runtime_pattern_no_parenthesis = r"(?P<runtime>\d+\.\d+s)"
+_one_or_more_digit_or_star_pattern = r"(\d|\*)+"  # due to Github secrets, some digits can be replaced with "*"
+runtime_pattern_no_parenthesis = (
+    rf"(?P<runtime>{_one_or_more_digit_or_star_pattern}\.{_one_or_more_digit_or_star_pattern}s)"
+)
+runtime_pattern = rf"\({runtime_pattern_no_parenthesis}\)"
 
 
 ignore_line_pattern = [re.compile(ts_pattern("ts") + r"\s" + ts_pattern("ts2"))]
