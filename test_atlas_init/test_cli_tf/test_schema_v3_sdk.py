@@ -90,9 +90,7 @@ def update_compuatbility(resource: Resource, live_attributes: list[TFSchemaAttri
             continue
         expected = live_attr.computability
         if attribute.computed_optional_required != expected:
-            logger.warning(
-                f"updating {path} Computability from {attribute.computed_optional_required} to {expected}"
-            )
+            logger.warning(f"updating {path} Computability from {attribute.computed_optional_required} to {expected}")
             attribute.computed_optional_required = expected
 
 

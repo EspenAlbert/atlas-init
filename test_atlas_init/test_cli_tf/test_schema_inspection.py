@@ -34,6 +34,4 @@ def test_log_optional_only(tmp_path):
     path.parent.mkdir(exist_ok=True, parents=True)
     path.write_text(_example_map)
     log_optional_only(tmp_path)
-    assert list(
-        schema_attributes_plugin_framework(path, optional=True, computed=True)
-    ) == ["tags"]
+    assert list(schema_attributes_plugin_framework(path, optional=True, computed=True)) == ["tags"]

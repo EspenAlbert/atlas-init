@@ -1,6 +1,11 @@
 import pytest
 
-from atlas_init.cli_tf.hcl.modifier import BLOCK_TYPE_OUTPUT, BLOCK_TYPE_VARIABLE, read_block_attribute_object_keys, update_descriptions
+from atlas_init.cli_tf.hcl.modifier import (
+    BLOCK_TYPE_OUTPUT,
+    BLOCK_TYPE_VARIABLE,
+    read_block_attribute_object_keys,
+    update_descriptions,
+)
 
 example_variables_tf = """variable "cluster_name" {
   type = string
@@ -109,10 +114,13 @@ output "env_vars" {
 }
 """
 
+
 def test_output_env_vars_keys(tmp_path):
     example_tf_path = tmp_path / "example.tf"
     example_tf_path.write_text(out_example_env_vars)
-    env_vars = read_block_attribute_object_keys(example_tf_path, block_type=BLOCK_TYPE_OUTPUT, block_name="env_vars", block_key="value")
+    env_vars = read_block_attribute_object_keys(
+        example_tf_path, block_type=BLOCK_TYPE_OUTPUT, block_name="env_vars", block_key="value"
+    )
     assert env_vars == [
         "MONGODB_ATLAS_PROFILE",
         "MONGODB_ATLAS_PUBLIC_API_KEY",

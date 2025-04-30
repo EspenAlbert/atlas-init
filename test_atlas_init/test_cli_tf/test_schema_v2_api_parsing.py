@@ -18,9 +18,7 @@ from atlas_init.cli_tf.schema_v2_api_parsing import (
 logger = logging.getLogger(__name__)
 
 
-def test_openapi_schema_create_parameters(
-    schema_v2: SchemaV2, openapi_schema: OpenapiSchema
-):
+def test_openapi_schema_create_parameters(schema_v2: SchemaV2, openapi_schema: OpenapiSchema):
     processor = schema_v2.resources["stream_processor"]
     create_path, read_path = processor.paths
     create_method = openapi_schema.create_method(create_path)
@@ -43,9 +41,7 @@ def test_openapi_schema_create_parameters(
         "required": True,
         "schema": {"type": "string"},
     }
-    instance_name_param = parse_api_spec_param(
-        openapi_schema, tenant_name_param, processor
-    )
+    instance_name_param = parse_api_spec_param(openapi_schema, tenant_name_param, processor)
     assert instance_name_param
     assert instance_name_param.name == "instance_name"
     assert instance_name_param.type == "string"
@@ -108,12 +104,8 @@ def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: Openapi
     assert schema_attribute.is_nested
 
 
-@pytest.mark.skipif(
-    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
-)
-def test_ensure_test_data_admin_api_is_up_to_date(
-    schema_v2, file_regression, api_spec_path
-):
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
+def test_ensure_test_data_admin_api_is_up_to_date(schema_v2, file_regression, api_spec_path):
     api_path = Path(os.environ["API_SPEC_PATH"])
     openapi_schema = parse_model(api_path, t=OpenapiSchema)
     assert openapi_schema, "unable to parse admin api spec"
@@ -129,14 +121,10 @@ def test_ensure_test_data_admin_api_is_up_to_date(
 def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
     updated = api_spec_text_changes(schema_v2, openapi_schema)
     updated_yaml = dump(updated, "yaml")
-    file_regression.check(
-        updated_yaml, basename="openapi_text_changes", extension=".yaml"
-    )
+    file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")
 
 
-@pytest.mark.skipif(
-    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
-)
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 def test_invalid_in_regex_patterns():
     api_path = Path(os.environ["API_SPEC_PATH"])
     expected_count = 1033
@@ -145,14 +133,10 @@ def test_invalid_in_regex_patterns():
     assert not project_id_example_pattern.match(should_not_match)
     assert not pattern_match_full("[0-9a-f]+", should_not_match)
     patterns = find_patterns_in_file_and_match(api_path, should_not_match)
-    assert (
-        len(patterns) == expected_count
-    ), f"expected {expected_count} patterns, got {len(patterns)}"
+    assert len(patterns) == expected_count, f"expected {expected_count} patterns, got {len(patterns)}"
 
 
-def find_patterns_in_file_and_match(
-    api_path: Path, expected_no_match: str
-) -> list[str]:
+def find_patterns_in_file_and_match(api_path: Path, expected_no_match: str) -> list[str]:
     patterns = []
     lines = api_path.read_text().splitlines()
     prefix = 'pattern: "'
@@ -168,12 +152,10 @@ def find_patterns_in_file_and_match(
             patterns.append(pattern_value)
             pattern_value = valid_pattern(pattern_value)
             if not pattern_value:
-                logger.warning(f"invalid pattern: {patterns[-1]} on line: {i+1}")
+                logger.warning(f"invalid pattern: {patterns[-1]} on line: {i + 1}")
                 continue
             if pattern_match_full(pattern_value, expected_no_match):
-                logger.warning(
-                    f"pattern: {pattern_value} matched invalid character: {expected_no_match} on L={i+1}"
-                )
+                logger.warning(f"pattern: {pattern_value} matched invalid character: {expected_no_match} on L={i + 1}")
     return patterns
 
 

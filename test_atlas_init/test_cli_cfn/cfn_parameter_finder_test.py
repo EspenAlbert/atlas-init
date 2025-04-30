@@ -26,6 +26,7 @@ def test_infer_template_parameters(tmp_path):
         )
     assert exc.value.unknown_params == ["KeyId", "OrgId", "TeamId"]
 
+
 @pytest.mark.skipif(
     any(os.environ.get(name, "") == "" for name in ["SRC_TEMPLATE", "DEST_TEMPLATE"]),
     reason='needs env vars: ["SRC_TEMPLATE", "DEST_TEMPLATE"])',

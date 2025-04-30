@@ -36,14 +36,11 @@ REQUIRED_FIELDS = [
 
 
 @pytest.fixture(
-    autouse=True,
-    scope="function"
+    autouse=True, scope="function"
 )  # autouse to avoid any test modifying the os.environ and leaving side effects for next test
 def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
-    if existing_in_env := {
-        key: os.environ[key] for key in REQUIRED_FIELDS if key in os.environ
-    }:
+    if existing_in_env := {key: os.environ[key] for key in REQUIRED_FIELDS if key in os.environ}:
         for k, v in existing_in_env.items():
             logger.warning(f"Environment variables already set: {k}={v}")
     static_dir = tmp_path / "static"
@@ -106,13 +103,9 @@ class CLIArgs:
         if self.is_dry_run:
             self.env_vars_in_file |= mongodb_atlas_required_vars()
         if self.commands_expected:
-            self.assertions.extend(
-                [RunAssertion(command) for command in self.commands_expected]
-            )
+            self.assertions.extend([RunAssertion(command) for command in self.commands_expected])
         if self.files_glob_expected:
-            self.assertions.extend(
-                [FileAssertion(glob=glob) for glob in self.files_glob_expected]
-            )
+            self.assertions.extend([FileAssertion(glob=glob) for glob in self.files_glob_expected])
 
 
 class _AssertionOutput(BaseModel):
@@ -163,9 +156,7 @@ def cli_configure(
             remotes=[
                 MagicMock(
                     name="origin",
-                    urls=[
-                        f"https://github.com/{GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES}"
-                    ],
+                    urls=[f"https://github.com/{GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES}"],
                 )
             ],
         )
@@ -203,26 +194,18 @@ def cli_assertions(file_regression, caplog, tmp_path):
                 case RunAssertion(substring):
                     for log_text in caplog.messages:
                         if substring in log_text:
-                            output.commands_run[substring] = normalize_cmd(
-                                substring, log_text
-                            )
+                            output.commands_run[substring] = normalize_cmd(substring, log_text)
                             break
                     else:
-                        output.commands_missing.append(
-                            f"substring no match: {substring}"
-                        )
+                        output.commands_missing.append(f"substring no match: {substring}")
                 case FileAssertion(base, glob, rglob):
                     if base != "cwd":
                         raise NotImplementedError(f"base: {base}")
                     cwd = current_dir()
                     files = sorted(cwd.glob(glob)) if glob else sorted(cwd.rglob(rglob))
                     if not files:
-                        output.files_missing.append(
-                            f"no files found in {base}: {glob or rglob}"
-                        )
-                    output.files |= {
-                        str(file.relative_to(cwd)): file.read_text() for file in files
-                    }
+                        output.files_missing.append(f"no files found in {base}: {glob or rglob}")
+                    output.files |= {str(file.relative_to(cwd)): file.read_text() for file in files}
         yaml_text = dump(output, "yaml")
         file_regression.check(yaml_text, extension=".yaml")
         assert output.commands_missing == [], output.commands_missing

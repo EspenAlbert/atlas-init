@@ -6,6 +6,7 @@ from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import GoTestDefaultError, GoTestError, GoTestErrorClass
 from atlas_init.settings.interactive2 import question_patcher
 
+
 def test_ask_user_to_classify_error():
     with question_patcher([""]):
         error = GoTestError(

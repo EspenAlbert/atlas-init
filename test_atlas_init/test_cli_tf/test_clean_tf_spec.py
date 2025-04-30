@@ -38,9 +38,7 @@ def test_parse_resource_schema_v3(parse_resource_v3, resource_name):
     attribute_names = [attr.name for attr in model.local_schema.attributes]
     assert attribute_names
     logger.info(f"attributes for {model.name}: {attribute_names}")
-    nested_attributes = [
-        attr.name for attr in model.local_schema.attributes if attr.is_nested
-    ]
+    nested_attributes = [attr.name for attr in model.local_schema.attributes if attr.is_nested]
     logger.info(f"nested_attributes for {model.name}: {nested_attributes}")
 
 

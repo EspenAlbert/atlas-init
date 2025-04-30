@@ -31,26 +31,17 @@ def test_go_parser(go_schema_paths):
     assert by_name["analytics_specs"].start_end == (389, 423)
     by_schema_path = {a.attribute_path: a for a in attributes}
     assert len(by_schema_path) == len(attributes)
-    assert (
-        by_name["analytics_specs"].attribute_path
-        == "replication_specs.region_configs.analytics_specs"
-    )
+    assert by_name["analytics_specs"].attribute_path == "replication_specs.region_configs.analytics_specs"
     assert by_name["analytics_specs"].parent_attribute_names() == [
         "replication_specs",
         "region_configs",
     ]
     assert by_name["cluster_type"].is_required
-    assert (
-        by_name["region_configs"].attribute_path == "replication_specs.region_configs"
-    )
+    assert by_name["region_configs"].attribute_path == "replication_specs.region_configs"
     assert by_name["advanced_configuration"].attribute_path == "advanced_configuration"
+    assert by_name["compute_enabled"].attribute_path == "(analytics_auto_scaling|auto_scaling).compute_enabled"
     assert (
-        by_name["compute_enabled"].attribute_path
-        == "(analytics_auto_scaling|auto_scaling).compute_enabled"
-    )
-    assert (
-        by_name["ebs_volume_type"].attribute_path
-        == "(analytics_specs|electable_specs|read_only_specs).ebs_volume_type"
+        by_name["ebs_volume_type"].attribute_path == "(analytics_specs|electable_specs|read_only_specs).ebs_volume_type"
     )
     assert by_name["ebs_volume_type"].parent_attribute_names() == [
         "analytics_specs",

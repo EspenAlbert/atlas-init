@@ -3,12 +3,15 @@ import pytest
 from test_atlas_init.conftest import CLIArgs
 
 
-@pytest.mark.parametrize("capture_mode,capture_env_vars", [
-    (GoTestCaptureMode.capture, {"HTTP_MOCKER_CAPTURE": "true"}),
-    (GoTestCaptureMode.replay, {"HTTP_MOCKER_REPLAY": "true"}),
-    (GoTestCaptureMode.replay_and_update, {"HTTP_MOCKER_REPLAY": "true", "HTTP_MOCKER_DATA_UPDATE": "true"}),
-    (GoTestCaptureMode.no_capture, {}),
-])
+@pytest.mark.parametrize(
+    "capture_mode,capture_env_vars",
+    [
+        (GoTestCaptureMode.capture, {"HTTP_MOCKER_CAPTURE": "true"}),
+        (GoTestCaptureMode.replay, {"HTTP_MOCKER_REPLAY": "true"}),
+        (GoTestCaptureMode.replay_and_update, {"HTTP_MOCKER_REPLAY": "true", "HTTP_MOCKER_DATA_UPDATE": "true"}),
+        (GoTestCaptureMode.no_capture, {}),
+    ],
+)
 def test_resolve_env_vars(cli_configure, capture_mode, capture_env_vars):
     settings = cli_configure(CLIArgs())
     actual = resolve_env_vars(

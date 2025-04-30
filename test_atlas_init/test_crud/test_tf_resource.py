@@ -3,7 +3,13 @@ from model_lib import copy_and_validate
 from zero_3rdparty.datetime_utils import utc_now
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
 from atlas_init.cli_tf.go_test_tf_error import GoTestDefaultError, GoTestError, GoTestErrorClass
-from atlas_init.crud.tf_resource import read_tf_error_by_run, read_tf_errors, read_tf_test_runs, store_or_update_tf_errors, store_tf_test_runs
+from atlas_init.crud.tf_resource import (
+    read_tf_error_by_run,
+    read_tf_errors,
+    read_tf_test_runs,
+    store_or_update_tf_errors,
+    store_tf_test_runs,
+)
 
 
 def test_tf_errors(settings, subtests):
@@ -47,7 +53,8 @@ def test_tf_errors(settings, subtests):
             GoTestErrorClass.FLAKY_400,
             GoTestErrorClass.FLAKY_400,
         )
-    
+
+
 def test_tf_test_runs(settings, subtests):
     now = utc_now()
     run1 = GoTestRun(name="test_run1", ts=now)

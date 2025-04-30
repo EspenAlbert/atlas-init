@@ -37,4 +37,3 @@ def test_terraform_resource_test_names(tf_repo_path):
         test_name_counts[name] += 1
     for name, count in test_name_counts.most_common(10):
         logger.info(f"test: {name} count: {count}")
-

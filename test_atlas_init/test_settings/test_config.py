@@ -12,13 +12,7 @@ def test_TerraformVars_add():
 
 
 def test_ChangeGroup():
-    group = TestSuite(
-        name="g1", repo_go_packages={"tf": ["internal/service/streamconnection"]}
-    )
-    assert group.is_active(
-        "tf", ["internal/service/streamconnection/model_stream_connection.go"]
-    )
+    group = TestSuite(name="g1", repo_go_packages={"tf": ["internal/service/streamconnection"]})
+    assert group.is_active("tf", ["internal/service/streamconnection/model_stream_connection.go"])
     assert not group.is_active("tf", ["internal/service/streamconnection"])
-    assert not group.is_active(
-        "tf", ["internal/service/another/model_stream_connection.go"]
-    )
+    assert not group.is_active("tf", ["internal/service/another/model_stream_connection.go"])

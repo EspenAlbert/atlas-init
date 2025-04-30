@@ -12,7 +12,6 @@ from atlas_init.cli_tf.go_test_run import (
     parse_tests,
 )
 
-from atlas_init.cli_tf.go_test_run import GoTestStatus, parse_tests
 from atlas_init.cli_tf.go_test_tf_error import (
     CheckError,
     GoTestAPIError,
@@ -22,9 +21,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
 from zero_3rdparty.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
-_CLUSTER_LOGS_FILENAME = (
-    "40216336752_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster"
-)
+_CLUSTER_LOGS_FILENAME = "40216336752_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster"
 
 _ci_logs_test_data = [
     (
@@ -64,12 +61,12 @@ _ci_logs_test_data = [
         [
             "streamprocessor/TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted",
             "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated",
-        ]
+        ],
     ),
     (
         "41241715011_tests-1.11.x-latest_tests-1.11.x-latest-false_cluster",
         {},
-        ["cluster/TestAccCluster_basicGCPRegionNameWesternUS"]
+        ["cluster/TestAccCluster_basicGCPRegionNameWesternUS"],
     ),
     (
         "41313624603_tests-1.11.x-latest_tests-1.11.x-latest-false_stream",
@@ -77,21 +74,21 @@ _ci_logs_test_data = [
         [
             "streamconnection/TestAccStreamRSStreamConnection_kafkaNetworkingVPC",
             "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StartedToCreated",
-        ]
+        ],
     ),
     (
         "41241718467_tests-1.11.x-latest_tests-1.11.x-latest-false_stream",
         {},
-        [
-            "streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated"
-        ]
-    )
+        ["streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated"],
+    ),
 ]
 TEST_LINES_SPLIT_SYMBOL = "\nNEXT_TEST\n"
+
 
 def dump_test_output(run: GoTestRun) -> str:
     assert run.is_failure, f"test output only for failures, got {run.status} for {run.name}"
     return f"{run.name}\n{run.output_lines_str}"
+
 
 @pytest.mark.parametrize(
     "log_file,test_results,test_output",
@@ -116,19 +113,15 @@ def test_parsing_ci_logs(
         for test_name, expected_status in test_results.items()
         if found_tests_by_name[test_name].status != expected_status
     ]
-    assert (
-        not non_matching_statuses
-    ), f"Test statuses do not match: {non_matching_statuses}"
+    assert not non_matching_statuses, f"Test statuses do not match: {non_matching_statuses}"
     # sourcery skip: no-loop-in-tests
     # sourcery skip: no-conditionals-in-tests
     if not test_output:
         return
-    test_output_logs = [
-        dump_test_output(found_tests_by_name[test_name])
-        for test_name in test_output
-    ]
+    test_output_logs = [dump_test_output(found_tests_by_name[test_name]) for test_name in test_output]
     all_log_lines = TEST_LINES_SPLIT_SYMBOL.join(test_output_logs)
     file_regression.check(all_log_lines, extension=".log")
+
 
 def test_find_env_of_mongodb_base_url(github_ci_logs_dir):
     logs_path = github_ci_logs_dir / f"{_CLUSTER_LOGS_FILENAME}.log"
@@ -150,9 +143,7 @@ def check_status_counts(
     }
     for status, count in group_counts.items():
         group_tests = [t for t in tests if t.status == status]
-        assert (
-            len(group_tests) == count
-        ), f"wrong count for {status}, got {len(group_tests)} expected {count}"
+        assert len(group_tests) == count, f"wrong count for {status}, got {len(group_tests)} expected {count}"
 
 
 _expected_pass_names = {
@@ -182,16 +173,12 @@ _expected_pass_names = {
     "TestAccNetworkPrivatelinkEndpointServiceDataFederationOnlineArchive_basicWithRegionDnsName",
 }
 
-_network_logs_one_failure = (
-    Path(__file__).parent / "test_data/network_logs_one_failure.txt"
-)
+_network_logs_one_failure = Path(__file__).parent / "test_data/network_logs_one_failure.txt"
 
 
 def test_parse():
     tests = parse_tests(_network_logs_one_failure.read_text().splitlines())
-    missing_passing = _expected_pass_names - {
-        t.name for t in tests if t.status == GoTestStatus.PASS
-    }
+    missing_passing = _expected_pass_names - {t.name for t in tests if t.status == GoTestStatus.PASS}
     assert not missing_passing, f"missing passing tests: {missing_passing}"
     assert tests
     check_status_counts(tests, fail_count=1, skip_count=6, pass_count=24)
@@ -211,11 +198,7 @@ def test_rename_directories_and_files():
 
 def test_extract_group_name():
     assert (
-        extract_group_name(
-            Path(
-                "40216340925_tests-1.11.x-latest_tests-1.11.x-latest-false_search_deployment.txt"
-            )
-        )
+        extract_group_name(Path("40216340925_tests-1.11.x-latest_tests-1.11.x-latest-false_search_deployment.txt"))
         == "search_deployment"
     )
 
@@ -260,6 +243,7 @@ api_error_unexpected_error = GoTestAPIError(
     api_path="/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy",
 )
 
+
 def read_test_logs(test_name: str) -> str:
     test_file_path = Path(__file__)
     logs_dir = test_file_path.parent / test_file_path.stem
@@ -270,6 +254,7 @@ def read_test_logs(test_name: str) -> str:
             name, *log_lines = part.splitlines()
             test_logs[name] = "\n".join(log_lines)
     return test_logs[test_name]
+
 
 @pytest.mark.parametrize(
     "test_name,expected_details",
@@ -300,7 +285,13 @@ def read_test_logs(test_name: str) -> str:
             api_error_unexpected_error,
         ),
     ],
-    ids=["tenant should create GoTestCheckError", "api error with params", "api error without params", "api error no details", "api error no TF resource or type"],
+    ids=[
+        "tenant should create GoTestCheckError",
+        "api error with params",
+        "api error without params",
+        "api error no details",
+        "api error no TF resource or type",
+    ],
 )
 def test_extract_error_details(test_name, expected_details):
     logs_str = read_test_logs(test_name)

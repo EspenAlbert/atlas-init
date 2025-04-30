@@ -66,10 +66,17 @@ def test_add_api_spec_info(schema_v2, api_spec_path):
     ]
 
 
-@pytest.mark.parametrize("resource_name", ["stream_processor", "resource_policy", "employee_access_grant", "non_compliant_resources", "push_based_log_export"])
-def test_resource_schema_full(
-    schema_with_api_info: SchemaV2, resource_name, file_regression
-):
+@pytest.mark.parametrize(
+    "resource_name",
+    [
+        "stream_processor",
+        "resource_policy",
+        "employee_access_grant",
+        "non_compliant_resources",
+        "push_based_log_export",
+    ],
+)
+def test_resource_schema_full(schema_with_api_info: SchemaV2, resource_name, file_regression):
     schema = schema_with_api_info
     actual = generate_go_resource_schema(schema, schema.resources[resource_name])
     file_regression.check(actual, basename=resource_name, extension=".go")
@@ -83,6 +90,7 @@ import (
   "github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 """
+
 
 @pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
 def test_sync_generated_schemas(original_datadir):
