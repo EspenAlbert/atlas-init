@@ -1,6 +1,6 @@
 from pathlib import Path
 
-VERSION = "0.4.5"
+VERSION = "0.5.0"
 
 
 def running_in_repo() -> bool:
