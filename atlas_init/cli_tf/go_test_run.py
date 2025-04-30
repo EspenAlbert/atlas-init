@@ -98,17 +98,16 @@ class GoTestRuntimeStats(NamedTuple):
     name_with_package: str
     runs: list[GoTestRun]
 
+    @property
+    def slowest_duration(self) -> str:
+        return humanize.naturaldelta(self.slowest_seconds)
+
 
 class GoTestLastPassStat(NamedTuple):
     pass_ts: utc_datetime
     name_with_package: str
     pass_when: str
     last_pass: GoTestRun
-
-
-class GoTestLastPassStats(NamedTuple):
-    never_passed: dict[str, list[GoTestRun]]
-    last_passed: list[GoTestLastPassStat]
 
 
 @total_ordering
@@ -195,25 +194,24 @@ class GoTestRun(Entity):
     @classmethod
     def last_pass(cls, tests: list[GoTestRun]) -> str:
         last_pass = max((test for test in tests if test.is_pass), default=None)
-        return last_pass.when if last_pass else "never"
+        return last_pass.when if last_pass else ""
 
     @classmethod
-    def last_pass_stats(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> GoTestLastPassStats:
-        """should also return tests that never passed"""
+    def last_pass_stats(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> list[GoTestLastPassStat]:
+        """Returns"""
         pass_stats: list[GoTestLastPassStat] = []
-        never_passed: dict[str, list[GoTestRun]] = {}
         for name_with_package, name_tests in cls.group_by_name_package(tests).items():
-            last_pass_str = cls.last_pass(name_tests)
-            if last_pass_str == "never":
-                if sum(GoTestStatus.is_pass_or_fail(test.status) for test in tests) != 0:
-                    never_passed[name_with_package] = name_tests
+            has_passes = bool(sum(test.is_pass for test in name_tests))
+            if not has_passes:
                 continue
-            last_pass = max((test for test in name_tests if test.is_pass))
-            finish_ts = last_pass.finish_ts
-            assert finish_ts is not None, f"last_pass {last_pass} has no finish_ts"
-            pass_stats.append(GoTestLastPassStat(finish_ts, name_with_package, last_pass_str, last_pass))
-        top_pass_stats = sorted(pass_stats)[:max_tests]
-        return GoTestLastPassStats(never_passed=never_passed, last_passed=top_pass_stats)
+            has_failures = bool(sum(test.is_failure for test in name_tests))
+            if not has_failures:
+                continue
+            last_pass_test = max((test for test in name_tests if test.is_pass))
+            finish_ts = last_pass_test.finish_ts
+            assert finish_ts is not None, f"last_pass {last_pass_test} has no finish_ts"
+            pass_stats.append(GoTestLastPassStat(finish_ts, name_with_package, last_pass_test.when, last_pass_test))
+        return sorted(pass_stats)[:max_tests]
 
     @classmethod
     def lowest_pass_rate(
@@ -252,7 +250,7 @@ class GoTestRun(Entity):
             slowest_seconds = max(run_time(test) for test in runs)
             if slowest_seconds < 0.1:  # ignore tests less than 0.1 seconds
                 return stats
-            average_seconds = sum(run_time(test) for test in runs) / len(runs) if len(runs) > 0 else None
+            average_seconds = sum(run_time(test) for test in runs) / len(runs) if len(runs) > 1 else None
             stats.append(
                 GoTestRuntimeStats(
                     slowest_seconds=slowest_seconds,

@@ -44,16 +44,24 @@ class GoTestErrorClass(StrEnum):
     __CONTAINS_MAPPING__ = {
         OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
         FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
-        PROVIDER_DOWNLOAD: tuple("mongodbatlas: failed to retrieve authentication checksums for provider".split()),
+        PROVIDER_DOWNLOAD: [
+            "mongodbatlas: failed to retrieve authentication checksums for provider",
+            "Error: Failed to install provider github.com: bad response",
+        ],
     }
 
     @classmethod
     def auto_classification(cls, output: str) -> GoTestErrorClass | None:
+        def contains(output: str, contains_part: str) -> bool:
+            if " " in contains_part:
+                return all(part in output for part in contains_part.split())
+            return contains_part in output
+
         return next(
             (
                 error_class
                 for error_class, contains_list in cls.__CONTAINS_MAPPING__.items()
-                if all(contains in output for contains in contains_list)
+                if all(contains(output, contains_part) for contains_part in contains_list)
             ),
             None,
         )  # type: ignore
@@ -209,6 +217,23 @@ class GoTestError(Entity):
         )
         unclassified = grouped_errors.pop(GoTestErrorClass.UNCLASSIFIED, [])
         return ErrorClassified(grouped_errors, unclassified)
+
+    @property
+    def short_description(self) -> str:
+        match self.details:
+            case GoTestCheckError():
+                return f"{self.details.tf_resource_type} {self.details.tf_resource_name} {self.details.step_nr}"
+            case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:
+                return f"{self.details.api_error_code_str} {api_path_normalized}"
+            case GoTestAPIError(api_path=api_path):
+                return f"{self.details.api_error_code_str} {api_path}"
+        return ""
+
+    @property
+    def header(self) -> str:
+        if details := self.short_description:
+            return f"{self.run.name_with_package} {details}"
+        return f"{self.run.name_with_package}"
 
 
 one_of_methods = "|".join(API_METHODS)

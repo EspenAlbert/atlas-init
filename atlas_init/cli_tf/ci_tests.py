@@ -12,7 +12,7 @@ import typer
 from model_lib import Entity, Event
 from pydantic import Field, model_validator
 from pydantic_core import Url
-from zero_3rdparty import str_utils
+from zero_3rdparty import file_utils, str_utils
 from zero_3rdparty.datetime_utils import utc_now
 
 from atlas_init.cli_helper.run import run_command_receive_result
@@ -104,7 +104,7 @@ def ci_tests(
     summary_markdown = create_test_report(out.found_tests, out.found_errors)
     if summary_name:
         summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        summary_path.write_text(summary_markdown)
+        file_utils.ensure_parents_write_text(summary_path, summary_markdown)
         logger.info(f"summary written to {summary_path}")
         if confirm(f"do you want to open the summary file? {summary_path}", default=False):
             run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
@@ -134,9 +134,10 @@ def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
             settings=settings,
             log_paths=log_paths,
             resources=resources,
+            branch=branch,
         )
     )
-    found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=False)
+    found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
     out = TFCITestOutput(log_paths=log_paths, found_tests=found_tests)
     admin_api_path = resolve_admin_api_path(sdk_branch="main")
     spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
@@ -315,6 +316,7 @@ class ParseJobLogsInput(Event):
     settings: AtlasInitSettings
     log_paths: list[Path]
     resources: TFResources
+    branch: str
 
 
 class ParseJobLogsOutput(Event):
@@ -336,6 +338,7 @@ def parse_job_tf_test_logs(
             test.log_path = log_path
             test.env = env or "unknown"
             test.resources = event.resources.find_test_resources(test)
+            test.branch = event.branch
         out.test_runs.extend(result)
     return out
 

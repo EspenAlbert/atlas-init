@@ -182,22 +182,22 @@ def create_test_report(
     envs = {run.env for run in runs if run.env}
     envs_str = ", ".join(sorted(envs))
     branches = {run.branch for run in runs if run.branch}
-    branches_str = ", ".join(sorted(branches))
+    branches_str = (
+        "from " + ", ".join(sorted(branches)) + " branches:" if len(branches) > 1 else f"from {branches.pop()} branch:"
+    )
     lines = [
-        f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} from {branches_str} branches: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
+        f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
     ]
     if errors:
-        lines.append("## Errors Overview")
+        lines.append("\n\n## Errors Overview")
         lines.extend(error_overview_lines(errors, single_indent))
     for env in envs:
         env_runs = [run for run in runs if run.env == env]
         if len(env_runs) > 1:
-            lines.append(f"## {env} Had {len(env_runs)} runs")
-            lines.extend(
-                f"{single_indent}{env_line}" for env_line in env_summary_lines(env_runs, max_runs, single_indent)
-            )
+            lines.append(f"\n\n## {env.upper()} Had {len(env_runs)} runs")
+            lines.extend(env_summary_lines(env_runs, max_runs, single_indent))
     if errors:
-        lines.append("## Errors Details")
+        lines.append("\n\n## Errors Details")
         lines.extend(error_details(errors))
     return "\n".join(lines)
 
@@ -206,33 +206,38 @@ def error_overview_lines(errors: list[GoTestError], single_indent: str) -> list[
     lines = []
     grouped_errors = GoTestError.group_by_classification(errors)
     if errors_unclassified := grouped_errors.unclassified:
-        errors_unclassified_str = ", ".join(
-            f"{error.run.name_with_package} ({error.run.status})" for error in errors_unclassified
-        )
-        lines.append(f"- Found {len(grouped_errors.unclassified)} unclassified errors {errors_unclassified_str}")
+        lines.append(f"- Found {len(grouped_errors.unclassified)} unclassified errors:")
+        lines.extend(f"{single_indent}- {error.header}" for error in errors_unclassified)
     if errors_by_class := grouped_errors.classified:
-        lines.append("- Error Types:")
         for classification, errors in errors_by_class.items():
-            errors_str = ", ".join(f"{error.run.name_with_package} ({error.run.status})" for error in errors)
-            lines.append(f"{single_indent}- {classification}: {errors_str}")
+            lines.append(f"- Error Type {classification}:")
+            lines.extend(f"{single_indent}- {error.header}" for error in errors)
     return lines
 
 
 def env_summary_lines(env_runs: list[GoTestRun], max_runs: int, single_indent: str) -> list[str]:
     lines = [f"- Lowest pass rate: {GoTestRun.run_delta(env_runs)}"]
     for pass_rate, name, name_tests in GoTestRun.lowest_pass_rate(env_runs, max_tests=max_runs):
-        last_pass = GoTestRun.last_pass(name_tests)
-        lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({len(name_tests)}) last PASS {last_pass}")
-    lines.append(f"- Longest time since `{GoTestStatus.PASS}`: {GoTestRun.run_delta(env_runs)}")
-    pass_stats = GoTestRun.last_pass_stats(env_runs)
-    lines.extend(f"{single_indent}- {never_name} never passed" for never_name in pass_stats.never_passed)
-    lines.extend(
-        f"{single_indent}- {pass_stat.pass_when} {pass_stat.name_with_package}" for pass_stat in pass_stats.last_passed
-    )
+        ran_count_str = f"ran {len(name_tests)} times" if len(name_tests) > 1 else "ran 1 time"
+        if last_pass := GoTestRun.last_pass(name_tests):
+            lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) last PASS {last_pass}")
+        else:
+            lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) never passed")
+    if pass_stats := GoTestRun.last_pass_stats(env_runs, max_tests=max_runs):
+        lines.append(f"- Longest time since `{GoTestStatus.PASS}`: {GoTestRun.run_delta(env_runs)}")
+        lines.extend(
+            f"{single_indent}- {pass_stat.pass_when} {pass_stat.name_with_package}" for pass_stat in pass_stats
+        )
     lines.append(f"- Slowest tests: {GoTestRun.run_delta(env_runs)}")
-    for slow_time, avg_time, name, name_tests in GoTestRun.slowest_tests(env_runs):
-        avg_time_str = f"(avg = {avg_time:.2f}s)" if avg_time else ""
-        lines.append(f"{single_indent}- {slow_time} {name} {avg_time_str} {len(name_tests)}")
+    for time_stat in GoTestRun.slowest_tests(env_runs):
+        avg_time_str = (
+            f"(avg = {time_stat.average_seconds:.2f}s across {len(time_stat.runs)} runs)"
+            if time_stat.average_seconds
+            else ""
+        )
+        lines.append(
+            f"{single_indent}- {time_stat.slowest_duration} {time_stat.name_with_package} {avg_time_str}".rstrip()
+        )
     return lines
 
 
