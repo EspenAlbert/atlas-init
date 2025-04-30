@@ -182,7 +182,7 @@ class ParseContext:
         self._add_line(line)
 
     def _add_line(self, line: str) -> None:
-        logger.info(f"adding line to {self.current_test_name}: {line}")
+        logger.debug(f"adding line to {self.current_test_name}: {line}")
         self.current_output.append(line)
 
     def start_test(self, test_name: str, start_line: str, ts: str) -> None:
@@ -321,11 +321,6 @@ def add_output_line(
     line: str,
     context: ParseContext,
 ) -> LineParserT:
-    if (
-        line
-        == "2025-04-28T00:45:17.1701402Z     resource_test.go:251: Step 1/3 error: Error running apply: exit status 1"
-    ):
-        logger.info("debugger hit")
     for pattern in ignore_line_pattern:
         if pattern.match(line):
             return add_output_line

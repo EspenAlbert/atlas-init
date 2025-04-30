@@ -25,11 +25,13 @@ class GoTestErrorClass(StrEnum):
     REAL_TEST_FAILURE = "real_test_failure"
     TIMEOUT = "timeout"
     UNKNOWN = "unknown"
+    PROVIDER_DOWNLOAD = "provider_download"
 
     __ACTIONS__ = {
         FLAKY_400: "retry",
         FLAKY_500: "retry",
         FLAKY_CHECK: "retry",
+        PROVIDER_DOWNLOAD: "retry",
         OUT_OF_CAPACITY: "retry_later",
         PROJECT_LIMIT_EXCEEDED: "clean_project",
         DANGLING_RESOURCE: "update_cleanup_script",
@@ -40,6 +42,7 @@ class GoTestErrorClass(StrEnum):
     __CONTAINS_MAPPING__ = {
         OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
         FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
+        PROVIDER_DOWNLOAD: tuple("mongodbatlas: failed to retrieve authentication checksums for provider".split()),
     }
 
     @classmethod
@@ -87,11 +90,17 @@ class GoTestAPIError(Entity):
         return f"{resource_part}{self.api_error_code_str} {self.api_method} {self.api_path} {self.api_response_code}"
 
 
+@total_ordering
 class CheckError(Entity):
     attribute: str = ""
     expected: str = ""
     got: str = ""
     check_nr: int = -1
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, CheckError):
+            raise TypeError
+        return (self.check_nr, self.attribute) < (other.check_nr, other.attribute)
 
 
 class GoTestCheckError(Entity):
@@ -106,6 +115,10 @@ class GoTestCheckError(Entity):
 
     def __str__(self) -> str:
         return f"{self.tf_resource_type} {self.tf_resource_name} {self.step_nr} {self.check_errors}"
+
+    @property
+    def check_numbers_str(self) -> str:
+        return ",".join(str(check.check_nr) for check in sorted(self.check_errors))
 
 
 @dataclass
@@ -161,6 +174,14 @@ class GoTestError(Entity):
                 and details.api_response_code == other_details.api_response_code
                 and details.api_method == other_details.api_method
                 and details.api_response_code == other_details.api_response_code
+            )
+        if isinstance(details, GoTestCheckError):
+            assert isinstance(other_details, GoTestCheckError)
+            return (
+                details.tf_resource_name == other_details.tf_resource_name
+                and details.tf_resource_type == other_details.tf_resource_type
+                and details.step_nr == other_details.step_nr
+                and details.check_numbers_str == other_details.check_numbers_str
             )
         return False
 

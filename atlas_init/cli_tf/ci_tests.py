@@ -382,7 +382,7 @@ def ask_user_to_classify_error(error: GoTestError) -> GoTestErrorClass | None:
     test = error.run
     details = error.details
     return select_list(
-        f"choose classification for {test.name_with_package} {details}\n{test.output_lines_str}\n",
+        f"choose classification for {test.name_with_package} in {test.env} {details}\n{test.output_lines_str}\n",
         choices=list(GoTestErrorClass),
         default=error.bot_error_class,
     )
