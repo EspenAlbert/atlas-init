@@ -54,7 +54,7 @@ class TFErrors(Entity):
                 return classifications
 
     def classified_errors(self) -> list[GoTestError]:
-        return [error for error in self.errors if error.human_error_class is not None]
+        return [error for error in self.errors if error.classifications is not None]
 
 
 def read_tf_errors(settings: AtlasInitSettings) -> TFErrors:

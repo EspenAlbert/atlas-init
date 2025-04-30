@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from collections import deque
 import logging
 import os
 import re
+from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import date, timedelta
 from pathlib import Path
@@ -12,6 +12,7 @@ import typer
 from model_lib import Entity, Event
 from pydantic import Field, model_validator
 from pydantic_core import Url
+from zero_3rdparty import str_utils
 from zero_3rdparty.datetime_utils import utc_now
 
 from atlas_init.cli_helper.run import run_command_receive_result
@@ -22,6 +23,7 @@ from atlas_init.cli_tf.github_logs import (
     tf_repo,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
+from atlas_init.cli_tf.go_test_summary import create_test_report
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     GoTestError,
@@ -99,15 +101,13 @@ def ci_tests(
     )
     out = analyze_ci_tests(event)
     logger.info(f"found {len(out.log_paths)} log files with a total of {len(out.found_tests)} tests")
-    errors = out.found_errors
-    if not errors:
-        logger.info("no errors found 🎉")
-        return
-    for error in out.found_errors:
-        test = error.run
-        logger.info(
-            f"Test: {test.name} failed, error class: (bot={error.bot_error_class}, human={error.human_error_class}) {error.details}\n{test.output_lines_str}"
-        )
+    summary_markdown = create_test_report(out.found_tests, out.found_errors)
+    if summary_name:
+        summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
+        summary_path.write_text(summary_markdown)
+        logger.info(f"summary written to {summary_path}")
+        if confirm(f"do you want to open the summary file? {summary_path}", default=False):
+            run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
 
 
 class TFCITestOutput(Entity):
@@ -197,7 +197,9 @@ def add_bot_classification_changes(needs_classification_errors: list[GoTestError
 
 
 def parse_errors(
-    parse_job_output: ParseJobLogsOutput, spec_paths: ApiSpecPaths | None, settings: AtlasInitSettings
+    parse_job_output: ParseJobLogsOutput,
+    spec_paths: ApiSpecPaths | None,
+    settings: AtlasInitSettings,
 ) -> list[GoTestError]:
     test_errors: list[GoTestError] = []
     for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):

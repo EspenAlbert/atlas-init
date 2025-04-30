@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import TypeAlias
+from typing import NamedTuple, TypeAlias
 
 import humanize
 from model_lib import Entity, utc_datetime
@@ -90,6 +90,25 @@ def parse_tests(
         parser = parser(line, context)
     result = context.finish_parsing()
     return result.tests
+
+
+class GoTestRuntimeStats(NamedTuple):
+    slowest_seconds: float
+    average_seconds: float | None
+    name_with_package: str
+    runs: list[GoTestRun]
+
+
+class GoTestLastPassStat(NamedTuple):
+    pass_ts: utc_datetime
+    name_with_package: str
+    pass_when: str
+    last_pass: GoTestRun
+
+
+class GoTestLastPassStats(NamedTuple):
+    never_passed: dict[str, list[GoTestRun]]
+    last_passed: list[GoTestLastPassStat]
 
 
 @total_ordering
@@ -179,6 +198,24 @@ class GoTestRun(Entity):
         return last_pass.when if last_pass else "never"
 
     @classmethod
+    def last_pass_stats(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> GoTestLastPassStats:
+        """should also return tests that never passed"""
+        pass_stats: list[GoTestLastPassStat] = []
+        never_passed: dict[str, list[GoTestRun]] = {}
+        for name_with_package, name_tests in cls.group_by_name_package(tests).items():
+            last_pass_str = cls.last_pass(name_tests)
+            if last_pass_str == "never":
+                if sum(GoTestStatus.is_pass_or_fail(test.status) for test in tests) != 0:
+                    never_passed[name_with_package] = name_tests
+                continue
+            last_pass = max((test for test in name_tests if test.is_pass))
+            finish_ts = last_pass.finish_ts
+            assert finish_ts is not None, f"last_pass {last_pass} has no finish_ts"
+            pass_stats.append(GoTestLastPassStat(finish_ts, name_with_package, last_pass_str, last_pass))
+        top_pass_stats = sorted(pass_stats)[:max_tests]
+        return GoTestLastPassStats(never_passed=never_passed, last_passed=top_pass_stats)
+
+    @classmethod
     def lowest_pass_rate(
         cls, tests: list[GoTestRun], *, max_tests: int = 10
     ) -> list[tuple[float, str, list[GoTestRun]]]:
@@ -201,8 +238,32 @@ class GoTestRun(Entity):
         return f"from {min(run_dates).strftime('%Y-%m-%d')} to {max(run_dates).strftime('%Y-%m-%d')}"
 
     @classmethod
-    def slowest_tests(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> list[tuple[float, str, list[GoTestRun]]]:
-        pass
+    def slowest_tests(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> list[GoTestRuntimeStats]:
+        def run_time(test: GoTestRun) -> float:
+            return test.run_seconds or 0.0
+
+        slowest_tests = sorted(tests, key=run_time, reverse=True)
+        stats = []
+        grouped_by_name = cls.group_by_name_package(slowest_tests)
+        for slow_test in slowest_tests:
+            if slow_test.name_with_package not in grouped_by_name:
+                continue  # already processed
+            runs = grouped_by_name[slow_test.name_with_package]
+            slowest_seconds = max(run_time(test) for test in runs)
+            if slowest_seconds < 0.1:  # ignore tests less than 0.1 seconds
+                return stats
+            average_seconds = sum(run_time(test) for test in runs) / len(runs) if len(runs) > 0 else None
+            stats.append(
+                GoTestRuntimeStats(
+                    slowest_seconds=slowest_seconds,
+                    average_seconds=average_seconds,
+                    name_with_package=slow_test.name_with_package,
+                    runs=runs,
+                )
+            )
+            if len(stats) >= max_tests:
+                return stats
+        return stats
 
 
 class ParseResult(Entity):
