@@ -1,3 +1,5 @@
+from collections import Counter
+from dataclasses import dataclass
 import logging
 from datetime import date, datetime, timedelta
 from functools import total_ordering
@@ -151,30 +153,29 @@ def create_short_summary(test_results: dict[str, list[GoTestRun]], failing_names
     return summary
 
 
+@dataclass
+class GoRunTestReport:
+    summary: str
+    error_details: str
+
+
 def create_test_report(
     runs: list[GoTestRun],
     errors: list[GoTestError],
     *,
-    indent_size=4,
-    max_runs=10,
-) -> str:
-    """
-    Format of return string:
-    - Found XX TestRuns in {",".join(envs)} (if only one day "on {YYYY-MM-DD}", else "between {YYYY-MM-DD}-{YYYY-MM-DD}"), YY unique tests, YY Errors, ZZ Skipped, PP Passed
-    - Error Types:
-        - error classification: pkg/TestName, pkg/TestName
-    - Lowest pass rate last 7 days
-        - `22%` pkg/TestName, last `PASS` y days ago, {classifications}
-    - Lowest QA pass rate (last 14 days)
-        - Same format
-    - Longest time since `PASS`
-        - (y days ago) pkg/TestName
-    - Slowest tests
-        - 3h 25s, pkg/TestName (Status) {maybe_classification}
-    """
+    indent_size=2,
+    max_runs=20,
+    env_name: str = "",
+) -> GoRunTestReport:
+    if env_name:
+        runs = [run for run in runs if run.env == env_name]
+        errors = [error for error in errors if error.run.env == env_name]
     single_indent = " " * indent_size
     if not runs:
-        return "No test runs found"
+        return GoRunTestReport(
+            summary="No test runs found",
+            error_details="",
+        )
     run_delta = GoTestRun.run_delta(runs)
     pkg_test_names = {run.name_with_package for run in runs}
     skipped = sum(run.status == GoTestStatus.SKIP for run in runs)
@@ -183,23 +184,30 @@ def create_test_report(
     envs_str = ", ".join(sorted(envs))
     branches = {run.branch for run in runs if run.branch}
     branches_str = (
-        "from " + ", ".join(sorted(branches)) + " branches:" if len(branches) > 1 else f"from {branches.pop()} branch:"
+        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop()} branch"
     )
     lines = [
         f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
     ]
     if errors:
-        lines.append("\n\n## Errors Overview")
+        env_name_str = f" in {env_name}" if env_name else ""
+        lines.append(f"\n\n## Errors Overview{env_name_str}")
         lines.extend(error_overview_lines(errors, single_indent))
     for env in envs:
         env_runs = [run for run in runs if run.env == env]
-        if len(env_runs) > 1:
-            lines.append(f"\n\n## {env.upper()} Had {len(env_runs)} runs")
-            lines.extend(env_summary_lines(env_runs, max_runs, single_indent))
+        lines.append(f"\n\n## {env.upper()} Had {len(env_runs)} Runs")
+        lines.extend(env_summary_lines(env_runs, max_runs, single_indent))
+    if len(envs) > 1:
+        lines.append(f"\n\n## All Environments Had {len(runs)} Runs")
+        lines.extend(env_summary_lines(runs, max_runs, single_indent))
+    error_detail_lines = []
     if errors:
-        lines.append("\n\n## Errors Details")
-        lines.extend(error_details(errors))
-    return "\n".join(lines)
+        error_detail_lines.append("# Errors Details")
+        error_detail_lines.extend(error_details(errors, include_env=len(envs) > 1))
+    return GoRunTestReport(
+        summary="\n".join(lines),
+        error_details="\n".join(error_detail_lines),
+    )
 
 
 def error_overview_lines(errors: list[GoTestError], single_indent: str) -> list[str]:
@@ -207,22 +215,37 @@ def error_overview_lines(errors: list[GoTestError], single_indent: str) -> list[
     grouped_errors = GoTestError.group_by_classification(errors)
     if errors_unclassified := grouped_errors.unclassified:
         lines.append(f"- Found {len(grouped_errors.unclassified)} unclassified errors:")
-        lines.extend(f"{single_indent}- {error.header}" for error in errors_unclassified)
+        lines.extend(count_errors_by_test(single_indent, errors_unclassified))
     if errors_by_class := grouped_errors.classified:
         for classification, errors in errors_by_class.items():
-            lines.append(f"- Error Type {classification}:")
-            lines.extend(f"{single_indent}- {error.header}" for error in errors)
+            lines.append(f"- Error Type `{classification}`:")
+            lines.extend(count_errors_by_test(single_indent, errors))
     return lines
 
 
-def env_summary_lines(env_runs: list[GoTestRun], max_runs: int, single_indent: str) -> list[str]:
-    lines = [f"- Lowest pass rate: {GoTestRun.run_delta(env_runs)}"]
-    for pass_rate, name, name_tests in GoTestRun.lowest_pass_rate(env_runs, max_tests=max_runs):
-        ran_count_str = f"ran {len(name_tests)} times" if len(name_tests) > 1 else "ran 1 time"
-        if last_pass := GoTestRun.last_pass(name_tests):
-            lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) last PASS {last_pass}")
+def count_errors_by_test(indent: str, errors: list[GoTestError]) -> list[str]:
+    lines: list[str] = []
+    counter = Counter()
+    for error in errors:
+        counter[error.header(use_ticks=True)] += 1
+    for error_header, count in counter.most_common():
+        if count > 1:
+            lines.append(f"{indent}- {count} x {error_header}")
         else:
-            lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) never passed")
+            lines.append(f"{indent}- {error_header}")
+    return sorted(lines)
+
+
+def env_summary_lines(env_runs: list[GoTestRun], max_runs: int, single_indent: str) -> list[str]:
+    lines: list[str] = []
+    if pass_rates := GoTestRun.lowest_pass_rate(env_runs, max_tests=max_runs, include_single_run=False):
+        lines.append(f"- Lowest pass rate: {GoTestRun.run_delta(env_runs)}")
+        for pass_rate, name, name_tests in pass_rates:
+            ran_count_str = f"ran {len(name_tests)} times" if len(name_tests) > 1 else "ran 1 time"
+            if last_pass := GoTestRun.last_pass(name_tests):
+                lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) last PASS {last_pass}")
+            else:
+                lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({ran_count_str}) never passed")
     if pass_stats := GoTestRun.last_pass_stats(env_runs, max_tests=max_runs):
         lines.append(f"- Longest time since `{GoTestStatus.PASS}`: {GoTestRun.run_delta(env_runs)}")
         lines.extend(
@@ -231,7 +254,7 @@ def env_summary_lines(env_runs: list[GoTestRun], max_runs: int, single_indent: s
     lines.append(f"- Slowest tests: {GoTestRun.run_delta(env_runs)}")
     for time_stat in GoTestRun.slowest_tests(env_runs):
         avg_time_str = (
-            f"(avg = {time_stat.average_seconds:.2f}s across {len(time_stat.runs)} runs)"
+            f"(avg = {time_stat.average_duration} across {len(time_stat.runs)} runs)"
             if time_stat.average_seconds
             else ""
         )
@@ -241,8 +264,20 @@ def env_summary_lines(env_runs: list[GoTestRun], max_runs: int, single_indent: s
     return lines
 
 
-def error_details(errors: list[GoTestError]) -> list[str]:
-    return [
-        f"### {error.run.name_with_package} in {error.run.env}\nerror class: (bot={error.bot_error_class}, human={error.human_error_class})\n{error.details}\n```log\n{error.run.output_lines_str}```"
-        for error in errors
-    ]
+def error_details(errors: list[GoTestError], include_env: bool) -> list[str]:
+    lines: list[str] = []
+    for name, name_errors in GoTestError.group_by_name_with_package(errors).items():
+        lines.append(
+            f"## {name} had {len(name_errors)} errors {GoTestRun.run_delta([error.run for error in name_errors])}",
+        )
+        for error in sorted(name_errors, reverse=True):  # newest first
+            env_str = f" in {error.run.env} " if include_env and error.run.env else ""
+            lines.extend(
+                [
+                    f"### Started @ {error.run.ts} {env_str}ran for ({error.run.runtime_human})",
+                    f"- error classes: bot={error.bot_error_class}, human={error.human_error_class}",
+                    f"- details summary: {error.short_description}",
+                    f"- test output:\n```log\n{error.run.output_lines_str}\n```\n",
+                ]
+            )
+    return lines

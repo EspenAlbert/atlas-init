@@ -218,22 +218,29 @@ class GoTestError(Entity):
         unclassified = grouped_errors.pop(GoTestErrorClass.UNCLASSIFIED, [])
         return ErrorClassified(grouped_errors, unclassified)
 
+    @classmethod
+    def group_by_name_with_package(cls, errors: list[GoTestError]) -> dict[str, list[GoTestError]]:
+        def by_name(error: GoTestError) -> str:
+            return error.run.name_with_package
+
+        return iter_utils.group_by_once(errors, key=by_name)
+
     @property
     def short_description(self) -> str:
         match self.details:
             case GoTestCheckError():
-                return f"{self.details.tf_resource_type} {self.details.tf_resource_name} {self.details.step_nr}"
+                return f"CheckFailure for {self.details.tf_resource_type}.{self.details.tf_resource_name} at Step: {self.details.step_nr} Checks: {self.details.check_numbers_str}"
             case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:
-                return f"{self.details.api_error_code_str} {api_path_normalized}"
+                return f"API Error {self.details.api_error_code_str} {api_path_normalized}"
             case GoTestAPIError(api_path=api_path):
                 return f"{self.details.api_error_code_str} {api_path}"
         return ""
 
-    @property
-    def header(self) -> str:
+    def header(self, use_ticks: bool = False) -> str:
+        name_with_ticks = f"`{self.run.name_with_package}`" if use_ticks else self.run.name_with_package
         if details := self.short_description:
-            return f"{self.run.name_with_package} {details}"
-        return f"{self.run.name_with_package}"
+            return f"{name_with_ticks} {details}"
+        return f"{name_with_ticks}"
 
 
 one_of_methods = "|".join(API_METHODS)

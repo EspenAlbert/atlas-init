@@ -102,6 +102,12 @@ class GoTestRuntimeStats(NamedTuple):
     def slowest_duration(self) -> str:
         return humanize.naturaldelta(self.slowest_seconds)
 
+    @property
+    def average_duration(self) -> str:
+        if self.average_seconds is None:
+            return ""
+        return humanize.naturaldelta(self.average_seconds)
+
 
 class GoTestLastPassStat(NamedTuple):
     pass_ts: utc_datetime
@@ -182,11 +188,13 @@ class GoTestRun(Entity):
         return grouped
 
     @classmethod
-    def pass_rate_or_skip_reason(cls, tests: list[GoTestRun]) -> tuple[float, str]:
+    def pass_rate_or_skip_reason(cls, tests: list[GoTestRun], *, include_single_run: bool = False) -> tuple[float, str]:
         if not tests:
             return 0.0, "No tests"
         fail_count = sum(test.is_pass for test in tests)
         total_count = sum(GoTestStatus.is_pass_or_fail(test.status) for test in tests)
+        if not include_single_run and total_count == 1:
+            return 0.0, "Only one test and include_single_run is False"
         if total_count == 0:
             return 0.0, "No pass or fail tests"
         return fail_count / total_count, ""
@@ -215,12 +223,12 @@ class GoTestRun(Entity):
 
     @classmethod
     def lowest_pass_rate(
-        cls, tests: list[GoTestRun], *, max_tests: int = 10
+        cls, tests: list[GoTestRun], *, max_tests: int = 10, include_single_run: bool = False
     ) -> list[tuple[float, str, list[GoTestRun]]]:
         tests_with_pass_rates = []
         grouped = cls.group_by_name_package(tests)
         for name, tests in grouped.items():
-            pass_rate, skip_reason = cls.pass_rate_or_skip_reason(tests)
+            pass_rate, skip_reason = cls.pass_rate_or_skip_reason(tests, include_single_run=include_single_run)
             if skip_reason or pass_rate == 1.0:
                 continue
             tests_with_pass_rates.append((pass_rate, name, tests))
@@ -246,7 +254,7 @@ class GoTestRun(Entity):
         for slow_test in slowest_tests:
             if slow_test.name_with_package not in grouped_by_name:
                 continue  # already processed
-            runs = grouped_by_name[slow_test.name_with_package]
+            runs = grouped_by_name.pop(slow_test.name_with_package)
             slowest_seconds = max(run_time(test) for test in runs)
             if slowest_seconds < 0.1:  # ignore tests less than 0.1 seconds
                 return stats
@@ -416,7 +424,6 @@ def line_match_status_pattern(
                         f"runtime not found in line with status={status}: {line} when pattern matched {pattern}"
                     )
                     seconds, milliseconds = run_time.split(".")
-
                     if "*" in seconds:
                         run_seconds = None
                     else:

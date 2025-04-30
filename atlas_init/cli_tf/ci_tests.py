@@ -5,7 +5,7 @@ import os
 import re
 from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor, wait
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
@@ -37,6 +37,7 @@ from atlas_init.crud.tf_resource import (
     read_tf_error_by_run,
     read_tf_errors,
     read_tf_resources,
+    read_tf_test_runs,
     store_or_update_tf_errors,
     store_tf_test_runs,
 )
@@ -56,6 +57,8 @@ class TFCITestInput(Event):
     branch: str = "master"
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     names: set[str] = Field(default_factory=set)
+    skip_log_download: bool = False
+    skip_error_parsing: bool = False
     summary_name: str = ""
 
     @model_validator(mode="after")
@@ -82,6 +85,11 @@ def ci_tests(
         "--summary",
         help="the name of the summary directory to store detailed test results",
     ),
+    summary_env_name: str = typer.Option("", "--env", help="filter summary based on tests/errors only in dev/qa"),
+    skip_log_download: bool = typer.Option(False, "-sld", "--skip-log-download", help="skip downloading logs"),
+    skip_error_parsing: bool = typer.Option(
+        False, "-sep", "--skip-error-parsing", help="skip parsing errors, usually together with --skip-log-download"
+    ),
 ):
     names_set: set[str] = set()
     if names:
@@ -98,14 +106,20 @@ def ci_tests(
         workflow_file_stems=set(workflow_file_stems.split(",")),
         names=names_set,
         summary_name=summary_name,
+        skip_log_download=skip_log_download,
+        skip_error_parsing=skip_error_parsing,
     )
     out = analyze_ci_tests(event)
     logger.info(f"found {len(out.log_paths)} log files with a total of {len(out.found_tests)} tests")
-    summary_markdown = create_test_report(out.found_tests, out.found_errors)
+    report = create_test_report(out.found_tests, out.found_errors, env_name=summary_env_name)
     if summary_name:
         summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        file_utils.ensure_parents_write_text(summary_path, summary_markdown)
+        file_utils.ensure_parents_write_text(summary_path, report.summary)
         logger.info(f"summary written to {summary_path}")
+        if report_details_md := report.error_details:
+            details_path = summary_path.with_name(f"{summary_path.stem}_details.md")
+            file_utils.ensure_parents_write_text(details_path, report_details_md)
+            logger.info(f"summary details written to {details_path}")
         if confirm(f"do you want to open the summary file? {summary_path}", default=False):
             run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
 
@@ -119,29 +133,42 @@ class TFCITestOutput(Entity):
 def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     repo_path = event.repo_path
     branch = event.branch
-    token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
-    os.environ[GH_TOKEN_ENV_NAME] = token
     settings = event.settings
     download_input = DownloadJobLogsInput(
         branch=branch,
         max_days_ago=event.max_days_ago,
         workflow_file_stems=event.workflow_file_stems,
+        repo_path=repo_path,
     )
-    log_paths = download_logs(download_input, settings)
-    resources = read_tf_resources(settings, repo_path, branch)
-    parse_job_output = parse_job_tf_test_logs(
-        ParseJobLogsInput(
-            settings=settings,
-            log_paths=log_paths,
-            resources=resources,
-            branch=branch,
+    if event.skip_log_download:
+        logger.info("skipping log download, reading existing instead")
+        runs = read_tf_test_runs(settings)
+        found_tests = [run for run in runs if run.ts >= download_input.start_date]
+        log_paths = [run.log_path for run in runs if run.log_path]
+        error_tests = [run for run in runs if run.is_failure]
+    else:
+        log_paths = download_logs(download_input, settings)
+        resources = read_tf_resources(settings, repo_path, branch)
+        parse_job_output = parse_job_tf_test_logs(
+            ParseJobLogsInput(
+                settings=settings,
+                log_paths=log_paths,
+                resources=resources,
+                branch=branch,
+            )
         )
-    )
-    found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
+        found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
+        error_tests = parse_job_output.tests_with_status(GoTestStatus.FAIL)
     out = TFCITestOutput(log_paths=log_paths, found_tests=found_tests)
-    admin_api_path = resolve_admin_api_path(sdk_branch="main")
-    spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
-    out.found_errors = test_errors = parse_errors(parse_job_output, spec_paths, settings)
+    if event.skip_error_parsing:
+        logger.info("skipping error parsing")
+        out.found_errors = test_errors = [
+            error for error in read_tf_errors(settings).errors if error.run.ts >= download_input.start_date
+        ]
+    else:
+        admin_api_path = resolve_admin_api_path(sdk_branch="main")
+        spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
+        out.found_errors = test_errors = parse_errors(error_tests, spec_paths, settings)
     classify_errors(test_errors, settings)
     return out
 
@@ -198,12 +225,12 @@ def add_bot_classification_changes(needs_classification_errors: list[GoTestError
 
 
 def parse_errors(
-    parse_job_output: ParseJobLogsOutput,
+    error_tests: list[GoTestRun],
     spec_paths: ApiSpecPaths | None,
     settings: AtlasInitSettings,
 ) -> list[GoTestError]:
     test_errors: list[GoTestError] = []
-    for test in parse_job_output.tests_with_status(GoTestStatus.FAIL):
+    for test in error_tests:
         if existing := read_tf_error_by_run(settings, test):
             test_errors.append(existing)
             continue
@@ -216,11 +243,19 @@ class DownloadJobLogsInput(Event):
     branch: str = "master"
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     max_days_ago: int = 1
+    end_date: datetime = Field(default_factory=utc_now)
+    repo_path: Path
+
+    @property
+    def start_date(self) -> datetime:
+        return self.end_date - timedelta(days=self.max_days_ago)
 
 
 def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
-    end_test_date = utc_now()
-    start_test_date = end_test_date - timedelta(days=event.max_days_ago)
+    token = run_command_receive_result("gh auth token", cwd=event.repo_path, logger=logger)
+    os.environ[GH_TOKEN_ENV_NAME] = token
+    end_test_date = event.end_date
+    start_test_date = event.start_date
     log_paths = []
     while start_test_date <= end_test_date:
         event_out = download_gh_job_logs(
