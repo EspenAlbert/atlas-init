@@ -4,10 +4,11 @@ from functools import total_ordering
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, TypeAlias
+from typing import Literal, NamedTuple, TypeAlias
 
 from model_lib import Entity
 from pydantic import Field, model_validator
+from zero_3rdparty import iter_utils
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.repos.go_sdk import ApiSpecPaths
@@ -26,6 +27,7 @@ class GoTestErrorClass(StrEnum):
     TIMEOUT = "timeout"
     UNKNOWN = "unknown"
     PROVIDER_DOWNLOAD = "provider_download"
+    UNCLASSIFIED = "unclassified"
 
     __ACTIONS__ = {
         FLAKY_400: "retry",
@@ -138,12 +140,17 @@ class GoTestDefaultError(Entity):
 ErrorDetails: TypeAlias = GoTestAPIError | GoTestCheckError | GoTestDefaultError
 
 
+class ErrorClassified(NamedTuple):
+    classified: dict[GoTestErrorClass, list[GoTestError]]
+    unclassified: list[GoTestError]
+
+
 @total_ordering
 class GoTestError(Entity):
     details: ErrorDetails
     run: GoTestRun
-    bot_error_class: GoTestErrorClass | None = None
-    human_error_class: GoTestErrorClass | None = None
+    bot_error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
+    human_error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, GoTestError):
@@ -152,7 +159,10 @@ class GoTestError(Entity):
 
     @property
     def classifications(self) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:
-        if self.bot_error_class and self.human_error_class:
+        if (
+            self.bot_error_class != GoTestErrorClass.UNCLASSIFIED
+            and self.human_error_class != GoTestErrorClass.UNCLASSIFIED
+        ):
             return self.bot_error_class, self.human_error_class
         return None
 
@@ -184,6 +194,21 @@ class GoTestError(Entity):
                 and details.check_numbers_str == other_details.check_numbers_str
             )
         return False
+
+    @classmethod
+    def group_by_classification(
+        cls, errors: list[GoTestError], *, classifier: Literal["bot", "human"] = "human"
+    ) -> ErrorClassified:
+        def get_classification(error: GoTestError) -> GoTestErrorClass:
+            if classifier == "bot":
+                return error.bot_error_class
+            return error.human_error_class
+
+        grouped_errors: dict[GoTestErrorClass, list[GoTestError]] = iter_utils.group_by_once(
+            errors, key=get_classification
+        )
+        unclassified = grouped_errors.pop(GoTestErrorClass.UNCLASSIFIED, [])
+        return ErrorClassified(grouped_errors, unclassified)
 
 
 one_of_methods = "|".join(API_METHODS)

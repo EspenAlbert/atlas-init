@@ -8,6 +8,7 @@ from zero_3rdparty import datetime_utils, file_utils
 
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
+from atlas_init.cli_tf.go_test_tf_error import GoTestError
 
 logger = logging.getLogger(__name__)
 _COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
@@ -148,3 +149,58 @@ def create_short_summary(test_results: dict[str, list[GoTestRun]], failing_names
         summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)
     logger.info("\n".join(summary_fail_details))
     return summary
+
+
+def create_test_report(
+    runs: list[GoTestRun],
+    errors: list[GoTestError],
+    *,
+    indent_size=4,
+    lowest_pass_rate_count=10,
+) -> str:
+    """
+    Format of return string:
+    - Found XX TestRuns in {",".join(envs)} (if only one day "on {YYYY-MM-DD}", else "between {YYYY-MM-DD}-{YYYY-MM-DD}"), YY unique tests, YY Errors, ZZ Skipped, PP Passed
+    - Error Types:
+        - error classification: pkg/TestName, pkg/TestName
+    - Lowest pass rate last 7 days
+        - `22%` pkg/TestName, last `PASS` y days ago, {classifications}
+    - Lowest QA pass rate (last 14 days)
+        - Same format
+    - Longest time since `PASS`
+        - (y days ago) pkg/TestName
+    - Slowest tests
+        - 3h 25s, pkg/TestName (Status) {maybe_classification}
+    """
+    lines = []
+    single_indent = " " * indent_size
+    if not runs:
+        return "No test runs found"
+    run_delta = GoTestRun.run_delta(runs)
+    pkg_test_names = {run.name_with_package for run in runs}
+    skipped = sum(run.status == GoTestStatus.SKIP for run in runs)
+    passed = sum(run.status == GoTestStatus.PASS for run in runs)
+    envs = {run.env for run in runs if run.env}
+    envs_str = ", ".join(sorted(envs))
+    branches = {run.branch for run in runs if run.branch}
+    branches_str = ", ".join(sorted(branches))
+    lines.append(
+        f"Found {len(runs)} TestRuns in {envs_str} {run_delta} from {branches_str} branches: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
+    )
+    grouped_errors = GoTestError.group_by_classification(errors)
+    if errors_unclassified := grouped_errors.unclassified:
+        errors_unclassified_str = ", ".join(
+            f"{error.run.name_with_package} ({error.run.status})" for error in errors_unclassified
+        )
+        lines.append(f"- Found {len(grouped_errors.unclassified)} unclassified errors {errors_unclassified_str}")
+    if errors_by_class := grouped_errors.classified:
+        lines.append("- Error Types:")
+        for classification, errors in errors_by_class.items():
+            errors_str = ", ".join(f"{error.run.name_with_package} ({error.run.status})" for error in errors)
+            lines.append(f"{single_indent}- {classification}: {errors_str}")
+    for env in envs:
+        env_runs = [run for run in runs if run.env == env]
+        lines.append(f"- Lowest pass rate in {env}: {GoTestRun.run_delta(env_runs)}")
+        for pass_rate, name, name_tests in GoTestRun.lowest_pass_rate(env_runs, max_tests=lowest_pass_rate_count):
+            last_pass = GoTestRun.last_pass(name_tests)
+            lines.append(f"{single_indent}- {pass_rate:.2%} {name} ({len(name_tests)}) last PASS {last_pass}")

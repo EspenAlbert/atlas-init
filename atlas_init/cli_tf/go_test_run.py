@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from functools import total_ordering
 import logging
 import re
@@ -37,6 +38,10 @@ class GoTestStatus(StrEnum):
     @classmethod
     def is_running_but_not_paused(cls, status: GoTestStatus) -> bool:
         return status != cls.PAUSE and cls.is_running(status)
+
+    @classmethod
+    def is_pass_or_fail(cls, status: GoTestStatus) -> bool:
+        return status in {cls.PASS, cls.FAIL}
 
 
 class GoTestContextStep(Entity):
@@ -92,11 +97,11 @@ class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
     ts: utc_datetime
-    finish_ts: utc_datetime | None = None
     output_lines: list[str] = Field(default_factory=list)
+    finish_ts: utc_datetime | None = None
+    run_seconds: float | None = Field(default=None, init=False)
 
     package_url: str | None = Field(default=None, init=False)
-    run_seconds: float | None = Field(default=None, init=False)
 
     log_path: Path | None = Field(default=None, init=False)
     env: str | None = Field(default=None, init=False)
@@ -150,6 +155,54 @@ class GoTestRun(Entity):
         if self.package_url:
             return f"{self.package_url.split('/')[-1]}/{self.name}"
         return self.name
+
+    @classmethod
+    def group_by_name_package(cls, tests: list[GoTestRun]) -> dict[str, list[GoTestRun]]:
+        grouped = defaultdict(list)
+        for test in tests:
+            grouped[test.name_with_package].append(test)
+        return grouped
+
+    @classmethod
+    def pass_rate_or_skip_reason(cls, tests: list[GoTestRun]) -> tuple[float, str]:
+        if not tests:
+            return 0.0, "No tests"
+        fail_count = sum(test.is_pass for test in tests)
+        total_count = sum(GoTestStatus.is_pass_or_fail(test.status) for test in tests)
+        if total_count == 0:
+            return 0.0, "No pass or fail tests"
+        return fail_count / total_count, ""
+
+    @classmethod
+    def last_pass(cls, tests: list[GoTestRun]) -> str:
+        last_pass = max((test for test in tests if test.is_pass), default=None)
+        return last_pass.when if last_pass else "never"
+
+    @classmethod
+    def lowest_pass_rate(
+        cls, tests: list[GoTestRun], *, max_tests: int = 10
+    ) -> list[tuple[float, str, list[GoTestRun]]]:
+        tests_with_pass_rates = []
+        grouped = cls.group_by_name_package(tests)
+        for name, tests in grouped.items():
+            pass_rate, skip_reason = cls.pass_rate_or_skip_reason(tests)
+            if skip_reason or pass_rate == 1.0:
+                continue
+            tests_with_pass_rates.append((pass_rate, name, tests))
+        return sorted(tests_with_pass_rates)[:max_tests]
+
+    @classmethod
+    def run_delta(cls, tests: list[GoTestRun]) -> str:
+        if not tests:
+            return "No tests"
+        run_dates = {run.ts.date() for run in tests}
+        if len(run_dates) == 1:
+            return f"on {run_dates.pop().strftime('%Y-%m-%d')}"
+        return f"from {min(run_dates).strftime('%Y-%m-%d')} to {max(run_dates).strftime('%Y-%m-%d')}"
+
+    @classmethod
+    def slowest_tests(cls, tests: list[GoTestRun], *, max_tests: int = 10) -> list[tuple[float, str, list[GoTestRun]]]:
+        pass
 
 
 class ParseResult(Entity):
@@ -209,11 +262,14 @@ class ParseContext:
             if test.package_url is None:
                 test.package_url = pkg_name
 
-    def finish_test(self, test_name: str, status: GoTestStatus, ts: str, end_line: str) -> None:
+    def finish_test(
+        self, test_name: str, status: GoTestStatus, ts: str, end_line: str, run_seconds: float | None
+    ) -> None:
         test = self.find_unfinished_test(test_name)
         test.status = status
         test.finish_ts = datetime.fromisoformat(ts)
         test.output_lines.append(end_line)
+        test.run_seconds = run_seconds
 
     def finish_parsing(self) -> ParseResult:
         return ParseResult(tests=self.tests)
@@ -235,7 +291,7 @@ def is_blank_line(line: str) -> bool:
 
 _one_or_more_digit_or_star_pattern = r"(\d|\*)+"  # due to Github secrets, some digits can be replaced with "*"
 runtime_pattern_no_parenthesis = (
-    rf"(?P<runtime>{_one_or_more_digit_or_star_pattern}\.{_one_or_more_digit_or_star_pattern}s)"
+    rf"(?P<runtime>{_one_or_more_digit_or_star_pattern}\.{_one_or_more_digit_or_star_pattern})s"
 )
 runtime_pattern = rf"\({runtime_pattern_no_parenthesis}\)"
 
@@ -296,7 +352,17 @@ def line_match_status_pattern(
                 case GoTestStatus.PAUSE:
                     return status  # do nothing
                 case GoTestStatus.PASS | GoTestStatus.FAIL | GoTestStatus.SKIP:
-                    context.finish_test(test_name, status, ts, line)
+                    run_time = pattern_match.group("runtime")
+                    assert run_time, (
+                        f"runtime not found in line with status={status}: {line} when pattern matched {pattern}"
+                    )
+                    seconds, milliseconds = run_time.split(".")
+
+                    if "*" in seconds:
+                        run_seconds = None
+                    else:
+                        run_seconds = int(seconds) + int(milliseconds.replace("*", "0")) / 1000
+                    context.finish_test(test_name, status, ts, line, run_seconds)
             return status
     for pkg_status, pattern in package_patterns:
         if pattern_match := pattern.match(line):

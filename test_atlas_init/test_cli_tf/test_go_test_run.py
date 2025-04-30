@@ -15,7 +15,6 @@ from atlas_init.cli_tf.go_test_run import (
 from atlas_init.cli_tf.go_test_run import GoTestStatus, parse_tests
 from atlas_init.cli_tf.go_test_tf_error import (
     CheckError,
-    DetailsInfo,
     GoTestAPIError,
     GoTestCheckError,
     parse_error_details,
