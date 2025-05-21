@@ -5,7 +5,7 @@ variable "aws_region" {
   type = string
 }
 variable "access_iam_role_arns" {
-  type = map(string)
+  type        = map(string)
   description = "static name to arn"
 }
 

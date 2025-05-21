@@ -19,13 +19,13 @@ locals {
         Resource  = "*"
       },
       {
-        Sid       = "Enable IAM User Permissions for Role",
-        Effect    = "Allow",
+        Sid    = "Enable IAM User Permissions for Role",
+        Effect = "Allow",
         Principal = {
           AWS = "*"
         }
-        Action    = "kms:Decrypt",
-        Resource  = "*"
+        Action   = "kms:Decrypt",
+        Resource = "*"
         Condition = {
           StringEquals = {
             "aws:PrincipalArn" = "arn:aws:iam::${var.aws_account_id}:role/${local.role_name}"
@@ -50,5 +50,5 @@ resource "aws_kms_key" "this" {
   count                   = var.use_kms_key ? 1 : 0
   description             = "KMS key for ${var.cfn_profile}"
   deletion_window_in_days = 7
-  policy = local.kms_key_policy_json
+  policy                  = local.kms_key_policy_json
 }

@@ -30,12 +30,12 @@ locals {
   use_free_cluster = var.instance_size == "M0"
   cluster          = try(mongodbatlas_advanced_cluster.project_cluster_free[0], mongodbatlas_advanced_cluster.project_cluster[0])
   container_id     = one(values(local.cluster.replication_specs[0].container_id))
-  mongodb_url = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.connection_strings.standard_srv, "mongodb+srv://", "")}/?retryWrites=true"
+  mongodb_url      = "mongodb+srv://${var.mongo_user}:${var.mongo_password}@${replace(local.cluster.connection_strings.standard_srv, "mongodb+srv://", "")}/?retryWrites=true"
 }
 resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
-  count      = local.use_free_cluster ? 1 : 0
-  project_id = var.project_id
-  name       = var.cluster_name
+  count        = local.use_free_cluster ? 1 : 0
+  project_id   = var.project_id
+  name         = var.cluster_name
   cluster_type = "REPLICASET"
 
   replication_specs = [{
@@ -43,10 +43,10 @@ resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
       auto_scaling = {
         disk_gb_enabled = false
       }
-      priority = 7
-      provider_name               = "TENANT"
-      backing_provider_name       = "AWS"
-      region_name = var.region
+      priority              = 7
+      provider_name         = "TENANT"
+      backing_provider_name = "AWS"
+      region_name           = var.region
       electable_specs = {
         instance_size = var.instance_size
       }
@@ -55,21 +55,21 @@ resource "mongodbatlas_advanced_cluster" "project_cluster_free" {
 }
 
 resource "mongodbatlas_advanced_cluster" "project_cluster" {
-  count        = local.use_free_cluster ? 0 : 1
-  project_id   = var.project_id
-  name         = var.cluster_name
+  count          = local.use_free_cluster ? 0 : 1
+  project_id     = var.project_id
+  name           = var.cluster_name
   backup_enabled = var.cloud_backup
-  cluster_type = "REPLICASET"
- 
+  cluster_type   = "REPLICASET"
+
   replication_specs = [{
     region_configs = [{
-      priority        = 7
+      priority      = 7
       provider_name = "AWS"
-      region_name     = var.region
+      region_name   = var.region
       electable_specs = {
-        node_count = 3
+        node_count    = 3
         instance_size = var.instance_size
-        disk_size_gb = 10
+        disk_size_gb  = 10
       }
     }]
   }]
@@ -111,6 +111,6 @@ output "env_vars" {
   value = {
     MONGODB_ATLAS_CLUSTER_NAME = var.cluster_name
     MONGODB_ATLAS_CONTAINER_ID = local.container_id
-    MONGODB_URL = local.mongodb_url
+    MONGODB_URL                = local.mongodb_url
   }
 }

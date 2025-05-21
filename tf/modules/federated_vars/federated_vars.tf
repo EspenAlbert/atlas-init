@@ -35,7 +35,7 @@ output "env_vars" {
     MONGODB_ATLAS_FEDERATION_SETTINGS_ID = var.federated_settings_id
     MONGODB_ATLAS_FEDERATED_ORG_ID       = var.org_id
     MONGODB_ATLAS_FEDERATED_GROUP_ID     = var.project_id
-    MONGODB_ATLAS_FEDERATED_IDP_ID = data.mongodbatlas_federated_settings_org_config.current.identity_provider_id # 20 character legacy needed for PATCH on org
+    MONGODB_ATLAS_FEDERATED_IDP_ID       = data.mongodbatlas_federated_settings_org_config.current.identity_provider_id # 20 character legacy needed for PATCH on org
     # MONGODB_ATLAS_FEDERATED_IDP_ID = data.mongodbatlas_federated_settings_org_config.current.okta_idp_id # used for org PATCH
     MONGODB_ATLAS_FEDERATED_SETTINGS_ASSOCIATED_DOMAIN = data.mongodbatlas_federated_settings_org_config.current.domain_allow_list[0]
   }

@@ -18,7 +18,7 @@ variable "tags" {
 }
 
 variable "use_kms_key" {
-  type = bool
+  type    = bool
   default = false
 }
 
