@@ -9,11 +9,12 @@ from zero_3rdparty.file_utils import clean_dir, copy, iter_paths_and_relative
 from zero_3rdparty.dict_nested import read_nested
 
 from atlas_init.cli_helper.run import run_binary_command_is_ok
-from atlas_init.cli_tf.hcl.modifier import read_block_attribute_object_keys, safe_parse
+from atlas_init.cli_tf.hcl.modifier import read_block_attribute_object_keys
 from atlas_init.cli_tf.hcl.modifier2 import (
     AttributeChange,
     attribute_transfomer,
     update_attribute_object_str_value_for_block,
+    safe_parse,
     write_tree,
 )
 from atlas_init.repos.cfn import cfn_examples_dir
