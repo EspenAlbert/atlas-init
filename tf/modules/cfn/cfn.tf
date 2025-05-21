@@ -1,11 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source = "hashicorp/aws"
-    }
-  }
-}
-
 locals {
   services_yaml         = file("${path.module}/assume_role_services.yaml")
   resource_actions_yaml = file("${path.module}/resource_actions.yaml")

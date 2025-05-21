@@ -18,6 +18,8 @@ file-check:
   uv run scripts/file_utils.py check
 file-generate:
   uv run scripts/file_utils.py generate
+file-provider:
+  uv run scripts/file_utils.py provider-version
 fix:
   uv run ruff check --fix .
 fix-unsafe:

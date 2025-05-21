@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "1.19.0"
-    }
-  }
-}
-
 variable "org_id" {
   type = string
 }
