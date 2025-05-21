@@ -1,14 +1,18 @@
 import logging
 from contextlib import suppress
 from pathlib import Path
+from typing import NamedTuple
 from lark import Token, Transformer, Tree, UnexpectedToken, v_args
 from hcl2.transformer import Attribute, DictTransformer
 from hcl2.api import reverse_transform, writes, parses
-from rich import print
+import rich
 
 logger = logging.getLogger(__name__)
 
-def update_attribute_object_str_value_for_block(tree: Tree, block_name: str, block_transformer: DictTransformer) -> Tree:
+
+def update_attribute_object_str_value_for_block(
+    tree: Tree, block_name: str, block_transformer: DictTransformer
+) -> Tree:
     class BlockUpdater(Transformer):
         @v_args(tree=True)
         def block(self, block_tree: Tree) -> Tree:
@@ -26,15 +30,32 @@ def update_attribute_object_str_value_for_block(tree: Tree, block_name: str, blo
 
     return BlockUpdater().transform(tree)
 
-def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> DictTransformer:
+
+class AttributeChange(NamedTuple):
+    attribute_name: str
+    old_value: str | None
+    new_value: str
+
+
+def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> tuple[DictTransformer, list[AttributeChange]]:
+    changes: list[AttributeChange] = []
+
     class AttributeTransformer(DictTransformer):
         def attribute(self, args: list) -> Attribute:
             found_attribute = super().attribute(args)
             if found_attribute.key == attr_name:
-                return Attribute(attr_name, found_attribute.value | { obj_key: new_value})
+                attribute_value = found_attribute.value
+                if not isinstance(attribute_value, dict):
+                    raise ValueError(f"Expected a dict for attribute {attr_name}, but got {type(attribute_value)}")
+                old_value = attribute_value.get(obj_key)
+                if old_value == new_value:
+                    return found_attribute
+                changes.append(AttributeChange(attr_name, old_value, new_value))
+                return Attribute(attr_name, found_attribute.value | {obj_key: new_value})
             return found_attribute
 
-    return AttributeTransformer(with_meta=True)
+    return AttributeTransformer(with_meta=True), changes
+
 
 def _identifier_name(tree: Tree) -> str | None:
     with suppress(Exception):
@@ -45,6 +66,7 @@ def _identifier_name(tree: Tree) -> str | None:
         if name_token.type == "NAME":
             return name_token.value
 
+
 def write_tree(tree: Tree) -> str:
     return writes(tree)
 
@@ -54,7 +76,7 @@ def print_tree(path: Path) -> None:
     if tree is None:
         return
     logger.info("=" * 10 + f"tree START of {path.parent.name}/{path.name}" + "=" * 10)
-    print(tree)
+    rich.print(tree)
     logger.info("=" * 10 + f"tree END of {path.parent.name}/{path.name}" + "=" * 10)
 
 
