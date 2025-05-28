@@ -6,14 +6,18 @@ from pathlib import Path
 
 import pytest
 from model_lib import dump, parse_model, parse_payload
+from zero_3rdparty import file_utils
 
 from atlas_init.cli_tf.schema_v2 import SchemaV2
 from atlas_init.cli_tf.schema_v2_api_parsing import (
     OpenapiSchema,
     api_spec_text_changes,
+    extract_api_version_content_header,
     minimal_api_spec,
     parse_api_spec_param,
 )
+
+from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +183,44 @@ def find_patterns_in_file_regex(api_path: Path) -> list[str]:
     text = api_path.read_text()
     pattern_regex = re.compile(r'\s+pattern:\s+"(?P<pattern>[^"]*)"$\s*', re.MULTILINE)
     return pattern_regex.findall(text)
+
+
+def test_extract_api_version_content_header():
+    assert extract_api_version_content_header("application/vnd.atlas.2023-01-01+json") == "2023-01-01"
+
+
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
+@pytest.mark.skipif(os.environ.get("LIVE_STATIC_DIR", "") == "", reason="needs os.environ[LIVE_STATIC_DIR]")
+def test_finding_multiple_response_versions():
+    api_path = Path(os.environ["API_SPEC_PATH"])
+    logger.info(f"parsing admin api spec: {api_path}")
+    model = parse_model(api_path, t=OpenapiSchema)
+    assert model, "unable to parse admin api spec"
+    settings = AtlasInitSettings(STATIC_DIR=os.environ["LIVE_STATIC_DIR"])  # type: ignore
+    report_path = settings.static_root / "api_versions_report.md"
+    report_md = generate_api_versions_report(model)
+    file_utils.ensure_parents_write_text(report_path, "\n".join(report_md))
+    logger.info(f"report written to: {report_path}")
+
+
+def generate_api_versions_report(model: OpenapiSchema) -> list[str]:
+    counter = 0
+    unique_versions = set()
+    headers = ["Path", "Method", "Code", "Versions"]
+    report_md = [
+        " | ".join(headers),
+        " | ".join(["---"] * len(headers)),
+    ]
+    multiple_versions_counter = 0
+    for (path, method, code), versions in model.path_method_api_versions():
+        counter += 1
+        unique_versions.update(versions)
+        if len(versions) > 1:
+            logger.warning(f"multiple versions for {path} {method} {code}: {versions}")
+            report_md.append(f"{path} | {method} | {code} | {', '.join(sorted(versions))}")
+            multiple_versions_counter += 1
+    versions_sorted = "\n".join(sorted(unique_versions))
+    logger.info(
+        f"found {counter} paths with {len(unique_versions)} unique API versions, where {multiple_versions_counter} used more than one version:\n{versions_sorted} "
+    )
+    return report_md

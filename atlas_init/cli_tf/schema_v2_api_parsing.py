@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable
 from pathlib import Path
 from queue import Queue
-from typing import ClassVar
+from typing import ClassVar, NamedTuple
 
 from model_lib import Entity, dump
 from pydantic import Field
@@ -46,6 +46,21 @@ def api_spec_text_changes(schema: SchemaV2, api_spec_parsed: OpenapiSchema) -> O
 def parse_openapi_schema_after_modifications(schema: SchemaV2, api_spec_path: Path) -> OpenapiSchema:
     original = parse_model(api_spec_path, t=OpenapiSchema)
     return api_spec_text_changes(schema, original)
+
+
+class PathMethodCode(NamedTuple):
+    path: str
+    method: str
+    code: str
+
+
+def extract_api_version_content_header(header: str) -> str | None:
+    """
+    Extracts the API version from the content header.
+    The header should be in the format 'application/vnd.atlas.v1+json'.
+    """
+    match = re.match(r"application/vnd\.atlas\.v?(?P<version>[\d-]+)\+json", header)
+    return match.group("version") if match else None
 
 
 class OpenapiSchema(Entity):
@@ -108,6 +123,31 @@ class OpenapiSchema(Entity):
         if not isinstance(key, str) or not key.endswith("json"):
             return None
         return value.get("schema", {}).get("$ref")
+
+    def _unpack_schema_versions(self, response: dict) -> list[str]:
+        content: dict[str, dict] = {**response.get("content", {})}
+        versions = []
+        while content:
+            key, value = content.popitem()
+            if not isinstance(value, dict) or not key.endswith("json"):
+                continue
+            if version := value.get("x-xgen-version"):
+                versions.append(version)
+                continue
+            if version := extract_api_version_content_header(key):
+                versions.append(version)
+        return versions
+
+    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[str]]]:
+        for path, methods in self.paths.items():
+            for method_name, method_dict in methods.items():
+                if not isinstance(method_dict, dict):
+                    continue
+                responses = method_dict.get("responses", {})
+                for code, response_dict in responses.items():
+                    if api_versions := self._unpack_schema_versions(response_dict):
+                        key = PathMethodCode(path, method_name, code)
+                        yield key, api_versions
 
     def schema_ref_component(self, ref: str, attributes_skip: set[str]) -> SchemaResource:
         schemas = self.components.get("schemas", {})
