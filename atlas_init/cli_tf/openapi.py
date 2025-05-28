@@ -79,13 +79,34 @@ class OpenapiSchema(Entity):
     def read_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("get")
 
+    def delete_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("delete")
+
+    def patch_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("patch")
+
+    def put_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("patch")
+
+    def methods(self, path: str) -> Iterable[dict]:
+        for method_name in ["post", "get", "delete", "patch", "put"]:
+            if method := self.paths.get(path, {}).get(method_name):
+                yield method
+
     def method_refs(self, path: str) -> Iterable[str]:
-        for method in [self.create_method(path), self.read_method(path)]:
+        for method in self.methods(path):
             if method:
                 if req_ref := self.method_request_body_ref(method):
                     yield req_ref
                 if resp_ref := self.method_response_ref(method):
                     yield resp_ref
+
+    def parameter_refs(self, path: str) -> Iterable[str]:
+        for method in self.methods(path):
+            parameters = method.get("parameters", [])
+            for param in parameters:
+                if param_ref := param.get("$ref"):
+                    yield param_ref
 
     def parameter(self, ref: str) -> dict:
         assert ref.startswith(OpenapiSchema.PARAMETERS_PREFIX)

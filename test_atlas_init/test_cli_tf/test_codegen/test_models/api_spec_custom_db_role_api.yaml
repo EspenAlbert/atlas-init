@@ -22,18 +22,6 @@ paths:
             application/vnd.atlas.2023-01-01+json:
               x-xgen-version: '2023-01-01'
           description: No Content
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '409':
-          $ref: '#/components/responses/conflict'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Remove One Custom Role from One Project
       tags:
       - Custom Database Roles
@@ -59,14 +47,6 @@ paths:
                 $ref: '#/components/schemas/UserCustomDBRole'
               x-xgen-version: '2023-01-01'
           description: OK
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return One Custom Role in One Project
       tags:
       - Custom Database Roles
@@ -99,18 +79,6 @@ paths:
                 $ref: '#/components/schemas/UserCustomDBRole'
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '409':
-          $ref: '#/components/responses/conflict'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Update One Custom Role in One Project
       tags:
       - Custom Database Roles
@@ -135,14 +103,6 @@ paths:
                   xgen-IPA-124-array-max-items: Schema predates IPA validation
               x-xgen-version: '2023-01-01'
           description: OK
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return All Custom Roles in One Project
       tags:
       - Custom Database Roles
@@ -169,18 +129,6 @@ paths:
                 $ref: '#/components/schemas/UserCustomDBRole'
               x-xgen-version: '2023-01-01'
           description: Accepted
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '409':
-          $ref: '#/components/responses/conflict'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Create One Custom Role
       tags:
       - Custom Database Roles
@@ -208,6 +156,22 @@ components:
           name: roleName
       required:
       - roleName
+      type: object
+    UpdateCustomDBRole:
+      properties:
+        actions:
+          description: List of the individual privilege actions that the role grants.
+          items:
+            $ref: '#/components/schemas/DatabasePrivilegeAction'
+          type: array
+          name: actions
+        inheritedRoles:
+          description: List of the built-in roles that this custom role inherits.
+          items:
+            $ref: '#/components/schemas/DatabaseInheritedRole'
+          type: array
+          uniqueItems: true
+          name: inheritedRoles
       type: object
     DatabasePrivilegeAction:
       description: Privilege action that the role grants.
@@ -347,5 +311,36 @@ components:
       - db
       title: Permitted Namespace
       type: object
-  parameters: {}
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
 tags: []

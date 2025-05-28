@@ -22,14 +22,6 @@ paths:
             application/vnd.atlas.2023-02-01+json:
               x-xgen-version: '2023-02-01'
           description: Accepted
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Delete One Stream Instance
       tags:
       - Streams
@@ -63,16 +55,6 @@ paths:
                 xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
               x-xgen-version: '2023-02-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return One Stream Instance
       tags:
       - Streams
@@ -107,16 +89,6 @@ paths:
                 $ref: '#/components/schemas/StreamsTenant'
               x-xgen-version: '2023-02-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Update One Stream Instance
       tags:
       - Streams
@@ -141,14 +113,6 @@ paths:
                 $ref: '#/components/schemas/PaginatedApiStreamsTenantView'
               x-xgen-version: '2023-02-01'
           description: OK
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return All Project Stream Instances
       tags:
       - Streams
@@ -177,16 +141,6 @@ paths:
                 $ref: '#/components/schemas/StreamsTenant'
               x-xgen-version: '2023-02-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Create One Stream Instance
       tags:
       - Streams
@@ -250,6 +204,36 @@ components:
         streamConfig:
           $ref: '#/components/schemas/StreamConfig'
           name: streamConfig
+      type: object
+    StreamsDataProcessRegion:
+      description: Information about the cloud provider region in which MongoDB Cloud processes the stream.
+      properties:
+        cloudProvider:
+          description: Label that identifies the cloud service provider where MongoDB Cloud performs stream processing. Currently, this parameter only supports AWS and AZURE.
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          - TENANT
+          - SERVERLESS
+          type: string
+          name: cloudProvider
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        region:
+          $ref: '#/components/schemas/BaseStreamsRegion'
+          name: region
+      required:
+      - cloudProvider
+      - region
       type: object
     PaginatedApiStreamsTenantView:
       properties:
@@ -323,36 +307,6 @@ components:
           name: type
       readOnly: true
       type: object
-    StreamsDataProcessRegion:
-      description: Information about the cloud provider region in which MongoDB Cloud processes the stream.
-      properties:
-        cloudProvider:
-          description: Label that identifies the cloud service provider where MongoDB Cloud performs stream processing. Currently, this parameter only supports AWS and AZURE.
-          enum:
-          - AWS
-          - GCP
-          - AZURE
-          - TENANT
-          - SERVERLESS
-          type: string
-          name: cloudProvider
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        region:
-          $ref: '#/components/schemas/BaseStreamsRegion'
-          name: region
-      required:
-      - cloudProvider
-      - region
-      type: object
     Link:
       properties:
         href:
@@ -415,5 +369,53 @@ components:
       - $ref: '#/components/schemas/ApiStreamsAzureRegionView'
       - $ref: '#/components/schemas/ApiStreamsGCPRegionView'
       type: object
-  parameters: {}
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
+    itemsPerPage:
+      description: Number of items that the response returns per page.
+      in: query
+      name: itemsPerPage
+      schema:
+        default: 100
+        maximum: 500
+        minimum: 1
+        type: integer
+    pageNum:
+      description: Number of the page that displays the current set of the total objects that the response returns.
+      in: query
+      name: pageNum
+      schema:
+        default: 1
+        minimum: 1
+        type: integer
 tags: []

@@ -29,16 +29,6 @@ paths:
             application/vnd.atlas.2024-08-05+json:
               x-xgen-version: '2024-08-05'
           description: This endpoint does not return a response body.
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Delete one Atlas Resource Policy
       tags:
       - Resource Policies
@@ -73,16 +63,6 @@ paths:
                 xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
               x-xgen-version: '2024-08-05'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return one Atlas Resource Policy
       tags:
       - Resource Policies
@@ -123,21 +103,6 @@ paths:
                 $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
               x-xgen-version: '2024-08-05'
           description: Ok
-        '400':
-          content:
-            application/vnd.atlas.2024-08-05+json:
-              schema:
-                $ref: '#/components/schemas/ApiAtlasInvalidResourcePolicyCreateErrorView'
-              x-xgen-version: '2024-08-05'
-          description: Bad request.
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Update one Atlas Resource Policy
       tags:
       - Resource Policies
@@ -169,16 +134,6 @@ paths:
                 xgen-IPA-110-collections-use-paginated-prefix: Content predates IPA validation
               x-xgen-version: '2024-08-05'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return all Atlas Resource Policies
       tags:
       - Resource Policies
@@ -209,21 +164,6 @@ paths:
                 $ref: '#/components/schemas/ApiAtlasResourcePolicyView'
               x-xgen-version: '2024-08-05'
           description: Created
-        '400':
-          content:
-            application/vnd.atlas.2024-08-05+json:
-              schema:
-                $ref: '#/components/schemas/ApiAtlasInvalidResourcePolicyCreateErrorView'
-              x-xgen-version: '2024-08-05'
-          description: Bad request.
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Create one Atlas Resource Policy
       tags:
       - Resource Policies
@@ -288,6 +228,23 @@ components:
           type: string
           name: version
       type: object
+    ApiAtlasResourcePolicyEditView:
+      properties:
+        description:
+          description: Description of the atlas resource policy.
+          type: string
+          name: description
+        name:
+          description: Human-readable label that describes the atlas resource policy.
+          type: string
+          name: name
+        policies:
+          description: List of policies that make up the atlas resource policy.
+          items:
+            $ref: '#/components/schemas/ApiAtlasPolicyCreateView'
+          type: array
+          name: policies
+      type: object
     ApiAtlasResourcePolicyCreateView:
       properties:
         description:
@@ -351,5 +308,33 @@ components:
       required:
       - body
       type: object
-  parameters: {}
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
+    orgId:
+      description: Unique 24-hexadecimal digit string that identifies the organization that contains your projects. Use the [/orgs](#tag/Organizations/operation/listOrganizations) endpoint to retrieve all organizations to which the authenticated user has access.
+      in: path
+      name: orgId
+      required: true
+      schema:
+        example: 4888442a3354817a7320eb61
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
 tags: []

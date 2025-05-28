@@ -16,18 +16,6 @@ paths:
             application/vnd.atlas.2023-01-01+json:
               x-xgen-version: '2023-01-01'
           description: This endpoint does not return a response body.
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '409':
-          $ref: '#/components/responses/conflict'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Remove One Project
       tags:
       - Projects
@@ -50,16 +38,6 @@ paths:
                 xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return One Project
       tags:
       - Projects
@@ -86,16 +64,6 @@ paths:
                 $ref: '#/components/schemas/Group'
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Update One Project
       tags:
       - Projects
@@ -118,16 +86,6 @@ paths:
                 $ref: '#/components/schemas/PaginatedAtlasGroupView'
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Return All Projects
       tags:
       - Projects
@@ -159,18 +117,6 @@ paths:
                 $ref: '#/components/schemas/Group'
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '409':
-          $ref: '#/components/responses/conflict'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Create One Project
       tags:
       - Projects
@@ -262,6 +208,23 @@ components:
       - name
       - orgId
       type: object
+    GroupUpdate:
+      description: Request view to update the group.
+      properties:
+        name:
+          description: Human-readable label that identifies the project included in the MongoDB Cloud organization.
+          type: string
+          name: name
+        tags:
+          description: List that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project.
+          externalDocs:
+            description: Resource Tags
+            url: https://www.mongodb.com/docs/atlas/tags
+          items:
+            $ref: '#/components/schemas/ResourceTag'
+          type: array
+          name: tags
+      type: object
     PaginatedAtlasGroupView:
       properties:
         links:
@@ -322,5 +285,60 @@ components:
       - value
       title: Resource Tag
       type: object
-  parameters: {}
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
+    includeCount:
+      description: Flag that indicates whether the response returns the total number of items (**totalCount**) in the response.
+      in: query
+      name: includeCount
+      schema:
+        default: true
+        type: boolean
+    itemsPerPage:
+      description: Number of items that the response returns per page.
+      in: query
+      name: itemsPerPage
+      schema:
+        default: 100
+        maximum: 500
+        minimum: 1
+        type: integer
+    pageNum:
+      description: Number of the page that displays the current set of the total objects that the response returns.
+      in: query
+      name: pageNum
+      schema:
+        default: 1
+        minimum: 1
+        type: integer
 tags: []

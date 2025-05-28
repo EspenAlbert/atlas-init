@@ -16,16 +16,6 @@ paths:
             application/vnd.atlas.2023-01-01+json:
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Disable the push-based log export feature for a project
       tags:
       - Push-Based Log Export
@@ -48,14 +38,6 @@ paths:
                 xgen-IPA-110-collections-use-paginated-prefix: Singleton method, mistakenly identified as a List method.
               x-xgen-version: '2023-01-01'
           description: OK
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Get the push-based log export configuration for a project
       tags:
       - Push-Based Log Export
@@ -81,16 +63,6 @@ paths:
             application/vnd.atlas.2023-01-01+json:
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Update the push-based log export feature for a project
       tags:
       - Push-Based Log Export
@@ -116,16 +88,6 @@ paths:
             application/vnd.atlas.2023-01-01+json:
               x-xgen-version: '2023-01-01'
           description: OK
-        '400':
-          $ref: '#/components/responses/badRequest'
-        '401':
-          $ref: '#/components/responses/unauthorized'
-        '403':
-          $ref: '#/components/responses/forbidden'
-        '404':
-          $ref: '#/components/responses/notFound'
-        '500':
-          $ref: '#/components/responses/internalServerError'
       summary: Enable the push-based log export feature for a project
       tags:
       - Push-Based Log Export
@@ -221,5 +183,36 @@ components:
           type: string
           name: rel
       type: object
-  parameters: {}
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
 tags: []
