@@ -4,6 +4,9 @@ from pathlib import Path
 
 import pytest
 
+from atlas_init.cli_tf.openapi import (
+    add_api_spec_info,
+)
 from atlas_init.cli_tf.schema_v2 import (
     SchemaAttribute,
     SchemaV2,
@@ -12,9 +15,6 @@ from atlas_init.cli_tf.schema_v2 import (
     generate_go_resource_schema,
     import_lines,
     plan_modifiers_lines,
-)
-from atlas_init.cli_tf.schema_v2_api_parsing import (
-    add_api_spec_info,
 )
 
 logger = logging.getLogger(__name__)

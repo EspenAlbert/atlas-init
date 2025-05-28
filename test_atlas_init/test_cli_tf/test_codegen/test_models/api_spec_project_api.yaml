@@ -1,0 +1,326 @@
+openapi: 3.0.1
+info:
+  description: minimal spec
+paths:
+  /api/atlas/v2/groups/{groupId}:
+    delete:
+      description: Removes the specified project. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. You can delete a project only if there are no Online Archives for the clusters in the project. To use this resource, the requesting Service Account or API Key must have the Project Owner role.
+      operationId: deleteProject
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/groupId'
+      - $ref: '#/components/parameters/pretty'
+      responses:
+        '204':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              x-xgen-version: '2023-01-01'
+          description: This endpoint does not return a response body.
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Remove One Project
+      tags:
+      - Projects
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/deleteProject
+    get:
+      description: Returns details about the specified project. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. To use this resource, the requesting Service Account or API Key must have the Project Read Only role.
+      operationId: getProject
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/groupId'
+      - $ref: '#/components/parameters/pretty'
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              x-xgen-IPA-exception:
+                xgen-IPA-104-get-method-response-has-no-input-fields: API predates IPA validation
+                xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Return One Project
+      tags:
+      - Projects
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/getProject
+    patch:
+      description: Updates the human-readable label that identifies the specified project, or the tags associated with the project. To use this resource, the requesting Service Account or API Key must have the Project Owner role.
+      operationId: updateProject
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/groupId'
+      - $ref: '#/components/parameters/pretty'
+      requestBody:
+        content:
+          application/vnd.atlas.2023-01-01+json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdate'
+        description: Project to update.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Update One Project
+      tags:
+      - Projects
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/updateProject
+  /api/atlas/v2/groups:
+    get:
+      description: Returns details about all projects. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. To use this resource, the requesting Service Account or API Key must have the Organization Read Only role or higher.
+      operationId: listProjects
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/includeCount'
+      - $ref: '#/components/parameters/itemsPerPage'
+      - $ref: '#/components/parameters/pageNum'
+      - $ref: '#/components/parameters/pretty'
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAtlasGroupView'
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Return All Projects
+      tags:
+      - Projects
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/listProjects
+    post:
+      description: Creates one project. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. To use this resource, the requesting Service Account or API Key must have the Read Write role.
+      operationId: createProject
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - description: Unique 24-hexadecimal digit string that identifies the MongoDB Cloud user to whom to grant the Project Owner role on the specified project. If you set this parameter, it overrides the default value of the oldest Organization Owner.
+        in: query
+        name: projectOwnerId
+        schema:
+          pattern: ^([a-f0-9]{24})$
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-01-01+json:
+            schema:
+              $ref: '#/components/schemas/Group'
+        description: Creates one project.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Create One Project
+      tags:
+      - Projects
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/createProject
+components:
+  schemas:
+    Group:
+      properties:
+        clusterCount:
+          description: Quantity of MongoDB Cloud clusters deployed in this project.
+          format: int64
+          readOnly: true
+          type: integer
+          name: clusterCount
+        created:
+          description: Date and time when MongoDB Cloud created this project. This parameter expresses its value in the ISO 8601 timestamp format in UTC.
+          format: date-time
+          readOnly: true
+          type: string
+          name: created
+        id:
+          description: Unique 24-hexadecimal digit string that identifies the MongoDB Cloud project.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+          name: id
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        name:
+          description: Human-readable label that identifies the project included in the MongoDB Cloud organization.
+          pattern: ^[\p{L}\p{N}\-_.(),:&@+']{1,64}$
+          type: string
+          name: name
+        orgId:
+          description: Unique 24-hexadecimal digit string that identifies the MongoDB Cloud organization to which the project belongs.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          name: orgId
+        regionUsageRestrictions:
+          default: COMMERCIAL_FEDRAMP_REGIONS_ONLY
+          description: 'Applies to Atlas for Government only.
+
+
+            In Commercial Atlas, this field will be rejected in requests and missing in responses.
+
+
+            This field sets restrictions on available regions in the project.
+
+
+            `COMMERCIAL_FEDRAMP_REGIONS_ONLY`: Only allows deployments in FedRAMP Moderate regions.
+
+
+            `GOV_REGIONS_ONLY`: Only allows deployments in GovCloud regions.'
+          enum:
+          - COMMERCIAL_FEDRAMP_REGIONS_ONLY
+          - GOV_REGIONS_ONLY
+          externalDocs:
+            url: https://www.mongodb.com/docs/atlas/government/overview/supported-regions/#supported-cloud-providers-and-regions
+          type: string
+          name: regionUsageRestrictions
+        tags:
+          description: List that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project.
+          externalDocs:
+            description: Resource Tags
+            url: https://www.mongodb.com/docs/atlas/tags
+          items:
+            $ref: '#/components/schemas/ResourceTag'
+          type: array
+          name: tags
+        withDefaultAlertsSettings:
+          default: true
+          description: Flag that indicates whether to create the project with default alert settings.
+          type: boolean
+          writeOnly: true
+          name: withDefaultAlertsSettings
+      required:
+      - clusterCount
+      - created
+      - name
+      - orgId
+      type: object
+    PaginatedAtlasGroupView:
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        results:
+          description: List of returned documents that MongoDB Cloud provides when completing this request.
+          items:
+            $ref: '#/components/schemas/Group'
+          readOnly: true
+          type: array
+          name: results
+        totalCount:
+          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
+          format: int32
+          minimum: 0
+          readOnly: true
+          type: integer
+          name: totalCount
+      type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+          name: href
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+          name: rel
+      type: object
+    ResourceTag:
+      description: 'Key-value pair that tags and categorizes a MongoDB Cloud organization, project, or cluster. For example, `environment : production`.'
+      properties:
+        key:
+          description: 'Constant that defines the set of the tag. For example, `environment` in the `environment : production` tag.'
+          maxLength: 255
+          minLength: 1
+          type: string
+          name: key
+        value:
+          description: 'Variable that belongs to the set of the tag. For example, `production` in the `environment : production` tag.'
+          maxLength: 255
+          minLength: 1
+          type: string
+          name: value
+      required:
+      - key
+      - value
+      title: Resource Tag
+      type: object
+  parameters: {}
+tags: []

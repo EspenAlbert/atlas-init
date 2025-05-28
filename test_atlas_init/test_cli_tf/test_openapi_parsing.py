@@ -9,7 +9,7 @@ from model_lib import dump, parse_model, parse_payload
 from zero_3rdparty import file_utils
 
 from atlas_init.cli_tf.schema_v2 import SchemaV2
-from atlas_init.cli_tf.schema_v2_api_parsing import (
+from atlas_init.cli_tf.openapi import (
     OpenapiSchema,
     api_spec_text_changes,
     extract_api_version_content_header,
@@ -189,16 +189,11 @@ def test_extract_api_version_content_header():
     assert extract_api_version_content_header("application/vnd.atlas.2023-01-01+json") == "2023-01-01"
 
 
-@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 @pytest.mark.skipif(os.environ.get("LIVE_STATIC_DIR", "") == "", reason="needs os.environ[LIVE_STATIC_DIR]")
-def test_finding_multiple_response_versions():
-    api_path = Path(os.environ["API_SPEC_PATH"])
-    logger.info(f"parsing admin api spec: {api_path}")
-    model = parse_model(api_path, t=OpenapiSchema)
-    assert model, "unable to parse admin api spec"
+def test_finding_multiple_response_versions(live_api_spec):
     settings = AtlasInitSettings(STATIC_DIR=os.environ["LIVE_STATIC_DIR"])  # type: ignore
     report_path = settings.static_root / "api_versions_report.md"
-    report_md = generate_api_versions_report(model)
+    report_md = generate_api_versions_report(live_api_spec)
     file_utils.ensure_parents_write_text(report_path, "\n".join(report_md))
     logger.info(f"report written to: {report_path}")
 

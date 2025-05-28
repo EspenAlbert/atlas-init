@@ -1,0 +1,314 @@
+openapi: 3.0.1
+info:
+  description: minimal spec
+paths:
+  /api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment:
+    delete:
+      description: Deletes the Search Nodes for the specified cluster.
+      operationId: deleteAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to delete.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              x-sunset: '2026-03-01'
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '204':
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              x-xgen-version: '2024-05-30'
+          description: This endpoint does not return a response body.
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Delete Search Nodes
+      tags:
+      - Atlas Search
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/deleteAtlasSearchDeployment
+    get:
+      description: Returns the Search Nodes for the specified cluster.
+      operationId: getAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to return the Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-sunset: '2026-03-01'
+              x-xgen-version: '2023-01-01'
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-sunset: '2026-03-12'
+              x-xgen-version: '2024-05-30'
+            application/vnd.atlas.2025-03-12+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2025-03-12'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Return Search Nodes
+      tags:
+      - Atlas Search
+      x-xgen-changelog:
+        '2025-03-12': Updates the return of the API when no nodes exist, the endpoint returns 200 with an empty JSON ({}) instead of 400.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/getAtlasSearchDeployment
+    patch:
+      description: Updates the Search Nodes for the specified cluster.
+      operationId: updateAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to update the Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+        description: Updates the Search Nodes for the specified cluster.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-sunset: '2026-03-01'
+              x-xgen-version: '2023-01-01'
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2024-05-30'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Update Search Nodes
+      tags:
+      - Atlas Search
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/updateAtlasSearchDeployment
+    post:
+      description: Creates Search Nodes for the specified cluster.
+      operationId: createAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to create Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-01-01+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+        description: Creates Search Nodes for the specified cluster.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-01-01+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-sunset: '2026-03-01'
+              x-xgen-version: '2023-01-01'
+          description: OK
+        '201':
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2024-05-30'
+          description: Created
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '409':
+          $ref: '#/components/responses/conflict'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Create Search Nodes
+      tags:
+      - Atlas Search
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/createAtlasSearchDeployment
+components:
+  schemas:
+    ApiSearchDeploymentRequestView:
+      properties:
+        specs:
+          description: 'List of settings that configure the Search Nodes for your cluster.
+
+
+            **NOTE**: We accept a single configuration for all nodes currently.'
+          items:
+            $ref: '#/components/schemas/ApiSearchDeploymentSpecView'
+          maxItems: 1
+          minItems: 1
+          type: array
+          name: specs
+      required:
+      - specs
+      type: object
+    ApiSearchDeploymentResponseView:
+      properties:
+        encryptionAtRestProvider:
+          description: Cloud service provider that manages your customer keys to provide an additional layer of Encryption At Rest for the cluster.
+          enum:
+          - NONE
+          - AWS
+          - AZURE
+          - GCP
+          externalDocs:
+            description: Encryption at Rest using Customer Key Management
+            url: https://www.mongodb.com/docs/atlas/security-kms-encryption/
+          readOnly: true
+          type: string
+          name: encryptionAtRestProvider
+        groupId:
+          description: Unique 24-hexadecimal character string that identifies the project.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+          name: groupId
+        id:
+          description: Unique 24-hexadecimal digit string that identifies the search deployment.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+          name: id
+        specs:
+          description: List of settings that configure the Search Nodes for your cluster. The configuration will be returned for each region and shard.
+          items:
+            $ref: '#/components/schemas/ApiSearchDeploymentSpecView'
+          readOnly: true
+          type: array
+          name: specs
+        stateName:
+          description: Human-readable label that indicates the current operating condition of this search deployment.
+          enum:
+          - IDLE
+          - PAUSED
+          - UPDATING
+          readOnly: true
+          type: string
+          name: stateName
+      type: object
+    ApiSearchDeploymentSpecView:
+      properties:
+        instanceSize:
+          description: Hardware specification for the Search Node instance sizes.
+          enum:
+          - S20_HIGHCPU_NVME
+          - S30_HIGHCPU_NVME
+          - S40_HIGHCPU_NVME
+          - S50_HIGHCPU_NVME
+          - S60_HIGHCPU_NVME
+          - S70_HIGHCPU_NVME
+          - S80_HIGHCPU_NVME
+          - S30_LOWCPU_NVME
+          - S40_LOWCPU_NVME
+          - S50_LOWCPU_NVME
+          - S60_LOWCPU_NVME
+          - S70_LOWCPU_NVME
+          - S80_LOWCPU_NVME
+          - S90_LOWCPU_NVME
+          - S100_LOWCPU_NVME
+          - S110_LOWCPU_NVME
+          - S120_LOWCPU_NVME
+          - S130_LOWCPU_NVME
+          - S135_LOWCPU_NVME
+          - S140_LOWCPU_NVME
+          - S40_STORAGE_NVME
+          - S50_STORAGE_NVME
+          - S60_STORAGE_NVME
+          - S80_STORAGE_NVME
+          - S90_STORAGE_NVME
+          type: string
+          name: instanceSize
+        nodeCount:
+          description: Number of Search Nodes in the cluster.
+          example: 2
+          format: int32
+          maximum: 32
+          minimum: 2
+          type: integer
+          name: nodeCount
+      required:
+      - instanceSize
+      - nodeCount
+      type: object
+  parameters: {}
+tags: []

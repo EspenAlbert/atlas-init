@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Callable
@@ -8,9 +9,12 @@ from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
 from model_lib import parse_model
 
+from atlas_init.cli_tf.openapi import OpenapiSchema, add_api_spec_info
 from atlas_init.cli_tf.schema_v2 import SchemaV2, parse_schema
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, add_api_spec_info
 from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
+
+
+logger = logging.getLogger(__name__)
 
 
 def as_step(name: str) -> WorkflowStep:
@@ -104,3 +108,15 @@ def go_schema_paths() -> Callable[[], dict[str, Path]]:
         return {name: Path(path) for name, path in paths.items()}
 
     return _go_file_path
+
+
+@pytest.fixture(scope="session")
+def live_api_spec() -> OpenapiSchema:
+    spec_path_str = os.environ.get("API_SPEC_PATH", "")
+    if spec_path_str == "":
+        pytest.skip("needs os.environ[API_SPEC_PATH]")
+    api_path = Path(spec_path_str)
+    logger.info(f"parsing admin api spec: {api_path}")
+    model = parse_model(api_path, t=OpenapiSchema)
+    assert model, "unable to parse admin api spec"
+    return model

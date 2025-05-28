@@ -6,7 +6,7 @@ from model_lib import Entity, parse_model
 
 from atlas_init.cli_tf.debug_logs_test_data import ApiSpecPath, find_normalized_path
 from atlas_init.cli_tf.schema import logger
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema
+from atlas_init.cli_tf.openapi import OpenapiSchema
 
 
 def go_sdk_breaking_changes(repo_path: Path, go_sdk_rel_path: str = "../atlas-sdk-go") -> Path:

@@ -1,0 +1,419 @@
+openapi: 3.0.1
+info:
+  description: minimal spec
+paths:
+  /api/atlas/v2/groups/{groupId}/streams/{tenantName}:
+    delete:
+      description: Delete one stream instance in the specified project. To use this resource, the requesting Service Account or API Key must have the Project Data Access Admin role, Project Owner role or Project Stream Processing Owner role.
+      operationId: deleteStreamInstance
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance to delete.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      responses:
+        '202':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              x-xgen-version: '2023-02-01'
+          description: Accepted
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Delete One Stream Instance
+      tags:
+      - Streams
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/deleteStreamInstance
+    get:
+      description: Returns the details of one stream instance within the specified project. To use this resource, the requesting Service Account or API Key must have the Project Data Access roles, Project Owner role or Project Stream Processing Owner role.
+      operationId: getStreamInstance
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance to return.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      - description: Flag to indicate whether connections information should be included in the stream instance.
+        in: query
+        name: includeConnections
+        schema:
+          type: boolean
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsTenant'
+              x-xgen-IPA-exception:
+                xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
+              x-xgen-version: '2023-02-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Return One Stream Instance
+      tags:
+      - Streams
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/getStreamInstance
+    patch:
+      description: Update one stream instance in the specified project. To use this resource, the requesting Service Account or API Key must have the Project Data Access Admin role, Project Owner role or Project Stream Processing Owner role.
+      operationId: updateStreamInstance
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance to update.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-02-01+json:
+            schema:
+              $ref: '#/components/schemas/StreamsDataProcessRegion'
+        description: Details of the new data process region to update in the streams instance.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsTenant'
+              x-xgen-version: '2023-02-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Update One Stream Instance
+      tags:
+      - Streams
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/updateStreamInstance
+  /api/atlas/v2/groups/{groupId}/streams:
+    get:
+      description: Returns all stream instances for the specified project.
+      operationId: listStreamInstances
+      parameters:
+      - $ref: '#/components/parameters/groupId'
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/itemsPerPage'
+      - $ref: '#/components/parameters/pageNum'
+      - $ref: '#/components/parameters/pretty'
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApiStreamsTenantView'
+              x-xgen-version: '2023-02-01'
+          description: OK
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Return All Project Stream Instances
+      tags:
+      - Streams
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/listStreamInstances
+    post:
+      description: Creates one stream instance in the specified project. To use this resource, the requesting Service Account or API Key must have the Project Data Access Admin role, Project Owner role or Project Stream Processing Owner role.
+      operationId: createStreamInstance
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      requestBody:
+        content:
+          application/vnd.atlas.2023-02-01+json:
+            schema:
+              $ref: '#/components/schemas/StreamsTenant'
+        description: Details to create one streams instance in the specified project.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsTenant'
+              x-xgen-version: '2023-02-01'
+          description: OK
+        '400':
+          $ref: '#/components/responses/badRequest'
+        '401':
+          $ref: '#/components/responses/unauthorized'
+        '403':
+          $ref: '#/components/responses/forbidden'
+        '404':
+          $ref: '#/components/responses/notFound'
+        '500':
+          $ref: '#/components/responses/internalServerError'
+      summary: Create One Stream Instance
+      tags:
+      - Streams
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/createStreamInstance
+components:
+  schemas:
+    StreamsTenant:
+      properties:
+        _id:
+          description: Unique 24-hexadecimal character string that identifies the project.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+          name: _id
+        connections:
+          description: List of connections configured in the stream instance.
+          items:
+            $ref: '#/components/schemas/StreamsConnection'
+          readOnly: true
+          type: array
+          name: connections
+        dataProcessRegion:
+          $ref: '#/components/schemas/StreamsDataProcessRegion'
+          name: dataProcessRegion
+        groupId:
+          description: Unique 24-hexadecimal character string that identifies the project.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+          name: groupId
+        hostnames:
+          description: List that contains the hostnames assigned to the stream instance.
+          items:
+            description: Unique hostname assigned to the stream instance.
+            readOnly: true
+            type: string
+          readOnly: true
+          type: array
+          name: hostnames
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        name:
+          description: Human-readable label that identifies the stream instance.
+          type: string
+          name: name
+        sampleConnections:
+          $ref: '#/components/schemas/StreamsSampleConnections'
+          name: sampleConnections
+        streamConfig:
+          $ref: '#/components/schemas/StreamConfig'
+          name: streamConfig
+      type: object
+    PaginatedApiStreamsTenantView:
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        results:
+          description: List of returned documents that MongoDB Cloud provides when completing this request.
+          items:
+            $ref: '#/components/schemas/StreamsTenant'
+          readOnly: true
+          type: array
+          name: results
+        totalCount:
+          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
+          format: int32
+          minimum: 0
+          readOnly: true
+          type: integer
+          name: totalCount
+      type: object
+    StreamsConnection:
+      description: Settings that define a connection to an external data store.
+      discriminator:
+        mapping:
+          AWSLambda: '#/components/schemas/StreamsAWSLambdaConnection'
+          Cluster: '#/components/schemas/StreamsClusterConnection'
+          Https: '#/components/schemas/StreamsHttpsConnection'
+          Kafka: '#/components/schemas/StreamsKafkaConnection'
+          S3: '#/components/schemas/StreamsS3Connection'
+          Sample: '#/components/schemas/StreamsSampleConnection'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/StreamsSampleConnection'
+      - $ref: '#/components/schemas/StreamsClusterConnection'
+      - $ref: '#/components/schemas/StreamsKafkaConnection'
+      - $ref: '#/components/schemas/StreamsHttpsConnection'
+      - $ref: '#/components/schemas/StreamsAWSLambdaConnection'
+      - $ref: '#/components/schemas/StreamsS3Connection'
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        name:
+          description: Human-readable label that identifies the stream connection. In the case of the Sample type, this is the name of the sample source.
+          type: string
+          name: name
+        type:
+          description: Type of the connection.
+          enum:
+          - Kafka
+          - Cluster
+          - Sample
+          - Https
+          - AWSLambda
+          type: string
+          name: type
+      readOnly: true
+      type: object
+    StreamsDataProcessRegion:
+      description: Information about the cloud provider region in which MongoDB Cloud processes the stream.
+      properties:
+        cloudProvider:
+          description: Label that identifies the cloud service provider where MongoDB Cloud performs stream processing. Currently, this parameter only supports AWS and AZURE.
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          - TENANT
+          - SERVERLESS
+          type: string
+          name: cloudProvider
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        region:
+          $ref: '#/components/schemas/BaseStreamsRegion'
+          name: region
+      required:
+      - cloudProvider
+      - region
+      type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+          name: href
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+          name: rel
+      type: object
+    StreamsSampleConnections:
+      description: Sample connections to add to SPI.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        solar:
+          default: false
+          description: Flag that indicates whether to add a 'sample_stream_solar' connection.
+          type: boolean
+          name: solar
+      type: object
+    StreamConfig:
+      description: Configuration options for an Atlas Stream Processing Instance.
+      nullable: true
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        tier:
+          description: Selected tier for the Stream Instance. Configures Memory / VCPU allowances.
+          enum:
+          - SP30
+          - SP10
+          title: Stream Instance Tier
+          type: string
+          name: tier
+      type: object
+    BaseStreamsRegion:
+      description: Name of the cloud provider region hosting Atlas Stream Processing.
+      oneOf:
+      - $ref: '#/components/schemas/ApiStreamsAWSRegionView'
+      - $ref: '#/components/schemas/ApiStreamsAzureRegionView'
+      - $ref: '#/components/schemas/ApiStreamsGCPRegionView'
+      type: object
+  parameters: {}
+tags: []

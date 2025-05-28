@@ -25,7 +25,7 @@ from atlas_init.cli_tf.schema_v2 import (
     generate_resource_go_resource_schema,
     parse_schema,
 )
-from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
+from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
 from atlas_init.repos.go_sdk import download_admin_api
 from atlas_init.repos.path import Repo, current_repo_path
