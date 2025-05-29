@@ -96,6 +96,7 @@ class SchemaAttribute(Entity):
             plan_modifiers=self.plan_modifiers + other.plan_modifiers,
             validators=self.validators + other.validators,
             parameter_ref=self.parameter_ref or other.parameter_ref,
+            additional_properties=self.additional_properties | other.additional_properties,
         )
 
     def set_attribute_type(

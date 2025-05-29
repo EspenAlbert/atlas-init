@@ -3285,6 +3285,38 @@ components:
           type: integer
           name: totalCount
       type: object
+    RegionSpec:
+      description: Physical location where MongoDB Cloud provisions cluster nodes.
+      properties:
+        analyticsNodes:
+          description: Number of analytics nodes in the region. Analytics nodes handle analytic data such as reporting queries from MongoDB Connector for Business Intelligence on MongoDB Cloud. Analytics nodes are read-only, and can never become the primary. Use **replicationSpecs[n].{region}.analyticsNodes** instead.
+          format: int32
+          type: integer
+          name: analyticsNodes
+        electableNodes:
+          description: Number of electable nodes to deploy in the specified region. Electable nodes can become the primary and can facilitate local reads. Use **replicationSpecs[n].{region}.electableNodes** instead.
+          enum:
+          - 0
+          - 3
+          - 5
+          - 7
+          format: int32
+          type: integer
+          name: electableNodes
+        priority:
+          description: Number that indicates the election priority of the region. To identify the Preferred Region of the cluster, set this parameter to `7`. The primary node runs in the **Preferred Region**. To identify a read-only region, set this parameter to `0`.
+          format: int32
+          maximum: 7
+          minimum: 0
+          type: integer
+          name: priority
+        readOnlyNodes:
+          description: Number of read-only nodes in the region. Read-only nodes can never become the primary member, but can facilitate local reads. Use **replicationSpecs[n].{region}.readOnlyNodes** instead.
+          format: int32
+          type: integer
+          name: readOnlyNodes
+      title: Region Configuration
+      type: object
     ReplicationSpec:
       description: Details that explain how MongoDB Cloud replicates data on the specified MongoDB database.
       properties:

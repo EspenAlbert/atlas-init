@@ -232,12 +232,14 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
         case {"$ref": ref, "name": name} if ref.startswith(OpenapiSchema.SCHEMAS_PREFIX):
             # nested attribute
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type="object",
                 name=name,
                 schema_ref=ref,
             )
         case {"type": "array", "items": {"$ref": ref}, "name": name}:
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type="array",
                 name=name,
                 schema_ref=ref,
@@ -247,6 +249,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
             )
         case {"name": name, "schema": schema}:
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type=schema["type"],
                 name=name,
                 description=param.get("description", ""),
@@ -260,6 +263,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
                 description=param.get("description", ""),
                 is_computed=param.get("readOnly", False),
                 is_required=param.get("required", False),
+                additional_properties=param.get("additionalProperties", {}),
             )
         case _:
             raise NotImplementedError
