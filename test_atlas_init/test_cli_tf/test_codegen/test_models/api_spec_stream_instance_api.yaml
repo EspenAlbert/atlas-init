@@ -369,6 +369,110 @@ components:
       - $ref: '#/components/schemas/ApiStreamsAzureRegionView'
       - $ref: '#/components/schemas/ApiStreamsGCPRegionView'
       type: object
+    StreamsKafkaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          authentication:
+            $ref: '#/components/schemas/StreamsKafkaAuthentication'
+          bootstrapServers:
+            description: Comma separated list of server addresses.
+            type: string
+          config:
+            additionalProperties:
+              description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+              example: '{"group.protocol.type":"consumer","debug":"queue, msg, protocol"}'
+              type: string
+            description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+            example:
+              debug: queue, msg, protocol
+              group.protocol.type: consumer
+            type: object
+          networking:
+            $ref: '#/components/schemas/StreamsKafkaNetworking'
+          security:
+            $ref: '#/components/schemas/StreamsKafkaSecurity'
+        type: object
+      type: object
+    StreamsHttpsConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          headers:
+            additionalProperties:
+              description: A map of key-value pairs that will be passed as headers for the request.
+              type: string
+            description: A map of key-value pairs that will be passed as headers for the request.
+            type: object
+          url:
+            description: The url to be used for the request.
+            type: string
+        type: object
+      type: object
+    StreamsClusterConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          clusterName:
+            description: Name of the cluster configured for this connection.
+            type: string
+          dbRoleToExecute:
+            $ref: '#/components/schemas/DBRoleToExecute'
+        type: object
+      type: object
+    StreamsSampleConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      type: object
+    StreamsS3Connection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for S3 connections.
+      type: object
+    StreamsAWSLambdaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for AWS Lambda connections.
+      type: object
+    ApiStreamsAzureRegionView:
+      description: Atlas Streams Azure Regions.
+      enum:
+      - eastus
+      - westus
+      - eastus2
+      - westeurope
+      type: string
+    ApiStreamsGCPRegionView:
+      description: Atlas Streams GCP Regions.
+      enum:
+      - US_CENTRAL1
+      - EUROPE_WEST1
+      - US_EAST4
+      type: string
+    ApiStreamsAWSRegionView:
+      description: Atlas Streams AWS Regions.
+      enum:
+      - SYDNEY_AUS
+      - MUMBAI_IND
+      - FRANKFURT_DEU
+      - DUBLIN_IRL
+      - LONDON_GBR
+      - VIRGINIA_USA
+      - OHIO_USA
+      - OREGON_USA
+      - SAOPAULO_BRA
+      - MONTREAL_CAN
+      - TOKYO_JPN
+      - SINGAPORE_SGP
+      type: string
   parameters:
     envelope:
       description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.

@@ -34,6 +34,9 @@ def minimal_api_spec_simplified(resource: ResourceConfig, full_spec: OpenapiSche
                     attribute.parameter_ref,
                     full_spec.resolve_ref(attribute.parameter_ref),
                 )
+        for ref in ref_resource.extra_refs():
+            minimal_spec.add_schema_ref(ref, full_spec.resolve_ref(ref))
+            include_refs.put(ref)
 
     while not include_refs.empty():
         ref = include_refs.get()
