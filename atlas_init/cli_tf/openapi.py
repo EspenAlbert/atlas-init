@@ -96,10 +96,8 @@ class OpenapiSchema(Entity):
     def method_refs(self, path: str) -> Iterable[str]:
         for method in self.methods(path):
             if method:
-                if req_ref := self.method_request_body_ref(method):
-                    yield req_ref
-                if resp_ref := self.method_response_ref(method):
-                    yield resp_ref
+                yield from self.method_request_body_ref(method)
+                yield from self.method_response_ref(method)
 
     def parameter_refs(self, path: str) -> Iterable[str]:
         for method in self.methods(path):
@@ -127,23 +125,25 @@ class OpenapiSchema(Entity):
             prop["name"] = name
             yield prop
 
-    def method_request_body_ref(self, method: dict) -> str | None:
+    def method_request_body_ref(self, method: dict) -> Iterable[str]:
         request_body = method.get("requestBody", {})
-        return self._unpack_schema_ref(request_body)
+        yield from self._unpack_schema_ref(request_body)
 
-    def method_response_ref(self, method: dict) -> str | None:
+    def method_response_ref(self, method: dict) -> Iterable[str]:
         responses = method.get("responses", {})
         ok_response = responses.get("200", {})
-        return self._unpack_schema_ref(ok_response)
+        yield from self._unpack_schema_ref(ok_response)
 
-    def _unpack_schema_ref(self, response: dict) -> str | None:
+    def _unpack_schema_ref(self, response: dict) -> Iterable[str]:
         content = {**response.get("content", {})}  # avoid side effects
         if not content:
             return None
-        key, value = content.popitem()
-        if not isinstance(key, str) or not key.endswith("json"):
-            return None
-        return value.get("schema", {}).get("$ref")
+        while content:
+            key, value = content.popitem()
+            if not isinstance(key, str) or not key.endswith("json"):
+                continue
+            if ref := value.get("schema", {}).get("$ref"):
+                yield ref
 
     def _unpack_schema_versions(self, response: dict) -> list[str]:
         content: dict[str, dict] = {**response.get("content", {})}
@@ -284,7 +284,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 continue
             for param in create_method.get("parameters", []):
                 parse_api_spec_param(api_spec, param, resource)
-            if req_ref := api_spec.method_request_body_ref(create_method):
+            for req_ref in api_spec.method_request_body_ref(create_method):
                 for property_dict in api_spec.schema_properties(req_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
         for path in resource.paths:
@@ -293,7 +293,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 continue
             for param in read_method.get("parameters", []):
                 parse_api_spec_param(api_spec, param, resource)
-            if response_ref := api_spec.method_response_ref(read_method):
+            for response_ref in api_spec.method_response_ref(read_method):
                 for property_dict in api_spec.schema_properties(response_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
     if minimal_refs:

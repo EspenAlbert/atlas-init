@@ -51,6 +51,13 @@ class SchemaAttribute(Entity):
     validators: list[SchemaAttributeValidator] = Field(default_factory=list)
     # not used during dumping but backtrace which parameters are used in the api spec
     parameter_ref: str = ""
+    additional_properties: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def additional_properties_ref(self) -> str:
+        if props := self.additional_properties:
+            return props.get("$ref", "")
+        return ""
 
     @property
     def tf_name(self) -> str:
