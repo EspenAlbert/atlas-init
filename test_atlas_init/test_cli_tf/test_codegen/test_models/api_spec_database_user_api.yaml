@@ -477,34 +477,6 @@ components:
       - groupId
       - username
       type: object
-    PaginatedApiAtlasDatabaseUserView:
-      description: List of MongoDB Database users granted access to databases in the specified project.
-      properties:
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        results:
-          description: List of returned documents that MongoDB Cloud provides when completing this request.
-          items:
-            $ref: '#/components/schemas/CloudDatabaseUser'
-          readOnly: true
-          type: array
-          name: results
-        totalCount:
-          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
-          format: int32
-          minimum: 0
-          readOnly: true
-          type: integer
-          name: totalCount
-      type: object
     ComponentLabel:
       description: Human-readable labels applied to this MongoDB Cloud component.
       properties:
@@ -521,19 +493,6 @@ components:
           type: string
           name: value
       title: Component Label
-      type: object
-    Link:
-      properties:
-        href:
-          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: https://cloud.mongodb.com/api/atlas
-          type: string
-          name: href
-        rel:
-          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: self
-          type: string
-          name: rel
       type: object
     DatabaseUserRole:
       description: Range of resources available to this database user.
@@ -566,6 +525,47 @@ components:
       - databaseName
       - roleName
       title: Database User Role
+      type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+          name: href
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+          name: rel
+      type: object
+    PaginatedApiAtlasDatabaseUserView:
+      description: List of MongoDB Database users granted access to databases in the specified project.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        results:
+          description: List of returned documents that MongoDB Cloud provides when completing this request.
+          items:
+            $ref: '#/components/schemas/CloudDatabaseUser'
+          readOnly: true
+          type: array
+          name: results
+        totalCount:
+          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
+          format: int32
+          minimum: 0
+          readOnly: true
+          type: integer
+          name: totalCount
       type: object
     UserScope:
       description: Range of resources available to this database user.
@@ -610,16 +610,6 @@ components:
         type: string
       x-xgen-IPA-exception:
         xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
-    pretty:
-      description: Flag that indicates whether the response body should be in the prettyprint format.
-      in: query
-      name: pretty
-      schema:
-        default: false
-        externalDocs:
-          description: Prettyprint
-          url: https://en.wikipedia.org/wiki/Prettyprint
-        type: boolean
     includeCount:
       description: Flag that indicates whether the response returns the total number of items (**totalCount**) in the response.
       in: query
@@ -644,4 +634,14 @@ components:
         default: 1
         minimum: 1
         type: integer
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
 tags: []

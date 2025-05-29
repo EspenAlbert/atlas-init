@@ -225,6 +225,19 @@ components:
           type: array
           name: tags
       type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+          name: href
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+          name: rel
+      type: object
     PaginatedAtlasGroupView:
       properties:
         links:
@@ -251,19 +264,6 @@ components:
           readOnly: true
           type: integer
           name: totalCount
-      type: object
-    Link:
-      properties:
-        href:
-          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: https://cloud.mongodb.com/api/atlas
-          type: string
-          name: href
-        rel:
-          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: self
-          type: string
-          name: rel
       type: object
     ResourceTag:
       description: 'Key-value pair that tags and categorizes a MongoDB Cloud organization, project, or cluster. For example, `environment : production`.'
@@ -307,16 +307,6 @@ components:
         type: string
       x-xgen-IPA-exception:
         xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
-    pretty:
-      description: Flag that indicates whether the response body should be in the prettyprint format.
-      in: query
-      name: pretty
-      schema:
-        default: false
-        externalDocs:
-          description: Prettyprint
-          url: https://en.wikipedia.org/wiki/Prettyprint
-        type: boolean
     includeCount:
       description: Flag that indicates whether the response returns the total number of items (**totalCount**) in the response.
       in: query
@@ -341,4 +331,14 @@ components:
         default: 1
         minimum: 1
         type: integer
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
 tags: []

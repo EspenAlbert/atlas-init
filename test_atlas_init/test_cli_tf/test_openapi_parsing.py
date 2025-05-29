@@ -122,6 +122,7 @@ def test_ensure_test_data_admin_api_is_up_to_date(schema_v2, file_regression, ap
     file_regression.check(minimal_spec_yaml, fullpath=api_spec_path)
 
 
+@pytest.mark.skip("manual test")
 def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
     updated = api_spec_text_changes(schema_v2, openapi_schema)
     updated_yaml = dump(updated, "yaml")

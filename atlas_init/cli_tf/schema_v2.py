@@ -8,7 +8,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from queue import Queue
 from tempfile import TemporaryDirectory
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from model_lib import Entity, copy_and_validate, parse_model
 from pydantic import ConfigDict, Field, model_validator
@@ -182,12 +182,12 @@ class Discriminator(Entity):
 
 
 class OneOf(Entity):
-    ref: str = Field(alias="$ref")
+    ref: str = Field(alias="$ref", default="")
 
 
 class AllOf(Entity):
     ref: str = Field(alias="$ref", default="")
-    properties: dict[str, str] = Field(default_factory=dict)
+    properties: dict[str, Any] = Field(default_factory=dict)
 
     @property
     def nested_refs(self) -> set[str]:
@@ -208,8 +208,8 @@ class SchemaResource(Entity):
     attribute_type_modifiers: AttributeTypeModifiers = Field(default_factory=AttributeTypeModifiers)
     conversion: SDKConversion = Field(default_factory=SDKConversion)
     discriminator: Discriminator | None = None
-    one_of: list[OneOf] = Field(default_factory=list, alias="oneOf")
-    all_of: list[AllOf] = Field(default_factory=list, alias="allOf")
+    one_of: list[OneOf] = Field(default_factory=list)
+    all_of: list[AllOf] = Field(default_factory=list)
 
     def extra_refs(self) -> set[str]:
         return (

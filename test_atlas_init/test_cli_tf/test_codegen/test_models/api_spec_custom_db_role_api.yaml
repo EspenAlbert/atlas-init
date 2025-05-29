@@ -135,43 +135,51 @@ paths:
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Custom-Database-Roles/operation/createCustomDatabaseRole
 components:
   schemas:
-    UserCustomDBRole:
+    DatabaseInheritedRole:
+      description: Role inherited from another context for this database user.
+      externalDocs:
+        description: Built-in MongoDB Roles
+        url: https://docs.mongodb.com/manual/reference/built-in-roles/
       properties:
-        actions:
-          description: List of the individual privilege actions that the role grants.
-          items:
-            $ref: '#/components/schemas/DatabasePrivilegeAction'
-          type: array
-          name: actions
-        inheritedRoles:
-          description: List of the built-in roles that this custom role inherits.
-          items:
-            $ref: '#/components/schemas/DatabaseInheritedRole'
-          type: array
-          uniqueItems: true
-          name: inheritedRoles
-        roleName:
-          description: Human-readable label that identifies the role for the request. This name must be unique for this custom role in this project.
+        db:
+          description: Human-readable label that identifies the database on which someone grants the action to one MongoDB user.
           type: string
-          name: roleName
+          name: db
+        role:
+          description: Human-readable label that identifies the role inherited. Set this value to `admin` for every role except `read` or `readWrite`.
+          externalDocs:
+            description: MongoDB Built-In Roles
+            url: https://docs.mongodb.com/manual/reference/built-in-roles/
+          type: string
+          name: role
       required:
-      - roleName
+      - db
+      - role
+      title: Inherited Role
       type: object
-    UpdateCustomDBRole:
+    DatabasePermittedNamespaceResource:
+      description: Namespace to which this database user has access.
+      externalDocs:
+        description: Cluster Resources
+        url: https://docs.mongodb.com/manual/reference/resource-document/#cluster-resource
       properties:
-        actions:
-          description: List of the individual privilege actions that the role grants.
-          items:
-            $ref: '#/components/schemas/DatabasePrivilegeAction'
-          type: array
-          name: actions
-        inheritedRoles:
-          description: List of the built-in roles that this custom role inherits.
-          items:
-            $ref: '#/components/schemas/DatabaseInheritedRole'
-          type: array
-          uniqueItems: true
-          name: inheritedRoles
+        cluster:
+          description: Flag that indicates whether to grant the action on the cluster resource. If `true`, MongoDB Cloud ignores the **actions.resources.collection** and **actions.resources.db** parameters.
+          type: boolean
+          name: cluster
+        collection:
+          description: 'Human-readable label that identifies the collection on which you grant the action to one MongoDB user. If you don''t set this parameter, you grant the action to all collections in the database specified in the **actions.resources.db** parameter. If you set `"actions.resources.cluster" : true`, MongoDB Cloud ignores this parameter.'
+          type: string
+          name: collection
+        db:
+          description: 'Human-readable label that identifies the database on which you grant the action to one MongoDB user. If you set `"actions.resources.cluster" : true`, MongoDB Cloud ignores this parameter.'
+          type: string
+          name: db
+      required:
+      - cluster
+      - collection
+      - db
+      title: Permitted Namespace
       type: object
     DatabasePrivilegeAction:
       description: Privilege action that the role grants.
@@ -265,51 +273,43 @@ components:
       - action
       title: Database Privilege Action
       type: object
-    DatabaseInheritedRole:
-      description: Role inherited from another context for this database user.
-      externalDocs:
-        description: Built-in MongoDB Roles
-        url: https://docs.mongodb.com/manual/reference/built-in-roles/
+    UpdateCustomDBRole:
       properties:
-        db:
-          description: Human-readable label that identifies the database on which someone grants the action to one MongoDB user.
-          type: string
-          name: db
-        role:
-          description: Human-readable label that identifies the role inherited. Set this value to `admin` for every role except `read` or `readWrite`.
-          externalDocs:
-            description: MongoDB Built-In Roles
-            url: https://docs.mongodb.com/manual/reference/built-in-roles/
-          type: string
-          name: role
-      required:
-      - db
-      - role
-      title: Inherited Role
+        actions:
+          description: List of the individual privilege actions that the role grants.
+          items:
+            $ref: '#/components/schemas/DatabasePrivilegeAction'
+          type: array
+          name: actions
+        inheritedRoles:
+          description: List of the built-in roles that this custom role inherits.
+          items:
+            $ref: '#/components/schemas/DatabaseInheritedRole'
+          type: array
+          uniqueItems: true
+          name: inheritedRoles
       type: object
-    DatabasePermittedNamespaceResource:
-      description: Namespace to which this database user has access.
-      externalDocs:
-        description: Cluster Resources
-        url: https://docs.mongodb.com/manual/reference/resource-document/#cluster-resource
+    UserCustomDBRole:
       properties:
-        cluster:
-          description: Flag that indicates whether to grant the action on the cluster resource. If `true`, MongoDB Cloud ignores the **actions.resources.collection** and **actions.resources.db** parameters.
-          type: boolean
-          name: cluster
-        collection:
-          description: 'Human-readable label that identifies the collection on which you grant the action to one MongoDB user. If you don''t set this parameter, you grant the action to all collections in the database specified in the **actions.resources.db** parameter. If you set `"actions.resources.cluster" : true`, MongoDB Cloud ignores this parameter.'
+        actions:
+          description: List of the individual privilege actions that the role grants.
+          items:
+            $ref: '#/components/schemas/DatabasePrivilegeAction'
+          type: array
+          name: actions
+        inheritedRoles:
+          description: List of the built-in roles that this custom role inherits.
+          items:
+            $ref: '#/components/schemas/DatabaseInheritedRole'
+          type: array
+          uniqueItems: true
+          name: inheritedRoles
+        roleName:
+          description: Human-readable label that identifies the role for the request. This name must be unique for this custom role in this project.
           type: string
-          name: collection
-        db:
-          description: 'Human-readable label that identifies the database on which you grant the action to one MongoDB user. If you set `"actions.resources.cluster" : true`, MongoDB Cloud ignores this parameter.'
-          type: string
-          name: db
+          name: roleName
       required:
-      - cluster
-      - collection
-      - db
-      title: Permitted Namespace
+      - roleName
       type: object
   parameters:
     envelope:

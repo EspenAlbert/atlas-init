@@ -191,6 +191,7 @@ class OpenapiSchema(Entity):
             attributes_skip=attributes_skip,
             discriminator=schema.get("discriminator"),
             one_of=schema.get("oneOf", []),
+            all_of=schema.get("allOf", []),
         )
         required_names = schema.get("required", [])
         for prop in self.schema_properties(ref):

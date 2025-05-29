@@ -49,6 +49,10 @@ def minimal_api_spec_simplified(resource: ResourceConfig, full_spec: OpenapiSche
         else:
             param_name = ref.split("/")[-1]
             minimal_spec.components["parameters"][param_name] = full_spec.resolve_ref(ref)
+    sorted_components = sorted(minimal_spec.components["schemas"].items())
+    sorted_parameters = sorted(minimal_spec.components["parameters"].items())
+    minimal_spec.components["schemas"] = dict(sorted_components)
+    minimal_spec.components["parameters"] = dict(sorted_parameters)
     return minimal_spec
 
 

@@ -149,6 +149,446 @@ paths:
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/createStreamInstance
 components:
   schemas:
+    ApiStreamsAWSRegionView:
+      description: Atlas Streams AWS Regions.
+      enum:
+      - SYDNEY_AUS
+      - MUMBAI_IND
+      - FRANKFURT_DEU
+      - DUBLIN_IRL
+      - LONDON_GBR
+      - VIRGINIA_USA
+      - OHIO_USA
+      - OREGON_USA
+      - SAOPAULO_BRA
+      - MONTREAL_CAN
+      - TOKYO_JPN
+      - SINGAPORE_SGP
+      type: string
+    ApiStreamsAzureRegionView:
+      description: Atlas Streams Azure Regions.
+      enum:
+      - eastus
+      - westus
+      - eastus2
+      - westeurope
+      type: string
+    ApiStreamsGCPRegionView:
+      description: Atlas Streams GCP Regions.
+      enum:
+      - US_CENTRAL1
+      - EUROPE_WEST1
+      - US_EAST4
+      type: string
+    BaseStreamsRegion:
+      description: Name of the cloud provider region hosting Atlas Stream Processing.
+      oneOf:
+      - $ref: '#/components/schemas/ApiStreamsAWSRegionView'
+      - $ref: '#/components/schemas/ApiStreamsAzureRegionView'
+      - $ref: '#/components/schemas/ApiStreamsGCPRegionView'
+      type: object
+    DBRoleToExecute:
+      description: The name of a Built in or Custom DB Role to connect to an Atlas Cluster.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        role:
+          description: The name of the role to use. Can be a built in role or a custom role.
+          type: string
+          name: role
+        type:
+          description: Type of the DB role. Can be either BuiltIn or Custom.
+          enum:
+          - BUILT_IN
+          - CUSTOM
+          title: DB Role Type
+          type: string
+          name: type
+      type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+          name: href
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+          name: rel
+      type: object
+    PaginatedApiStreamsTenantView:
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        results:
+          description: List of returned documents that MongoDB Cloud provides when completing this request.
+          items:
+            $ref: '#/components/schemas/StreamsTenant'
+          readOnly: true
+          type: array
+          name: results
+        totalCount:
+          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
+          format: int32
+          minimum: 0
+          readOnly: true
+          type: integer
+          name: totalCount
+      type: object
+    StreamConfig:
+      description: Configuration options for an Atlas Stream Processing Instance.
+      nullable: true
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        tier:
+          description: Selected tier for the Stream Instance. Configures Memory / VCPU allowances.
+          enum:
+          - SP30
+          - SP10
+          title: Stream Instance Tier
+          type: string
+          name: tier
+      type: object
+    StreamsAWSConnectionConfig:
+      description: AWS configurations for AWS-based connection types.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        roleArn:
+          description: Amazon Resource Name (ARN) that identifies the Amazon Web Services (AWS) Identity and Access Management (IAM) role that MongoDB Cloud assumes when it accesses resources in your AWS account.
+          type: string
+          name: roleArn
+        testBucket:
+          description: The name of an S3 bucket used to check authorization of the passed-in IAM role ARN.
+          type: string
+          name: testBucket
+      type: object
+    StreamsAWSLambdaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for AWS Lambda connections.
+      type: object
+    StreamsClusterConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          clusterName:
+            description: Name of the cluster configured for this connection.
+            type: string
+          dbRoleToExecute:
+            $ref: '#/components/schemas/DBRoleToExecute'
+        type: object
+      type: object
+    StreamsConnection:
+      description: Settings that define a connection to an external data store.
+      discriminator:
+        mapping:
+          AWSLambda: '#/components/schemas/StreamsAWSLambdaConnection'
+          Cluster: '#/components/schemas/StreamsClusterConnection'
+          Https: '#/components/schemas/StreamsHttpsConnection'
+          Kafka: '#/components/schemas/StreamsKafkaConnection'
+          S3: '#/components/schemas/StreamsS3Connection'
+          Sample: '#/components/schemas/StreamsSampleConnection'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/StreamsSampleConnection'
+      - $ref: '#/components/schemas/StreamsClusterConnection'
+      - $ref: '#/components/schemas/StreamsKafkaConnection'
+      - $ref: '#/components/schemas/StreamsHttpsConnection'
+      - $ref: '#/components/schemas/StreamsAWSLambdaConnection'
+      - $ref: '#/components/schemas/StreamsS3Connection'
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        name:
+          description: Human-readable label that identifies the stream connection. In the case of the Sample type, this is the name of the sample source.
+          type: string
+          name: name
+        type:
+          description: Type of the connection.
+          enum:
+          - Kafka
+          - Cluster
+          - Sample
+          - Https
+          - AWSLambda
+          type: string
+          name: type
+      readOnly: true
+      type: object
+    StreamsDataProcessRegion:
+      description: Information about the cloud provider region in which MongoDB Cloud processes the stream.
+      properties:
+        cloudProvider:
+          description: Label that identifies the cloud service provider where MongoDB Cloud performs stream processing. Currently, this parameter only supports AWS and AZURE.
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          - TENANT
+          - SERVERLESS
+          type: string
+          name: cloudProvider
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        region:
+          $ref: '#/components/schemas/BaseStreamsRegion'
+          name: region
+      required:
+      - cloudProvider
+      - region
+      type: object
+    StreamsHttpsConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          headers:
+            additionalProperties:
+              description: A map of key-value pairs that will be passed as headers for the request.
+              type: string
+            description: A map of key-value pairs that will be passed as headers for the request.
+            type: object
+          url:
+            description: The url to be used for the request.
+            type: string
+        type: object
+      type: object
+    StreamsKafkaAuthentication:
+      description: User credentials required to connect to a Kafka Cluster. Includes the authentication type, as well as the parameters for that authentication mode.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        mechanism:
+          description: Style of authentication. Can be one of PLAIN, SCRAM-256, or SCRAM-512.
+          type: string
+          name: mechanism
+        password:
+          description: Password of the account to connect to the Kafka cluster.
+          format: password
+          type: string
+          writeOnly: true
+          name: password
+        sslCertificate:
+          description: SSL certificate for client authentication to Kafka.
+          type: string
+          name: sslCertificate
+        sslKey:
+          description: SSL key for client authentication to Kafka.
+          type: string
+          writeOnly: true
+          name: sslKey
+        sslKeyPassword:
+          description: Password for the SSL key, if it is password protected.
+          type: string
+          writeOnly: true
+          name: sslKeyPassword
+        username:
+          description: Username of the account to connect to the Kafka cluster.
+          type: string
+          name: username
+      type: object
+    StreamsKafkaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          authentication:
+            $ref: '#/components/schemas/StreamsKafkaAuthentication'
+          bootstrapServers:
+            description: Comma separated list of server addresses.
+            type: string
+          config:
+            additionalProperties:
+              description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+              example: '{"group.protocol.type":"consumer","debug":"queue, msg, protocol"}'
+              type: string
+            description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+            example:
+              debug: queue, msg, protocol
+              group.protocol.type: consumer
+            type: object
+          networking:
+            $ref: '#/components/schemas/StreamsKafkaNetworking'
+          security:
+            $ref: '#/components/schemas/StreamsKafkaSecurity'
+        type: object
+      type: object
+    StreamsKafkaNetworking:
+      description: Networking Access Type can either be 'PUBLIC' (default) or VPC. VPC type is in public preview, please file a support ticket to enable VPC Network Access.
+      properties:
+        access:
+          $ref: '#/components/schemas/StreamsKafkaNetworkingAccess'
+          name: access
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+      type: object
+    StreamsKafkaNetworkingAccess:
+      description: Information about the networking access.
+      properties:
+        connectionId:
+          description: Reserved. Will be used by PRIVATE_LINK connection type.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          type: string
+          name: connectionId
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        name:
+          description: Reserved. Will be used by PRIVATE_LINK connection type.
+          type: string
+          name: name
+        tgwId:
+          description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
+          pattern: ^(tgw-)[0-9a-zA-Z]+$
+          type: string
+          name: tgwId
+        type:
+          description: Selected networking type. Either PUBLIC, VPC, PRIVATE_LINK, or TRANSIT_GATEWAY. Defaults to PUBLIC. For VPC, ensure that VPC peering exists and connectivity has been established between Atlas VPC and the VPC where Kafka cluster is hosted for the connection to function properly. TRANSIT_GATEWAY support is coming soon.
+          enum:
+          - PUBLIC
+          - VPC
+          - PRIVATE_LINK
+          - TRANSIT_GATEWAY
+          title: Networking Access Type
+          type: string
+          name: type
+        vpcCIDR:
+          description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
+          type: string
+          name: vpcCIDR
+      type: object
+    StreamsKafkaSecurity:
+      description: Properties for the secure transport connection to Kafka. For SSL, this can include the trusted certificate to use.
+      properties:
+        brokerPublicCertificate:
+          description: A trusted, public x509 certificate for connecting to Kafka over SSL.
+          type: string
+          name: brokerPublicCertificate
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        protocol:
+          description: Describes the transport type. Can be either SASL_PLAINTEXT, SASL_SSL, or SSL.
+          type: string
+          name: protocol
+      type: object
+    StreamsS3Connection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for S3 connections.
+      type: object
+    StreamsSampleConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      type: object
+    StreamsSampleConnections:
+      description: Sample connections to add to SPI.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+          name: links
+        solar:
+          default: false
+          description: Flag that indicates whether to add a 'sample_stream_solar' connection.
+          type: boolean
+          name: solar
+      type: object
     StreamsTenant:
       properties:
         _id:
@@ -205,274 +645,6 @@ components:
           $ref: '#/components/schemas/StreamConfig'
           name: streamConfig
       type: object
-    StreamsDataProcessRegion:
-      description: Information about the cloud provider region in which MongoDB Cloud processes the stream.
-      properties:
-        cloudProvider:
-          description: Label that identifies the cloud service provider where MongoDB Cloud performs stream processing. Currently, this parameter only supports AWS and AZURE.
-          enum:
-          - AWS
-          - GCP
-          - AZURE
-          - TENANT
-          - SERVERLESS
-          type: string
-          name: cloudProvider
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        region:
-          $ref: '#/components/schemas/BaseStreamsRegion'
-          name: region
-      required:
-      - cloudProvider
-      - region
-      type: object
-    PaginatedApiStreamsTenantView:
-      properties:
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        results:
-          description: List of returned documents that MongoDB Cloud provides when completing this request.
-          items:
-            $ref: '#/components/schemas/StreamsTenant'
-          readOnly: true
-          type: array
-          name: results
-        totalCount:
-          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
-          format: int32
-          minimum: 0
-          readOnly: true
-          type: integer
-          name: totalCount
-      type: object
-    StreamsConnection:
-      description: Settings that define a connection to an external data store.
-      discriminator:
-        mapping:
-          AWSLambda: '#/components/schemas/StreamsAWSLambdaConnection'
-          Cluster: '#/components/schemas/StreamsClusterConnection'
-          Https: '#/components/schemas/StreamsHttpsConnection'
-          Kafka: '#/components/schemas/StreamsKafkaConnection'
-          S3: '#/components/schemas/StreamsS3Connection'
-          Sample: '#/components/schemas/StreamsSampleConnection'
-        propertyName: type
-      oneOf:
-      - $ref: '#/components/schemas/StreamsSampleConnection'
-      - $ref: '#/components/schemas/StreamsClusterConnection'
-      - $ref: '#/components/schemas/StreamsKafkaConnection'
-      - $ref: '#/components/schemas/StreamsHttpsConnection'
-      - $ref: '#/components/schemas/StreamsAWSLambdaConnection'
-      - $ref: '#/components/schemas/StreamsS3Connection'
-      properties:
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        name:
-          description: Human-readable label that identifies the stream connection. In the case of the Sample type, this is the name of the sample source.
-          type: string
-          name: name
-        type:
-          description: Type of the connection.
-          enum:
-          - Kafka
-          - Cluster
-          - Sample
-          - Https
-          - AWSLambda
-          type: string
-          name: type
-      readOnly: true
-      type: object
-    Link:
-      properties:
-        href:
-          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: https://cloud.mongodb.com/api/atlas
-          type: string
-          name: href
-        rel:
-          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
-          example: self
-          type: string
-          name: rel
-      type: object
-    StreamsSampleConnections:
-      description: Sample connections to add to SPI.
-      properties:
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        solar:
-          default: false
-          description: Flag that indicates whether to add a 'sample_stream_solar' connection.
-          type: boolean
-          name: solar
-      type: object
-    StreamConfig:
-      description: Configuration options for an Atlas Stream Processing Instance.
-      nullable: true
-      properties:
-        links:
-          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
-          externalDocs:
-            description: Web Linking Specification (RFC 5988)
-            url: https://datatracker.ietf.org/doc/html/rfc5988
-          items:
-            $ref: '#/components/schemas/Link'
-          readOnly: true
-          type: array
-          name: links
-        tier:
-          description: Selected tier for the Stream Instance. Configures Memory / VCPU allowances.
-          enum:
-          - SP30
-          - SP10
-          title: Stream Instance Tier
-          type: string
-          name: tier
-      type: object
-    BaseStreamsRegion:
-      description: Name of the cloud provider region hosting Atlas Stream Processing.
-      oneOf:
-      - $ref: '#/components/schemas/ApiStreamsAWSRegionView'
-      - $ref: '#/components/schemas/ApiStreamsAzureRegionView'
-      - $ref: '#/components/schemas/ApiStreamsGCPRegionView'
-      type: object
-    StreamsKafkaConnection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      - properties:
-          authentication:
-            $ref: '#/components/schemas/StreamsKafkaAuthentication'
-          bootstrapServers:
-            description: Comma separated list of server addresses.
-            type: string
-          config:
-            additionalProperties:
-              description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
-              example: '{"group.protocol.type":"consumer","debug":"queue, msg, protocol"}'
-              type: string
-            description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
-            example:
-              debug: queue, msg, protocol
-              group.protocol.type: consumer
-            type: object
-          networking:
-            $ref: '#/components/schemas/StreamsKafkaNetworking'
-          security:
-            $ref: '#/components/schemas/StreamsKafkaSecurity'
-        type: object
-      type: object
-    StreamsHttpsConnection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      - properties:
-          headers:
-            additionalProperties:
-              description: A map of key-value pairs that will be passed as headers for the request.
-              type: string
-            description: A map of key-value pairs that will be passed as headers for the request.
-            type: object
-          url:
-            description: The url to be used for the request.
-            type: string
-        type: object
-      type: object
-    StreamsClusterConnection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      - properties:
-          clusterName:
-            description: Name of the cluster configured for this connection.
-            type: string
-          dbRoleToExecute:
-            $ref: '#/components/schemas/DBRoleToExecute'
-        type: object
-      type: object
-    StreamsSampleConnection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      type: object
-    StreamsS3Connection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      - properties:
-          aws:
-            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
-        type: object
-      description: The configuration for S3 connections.
-      type: object
-    StreamsAWSLambdaConnection:
-      allOf:
-      - $ref: '#/components/schemas/StreamsConnection'
-      - properties:
-          aws:
-            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
-        type: object
-      description: The configuration for AWS Lambda connections.
-      type: object
-    ApiStreamsAzureRegionView:
-      description: Atlas Streams Azure Regions.
-      enum:
-      - eastus
-      - westus
-      - eastus2
-      - westeurope
-      type: string
-    ApiStreamsGCPRegionView:
-      description: Atlas Streams GCP Regions.
-      enum:
-      - US_CENTRAL1
-      - EUROPE_WEST1
-      - US_EAST4
-      type: string
-    ApiStreamsAWSRegionView:
-      description: Atlas Streams AWS Regions.
-      enum:
-      - SYDNEY_AUS
-      - MUMBAI_IND
-      - FRANKFURT_DEU
-      - DUBLIN_IRL
-      - LONDON_GBR
-      - VIRGINIA_USA
-      - OHIO_USA
-      - OREGON_USA
-      - SAOPAULO_BRA
-      - MONTREAL_CAN
-      - TOKYO_JPN
-      - SINGAPORE_SGP
-      type: string
   parameters:
     envelope:
       description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
@@ -495,16 +667,6 @@ components:
         type: string
       x-xgen-IPA-exception:
         xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
-    pretty:
-      description: Flag that indicates whether the response body should be in the prettyprint format.
-      in: query
-      name: pretty
-      schema:
-        default: false
-        externalDocs:
-          description: Prettyprint
-          url: https://en.wikipedia.org/wiki/Prettyprint
-        type: boolean
     itemsPerPage:
       description: Number of items that the response returns per page.
       in: query
@@ -522,4 +684,14 @@ components:
         default: 1
         minimum: 1
         type: integer
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
 tags: []
