@@ -1,6 +1,8 @@
 openapi: 3.0.1
 info:
   description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
 paths:
   /api/atlas/v2/groups/{groupId}/databaseUsers/{databaseName}/{username}:
     delete:
@@ -61,6 +63,13 @@ paths:
       summary: Remove One Database User from One Project
       tags:
       - Database Users
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/databaseUsers/{databaseName}/{username}\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteDatabaseUser --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Database-Users/operation/deleteDatabaseUser
     get:
       description: Returns one database user that belong to the specified project. To use this resource, the requesting Service Account or API Key must have the Project Read Only role.
@@ -122,6 +131,13 @@ paths:
       summary: Return One Database User from One Project
       tags:
       - Database Users
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/databaseUsers/{databaseName}/{username}?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getDatabaseUser --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Database-Users/operation/getDatabaseUser
     patch:
       description: Updates one database user that belongs to the specified project. To use this resource, the requesting Service Account or API Key must have the Project Owner role, Project Charts Admin role, Project Stream Processing Owner role, or the Project Database Access Admin role.
@@ -190,6 +206,13 @@ paths:
       summary: Update One Database User in One Project
       tags:
       - Database Users
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/databaseUsers/{databaseName}/{username}\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateDatabaseUser --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Database-Users/operation/updateDatabaseUser
   /api/atlas/v2/groups/{groupId}/databaseUsers:
     get:
@@ -213,6 +236,13 @@ paths:
       summary: Return All Database Users from One Project
       tags:
       - Database Users
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/databaseUsers?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api listDatabaseUsers --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Database-Users/operation/listDatabaseUsers
     post:
       description: Creates one database user in the specified project. This MongoDB Cloud supports a maximum of 100 database users per project. If you require more than 100 database users on a project, contact Support. To use this resource, the requesting Service Account or API Key must have the Project Owner role, the Project Charts Admin role, Project Stream Processing Owner role, or the Project Database Access Admin role.
@@ -333,6 +363,13 @@ paths:
       summary: Create One Database User in One Project
       tags:
       - Database Users
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/databaseUsers\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createDatabaseUser --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Database-Users/operation/createDatabaseUser
 components:
   schemas:
@@ -346,7 +383,6 @@ components:
           - USER
           - ROLE
           type: string
-          name: awsIAMType
         databaseName:
           default: admin
           description: The database against which the database user authenticates. Database users must provide both a username and authentication database to log into MongoDB. If the user authenticates with AWS IAM, x.509, LDAP, or OIDC Workload this value should be `$external`. If the user authenticates with SCRAM-SHA or OIDC Workforce, this value should be `admin`.
@@ -354,28 +390,23 @@ components:
           - admin
           - $external
           type: string
-          name: databaseName
         deleteAfterDate:
           description: Date and time when MongoDB Cloud deletes the user. This parameter expresses its value in the ISO 8601 timestamp format in UTC and can include the time zone designation. You must specify a future date that falls within one week of making the Application Programming Interface (API) request.
           format: date-time
           type: string
-          name: deleteAfterDate
         description:
           description: Description of this database user.
           maxLength: 100
           type: string
-          name: description
         groupId:
           description: Unique 24-hexadecimal digit string that identifies the project.
           type: string
           writeOnly: true
-          name: groupId
         labels:
           description: List that contains the key-value pairs for tagging and categorizing the MongoDB database user. The labels that you define do not appear in the console.
           items:
             $ref: '#/components/schemas/ComponentLabel'
           type: array
-          name: labels
         ldapAuthType:
           default: NONE
           description: Part of the Lightweight Directory Access Protocol (LDAP) record that the database uses to authenticate this database user on the LDAP host.
@@ -384,7 +415,6 @@ components:
           - GROUP
           - USER
           type: string
-          name: ldapAuthType
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -394,7 +424,6 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         oidcAuthType:
           default: NONE
           description: Human-readable label that indicates whether the new database user or group authenticates with OIDC federated authentication. To create a federated authentication user, specify the value of USER in this field. To create a federated authentication group, specify the value of IDP_GROUP in this field.
@@ -403,7 +432,6 @@ components:
           - IDP_GROUP
           - USER
           type: string
-          name: oidcAuthType
         password:
           description: Alphanumeric string that authenticates this database user against the database specified in `databaseName`. To authenticate with SCRAM-SHA, you must specify this parameter. This parameter doesn't appear in this response.
           externalDocs:
@@ -412,19 +440,16 @@ components:
           minLength: 8
           type: string
           writeOnly: true
-          name: password
         roles:
           description: List that provides the pairings of one role with one applicable database.
           items:
             $ref: '#/components/schemas/DatabaseUserRole'
           type: array
-          name: roles
         scopes:
           description: List that contains clusters, MongoDB Atlas Data Lakes, and MongoDB Atlas Streams Instances that this database user can access. If omitted, MongoDB Cloud grants the database user access to all the clusters, MongoDB Atlas Data Lakes, and MongoDB Atlas Streams Instances in the project.
           items:
             $ref: '#/components/schemas/UserScope'
           type: array
-          name: scopes
         username:
           description: 'Human-readable label that represents the user that authenticates to MongoDB. The format of this label depends on the method of authentication:
 
@@ -454,7 +479,6 @@ components:
             '
           maxLength: 1024
           type: string
-          name: username
         x509Type:
           default: NONE
           description: 'X.509 method that MongoDB Cloud uses to authenticate the database user.
@@ -471,7 +495,6 @@ components:
           - CUSTOMER
           - MANAGED
           type: string
-          name: x509Type
       required:
       - databaseName
       - groupId
@@ -485,13 +508,11 @@ components:
           maxLength: 255
           minLength: 1
           type: string
-          name: key
         value:
           description: Value set to the Key applied to tag and categorize this component.
           maxLength: 255
           minLength: 1
           type: string
-          name: value
       title: Component Label
       type: object
     DatabaseUserRole:
@@ -500,11 +521,9 @@ components:
         collectionName:
           description: Collection on which this role applies.
           type: string
-          name: collectionName
         databaseName:
           description: Database to which the user is granted access privileges.
           type: string
-          name: databaseName
         roleName:
           description: Human-readable label that identifies a group of privileges assigned to a database user. This value can either be a built-in role or a custom role.
           enum:
@@ -520,7 +539,6 @@ components:
           - readWriteAnyDatabase
           - <a custom role name>
           type: string
-          name: roleName
       required:
       - databaseName
       - roleName
@@ -532,12 +550,10 @@ components:
           description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: https://cloud.mongodb.com/api/atlas
           type: string
-          name: href
         rel:
           description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: self
           type: string
-          name: rel
       type: object
     PaginatedApiAtlasDatabaseUserView:
       description: List of MongoDB Database users granted access to databases in the specified project.
@@ -551,21 +567,18 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         results:
           description: List of returned documents that MongoDB Cloud provides when completing this request.
           items:
             $ref: '#/components/schemas/CloudDatabaseUser'
           readOnly: true
           type: array
-          name: results
         totalCount:
           description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
           format: int32
           minimum: 0
           readOnly: true
           type: integer
-          name: totalCount
       type: object
     UserScope:
       description: Range of resources available to this database user.
@@ -574,7 +587,6 @@ components:
           description: Human-readable label that identifies the cluster or MongoDB Atlas Data Lake that this database user can access.
           pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
           type: string
-          name: name
         type:
           description: Category of resource that this database user can access.
           enum:
@@ -582,7 +594,6 @@ components:
           - DATA_LAKE
           - STREAM
           type: string
-          name: type
       required:
       - name
       - type

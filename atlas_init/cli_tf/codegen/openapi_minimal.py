@@ -7,7 +7,7 @@ from atlas_init.cli_tf.schema_v2 import SchemaResource
 def minimal_api_spec_simplified(resource: ResourceConfig, full_spec: OpenapiSchema) -> OpenapiSchema:
     minimal_spec = OpenapiSchema(
         openapi=full_spec.openapi,
-        info={"description": "minimal spec"},
+        info={"description": "minimal spec", "version": full_spec.info["version"], "title": full_spec.info["title"]},
         paths={},
         components={"schemas": {}, "parameters": {}},
     )
@@ -54,9 +54,17 @@ def minimal_api_spec_simplified(resource: ResourceConfig, full_spec: OpenapiSche
             minimal_spec.components["parameters"][param_name] = full_spec.resolve_ref(ref)
     sorted_components = sorted(minimal_spec.components["schemas"].items())
     sorted_parameters = sorted(minimal_spec.components["parameters"].items())
+    modify_schema_properties(sorted_components)
     minimal_spec.components["schemas"] = dict(sorted_components)
     minimal_spec.components["parameters"] = dict(sorted_parameters)
     return minimal_spec
+
+
+def modify_schema_properties(schema_properties: list[tuple[str, dict]]):
+    for _, schema_values in schema_properties:
+        properties = schema_values.get("properties", {})
+        for _, prop_values in properties.items():
+            prop_values.pop("name", None)  # Remove 'name' field if it exists
 
 
 def remove_non_2xx_responses(path_dict: dict) -> None:

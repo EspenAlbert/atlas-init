@@ -1,6 +1,8 @@
 openapi: 3.0.1
 info:
   description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
 paths:
   /api/atlas/v2/groups/{groupId}/streams/{tenantName}:
     delete:
@@ -25,6 +27,13 @@ paths:
       summary: Delete One Stream Instance
       tags:
       - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteStreamInstance --help
       x-xgen-changelog:
         '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/deleteStreamInstance
@@ -58,6 +67,13 @@ paths:
       summary: Return One Stream Instance
       tags:
       - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getStreamInstance --help
       x-xgen-changelog:
         '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/getStreamInstance
@@ -92,6 +108,13 @@ paths:
       summary: Update One Stream Instance
       tags:
       - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateStreamInstance --help
       x-xgen-changelog:
         '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/updateStreamInstance
@@ -116,6 +139,13 @@ paths:
       summary: Return All Project Stream Instances
       tags:
       - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api listStreamInstances --help
       x-xgen-changelog:
         '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/listStreamInstances
@@ -144,6 +174,13 @@ paths:
       summary: Create One Stream Instance
       tags:
       - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createStreamInstance --help
       x-xgen-changelog:
         '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/createStreamInstance
@@ -199,11 +236,9 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         role:
           description: The name of the role to use. Can be a built in role or a custom role.
           type: string
-          name: role
         type:
           description: Type of the DB role. Can be either BuiltIn or Custom.
           enum:
@@ -211,7 +246,6 @@ components:
           - CUSTOM
           title: DB Role Type
           type: string
-          name: type
       type: object
     Link:
       properties:
@@ -219,12 +253,10 @@ components:
           description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: https://cloud.mongodb.com/api/atlas
           type: string
-          name: href
         rel:
           description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: self
           type: string
-          name: rel
       type: object
     PaginatedApiStreamsTenantView:
       properties:
@@ -237,21 +269,18 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         results:
           description: List of returned documents that MongoDB Cloud provides when completing this request.
           items:
             $ref: '#/components/schemas/StreamsTenant'
           readOnly: true
           type: array
-          name: results
         totalCount:
           description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
           format: int32
           minimum: 0
           readOnly: true
           type: integer
-          name: totalCount
       type: object
     StreamConfig:
       description: Configuration options for an Atlas Stream Processing Instance.
@@ -266,7 +295,6 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         tier:
           description: Selected tier for the Stream Instance. Configures Memory / VCPU allowances.
           enum:
@@ -274,7 +302,6 @@ components:
           - SP10
           title: Stream Instance Tier
           type: string
-          name: tier
       type: object
     StreamsAWSConnectionConfig:
       description: AWS configurations for AWS-based connection types.
@@ -288,15 +315,12 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         roleArn:
           description: Amazon Resource Name (ARN) that identifies the Amazon Web Services (AWS) Identity and Access Management (IAM) role that MongoDB Cloud assumes when it accesses resources in your AWS account.
           type: string
-          name: roleArn
         testBucket:
           description: The name of an S3 bucket used to check authorization of the passed-in IAM role ARN.
           type: string
-          name: testBucket
       type: object
     StreamsAWSLambdaConnection:
       allOf:
@@ -346,11 +370,9 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         name:
           description: Human-readable label that identifies the stream connection. In the case of the Sample type, this is the name of the sample source.
           type: string
-          name: name
         type:
           description: Type of the connection.
           enum:
@@ -360,7 +382,6 @@ components:
           - Https
           - AWSLambda
           type: string
-          name: type
       readOnly: true
       type: object
     StreamsDataProcessRegion:
@@ -375,7 +396,6 @@ components:
           - TENANT
           - SERVERLESS
           type: string
-          name: cloudProvider
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -385,10 +405,8 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         region:
           $ref: '#/components/schemas/BaseStreamsRegion'
-          name: region
       required:
       - cloudProvider
       - region
@@ -420,35 +438,28 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         mechanism:
           description: Style of authentication. Can be one of PLAIN, SCRAM-256, or SCRAM-512.
           type: string
-          name: mechanism
         password:
           description: Password of the account to connect to the Kafka cluster.
           format: password
           type: string
           writeOnly: true
-          name: password
         sslCertificate:
           description: SSL certificate for client authentication to Kafka.
           type: string
-          name: sslCertificate
         sslKey:
           description: SSL key for client authentication to Kafka.
           type: string
           writeOnly: true
-          name: sslKey
         sslKeyPassword:
           description: Password for the SSL key, if it is password protected.
           type: string
           writeOnly: true
-          name: sslKeyPassword
         username:
           description: Username of the account to connect to the Kafka cluster.
           type: string
-          name: username
       type: object
     StreamsKafkaConnection:
       allOf:
@@ -480,7 +491,6 @@ components:
       properties:
         access:
           $ref: '#/components/schemas/StreamsKafkaNetworkingAccess'
-          name: access
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -490,7 +500,6 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
       type: object
     StreamsKafkaNetworkingAccess:
       description: Information about the networking access.
@@ -500,7 +509,6 @@ components:
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           type: string
-          name: connectionId
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -510,16 +518,13 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         name:
           description: Reserved. Will be used by PRIVATE_LINK connection type.
           type: string
-          name: name
         tgwId:
           description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
           pattern: ^(tgw-)[0-9a-zA-Z]+$
           type: string
-          name: tgwId
         type:
           description: Selected networking type. Either PUBLIC, VPC, PRIVATE_LINK, or TRANSIT_GATEWAY. Defaults to PUBLIC. For VPC, ensure that VPC peering exists and connectivity has been established between Atlas VPC and the VPC where Kafka cluster is hosted for the connection to function properly. TRANSIT_GATEWAY support is coming soon.
           enum:
@@ -529,11 +534,9 @@ components:
           - TRANSIT_GATEWAY
           title: Networking Access Type
           type: string
-          name: type
         vpcCIDR:
           description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
           type: string
-          name: vpcCIDR
       type: object
     StreamsKafkaSecurity:
       description: Properties for the secure transport connection to Kafka. For SSL, this can include the trusted certificate to use.
@@ -541,7 +544,6 @@ components:
         brokerPublicCertificate:
           description: A trusted, public x509 certificate for connecting to Kafka over SSL.
           type: string
-          name: brokerPublicCertificate
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -551,11 +553,9 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         protocol:
           description: Describes the transport type. Can be either SASL_PLAINTEXT, SASL_SSL, or SSL.
           type: string
-          name: protocol
       type: object
     StreamsS3Connection:
       allOf:
@@ -582,12 +582,10 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         solar:
           default: false
           description: Flag that indicates whether to add a 'sample_stream_solar' connection.
           type: boolean
-          name: solar
       type: object
     StreamsTenant:
       properties:
@@ -597,24 +595,20 @@ components:
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: _id
         connections:
           description: List of connections configured in the stream instance.
           items:
             $ref: '#/components/schemas/StreamsConnection'
           readOnly: true
           type: array
-          name: connections
         dataProcessRegion:
           $ref: '#/components/schemas/StreamsDataProcessRegion'
-          name: dataProcessRegion
         groupId:
           description: Unique 24-hexadecimal character string that identifies the project.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: groupId
         hostnames:
           description: List that contains the hostnames assigned to the stream instance.
           items:
@@ -623,7 +617,6 @@ components:
             type: string
           readOnly: true
           type: array
-          name: hostnames
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -633,17 +626,13 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         name:
           description: Human-readable label that identifies the stream instance.
           type: string
-          name: name
         sampleConnections:
           $ref: '#/components/schemas/StreamsSampleConnections'
-          name: sampleConnections
         streamConfig:
           $ref: '#/components/schemas/StreamConfig'
-          name: streamConfig
       type: object
   parameters:
     envelope:

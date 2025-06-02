@@ -207,6 +207,16 @@ class OpenapiSchema(Entity):
         elif ref.startswith(self.SCHEMAS_PREFIX):
             prefix = self.SCHEMAS_PREFIX
             parent_dict = self.components["schemas"]
+            ref_value.pop("name", None)
+            if properties := ref_value.get("properties"):
+                properties_no_name = {
+                    k: {nested_k: nested_v for nested_k, nested_v in v.items() if nested_k != "name"}
+                    for k, v in properties.items()
+                }
+                if ref.removeprefix(prefix).endswith("DBRoleToExecute"):
+                    logger.warning(f"debug me: {properties_no_name}")
+                ref_value["properties"] = properties_no_name
+
         else:
             err_msg = f"Unknown schema_ref {ref}"
             raise ValueError(err_msg)

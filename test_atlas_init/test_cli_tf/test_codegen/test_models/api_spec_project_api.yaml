@@ -1,6 +1,8 @@
 openapi: 3.0.1
 info:
   description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
 paths:
   /api/atlas/v2/groups/{groupId}:
     delete:
@@ -19,6 +21,13 @@ paths:
       summary: Remove One Project
       tags:
       - Projects
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteProject --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/deleteProject
     get:
       description: Returns details about the specified project. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. To use this resource, the requesting Service Account or API Key must have the Project Read Only role.
@@ -41,6 +50,13 @@ paths:
       summary: Return One Project
       tags:
       - Projects
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getProject --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/getProject
     patch:
       description: Updates the human-readable label that identifies the specified project, or the tags associated with the project. To use this resource, the requesting Service Account or API Key must have the Project Owner role.
@@ -67,6 +83,13 @@ paths:
       summary: Update One Project
       tags:
       - Projects
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateProject --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/updateProject
   /api/atlas/v2/groups:
     get:
@@ -89,6 +112,13 @@ paths:
       summary: Return All Projects
       tags:
       - Projects
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api listProjects --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/listProjects
     post:
       description: Creates one project. Projects group clusters into logical collections that support an application environment, workload, or both. Each project can have its own users, teams, security, tags, and alert settings. To use this resource, the requesting Service Account or API Key must have the Read Write role.
@@ -120,6 +150,13 @@ paths:
       summary: Create One Project
       tags:
       - Projects
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createProject --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Projects/operation/createProject
 components:
   schemas:
@@ -130,20 +167,17 @@ components:
           format: int64
           readOnly: true
           type: integer
-          name: clusterCount
         created:
           description: Date and time when MongoDB Cloud created this project. This parameter expresses its value in the ISO 8601 timestamp format in UTC.
           format: date-time
           readOnly: true
           type: string
-          name: created
         id:
           description: Unique 24-hexadecimal digit string that identifies the MongoDB Cloud project.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: id
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -153,18 +187,15 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         name:
           description: Human-readable label that identifies the project included in the MongoDB Cloud organization.
           pattern: ^[\p{L}\p{N}\-_.(),:&@+']{1,64}$
           type: string
-          name: name
         orgId:
           description: Unique 24-hexadecimal digit string that identifies the MongoDB Cloud organization to which the project belongs.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           type: string
-          name: orgId
         regionUsageRestrictions:
           default: COMMERCIAL_FEDRAMP_REGIONS_ONLY
           description: 'Applies to Atlas for Government only.
@@ -186,7 +217,6 @@ components:
           externalDocs:
             url: https://www.mongodb.com/docs/atlas/government/overview/supported-regions/#supported-cloud-providers-and-regions
           type: string
-          name: regionUsageRestrictions
         tags:
           description: List that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project.
           externalDocs:
@@ -195,13 +225,11 @@ components:
           items:
             $ref: '#/components/schemas/ResourceTag'
           type: array
-          name: tags
         withDefaultAlertsSettings:
           default: true
           description: Flag that indicates whether to create the project with default alert settings.
           type: boolean
           writeOnly: true
-          name: withDefaultAlertsSettings
       required:
       - clusterCount
       - created
@@ -214,7 +242,6 @@ components:
         name:
           description: Human-readable label that identifies the project included in the MongoDB Cloud organization.
           type: string
-          name: name
         tags:
           description: List that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the project.
           externalDocs:
@@ -223,7 +250,6 @@ components:
           items:
             $ref: '#/components/schemas/ResourceTag'
           type: array
-          name: tags
       type: object
     Link:
       properties:
@@ -231,12 +257,10 @@ components:
           description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: https://cloud.mongodb.com/api/atlas
           type: string
-          name: href
         rel:
           description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: self
           type: string
-          name: rel
       type: object
     PaginatedAtlasGroupView:
       properties:
@@ -249,21 +273,18 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         results:
           description: List of returned documents that MongoDB Cloud provides when completing this request.
           items:
             $ref: '#/components/schemas/Group'
           readOnly: true
           type: array
-          name: results
         totalCount:
           description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
           format: int32
           minimum: 0
           readOnly: true
           type: integer
-          name: totalCount
       type: object
     ResourceTag:
       description: 'Key-value pair that tags and categorizes a MongoDB Cloud organization, project, or cluster. For example, `environment : production`.'
@@ -273,13 +294,11 @@ components:
           maxLength: 255
           minLength: 1
           type: string
-          name: key
         value:
           description: 'Variable that belongs to the set of the tag. For example, `production` in the `environment : production` tag.'
           maxLength: 255
           minLength: 1
           type: string
-          name: value
       required:
       - key
       - value

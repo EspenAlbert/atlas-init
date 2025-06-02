@@ -1,6 +1,8 @@
 openapi: 3.0.1
 info:
   description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
 paths:
   /api/atlas/v2/groups/{groupId}/pushBasedLogExport:
     delete:
@@ -19,6 +21,13 @@ paths:
       summary: Disable the push-based log export feature for a project
       tags:
       - Push-Based Log Export
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/pushBasedLogExport\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deletePushBasedLogConfiguration --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Push-Based-Log-Export/operation/deletePushBasedLogConfiguration
     get:
       description: Fetches the current project level settings for the push-based log export feature.
@@ -41,6 +50,13 @@ paths:
       summary: Get the push-based log export configuration for a project
       tags:
       - Push-Based Log Export
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/pushBasedLogExport?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getPushBasedLogConfiguration --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Push-Based-Log-Export/operation/getPushBasedLogConfiguration
     patch:
       description: Updates the project level settings for the push-based log export feature.
@@ -66,6 +82,13 @@ paths:
       summary: Update the push-based log export feature for a project
       tags:
       - Push-Based Log Export
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/pushBasedLogExport\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updatePushBasedLogConfiguration --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Push-Based-Log-Export/operation/updatePushBasedLogConfiguration
     post:
       description: Configures the project level settings for the push-based log export feature.
@@ -91,6 +114,13 @@ paths:
       summary: Enable the push-based log export feature for a project
       tags:
       - Push-Based Log Export
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/pushBasedLogExport\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createPushBasedLogConfiguration --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Push-Based-Log-Export/operation/createPushBasedLogConfiguration
 components:
   schemas:
@@ -99,13 +129,11 @@ components:
         bucketName:
           description: The name of the bucket to which the agent will send the logs to.
           type: string
-          name: bucketName
         iamRoleId:
           description: ID of the AWS IAM role that will be used to write to the S3 bucket.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           type: string
-          name: iamRoleId
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -115,11 +143,9 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         prefixPath:
           description: S3 directory in which vector will write to in order to store the logs. An empty string denotes the root directory.
           type: string
-          name: prefixPath
       required:
       - bucketName
       - iamRoleId
@@ -131,31 +157,26 @@ components:
           description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: https://cloud.mongodb.com/api/atlas
           type: string
-          name: href
         rel:
           description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
           example: self
           type: string
-          name: rel
       type: object
     PushBasedLogExportProject:
       properties:
         bucketName:
           description: The name of the bucket to which the agent will send the logs to.
           type: string
-          name: bucketName
         createDate:
           description: Date and time that this feature was enabled on. This parameter expresses its value in the ISO 8601 timestamp format in UTC.
           format: date-time
           readOnly: true
           type: string
-          name: createDate
         iamRoleId:
           description: ID of the AWS IAM role that will be used to write to the S3 bucket.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           type: string
-          name: iamRoleId
         links:
           description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
           externalDocs:
@@ -165,11 +186,9 @@ components:
             $ref: '#/components/schemas/Link'
           readOnly: true
           type: array
-          name: links
         prefixPath:
           description: S3 directory in which vector will write to in order to store the logs. An empty string denotes the root directory.
           type: string
-          name: prefixPath
         state:
           description: Describes whether or not the feature is enabled and what status it is in.
           enum:
@@ -181,7 +200,6 @@ components:
           - ACTIVE
           readOnly: true
           type: string
-          name: state
       type: object
   parameters:
     envelope:

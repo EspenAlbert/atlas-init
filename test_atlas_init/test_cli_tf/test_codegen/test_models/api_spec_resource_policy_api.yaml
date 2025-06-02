@@ -1,6 +1,8 @@
 openapi: 3.0.1
 info:
   description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
 paths:
   /api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}:
     delete:
@@ -32,6 +34,13 @@ paths:
       summary: Delete one Atlas Resource Policy
       tags:
       - Resource Policies
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteAtlasResourcePolicy --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Resource-Policies/operation/deleteAtlasResourcePolicy
     get:
       description: Return one Atlas Resource Policy for an org.
@@ -66,6 +75,13 @@ paths:
       summary: Return one Atlas Resource Policy
       tags:
       - Resource Policies
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getAtlasResourcePolicy --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Resource-Policies/operation/getAtlasResourcePolicy
     patch:
       description: Update one Atlas Resource Policy for an org.
@@ -106,6 +122,13 @@ paths:
       summary: Update one Atlas Resource Policy
       tags:
       - Resource Policies
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/orgs/{orgId}/resourcePolicies/{resourcePolicyId}\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateAtlasResourcePolicy --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Resource-Policies/operation/updateAtlasResourcePolicy
   /api/atlas/v2/orgs/{orgId}/resourcePolicies:
     get:
@@ -137,6 +160,13 @@ paths:
       summary: Return all Atlas Resource Policies
       tags:
       - Resource Policies
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/orgs/{orgId}/resourcePolicies?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getAtlasResourcePolicies --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Resource-Policies/operation/getAtlasResourcePolicies
     post:
       description: Create one Atlas Resource Policy for an org.
@@ -167,6 +197,13 @@ paths:
       summary: Create one Atlas Resource Policy
       tags:
       - Resource Policies
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/orgs/{orgId}/resourcePolicies\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createAtlasResourcePolicy --help
       x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Resource-Policies/operation/createAtlasResourcePolicy
 components:
   schemas:
@@ -176,7 +213,6 @@ components:
           description: A string that defines the permissions for the policy. The syntax used is the Cedar Policy language.
           example: "  forbid (\n    principal,\n    action == cloud::Action::\"cluster.createEdit\",\n    resource\n  ) when {\n   context.cluster.regions.contains(cloud::region::\"aws:us-east-1\")\n  };\n"
           type: string
-          name: body
       required:
       - body
       type: object
@@ -187,31 +223,26 @@ components:
           example: "  forbid (\n    principal,\n    action == cloud::Action::\"cluster.createEdit\",\n    resource\n  ) when {\n   context.cluster.regions.contains(cloud::region::\"aws:us-east-1\")\n  };\n"
           readOnly: true
           type: string
-          name: body
         id:
           description: Unique 24-hexadecimal character string that identifies the policy.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: id
       type: object
     ApiAtlasResourcePolicyCreateView:
       properties:
         description:
           description: Description of the atlas resource policy.
           type: string
-          name: description
         name:
           description: Human-readable label that describes the atlas resource policy.
           type: string
-          name: name
         policies:
           description: List of policies that make up the atlas resource policy.
           items:
             $ref: '#/components/schemas/ApiAtlasPolicyCreateView'
           type: array
-          name: policies
       required:
       - name
       - policies
@@ -221,75 +252,62 @@ components:
         description:
           description: Description of the atlas resource policy.
           type: string
-          name: description
         name:
           description: Human-readable label that describes the atlas resource policy.
           type: string
-          name: name
         policies:
           description: List of policies that make up the atlas resource policy.
           items:
             $ref: '#/components/schemas/ApiAtlasPolicyCreateView'
           type: array
-          name: policies
       type: object
     ApiAtlasResourcePolicyView:
       properties:
         createdByUser:
           $ref: '#/components/schemas/ApiAtlasUserMetadataView'
-          name: createdByUser
         createdDate:
           description: Date and time in UTC when the atlas resource policy was created.
           format: date-time
           readOnly: true
           type: string
-          name: createdDate
         description:
           description: Description of the atlas resource policy.
           readOnly: true
           type: string
-          name: description
         id:
           description: Unique 24-hexadecimal character string that identifies the atlas resource policy.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: id
         lastUpdatedByUser:
           $ref: '#/components/schemas/ApiAtlasUserMetadataView'
-          name: lastUpdatedByUser
         lastUpdatedDate:
           description: Date and time in UTC when the atlas resource policy was last updated.
           format: date-time
           readOnly: true
           type: string
-          name: lastUpdatedDate
         name:
           description: Human-readable label that describes the atlas resource policy.
           readOnly: true
           type: string
-          name: name
         orgId:
           description: Unique 24-hexadecimal character string that identifies the organization the atlas resource policy belongs to.
           example: 32b6e34b3d91647abb20e7b8
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: orgId
         policies:
           description: List of policies that make up the atlas resource policy.
           items:
             $ref: '#/components/schemas/ApiAtlasPolicyView'
           readOnly: true
           type: array
-          name: policies
         version:
           description: A string that identifies the version of the atlas resource policy.
           example: v1
           readOnly: true
           type: string
-          name: version
       type: object
     ApiAtlasUserMetadataView:
       description: The user that last updated the atlas resource policy.
@@ -300,12 +318,10 @@ components:
           pattern: ^([a-f0-9]{24})$
           readOnly: true
           type: string
-          name: id
         name:
           description: Human-readable label that describes a user.
           readOnly: true
           type: string
-          name: name
       readOnly: true
       type: object
   parameters:
