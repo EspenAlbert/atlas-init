@@ -1,0 +1,561 @@
+openapi: 3.0.1
+info:
+  description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
+paths:
+  /api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections/{connectionName}:
+    delete:
+      description: Delete one connection of the specified stream instance. To use this resource, the requesting Service Account or API Key must have the Project Owner role or Project Stream Processing Owner role.
+      operationId: deleteStreamConnection
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      - description: Human-readable label that identifies the stream connection.
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      responses:
+        '202':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              x-xgen-version: '2023-02-01'
+          description: Accepted
+      summary: Delete One Stream Connection
+      tags:
+      - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections/{connectionName}\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteStreamConnection --help
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/deleteStreamConnection
+    get:
+      description: Returns the details of one stream connection within the specified stream instance. To use this resource, the requesting Service Account or API Key must have the Project Read Only role.
+      operationId: getStreamConnection
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance to return.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      - description: Human-readable label that identifies the stream connection to return.
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsConnection'
+              x-xgen-IPA-exception:
+                xgen-IPA-104-get-method-returns-response-suffixed-object: API predates IPA validation
+              x-xgen-version: '2023-02-01'
+          description: OK
+      summary: Return One Stream Connection
+      tags:
+      - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections/{connectionName}?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getStreamConnection --help
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/getStreamConnection
+    patch:
+      description: Update one connection for the specified stream instance in the specified project. To use this resource, the requesting Service Account or API Key must have the Project Owner role or Project Stream Processing Owner role.
+      operationId: updateStreamConnection
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      - description: Human-readable label that identifies the stream connection.
+        in: path
+        name: connectionName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-02-01+json:
+            schema:
+              $ref: '#/components/schemas/StreamsConnection'
+        description: Details to update one connection for a streams instance in the specified project.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsConnection'
+              x-xgen-version: '2023-02-01'
+          description: OK
+      summary: Update One Stream Connection
+      tags:
+      - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections/{connectionName}\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateStreamConnection --help
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/updateStreamConnection
+  /api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections:
+    get:
+      description: Returns all connections of the stream instance for the specified project.To use this resource, the requesting Service Account or API Key must have the Project Data Access roles, Project Owner role or Project Stream Processing Owner role.
+      operationId: listStreamConnections
+      parameters:
+      - $ref: '#/components/parameters/groupId'
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/itemsPerPage'
+      - $ref: '#/components/parameters/pageNum'
+      - $ref: '#/components/parameters/pretty'
+      - description: Human-readable label that identifies the stream instance.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApiStreamsConnectionView'
+              x-xgen-version: '2023-02-01'
+          description: OK
+      summary: Return All Connections Of The Stream Instances
+      tags:
+      - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api listStreamConnections --help
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/listStreamConnections
+    post:
+      description: Creates one connection for a stream instance in the specified project. To use this resource, the requesting Service Account or API Key must have the Project Owner or Project Stream Processing Owner role.
+      operationId: createStreamConnection
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Human-readable label that identifies the stream instance.
+        in: path
+        name: tenantName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2023-02-01+json:
+            schema:
+              $ref: '#/components/schemas/StreamsConnection'
+        description: Details to create one connection for a streams instance in the specified project.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2023-02-01+json:
+              schema:
+                $ref: '#/components/schemas/StreamsConnection'
+              x-xgen-version: '2023-02-01'
+          description: OK
+      summary: Create One Connection
+      tags:
+      - Streams
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/streams/{tenantName}/connections\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createStreamConnection --help
+      x-xgen-changelog:
+        '2023-09-11': The MongoDB Atlas Streams Processing API is now exposed as part of private preview, but is subject to change until GA.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Streams/operation/createStreamConnection
+components:
+  schemas:
+    DBRoleToExecute:
+      description: The name of a Built in or Custom DB Role to connect to an Atlas Cluster.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        role:
+          description: The name of the role to use. Can be a built in role or a custom role.
+          type: string
+        type:
+          description: Type of the DB role. Can be either BuiltIn or Custom.
+          enum:
+          - BUILT_IN
+          - CUSTOM
+          title: DB Role Type
+          type: string
+      type: object
+    Link:
+      properties:
+        href:
+          description: Uniform Resource Locator (URL) that points another API resource to which this response has some relationship. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: https://cloud.mongodb.com/api/atlas
+          type: string
+        rel:
+          description: Uniform Resource Locator (URL) that defines the semantic relationship between this resource and another API resource. This URL often begins with `https://cloud.mongodb.com/api/atlas`.
+          example: self
+          type: string
+      type: object
+    PaginatedApiStreamsConnectionView:
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        results:
+          description: List of returned documents that MongoDB Cloud provides when completing this request.
+          items:
+            $ref: '#/components/schemas/StreamsConnection'
+          readOnly: true
+          type: array
+        totalCount:
+          description: Total number of documents available. MongoDB Cloud omits this value if `includeCount` is set to `false`. The total number is an estimate and may not be exact.
+          format: int32
+          minimum: 0
+          readOnly: true
+          type: integer
+      type: object
+    StreamsAWSConnectionConfig:
+      description: AWS configurations for AWS-based connection types.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        roleArn:
+          description: Amazon Resource Name (ARN) that identifies the Amazon Web Services (AWS) Identity and Access Management (IAM) role that MongoDB Cloud assumes when it accesses resources in your AWS account.
+          type: string
+        testBucket:
+          description: The name of an S3 bucket used to check authorization of the passed-in IAM role ARN.
+          type: string
+      type: object
+    StreamsAWSLambdaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for AWS Lambda connections.
+      type: object
+    StreamsClusterConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          clusterName:
+            description: Name of the cluster configured for this connection.
+            type: string
+          dbRoleToExecute:
+            $ref: '#/components/schemas/DBRoleToExecute'
+        type: object
+      type: object
+    StreamsConnection:
+      description: Settings that define a connection to an external data store.
+      discriminator:
+        mapping:
+          AWSLambda: '#/components/schemas/StreamsAWSLambdaConnection'
+          Cluster: '#/components/schemas/StreamsClusterConnection'
+          Https: '#/components/schemas/StreamsHttpsConnection'
+          Kafka: '#/components/schemas/StreamsKafkaConnection'
+          S3: '#/components/schemas/StreamsS3Connection'
+          Sample: '#/components/schemas/StreamsSampleConnection'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/StreamsSampleConnection'
+      - $ref: '#/components/schemas/StreamsClusterConnection'
+      - $ref: '#/components/schemas/StreamsKafkaConnection'
+      - $ref: '#/components/schemas/StreamsHttpsConnection'
+      - $ref: '#/components/schemas/StreamsAWSLambdaConnection'
+      - $ref: '#/components/schemas/StreamsS3Connection'
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        name:
+          description: Human-readable label that identifies the stream connection. In the case of the Sample type, this is the name of the sample source.
+          type: string
+        type:
+          description: Type of the connection.
+          enum:
+          - Kafka
+          - Cluster
+          - Sample
+          - Https
+          - AWSLambda
+          type: string
+      readOnly: true
+      type: object
+    StreamsHttpsConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          headers:
+            additionalProperties:
+              description: A map of key-value pairs that will be passed as headers for the request.
+              type: string
+            description: A map of key-value pairs that will be passed as headers for the request.
+            type: object
+          url:
+            description: The url to be used for the request.
+            type: string
+        type: object
+      type: object
+    StreamsKafkaAuthentication:
+      description: User credentials required to connect to a Kafka Cluster. Includes the authentication type, as well as the parameters for that authentication mode.
+      properties:
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        mechanism:
+          description: Style of authentication. Can be one of PLAIN, SCRAM-256, or SCRAM-512.
+          type: string
+        password:
+          description: Password of the account to connect to the Kafka cluster.
+          format: password
+          type: string
+          writeOnly: true
+        sslCertificate:
+          description: SSL certificate for client authentication to Kafka.
+          type: string
+        sslKey:
+          description: SSL key for client authentication to Kafka.
+          type: string
+          writeOnly: true
+        sslKeyPassword:
+          description: Password for the SSL key, if it is password protected.
+          type: string
+          writeOnly: true
+        username:
+          description: Username of the account to connect to the Kafka cluster.
+          type: string
+      type: object
+    StreamsKafkaConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          authentication:
+            $ref: '#/components/schemas/StreamsKafkaAuthentication'
+          bootstrapServers:
+            description: Comma separated list of server addresses.
+            type: string
+          config:
+            additionalProperties:
+              description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+              example: '{"group.protocol.type":"consumer","debug":"queue, msg, protocol"}'
+              type: string
+            description: A map of Kafka key-value pairs for optional configuration. This is a flat object, and keys can have '.' characters.
+            example:
+              debug: queue, msg, protocol
+              group.protocol.type: consumer
+            type: object
+          networking:
+            $ref: '#/components/schemas/StreamsKafkaNetworking'
+          security:
+            $ref: '#/components/schemas/StreamsKafkaSecurity'
+        type: object
+      type: object
+    StreamsKafkaNetworking:
+      description: Networking Access Type can either be 'PUBLIC' (default) or VPC. VPC type is in public preview, please file a support ticket to enable VPC Network Access.
+      properties:
+        access:
+          $ref: '#/components/schemas/StreamsKafkaNetworkingAccess'
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+      type: object
+    StreamsKafkaNetworkingAccess:
+      description: Information about the networking access.
+      properties:
+        connectionId:
+          description: Reserved. Will be used by PRIVATE_LINK connection type.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          type: string
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        name:
+          description: Reserved. Will be used by PRIVATE_LINK connection type.
+          type: string
+        tgwId:
+          description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
+          pattern: ^(tgw-)[0-9a-zA-Z]+$
+          type: string
+        type:
+          description: Selected networking type. Either PUBLIC, VPC, PRIVATE_LINK, or TRANSIT_GATEWAY. Defaults to PUBLIC. For VPC, ensure that VPC peering exists and connectivity has been established between Atlas VPC and the VPC where Kafka cluster is hosted for the connection to function properly. TRANSIT_GATEWAY support is coming soon.
+          enum:
+          - PUBLIC
+          - VPC
+          - PRIVATE_LINK
+          - TRANSIT_GATEWAY
+          title: Networking Access Type
+          type: string
+        vpcCIDR:
+          description: Reserved. Will be used by TRANSIT_GATEWAY connection type.
+          type: string
+      type: object
+    StreamsKafkaSecurity:
+      description: Properties for the secure transport connection to Kafka. For SSL, this can include the trusted certificate to use.
+      properties:
+        brokerPublicCertificate:
+          description: A trusted, public x509 certificate for connecting to Kafka over SSL.
+          type: string
+        links:
+          description: List of one or more Uniform Resource Locators (URLs) that point to API sub-resources, related API resources, or both. RFC 5988 outlines these relationships.
+          externalDocs:
+            description: Web Linking Specification (RFC 5988)
+            url: https://datatracker.ietf.org/doc/html/rfc5988
+          items:
+            $ref: '#/components/schemas/Link'
+          readOnly: true
+          type: array
+        protocol:
+          description: Describes the transport type. Can be either SASL_PLAINTEXT, SASL_SSL, or SSL.
+          type: string
+      type: object
+    StreamsS3Connection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      - properties:
+          aws:
+            $ref: '#/components/schemas/StreamsAWSConnectionConfig'
+        type: object
+      description: The configuration for S3 connections.
+      type: object
+    StreamsSampleConnection:
+      allOf:
+      - $ref: '#/components/schemas/StreamsConnection'
+      type: object
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    itemsPerPage:
+      description: Number of items that the response returns per page.
+      in: query
+      name: itemsPerPage
+      schema:
+        default: 100
+        maximum: 500
+        minimum: 1
+        type: integer
+    pageNum:
+      description: Number of the page that displays the current set of the total objects that the response returns.
+      in: query
+      name: pageNum
+      schema:
+        default: 1
+        minimum: 1
+        type: integer
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
+tags: []

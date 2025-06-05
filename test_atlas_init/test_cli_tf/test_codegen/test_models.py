@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+from typing import Callable
 
 import pytest
 from model_lib import dump, parse_model
@@ -37,19 +38,34 @@ resources = [
     "push_based_log_export_api",
     "resource_policy_api",
     "search_deployment_api",
+    "stream_connection_api",
     "stream_instance_api",
 ]
 
 
+@pytest.fixture()
+def resource_skip() -> Callable[[str], None]:
+    included = (
+        set(os.environ.get("RESOURCE_FILTER", "").split(",")) if os.environ.get("RESOURCE_FILTER") else set(resources)
+    )
+
+    def skip_if_not_included(resource_name: str) -> None:
+        if resource_name not in included:
+            pytest.skip(f"Skipping {resource_name} as it is not in {included}")
+
+    return skip_if_not_included
+
+
 @pytest.mark.parametrize("resource_name", resources)
 def test_create_minimal_api_resources_config(
-    tf_api_resources_config: ApiResourcesConfig, live_api_spec, resource_name, file_regression
+    resource_skip, tf_api_resources_config: ApiResourcesConfig, live_api_spec, resource_name, file_regression
 ):
     """
     0. change pytest_regressions.common.L48 if len(diff_lines) <= 500 --> 50_000
     1. Run first with API_SPEC_PATH set to https://github.com/mongodb/openapi/blob/main/openapi/v2.yaml
     2. Run second time with API_SPEC_PATH set to https://github.com/mongodb/atlas-sdk-go/blob/main/openapi/atlas-api-transformed.yaml to see the differences
     """
+    resource_skip(resource_name)
     # print(f"Resources: {tf_api_resources_config.list_resources()}")
     minimal_spec = minimal_api_spec_simplified(tf_api_resources_config.get_resource(resource_name), live_api_spec)
     spec_yaml = dump(minimal_spec, format="yaml")
@@ -87,7 +103,8 @@ def test_diff_dir():
 
 
 @pytest.mark.parametrize("resource_name", resources)
-def test_generate_tf_resources(tf_repo_path, resource_name):
+def test_generate_tf_resources(resource_skip, tf_repo_path, resource_name):
+    resource_skip(resource_name)
     output_dir, _ = output_diff_dir()
     expected_api_spec_filepath = output_dir / f"api_spec_{resource_name}.yaml"
     env = {
