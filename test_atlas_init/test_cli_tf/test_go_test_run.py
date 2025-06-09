@@ -15,7 +15,8 @@ from atlas_init.cli_tf.go_test_run import (
 from atlas_init.cli_tf.go_test_tf_error import (
     CheckError,
     GoTestAPIError,
-    GoTestCheckError,
+    GoTestGeneralCheckError,
+    GoTestResourceCheckError,
     parse_error_details,
 )
 from zero_3rdparty.datetime_utils import utc_now
@@ -268,7 +269,7 @@ def read_test_logs(test_name: str) -> str:
     [
         (
             "TestAccCluster_tenant",
-            GoTestCheckError(
+            GoTestResourceCheckError(
                 tf_resource_name="tenant",
                 tf_resource_type="cluster",
                 step_nr=2,
@@ -291,6 +292,14 @@ def read_test_logs(test_name: str) -> str:
             "TestAccBackupCompliancePolicy_UpdateSetsAllAttributes",
             api_error_unexpected_error,
         ),
+        (
+            "TestAccProjectAPI_basic",
+            GoTestGeneralCheckError(
+                error_check_str="project(6840e511161ca93c1f053d1a) does not exist",
+                step_nr=1,
+                check_errors=[CheckError(check_nr=4)],
+            ),
+        ),
     ],
     ids=[
         "tenant should create GoTestCheckError",
@@ -298,6 +307,7 @@ def read_test_logs(test_name: str) -> str:
         "api error without params",
         "api error no details",
         "api error no TF resource or type",
+        "general check error (no resource name or type)",
     ],
 )
 def test_extract_error_details(test_name, expected_details):

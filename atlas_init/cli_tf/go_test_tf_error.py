@@ -4,7 +4,7 @@ from functools import total_ordering
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Literal, NamedTuple, TypeAlias
+from typing import Literal, NamedTuple, Self, TypeAlias
 
 from model_lib import Entity
 from pydantic import Field, model_validator
@@ -48,6 +48,7 @@ class GoTestErrorClass(StrEnum):
             "mongodbatlas: failed to retrieve authentication checksums for provider",
             "Error: Failed to install provider github.com: bad response",
         ],
+        TIMEOUT: ("timeout while waiting for",),
     }
 
     @classmethod
@@ -112,8 +113,15 @@ class CheckError(Entity):
             raise TypeError
         return (self.check_nr, self.attribute) < (other.check_nr, other.attribute)
 
+    @classmethod
+    def parse_from_output(cls, output: str) -> list[Self]:
+        return [
+            cls(**check_match.groupdict())  # type: ignore
+            for check_match in check_pattern.finditer(output)
+        ]
 
-class GoTestCheckError(Entity):
+
+class GoTestResourceCheckError(Entity):
     type: Literal["check_error"] = "check_error"
     tf_resource_name: str
     tf_resource_type: str
@@ -131,6 +139,16 @@ class GoTestCheckError(Entity):
         return ",".join(str(check.check_nr) for check in sorted(self.check_errors))
 
 
+class GoTestGeneralCheckError(Entity):
+    type: Literal["general_check_error"] = "general_check_error"
+    step_nr: int = -1
+    check_errors: list[CheckError] = Field(default_factory=list)
+    error_check_str: str
+
+    def add_info_fields(self, _: DetailsInfo) -> None:
+        pass
+
+
 @dataclass
 class DetailsInfo:
     run: GoTestRun
@@ -145,7 +163,7 @@ class GoTestDefaultError(Entity):
         pass
 
 
-ErrorDetails: TypeAlias = GoTestAPIError | GoTestCheckError | GoTestDefaultError
+ErrorDetails: TypeAlias = GoTestAPIError | GoTestResourceCheckError | GoTestDefaultError | GoTestGeneralCheckError
 
 
 class ErrorClassified(NamedTuple):
@@ -193,8 +211,8 @@ class GoTestError(Entity):
                 and details.api_method == other_details.api_method
                 and details.api_response_code == other_details.api_response_code
             )
-        if isinstance(details, GoTestCheckError):
-            assert isinstance(other_details, GoTestCheckError)
+        if isinstance(details, GoTestResourceCheckError):
+            assert isinstance(other_details, GoTestResourceCheckError)
             return (
                 details.tf_resource_name == other_details.tf_resource_name
                 and details.tf_resource_type == other_details.tf_resource_type
@@ -228,7 +246,7 @@ class GoTestError(Entity):
     @property
     def short_description(self) -> str:
         match self.details:
-            case GoTestCheckError():
+            case GoTestResourceCheckError():
                 return f"CheckFailure for {self.details.tf_resource_type}.{self.details.tf_resource_name} at Step: {self.details.step_nr} Checks: {self.details.check_numbers_str}"
             case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:
                 return f"API Error {self.details.api_error_code_str} {api_path_normalized}"
@@ -246,8 +264,10 @@ class GoTestError(Entity):
 one_of_methods = "|".join(API_METHODS)
 
 
-check_pattern = re.compile(r"Check (?P<check_nr>\d+)/\d+")
+check_pattern_str = r"Check (?P<check_nr>\d+)/\d+"
+check_pattern = re.compile(check_pattern_str)
 url_pattern = r"https://cloud(-dev|-qa)?\.mongodb\.com(?P<api_path>\S+)"
+error_check_pattern = re.compile(check_pattern_str + r"\s+error:\s(?P<error_check_str>.+)$", re.MULTILINE)
 detail_patterns: list[re.Pattern] = [
     re.compile(r"Step (?P<step_nr>\d+)/\d+"),
     check_pattern,
@@ -277,11 +297,16 @@ def parse_error_details(run: GoTestRun) -> ErrorDetails:
         case {"api_path": _} if pattern_match := api_error_pattern_missing_details.search(output):
             kwargs |= pattern_match.groupdict()
             return GoTestAPIError(**kwargs)
-        case {"check_nr": _}:
+        case {"check_nr": _} if all(name in kwargs for name in ("tf_resource_name", "tf_resource_type")):
             kwargs.pop("check_nr")
-            check_errors = [
-                CheckError(**check_match.groupdict())  # type: ignore
-                for check_match in check_pattern.finditer(output)
-            ]
-            return GoTestCheckError(**kwargs, check_errors=check_errors)
+            check_errors = CheckError.parse_from_output(output)
+            return GoTestResourceCheckError(**kwargs, check_errors=check_errors)
+        case {"check_nr": _}:
+            if error_check_match := error_check_pattern.search(output):
+                kwargs.pop("check_nr")
+                check_errors = CheckError.parse_from_output(output)
+                return GoTestGeneralCheckError(
+                    **kwargs, error_check_str=error_check_match.group("error_check_str"), check_errors=check_errors
+                )
+    kwargs.pop("error_check_str", None)  # Remove if it was not matched
     return GoTestDefaultError(error_str=run.output_lines_str)
