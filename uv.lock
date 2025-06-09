@@ -21,14 +21,32 @@ wheels = [
 ]
 
 [[package]]
+name = "ask-shell"
+version = "1.0.0+rc1"
+source = { directory = "../py-libs/ask-shell" }
+dependencies = [
+    { name = "questionary" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "questionary", specifier = ">=2.1.0" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "typer", specifier = ">=0.16.0" },
+]
+
+[[package]]
 name = "atlas-init"
 source = { editable = "." }
 dependencies = [
     { name = "appdirs" },
+    { name = "ask-shell" },
     { name = "boto3" },
     { name = "gitpython" },
     { name = "humanize" },
-    { name = "model-lib", extra = ["toml"] },
+    { name = "model-lib" },
     { name = "mypy-boto3-cloudformation" },
     { name = "orjson" },
     { name = "pydantic-settings" },
@@ -59,10 +77,11 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
+    { name = "ask-shell", directory = "../py-libs/ask-shell" },
     { name = "boto3", specifier = "==1.35.92" },
     { name = "gitpython", specifier = "==3.1.42" },
     { name = "humanize", specifier = "==4.9.0" },
-    { name = "model-lib", extras = ["toml"], specifier = "==1.0.0b3" },
+    { name = "model-lib", directory = "../py-libs/model-lib" },
     { name = "mypy-boto3-cloudformation", specifier = "==1.37.22" },
     { name = "orjson", specifier = "==3.10.13" },
     { name = "pydantic-settings", specifier = "==2.7.1" },
@@ -73,8 +92,8 @@ requires-dist = [
     { name = "rich", specifier = "==14.0.0" },
     { name = "stringcase", specifier = "==1.2.0" },
     { name = "tenacity", specifier = "==9.0.0" },
-    { name = "typer", specifier = "==0.15.1" },
-    { name = "zero-3rdparty", specifier = "==1.0.0b2" },
+    { name = "typer", specifier = ">=0.15.1" },
+    { name = "zero-3rdparty", directory = "../py-libs/zero-3rdparty" },
 ]
 
 [package.metadata.requires-dev]
@@ -408,26 +427,26 @@ wheels = [
 
 [[package]]
 name = "model-lib"
-version = "1.0.0b3"
-source = { registry = "https://pypi.org/simple" }
+version = "1.0.0b4"
+source = { directory = "../py-libs/model-lib" }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "zero-3rdparty" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/16/da781430f71e5959e9fffcc1cd78e2b8a79e293f229196eabe9b0f83387d/model_lib-1.0.0b3.tar.gz", hash = "sha256:1db9e27f296fe12c0f60098d97e9ce3f4eca468fa119e8277cae02324d6d966b", size = 16627 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/c8/9fc4a5cf894087a02e199c8340effb0a61c70bfebb00c524fe022d3f6581/model_lib-1.0.0b3-py3-none-any.whl", hash = "sha256:46c1041b14d13ea0fbbe49aefd5980145bb433fa283fcbfd23e848e313352c6d", size = 24188 },
-]
 
-[package.optional-dependencies]
-toml = [
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "tomli-w" },
-    { name = "zero-3rdparty" },
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = "~=2.10.4" },
+    { name = "pydantic", marker = "extra == 'toml'", specifier = "~=2.10.4" },
+    { name = "pydantic-settings", specifier = "~=2.7.1" },
+    { name = "pydantic-settings", marker = "extra == 'toml'", specifier = "~=2.7.1" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "tomli-w", marker = "extra == 'toml'", specifier = "~=1.1.0" },
+    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
 ]
+provides-extras = ["toml"]
 
 [[package]]
 name = "mypy-boto3-cloudformation"
@@ -916,15 +935,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tomli-w"
-version = "1.1.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d4/19/b65f1a088ee23e37cdea415b357843eca8b1422a7b11a9eee6e35d4ec273/tomli_w-1.1.0.tar.gz", hash = "sha256:49e847a3a304d516a169a601184932ef0f6b61623fe680f836a2aa7128ed0d33", size = 6929 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/ac/ce90573ba446a9bbe65838ded066a805234d159b4446ae9f8ec5bbd36cbd/tomli_w-1.1.0-py3-none-any.whl", hash = "sha256:1403179c78193e3184bfaade390ddbd071cba48a32a2e62ba11aae47490c63f7", size = 6440 },
-]
-
-[[package]]
 name = "trove-classifiers"
 version = "2025.4.11.15"
 source = { registry = "https://pypi.org/simple" }
@@ -935,7 +945,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.15.1"
+version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -943,9 +953,9 @@ dependencies = [
     { name = "shellingham" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/ce/dca7b219718afd37a0068f4f2530a727c2b74a8b6e8e0c0080a4c0de4fcd/typer-0.15.1.tar.gz", hash = "sha256:a0588c0a7fa68a1978a069818657778f86abe6ff5ea6abf472f940a08bfe4f0a", size = 99789 }
+sdist = { url = "https://files.pythonhosted.org/packages/c5/8c/7d682431efca5fd290017663ea4588bf6f2c6aad085c7f108c5dbc316e70/typer-0.16.0.tar.gz", hash = "sha256:af377ffaee1dbe37ae9440cb4e8f11686ea5ce4e9bae01b84ae7c63b87f1dd3b", size = 102625 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/cc/0a838ba5ca64dc832aa43f727bd586309846b0ffb2ce52422543e6075e8a/typer-0.15.1-py3-none-any.whl", hash = "sha256:7994fb7b8155b64d3402518560648446072864beefd44aa2dc36972a5972e847", size = 44908 },
+    { url = "https://files.pythonhosted.org/packages/76/42/3efaf858001d2c2913de7f354563e3a3a2f0decae3efe98427125a8f441e/typer-0.16.0-py3-none-any.whl", hash = "sha256:1f79bed11d4d02d4310e3c1b7ba594183bcedb0ac73b27a9e5f28f6fb5b98855", size = 46317 },
 ]
 
 [[package]]
@@ -1009,8 +1019,4 @@ wheels = [
 [[package]]
 name = "zero-3rdparty"
 version = "1.0.0b2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1b/67/b8db563b90b5ab9e718428d4fccfe5475bb1c700fc98080c3748891ea0de/zero_3rdparty-1.0.0b2.tar.gz", hash = "sha256:30bd2690a8d5ac059552499ad7d0503a683a4a903590d463f40fd98b165ba272", size = 29352 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/da/2f/eb232ad975c13184c4a56e89ee7ab429346f8283bfd783565d14fcd0c1a8/zero_3rdparty-1.0.0b2-py3-none-any.whl", hash = "sha256:ef0a041bdebb87a45f99f93bb272d02e7e7142c077289b707e407a82f1e5e15a", size = 37799 },
-]
+source = { editable = "../py-libs/zero-3rdparty" }

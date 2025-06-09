@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal, NamedTuple, Self, TypeAlias
 
-from model_lib import Entity
+from model_lib import Entity, utc_datetime
 from pydantic import Field, model_validator
 from zero_3rdparty import iter_utils
+from zero_3rdparty.datetime_utils import utc_now
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.repos.go_sdk import ApiSpecPaths
@@ -171,6 +172,22 @@ class ErrorClassified(NamedTuple):
     unclassified: list[GoTestError]
 
 
+class GoTestErrorClassificationAuthor(StrEnum):
+    AUTO = "auto"
+    HUMAN = "human"
+    LLM = "llm"
+
+
+class GoTestErrorClassification(Entity):
+    error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
+    ts: utc_datetime = Field(default_factory=utc_now)
+    author: GoTestErrorClassificationAuthor
+    confidence: float = 0.0
+    test_output: str = ""
+    details: ErrorDetails
+    run_id: str
+
+
 @total_ordering
 class GoTestError(Entity):
     details: ErrorDetails
@@ -182,6 +199,10 @@ class GoTestError(Entity):
         if not isinstance(other, GoTestError):
             raise TypeError
         return self.run < other.run
+
+    @property
+    def run_id(self) -> str:
+        return self.run.id
 
     @property
     def classifications(self) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:

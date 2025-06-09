@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -62,6 +63,10 @@ def read_tf_errors(settings: AtlasInitSettings) -> TFErrors:
     return parse_model(path, TFErrors) if path.exists() else TFErrors()
 
 
+def read_tf_errors_for_day(settings: AtlasInitSettings, branch: str, date: datetime) -> list[GoTestError]:
+    raise NotImplementedError
+
+
 def store_or_update_tf_errors(settings: AtlasInitSettings, errors: list[GoTestError]) -> None:
     existing = read_tf_errors(settings)
     new_error_ids = {error.run.id for error in errors}
@@ -104,3 +109,15 @@ def store_tf_test_runs(settings: AtlasInitSettings, test_runs: list[GoTestRun], 
     yaml_dump = dump(TFTestRuns(test_runs=all_runs), "yaml")
     ensure_parents_write_text(path, yaml_dump)
     return sorted([run for run in all_runs if run.id in new_ids])
+
+
+def read_tf_tests_for_day(settings: AtlasInitSettings, branch: str, date: datetime) -> list[GoTestRun]:
+    start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+    return read_tf_tests(settings, branch, start_date, end_date)
+
+
+def read_tf_tests(
+    settings: AtlasInitSettings, branch: str, start_date: datetime, end_date: datetime | None = None
+) -> list[GoTestRun]:
+    raise NotImplementedError

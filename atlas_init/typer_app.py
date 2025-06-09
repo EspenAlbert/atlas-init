@@ -19,7 +19,6 @@ from atlas_init.settings.env_vars import (
     ENV_S3_PROFILE_BUCKET,
     init_settings,
 )
-from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +105,6 @@ def main(
     if use_clipboard:
         os.environ[ENV_CLIPBOARD_COPY] = use_clipboard
     is_running_in_repo = running_in_repo()
-    handler = configure_logging(app, log_level, is_running_in_repo=is_running_in_repo)
     logger.info(f"running in atlas-init repo: {is_running_in_repo} python location:{sys.executable}")
     logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
     if s3_bucket := s3_profile_bucket:
@@ -114,9 +112,6 @@ def main(
         settings = init_settings()
         download_from_s3(settings.profile_dir, s3_bucket)
     settings = init_settings()
-    if not show_secrets:
-        # must happen after init_settings that might load some env-vars
-        hide_secrets(handler, {**os.environ})
 
 
 def format_cmd(ctx: typer.Context) -> str:

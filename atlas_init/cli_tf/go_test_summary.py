@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import logging
 from datetime import date, datetime, timedelta
 from functools import total_ordering
+from pathlib import Path
 
 from model_lib import Entity
 from pydantic import Field, model_validator
@@ -10,7 +11,7 @@ from zero_3rdparty import datetime_utils, file_utils
 
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
-from atlas_init.cli_tf.go_test_tf_error import GoTestError
+from atlas_init.cli_tf.go_test_tf_error import GoTestError, GoTestErrorClassification
 
 logger = logging.getLogger(__name__)
 _COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
@@ -281,3 +282,21 @@ def error_details(errors: list[GoTestError], include_env: bool) -> list[str]:
                 ]
             )
     return lines
+
+
+class TFCITestOutput(Entity):
+    log_paths: list[Path] = Field(default_factory=list)
+    found_tests: list[GoTestRun] = Field(default_factory=list)
+    found_errors: list[GoTestError] = Field(default_factory=list)
+    classified_errors: list[GoTestErrorClassification] = Field(default_factory=list)
+
+
+class DailyReport(Entity):
+    summary_md: str
+    details_md: str
+
+
+def create_daily_report(
+    output: TFCITestOutput,
+) -> DailyReport:
+    raise NotImplementedError

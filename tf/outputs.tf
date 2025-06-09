@@ -50,6 +50,7 @@ locals {
 
     PROJECT_NAME                   = var.project_name
     MONGODB_ATLAS_PROJECT_OWNER_ID = try(data.mongodbatlas_atlas_user.this[0].user_id, "")
+    MONGODB_ATLAS_USER_EMAIL = try(data.mongodbatlas_atlas_user.this[0].email_address, "")
 
     # tf
     TF_ACC         = 1

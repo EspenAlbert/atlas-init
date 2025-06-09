@@ -9,9 +9,13 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
+from ask_shell import run_and_wait
+from ask_shell.rich_progress import new_task
+from ask_shell.rich_live import print_to_live_console
 from model_lib import Entity, Event
 from pydantic import Field, model_validator
 from pydantic_core import Url
+from rich.markdown import Markdown
 from zero_3rdparty import file_utils, str_utils
 from zero_3rdparty.datetime_utils import utc_now
 
@@ -23,21 +27,23 @@ from atlas_init.cli_tf.github_logs import (
     tf_repo,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
-from atlas_init.cli_tf.go_test_summary import create_test_report
+from atlas_init.cli_tf.go_test_summary import TFCITestOutput, create_daily_report
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     GoTestError,
     GoTestErrorClass,
+    GoTestErrorClassification,
+    GoTestErrorClassificationAuthor,
     parse_error_details,
 )
 from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 from atlas_init.crud.tf_resource import (
-    TFErrors,
     TFResources,
     read_tf_error_by_run,
     read_tf_errors,
+    read_tf_errors_for_day,
     read_tf_resources,
-    read_tf_test_runs,
+    read_tf_tests_for_day,
     store_or_update_tf_errors,
     store_tf_test_runs,
 )
@@ -60,6 +66,7 @@ class TFCITestInput(Event):
     skip_log_download: bool = False
     skip_error_parsing: bool = False
     summary_name: str = ""
+    report_date: datetime = Field(default_factory=utc_now)
 
     @model_validator(mode="after")
     def set_workflow_file_stems(self) -> TFCITestInput:
@@ -109,14 +116,15 @@ def ci_tests(
         skip_log_download=skip_log_download,
         skip_error_parsing=skip_error_parsing,
     )
-    out = analyze_ci_tests(event)
-    logger.info(f"found {len(out.log_paths)} log files with a total of {len(out.found_tests)} tests")
-    report = create_test_report(out.found_tests, out.found_errors, env_name=summary_env_name)
+    out = ci_tests_pipeline(event)
+    logger.info("will later add support for adding manual classifications")
+    daily = create_daily_report(out)
+    print_to_live_console(Markdown(daily.summary_md))
     if summary_name:
         summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        file_utils.ensure_parents_write_text(summary_path, report.summary)
+        file_utils.ensure_parents_write_text(summary_path, daily.summary_md)
         logger.info(f"summary written to {summary_path}")
-        if report_details_md := report.error_details:
+        if report_details_md := daily.details_md:
             details_path = summary_path.with_name(f"{summary_path.stem}_details.md")
             file_utils.ensure_parents_write_text(details_path, report_details_md)
             logger.info(f"summary details written to {details_path}")
@@ -124,13 +132,7 @@ def ci_tests(
             run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
 
 
-class TFCITestOutput(Entity):
-    log_paths: list[Path] = Field(default_factory=list)
-    found_tests: list[GoTestRun] = Field(default_factory=list)
-    found_errors: list[GoTestError] = Field(default_factory=list)
-
-
-def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
+def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
     repo_path = event.repo_path
     branch = event.branch
     settings = event.settings
@@ -142,57 +144,60 @@ def analyze_ci_tests(event: TFCITestInput) -> TFCITestOutput:
     )
     if event.skip_log_download:
         logger.info("skipping log download, reading existing instead")
-        runs = read_tf_test_runs(settings)
-        found_tests = [run for run in runs if run.ts >= download_input.start_date]
-        log_paths = [run.log_path for run in runs if run.log_path]
-        error_tests = [run for run in runs if run.is_failure]
+        log_paths = []
     else:
         log_paths = download_logs(download_input, settings)
         resources = read_tf_resources(settings, repo_path, branch)
-        parse_job_output = parse_job_tf_test_logs(
-            ParseJobLogsInput(
-                settings=settings,
-                log_paths=log_paths,
-                resources=resources,
-                branch=branch,
+        with new_task(f"parse job logs from {len(log_paths)} files"):
+            parse_job_output = parse_job_tf_test_logs(
+                ParseJobLogsInput(
+                    settings=settings,
+                    log_paths=log_paths,
+                    resources=resources,
+                    branch=branch,
+                )
             )
-        )
-        found_tests = store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
-        error_tests = parse_job_output.tests_with_status(GoTestStatus.FAIL)
-    out = TFCITestOutput(log_paths=log_paths, found_tests=found_tests)
+        store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
+    with new_task("reading test runs from storage"):
+        found_tests = read_tf_tests_for_day(settings, event.branch, event.report_date)
     if event.skip_error_parsing:
-        logger.info("skipping error parsing")
-        out.found_errors = test_errors = [
-            error for error in read_tf_errors(settings).errors if error.run.ts >= download_input.start_date
-        ]
+        with new_task("skipping error parsing, reading existing errors"):
+            test_errors = read_tf_errors_for_day(settings, event.branch, event.report_date)
     else:
-        admin_api_path = resolve_admin_api_path(sdk_branch="main")
-        spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
-        out.found_errors = test_errors = parse_errors(error_tests, spec_paths, settings)
-    classify_errors(test_errors, settings)
-    return out
+        with new_task("parsing test errors"):
+            test_errors = parse_test_errors(settings, found_tests)
+    with new_task("classifying errors"):
+        classified_errors = classify_errors(test_errors, settings)
+    return TFCITestOutput(log_paths=log_paths, found_tests=found_tests, classified_errors=classified_errors)
 
 
-def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> None:
-    known_errors: TFErrors = read_tf_errors(settings)
+def parse_test_errors(settings: AtlasInitSettings, found_tests: list[GoTestRun]) -> list[GoTestError]:
+    admin_api_path = resolve_admin_api_path(sdk_branch="main")
+    spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
+    error_tests = [test for test in found_tests if test.is_failure]
+    return parse_errors(error_tests, spec_paths, settings)
+
+
+def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> list[GoTestErrorClassification]:
     needs_classification: list[GoTestError] = []
+    classified_errors: list[GoTestErrorClassification] = []
     for error in errors:
-        if error.classifications:
-            continue
-        if auto_classification := GoTestErrorClass.auto_classification(error.run.output_lines_str):
-            logger.info(f"auto classification for {error.run.name}: {auto_classification}")
-            error.set_human_and_bot_classification(auto_classification)
-            store_or_update_tf_errors(settings, [error])
-            continue
-        if existing_classifications := known_errors.look_for_existing_classifications(error):
-            error.set_human_and_bot_classification(existing_classifications[-1])
-            store_or_update_tf_errors(settings, [error])
+        if auto_class := GoTestErrorClass.auto_classification(error.run.output_lines_str):
+            logger.info(f"auto class for {error.run.name}: {auto_class}")
+            classified_errors.append(
+                GoTestErrorClassification(
+                    error_class=auto_class,
+                    confidence=1.0,
+                    details=error.details,
+                    test_output=error.run.output_lines_str,
+                    run_id=error.run_id,
+                    author=GoTestErrorClassificationAuthor.AUTO,
+                )
+            )
         else:
             needs_classification.append(error)
-    if add_bot_classification_changes(needs_classification, settings):
-        store_or_update_tf_errors(settings, needs_classification)
-    logger.info(f"found {len(needs_classification)} errors that need manual classification")
-    manual_classification(settings, needs_classification)
+    # todo: support reading existing classifications, for example matching on the details
+    return classified_errors + add_llm_classifications(needs_classification, settings)
 
 
 def manual_classification(settings: AtlasInitSettings, needs_classification: list[GoTestError]):
@@ -215,13 +220,15 @@ def manual_classification(settings: AtlasInitSettings, needs_classification: lis
             return
 
 
-def add_bot_classification_changes(needs_classification_errors: list[GoTestError], settings: AtlasInitSettings) -> bool:
+def add_llm_classifications(
+    needs_classification_errors: list[GoTestError], settings: AtlasInitSettings
+) -> list[GoTestErrorClassification]:
     """Todo: Use LLM"""
     example_errors = read_tf_errors(settings).classified_errors()
     if not example_errors:
         logger.warning("no example of classified errors found, the bot cannot classify errors without examples")
-        return False
-    return False
+        return []
+    return []
 
 
 def parse_errors(
@@ -252,20 +259,26 @@ class DownloadJobLogsInput(Event):
 
 
 def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
-    token = run_command_receive_result("gh auth token", cwd=event.repo_path, logger=logger)
+    token = run_and_wait("gh auth token", cwd=event.repo_path).stdout
+    assert token, "expected token, but got empty string"
     os.environ[GH_TOKEN_ENV_NAME] = token
     end_test_date = event.end_date
     start_test_date = event.start_date
     log_paths = []
-    while start_test_date <= end_test_date:
-        event_out = download_gh_job_logs(
-            settings,
-            DownloadJobRunsInput(branch=event.branch, run_date=start_test_date.date()),
-        )
-        log_paths.extend(event_out.log_paths)
-        if errors := event_out.log_errors():
-            logger.warning(errors)
-        start_test_date += timedelta(days=1)
+    with new_task(
+        f"downloading logs for {event.branch} from {start_test_date.date()} to {end_test_date.date()}",
+        total=(end_test_date - start_test_date).days,
+    ) as task:
+        while start_test_date <= end_test_date:
+            event_out = download_gh_job_logs(
+                settings,
+                DownloadJobRunsInput(branch=event.branch, run_date=start_test_date.date()),
+            )
+            log_paths.extend(event_out.log_paths)
+            if errors := event_out.log_errors():
+                logger.warning(errors)
+            start_test_date += timedelta(days=1)
+            task.update(advance=1)
     return log_paths
 
 
