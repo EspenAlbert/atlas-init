@@ -1,0 +1,8 @@
+TestAccClusterAdvancedCluster_replicaSetAWSProvider
+2025-06-06T05:30:18.8724001Z === RUN   TestAccClusterAdvancedCluster_replicaSetAWSProvider
+2025-06-06T05:30:18.8831721Z === CONT  TestAccClusterAdvancedCluster_replicaSetAWSProvider
+2025-06-06T05:30:18.8922059Z === NAME  TestAccClusterAdvancedCluster_replicaSetAWSProvider
+2025-06-06T05:30:18.8923637Z     pre_check.go:40: Time before creating cluster: 2025-06-06T01:02:51.386392261Z, ProjectID: 6842369dc64ff333daf68f56, Cluster name: test-acc-tf-c-3090516483289871116
+2025-06-06T05:30:18.9059177Z panic: test timed out after 5h0m0s
+2025-06-06T05:30:18.9059575Z 	running tests:
+2025-06-06T05:30:18.9060127Z 		TestAccClusterAdvancedCluster_replicaSetAWSProvider (4h28m7s)

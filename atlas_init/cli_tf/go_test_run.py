@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import total_ordering
 import logging
 import re
@@ -29,6 +29,7 @@ class GoTestStatus(StrEnum):
     FAIL = "FAIL"
     SKIP = "SKIP"
     CONT = "CONT"
+    TIMEOUT = "TIMEOUT"
     PKG_OK = "ok"
 
     @classmethod
@@ -41,7 +42,7 @@ class GoTestStatus(StrEnum):
 
     @classmethod
     def is_pass_or_fail(cls, status: GoTestStatus) -> bool:
-        return status in {cls.PASS, cls.FAIL}
+        return status in {cls.PASS, cls.FAIL, cls.TIMEOUT}  # TIMEOUT is considered a failure in this context
 
 
 class GoTestContextStep(Entity):
@@ -88,6 +89,7 @@ def parse_tests(
     parser = wait_for_relvant_line
     for line in log_lines:
         parser = parser(line, context)
+        context.last_lines.append(line)
     result = context.finish_parsing()
     return result.tests
 
@@ -158,7 +160,7 @@ class GoTestRun(Entity):
 
     @property
     def is_failure(self) -> bool:
-        return self.status == GoTestStatus.FAIL
+        return self.status in {GoTestStatus.FAIL, GoTestStatus.TIMEOUT}
 
     @property
     def is_pass(self) -> bool:
@@ -295,6 +297,7 @@ class ParseContext:
 
     current_output: list[str] = field(default_factory=list, init=False)
     current_test_name: str = ""  # used for debugging and breakpoints
+    last_lines: deque = field(default_factory=lambda: deque(maxlen=10), init=False)
 
     def add_output_line(self, line: str) -> None:
         if is_blank_line(line) and self.current_output and is_blank_line(self.current_output[-1]):
@@ -330,11 +333,19 @@ class ParseContext:
                 test.package_url = pkg_name
 
     def finish_test(
-        self, test_name: str, status: GoTestStatus, ts: str, end_line: str, run_seconds: float | None
+        self,
+        test_name: str,
+        status: GoTestStatus,
+        ts: str,
+        end_line: str,
+        run_seconds: float | None,
+        extra_lines: list[str] | None = None,
     ) -> None:
         test = self.find_unfinished_test(test_name)
         test.status = status
         test.finish_ts = datetime.fromisoformat(ts)
+        if extra_lines:
+            test.output_lines.extend(extra_lines)
         test.output_lines.append(end_line)
         test.run_seconds = run_seconds
 
@@ -388,6 +399,11 @@ status_patterns = [
         GoTestStatus.SKIP,
         re.compile(ts_pattern("ts") + r"--- SKIP: (?P<name>\S+)\s+" + runtime_pattern),
     ),
+    (
+        # 2025-06-06T05:30:18.9060127Z 		TestAccClusterAdvancedCluster_replicaSetAWSProvider (4h28m7s)
+        GoTestStatus.TIMEOUT,
+        re.compile(ts_pattern("ts") + r"\s+(?P<name>\S+)\s\((?P<hours>\d+)?h?(?P<minutes>\d+)?m(?P<seconds>\d+)?s\)"),
+    ),
 ]
 package_patterns = [
     (
@@ -418,6 +434,17 @@ def line_match_status_pattern(
                     context.continue_test(test_name, line)
                 case GoTestStatus.PAUSE:
                     return status  # do nothing
+                case GoTestStatus.TIMEOUT:
+                    hours = pattern_match.group("hours")
+                    minutes = pattern_match.group("minutes")
+                    seconds = pattern_match.group("seconds")
+                    run_seconds = (
+                        (int(hours) * 3600 if hours else 0)
+                        + (int(minutes) * 60 if minutes else 0)
+                        + (int(seconds) if seconds else 0)
+                    )
+                    last_two_lines = list(context.last_lines)[-2:]
+                    context.finish_test(test_name, status, ts, line, run_seconds, extra_lines=last_two_lines)
                 case GoTestStatus.PASS | GoTestStatus.FAIL | GoTestStatus.SKIP:
                     run_time = pattern_match.group("runtime")
                     assert run_time, (

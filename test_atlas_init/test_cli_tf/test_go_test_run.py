@@ -81,6 +81,13 @@ _ci_logs_test_data = [
         {},
         ["streamprocessor/TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated"],
     ),
+    (
+        "43584025455_1.12.x-latest-2.0.0_tests-1.12.x-latest-false_advanced_cluster_tpf",
+        {"advancedcluster/TestAccClusterAdvancedCluster_replicaSetAWSProvider": GoTestStatus.TIMEOUT},
+        [
+            "advancedcluster/TestAccClusterAdvancedCluster_replicaSetAWSProvider",
+        ],
+    ),
 ]
 TEST_LINES_SPLIT_SYMBOL = "\nNEXT_TEST\n"
 
