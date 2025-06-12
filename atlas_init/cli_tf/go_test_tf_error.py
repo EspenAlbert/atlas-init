@@ -164,7 +164,7 @@ class GoTestDefaultError(Entity):
         pass
 
 
-ErrorDetails: TypeAlias = GoTestAPIError | GoTestResourceCheckError | GoTestDefaultError | GoTestGeneralCheckError
+ErrorDetailsT: TypeAlias = GoTestAPIError | GoTestResourceCheckError | GoTestDefaultError | GoTestGeneralCheckError
 
 
 class ErrorClassified(NamedTuple):
@@ -184,13 +184,13 @@ class GoTestErrorClassification(Entity):
     author: GoTestErrorClassificationAuthor
     confidence: float = 0.0
     test_output: str = ""
-    details: ErrorDetails
+    details: ErrorDetailsT
     run_id: str
 
 
 @total_ordering
 class GoTestError(Entity):
-    details: ErrorDetails
+    details: ErrorDetailsT
     run: GoTestRun
     bot_error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
     human_error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
@@ -306,7 +306,7 @@ api_error_pattern_missing_details = re.compile(
 )
 
 
-def parse_error_details(run: GoTestRun) -> ErrorDetails:
+def parse_error_details(run: GoTestRun) -> ErrorDetailsT:
     kwargs = {}
     output = run.output_lines_str
     for pattern in detail_patterns:

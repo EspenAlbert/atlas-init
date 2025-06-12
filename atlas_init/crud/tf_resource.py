@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from functools import cached_property
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Self
 
 from motor.motor_asyncio import AsyncIOMotorCollection
 from model_lib import Entity, dump, parse_model
@@ -15,8 +17,10 @@ from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import (
     GoTestError,
     GoTestErrorClass,
+    GoTestErrorClassification,
 )
-from atlas_init.crud.mongo_client import get_collection
+from atlas_init.crud.mongo_client import get_collection, init_mongo
+from atlas_init.crud.mongo_utils import MongoQueryOperation, create_or_replace, dump_with_id
 from atlas_init.repos.path import TFResoure, terraform_resources
 from atlas_init.settings.env_vars import AtlasInitSettings
 
@@ -99,22 +103,6 @@ def read_tf_test_runs(settings: AtlasInitSettings) -> list[GoTestRun]:
     return parse_model(path, TFTestRuns).test_runs if path.exists() else []
 
 
-def store_tf_test_runs(settings: AtlasInitSettings, test_runs: list[GoTestRun], *, overwrite: bool) -> list[GoTestRun]:
-    existing = read_tf_test_runs(settings)
-    new_ids = {run.id for run in test_runs}
-    if overwrite:
-        existing_without_new = [run for run in existing if run.id not in new_ids]
-        all_runs = existing_without_new + test_runs
-    else:
-        existing_ids = {run.id for run in existing}
-        new_only = [run for run in test_runs if run.id not in existing_ids]
-        all_runs = existing + new_only
-    path = crud_dir(settings) / "tf_test_runs.yaml"
-    yaml_dump = dump(TFTestRuns(test_runs=all_runs), "yaml")
-    ensure_parents_write_text(path, yaml_dump)
-    return sorted([run for run in all_runs if run.id in new_ids])
-
-
 def read_tf_tests_for_day(settings: AtlasInitSettings, branch: str, date: datetime) -> list[GoTestRun]:
     start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
     end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -127,10 +115,70 @@ def read_tf_tests(
     raise NotImplementedError
 
 
+async def init_mongo_dao(settings: AtlasInitSettings) -> MongoDao:
+    dao = MongoDao(settings=settings)
+    return await dao.connect()
+
+
 @dataclass
-class GoTestRunDao:
+class MongoDao:
     settings: AtlasInitSettings
 
     @cached_property
-    def collection(self) -> AsyncIOMotorCollection:
+    def runs(self) -> AsyncIOMotorCollection:
         return get_collection(GoTestRun)
+
+    @cached_property
+    def classifications(self) -> AsyncIOMotorCollection:
+        return get_collection(GoTestErrorClassification)
+
+    async def connect(self) -> Self:
+        await init_mongo(
+            mongo_url=self.settings.mongo_url,
+            db_name=self.settings.mongo_database,
+        )
+        return self
+
+    async def store_tf_test_runs(self, test_runs: list[GoTestRun]) -> list[GoTestRun]:
+        if not test_runs:
+            return []
+        col = self.runs
+        tasks = []
+        loop = asyncio.get_event_loop()
+        for run in test_runs:
+            dumped = dump_with_id(run, id=run.id, dt_keys=["ts", "finish_ts"])
+            tasks.append(loop.create_task(create_or_replace(col, dumped)))
+        await asyncio.gather(*tasks)
+        return test_runs
+
+    async def read_tf_tests_for_day(self, branch: str, date: datetime) -> list[GoTestRun]:
+        start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        runs: list[GoTestRun] = []
+        async for raw_run in self.runs.find(
+            {
+                "branch": branch,
+                "ts": {MongoQueryOperation.gte: start_date, MongoQueryOperation.lte: end_date},
+            }
+        ):
+            raw_run.pop("_id", None)
+            runs.append(parse_model(raw_run, t=GoTestRun))
+        return runs
+
+    async def read_error_classifications(
+        self, run_ids: list[str] | None = None
+    ) -> dict[str, GoTestErrorClassification]:
+        run_ids = run_ids or []
+        if not run_ids:
+            return {}
+        classifications: dict[str, GoTestErrorClassification] = {}
+        async for raw_error in self.classifications.find({"_id": {MongoQueryOperation.in_: run_ids}}):
+            run_id = raw_error.pop("_id", None)
+            classification = parse_model(raw_error, t=GoTestErrorClassification)
+            classifications[run_id] = classification
+        return classifications
+
+    async def add_classification(self, classification: GoTestErrorClassification) -> bool:
+        """Returns is_new"""
+        raw = dump_with_id(classification, id=classification.run_id, dt_keys=["ts"])
+        return await create_or_replace(self.classifications, raw)

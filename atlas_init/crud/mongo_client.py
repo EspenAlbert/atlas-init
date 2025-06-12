@@ -10,7 +10,8 @@ from pymongo.errors import DuplicateKeyError
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
-from atlas_init.cli_tf.go_test_tf_error import GoTestError, GoTestErrorClassification
+from atlas_init.cli_tf.go_test_tf_error import GoTestErrorClassification
+from atlas_init.crud.mongo_utils import index_dec
 
 
 logger = logging.getLogger(__name__)
@@ -27,9 +28,8 @@ CollectionConfigsT: TypeAlias = dict[type, CollectionConfig]
 
 def default_document_models() -> CollectionConfigsT:
     return {
-        GoTestErrorClassification: CollectionConfig(),
-        GoTestError: CollectionConfig(),
-        GoTestRun: CollectionConfig(),
+        GoTestErrorClassification: CollectionConfig(indexes=[index_dec("ts"), IndexModel(["error_class"])]),
+        GoTestRun: CollectionConfig(indexes=[index_dec("ts"), IndexModel(["branch"]), IndexModel(["status"])]),
     }
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -39,13 +40,9 @@ from atlas_init.cli_tf.go_test_tf_error import (
 from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
 from atlas_init.crud.tf_resource import (
     TFResources,
-    read_tf_error_by_run,
-    read_tf_errors,
-    read_tf_errors_for_day,
+    init_mongo_dao,
     read_tf_resources,
-    read_tf_tests_for_day,
     store_or_update_tf_errors,
-    store_tf_test_runs,
 )
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
@@ -116,7 +113,7 @@ def ci_tests(
         skip_log_download=skip_log_download,
         skip_error_parsing=skip_error_parsing,
     )
-    out = ci_tests_pipeline(event)
+    out = asyncio.run(ci_tests_pipeline(event))
     logger.info("will later add support for adding manual classifications")
     daily = create_daily_report(out)
     print_to_live_console(Markdown(daily.summary_md))
@@ -132,7 +129,7 @@ def ci_tests(
             run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
 
 
-def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
+async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
     repo_path = event.repo_path
     branch = event.branch
     settings = event.settings
@@ -142,6 +139,7 @@ def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
         workflow_file_stems=event.workflow_file_stems,
         repo_path=repo_path,
     )
+    dao = await init_mongo_dao(settings)
     if event.skip_log_download:
         logger.info("skipping log download, reading existing instead")
         log_paths = []
@@ -157,31 +155,39 @@ def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
                     branch=branch,
                 )
             )
-        store_tf_test_runs(settings, parse_job_output.test_runs, overwrite=True)
+        await dao.store_tf_test_runs(parse_job_output.test_runs)
     with new_task("reading test runs from storage"):
-        found_tests = read_tf_tests_for_day(settings, event.branch, event.report_date)
-    if event.skip_error_parsing:
-        with new_task("skipping error parsing, reading existing errors"):
-            test_errors = read_tf_errors_for_day(settings, event.branch, event.report_date)
-    else:
-        with new_task("parsing test errors"):
-            test_errors = parse_test_errors(settings, found_tests)
+        found_tests = await dao.read_tf_tests_for_day(event.branch, event.report_date)
+    with new_task("parsing test errors"):
+        test_errors = parse_test_errors(found_tests)
     with new_task("classifying errors"):
-        classified_errors = classify_errors(test_errors, settings)
+        error_run_ids = [error.run_id for error in test_errors]
+        existing_classifications = await dao.read_error_classifications(error_run_ids)
+        classified_errors = classify_errors(existing_classifications, test_errors)
     return TFCITestOutput(log_paths=log_paths, found_tests=found_tests, classified_errors=classified_errors)
 
 
-def parse_test_errors(settings: AtlasInitSettings, found_tests: list[GoTestRun]) -> list[GoTestError]:
+def parse_test_errors(found_tests: list[GoTestRun]) -> list[GoTestError]:
     admin_api_path = resolve_admin_api_path(sdk_branch="main")
     spec_paths = ApiSpecPaths(method_paths=parse_api_spec_paths(admin_api_path))
     error_tests = [test for test in found_tests if test.is_failure]
-    return parse_errors(error_tests, spec_paths, settings)
+    test_errors: list[GoTestError] = []
+    for test in error_tests:
+        test_error_input = ParseTestErrorInput(test=test, api_spec_paths=spec_paths)
+        test_errors.append(parse_test_error(test_error_input))
+    return test_errors
 
 
-def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> list[GoTestErrorClassification]:
+def classify_errors(
+    existing: dict[str, GoTestErrorClassification], errors: list[GoTestError]
+) -> list[GoTestErrorClassification]:
     needs_classification: list[GoTestError] = []
     classified_errors: list[GoTestErrorClassification] = []
     for error in errors:
+        if prev_classification := existing.get(error.run_id):
+            logger.info(f"found existing classification for {error.run.name}: {prev_classification}")
+            classified_errors.append(prev_classification)
+            continue
         if auto_class := GoTestErrorClass.auto_classification(error.run.output_lines_str):
             logger.info(f"auto class for {error.run.name}: {auto_class}")
             classified_errors.append(
@@ -196,8 +202,7 @@ def classify_errors(errors: list[GoTestError], settings: AtlasInitSettings) -> l
             )
         else:
             needs_classification.append(error)
-    # todo: support reading existing classifications, for example matching on the details
-    return classified_errors + add_llm_classifications(needs_classification, settings)
+    return classified_errors + add_llm_classifications(needs_classification)
 
 
 def manual_classification(settings: AtlasInitSettings, needs_classification: list[GoTestError]):
@@ -220,30 +225,20 @@ def manual_classification(settings: AtlasInitSettings, needs_classification: lis
             return
 
 
-def add_llm_classifications(
-    needs_classification_errors: list[GoTestError], settings: AtlasInitSettings
-) -> list[GoTestErrorClassification]:
-    """Todo: Use LLM"""
-    example_errors = read_tf_errors(settings).classified_errors()
-    if not example_errors:
-        logger.warning("no example of classified errors found, the bot cannot classify errors without examples")
-        return []
-    return []
-
-
-def parse_errors(
-    error_tests: list[GoTestRun],
-    spec_paths: ApiSpecPaths | None,
-    settings: AtlasInitSettings,
-) -> list[GoTestError]:
-    test_errors: list[GoTestError] = []
-    for test in error_tests:
-        if existing := read_tf_error_by_run(settings, test):
-            test_errors.append(existing)
-            continue
-        test_error_input = ParseTestErrorInput(test=test, api_spec_paths=spec_paths)
-        test_errors.append(parse_test_error(test_error_input))
-    return test_errors
+def add_llm_classifications(needs_classification_errors: list[GoTestError]) -> list[GoTestErrorClassification]:
+    """Todo: Use LLM and support reading existing classifications, for example matching on the details"""
+    return [
+        GoTestErrorClassification(
+            ts=utc_now(),
+            error_class=GoTestErrorClass.UNKNOWN,
+            confidence=0.0,
+            details=error.details,
+            test_output=error.run.output_lines_str,
+            run_id=error.run_id,
+            author=GoTestErrorClassificationAuthor.LLM,
+        )
+        for error in needs_classification_errors
+    ]
 
 
 class DownloadJobLogsInput(Event):

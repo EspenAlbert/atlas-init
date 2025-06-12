@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from datetime import datetime, timedelta
 from typing import NamedTuple
 
 import pytest
@@ -11,8 +12,16 @@ from pydantic import BaseModel
 from zero_3rdparty.datetime_utils import date_filename_with_seconds, utc_now
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
+from atlas_init.cli_tf.go_test_tf_error import (
+    ErrorDetailsT,
+    GoTestDefaultError,
+    GoTestErrorClass,
+    GoTestErrorClassification,
+    GoTestErrorClassificationAuthor,
+)
 from atlas_init.crud.mongo_client import CollectionConfig, get_collection, init_mongo
 from atlas_init.crud.mongo_utils import create_or_replace, dump_with_id
+from atlas_init.crud.tf_resource import MongoDao
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +58,18 @@ def cleanup_databases(request):
     asyncio.run(drop_databases())
 
 
+@pytest.fixture()
+def db_name_test(request) -> str:
+    func_name = request.function.__name__
+    return f"pytest-{func_name}-{date_filename_with_seconds()}"
+
+
 @pytest_asyncio.fixture
 @pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
-async def clean_mongo(settings, request) -> MongoInfo:
-    func_name = request.function.__name__
-    settings.mongo_database = f"pytest-{func_name}-{date_filename_with_seconds()}"
+async def mongo_dao(settings, db_name_test) -> MongoDao:
+    settings.mongo_database = db_name_test
     logger.info(f"mongo url: {settings.mongo_url} db: {settings.mongo_database}")
-    await init_mongo(settings.mongo_url, db_name=settings.mongo_database)
-    return MongoInfo(settings.mongo_url, settings.mongo_database)
+    return await MongoDao(settings).connect()
 
 
 _example_logs = """\
@@ -66,13 +79,37 @@ _example_logs = """\
 2025-06-05T00:30:13.8320050Z --- FAIL: TestAccProjectAPI_basic (3.15s)"""
 
 
-def dummy_run(logs_str: str, name: str):
-    return GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=utc_now())
+def dummy_run(logs_str: str, name: str, ts: datetime | None = None):
+    ts = ts or utc_now()
+    run = GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=ts)
+    run.branch = "test_branch"
+    return run
+
+
+def dummy_classification(
+    run_id: str,
+    error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED,
+    ts: datetime | None = None,
+    logs_str: str = _example_logs,
+    details: ErrorDetailsT | None = None,
+) -> GoTestErrorClassification:
+    ts = ts or utc_now()
+    details = details or GoTestDefaultError(error_str=logs_str)
+    return GoTestErrorClassification(
+        author=GoTestErrorClassificationAuthor.AUTO,
+        error_class=error_class,
+        ts=ts,
+        run_id=run_id,
+        test_output=logs_str,
+        details=details,
+    )
 
 
 @pytest.mark.asyncio
-async def test_init_mongo2(clean_mongo):
-    url, db = clean_mongo
+@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
+async def test_init_mongo2(db_name_test):
+    url = os.environ["MONGO_URL"]
+    db = db_name_test
     logger.info(f"(test) mongo url: {url} db: {db}")
     await init_mongo(
         mongo_url=url,
@@ -94,3 +131,41 @@ async def test_init_mongo2(clean_mongo):
     assert parse_model(raw, t=MyModel) == model
     assert await col.count_documents({}) == 1
     logger.info("Test completed successfully")
+
+
+@pytest.mark.asyncio()
+async def test_classification_crud(mongo_dao, subtests):
+    now = utc_now()
+    now_plus1 = now + timedelta(seconds=1)
+    c1_id = "r1"
+    c1 = dummy_classification(c1_id, ts=now)
+    c2_id = "r2"
+    c2 = dummy_classification(c2_id, ts=now_plus1)
+    with subtests.test("create"):
+        assert await mongo_dao.add_classification(c1)
+        assert await mongo_dao.add_classification(c2)
+    with subtests.test("list"):
+        ids = [c1_id, c2_id]
+        # list_result = await mongo_dao.read_error_classifications(run_ids=ids)
+        list_result = await mongo_dao.read_error_classifications(run_ids=ids)
+        assert len(list_result) == 2
+        assert set(ids) == set(list_result)
+    with subtests.test("read"):
+        read_c1 = await mongo_dao.read_error_classifications(run_ids=[c1_id])
+        assert len(read_c1) == 1
+        assert c1_id in read_c1
+
+
+@pytest.mark.asyncio()
+async def test_runs(mongo_dao, subtests):
+    now = utc_now()
+    now_plus1 = now + timedelta(seconds=1)
+    r1 = dummy_run("test run 1", name="test_run_1", ts=now)
+    r2 = dummy_run("test run 2", name="test_run_2", ts=now_plus1)
+    with subtests.test("create"):
+        runs = await mongo_dao.store_tf_test_runs([r1, r2])
+        assert len(runs) == 2
+    with subtests.test("read for day"):
+        branch = r1.branch
+        runs = await mongo_dao.read_tf_tests_for_day(branch=branch, date=now)
+        assert len(runs) == 2
