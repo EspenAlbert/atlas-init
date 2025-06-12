@@ -64,6 +64,9 @@ class AtlasInitSettings(StaticSettings):
 
     non_interactive: bool = False
 
+    mongo_database: str = "atlas_init"
+    mongo_url: str = "mongodb://user:pass@localhost:27017?retryWrites=true&w=majority&authSource=admin"
+
     @property
     def is_interactive(self) -> bool:
         return not self.non_interactive
