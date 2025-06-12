@@ -1,10 +1,13 @@
+import asyncio
 import logging
 import os
 from typing import NamedTuple
-from model_lib import parse_model
-from pydantic import BaseModel
+
 import pytest
 import pytest_asyncio
+from model_lib import parse_model
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel
 from zero_3rdparty.datetime_utils import date_filename_with_seconds, utc_now
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
@@ -24,7 +27,30 @@ class MongoInfo(NamedTuple):
     mongo_database: str
 
 
+@pytest.fixture(scope="session", autouse=True)
+@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
+def cleanup_databases(request):
+    yield
+    client = AsyncIOMotorClient(os.environ.get("MONGO_URL", ""))
+
+    async def drop_databases():
+        dbs = await client.list_database_names()
+        for db_name in dbs:
+            if db_name.startswith("pytest-"):
+                logger.info(f"Cleaning up database: {db_name}")
+                await client.drop_database(db_name)
+
+    session = request.session
+    skip_cleanup = getattr(session, "testsfailed", 0) > 0
+    skip_cleanup = skip_cleanup or os.environ.get("SKIP_MONGODB_CLEANUP", "") in {"1", "true", "yes"}
+    if skip_cleanup:
+        logger.warning("Skipping MongoDB cleanup due to test failures or environment variable.")
+        return
+    asyncio.run(drop_databases())
+
+
 @pytest_asyncio.fixture
+@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 async def clean_mongo(settings, request) -> MongoInfo:
     func_name = request.function.__name__
     settings.mongo_database = f"pytest-{func_name}-{date_filename_with_seconds()}"
@@ -44,7 +70,6 @@ def dummy_run(logs_str: str, name: str):
     return GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=utc_now())
 
 
-@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 @pytest.mark.asyncio
 async def test_init_mongo2(clean_mongo):
     url, db = clean_mongo

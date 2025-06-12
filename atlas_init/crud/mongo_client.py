@@ -43,11 +43,15 @@ def get_collection(model: type) -> AsyncIOMotorCollection:
     raise ValueError(f"Collection for model {model.__name__} is not initialized. Call init_mongo first.")
 
 
+def get_db(mongo_url: str, db_name: str) -> AsyncIOMotorDatabase:
+    client = AsyncIOMotorClient(mongo_url)
+    return client.get_database(db_name)
+
+
 async def init_mongo(
     mongo_url: str, db_name: str, clean_collections: bool = False, document_models: CollectionConfigsT | None = None
 ) -> None:
-    client = AsyncIOMotorClient(mongo_url)
-    db: AsyncIOMotorDatabase = client.get_database(db_name)  # type: ignore
+    db: AsyncIOMotorDatabase = get_db(mongo_url, db_name)
     document_models = document_models or default_document_models()
     for t, config in document_models.items():
         name = config.name or t.__name__

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from functools import cached_property
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+from motor.motor_asyncio import AsyncIOMotorCollection
 from model_lib import Entity, dump, parse_model
 from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -14,6 +16,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     GoTestError,
     GoTestErrorClass,
 )
+from atlas_init.crud.mongo_client import get_collection
 from atlas_init.repos.path import TFResoure, terraform_resources
 from atlas_init.settings.env_vars import AtlasInitSettings
 
@@ -122,3 +125,12 @@ def read_tf_tests(
     settings: AtlasInitSettings, branch: str, start_date: datetime, end_date: datetime | None = None
 ) -> list[GoTestRun]:
     raise NotImplementedError
+
+
+@dataclass
+class GoTestRunDao:
+    settings: AtlasInitSettings
+
+    @cached_property
+    def collection(self) -> AsyncIOMotorCollection:
+        return get_collection(GoTestRun)

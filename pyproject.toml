@@ -58,6 +58,9 @@ path = "atlas_init/__init__.py"
 addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no"
 testpaths = ["test_atlas_init"]
 asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::pytest.PytestRemovedIn9Warning",
+]
 
 [tool.bandit]
 exclude_dirs = ["test_*", "atlas_init/cli_tf/hcl/*"]
