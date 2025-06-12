@@ -7,6 +7,7 @@ from typing import Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
+from _pytest.python import CallSpec2
 from model_lib import dump, field_names
 from pydantic import BaseModel, Field
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
@@ -33,6 +34,39 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+
+
+def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:
+    markers = getattr(fixture_def.func, "pytestmark", [])
+    return any(marker.name.startswith("skip") for marker in markers)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip tests that are marked with @pytest.mark.skip
+    To avoid the terminal session in VS Code that might have extra env-vars set accidentally run marked tests"""
+    skip_marked_tests = os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
+    if not skip_marked_tests:
+        return
+    for item in items:
+        if any(marker.name.startswith("skip") for marker in item.own_markers):
+            item.add_marker(pytest.mark.skip(reason="Skipping test due to SKIP_MARKED_TESTS environment variable"))
+            continue
+        item_session: pytest.Session = item.session
+        fixture_manager = item_session._fixturemanager
+        call_spec: CallSpec2 | None = getattr(item, "callspec", None)
+        for fixture_name in item.fixturenames:
+            if fixture_name == "request" or call_spec and fixture_name in call_spec.params:
+                continue
+            fixturedefs: list = fixture_manager.getfixturedefs(fixture_name, item)  # type: ignore
+            if not fixturedefs:
+                logger.warning(f"No fixture definitions found for {fixture_name} in {item}")
+                continue
+            assert len(fixturedefs) == 1, f"Expected one fixture definition for {fixture_name}, got {len(fixturedefs)}"
+            if _fixture_has_skip_marker(fixture_name, fixturedefs[0]):
+                item.add_marker(
+                    pytest.mark.skip(reason=f"Skipping test due to fixture {fixture_name} having skip marker")
+                )
+                break
 
 
 @pytest.fixture(
@@ -240,11 +274,8 @@ def cfn_resource_path(repo_path: Path, resource_name: str) -> Path:
 
 
 @pytest.fixture()
+@pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
 def tf_repo_path() -> Path:
-    repo_path = os.environ.get("REPO_PATH_TF", "")
-    if repo_path == "":
-        pytest.skip("REPO_PATH_TF not set")
-        return
-    tf_repo_path = Path(repo_path)
-    assert tf_repo_path.exists(), f"REPO_PATH_TF does not exist: {tf_repo_path}"
+    tf_repo_path = Path(os.environ["TF_REPO_PATH"])
+    assert tf_repo_path.exists(), f"TF_REPO_PATH does not exist: {tf_repo_path}"
     return tf_repo_path

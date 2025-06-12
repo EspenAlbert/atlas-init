@@ -15,11 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-def tf_api_resources_config() -> ApiResourcesConfig:
-    path = os.environ.get("REPO_PATH_TF", "")
-    if not path:
-        pytest.skip("REPO_PATH_TF environment variable is not set")
-    path = Path(os.environ["REPO_PATH_TF"]) / "tools/codegen/config.yml"
+def tf_api_resources_config(tf_repo_path) -> ApiResourcesConfig:
+    path = tf_repo_path / "tools/codegen/config.yml"
     return parse_model(path, t=ApiResourcesConfig, format="yaml")
 
 

@@ -1,6 +1,4 @@
 import logging
-import os
-from pathlib import Path
 
 import pytest
 
@@ -92,9 +90,7 @@ import (
 """
 
 
-@pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
-def test_sync_generated_schemas(original_datadir):
-    tf_repo_path = Path(os.environ["TF_REPO_PATH"])
+def test_sync_generated_schemas(original_datadir, tf_repo_path):
     pkg_filter = "resourcepolicy"
     for schema_go in original_datadir.glob("*.go"):
         stem = schema_go.stem

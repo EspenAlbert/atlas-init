@@ -8,7 +8,6 @@ import pytest
 from model_lib import dump, parse_model, parse_payload
 from zero_3rdparty import file_utils
 
-from atlas_init.cli_tf.schema_v2 import SchemaV2
 from atlas_init.cli_tf.openapi import (
     OpenapiSchema,
     api_spec_text_changes,
@@ -16,7 +15,7 @@ from atlas_init.cli_tf.openapi import (
     minimal_api_spec,
     parse_api_spec_param,
 )
-
+from atlas_init.cli_tf.schema_v2 import SchemaV2
 from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,9 @@ def test_openapi_schema_create_parameters(schema_v2: SchemaV2, openapi_schema: O
     assert instance_name_param.description
     assert instance_name_param.is_required
 
-    req_ref = openapi_schema.method_request_body_ref(create_method)
+    req_refs = list(openapi_schema.method_request_body_ref(create_method))
+    assert len(req_refs) == 1, "expected exactly one request body reference"
+    req_ref = req_refs[0]
     assert req_ref == "#/components/schemas/StreamsProcessor"
     property_dicts = list(openapi_schema.schema_properties(req_ref))
     assert property_dicts
@@ -76,7 +77,9 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
     assert group_id_param == {"$ref": "#/components/parameters/groupId"}
     assert tenant_name_param["name"] == "tenantName"
     assert processor_name_param["name"] == "processorName"
-    response_ref = openapi_schema.method_response_ref(read_method)
+    response_refs = list(openapi_schema.method_response_ref(read_method))
+    assert len(response_refs) == 1, "expected exactly one response reference"
+    response_ref = response_refs[0]
     assert response_ref == "#/components/schemas/StreamsProcessorWithStats"
     property_dicts = list(openapi_schema.schema_properties(response_ref))
     assert property_dicts
