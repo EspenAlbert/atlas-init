@@ -6,12 +6,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import Self
+from typing import ClassVar, Self
 
-from model_lib import Entity, dump, parse_model
+from model_lib import Entity, dump, field_names, parse_model
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
+from zero_3rdparty.iter_utils import ignore_falsy
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import (
@@ -133,6 +134,7 @@ class GoTestRunNotFound(Exception):
 @dataclass
 class MongoDao:
     settings: AtlasInitSettings
+    property_keys_run: ClassVar[list[str]] = ["group_name"]
 
     @cached_property
     def runs(self) -> AsyncIOMotorCollection:
@@ -141,6 +143,10 @@ class MongoDao:
     @cached_property
     def classifications(self) -> AsyncIOMotorCollection:
         return get_collection(GoTestErrorClassification)
+
+    @cached_property
+    def _field_names_runs(self) -> set[str]:
+        return set(field_names(GoTestRun)) | set(self.property_keys_run)
 
     async def connect(self) -> Self:
         await init_mongo(
@@ -156,7 +162,7 @@ class MongoDao:
         tasks = []
         loop = asyncio.get_event_loop()
         for run in test_runs:
-            dumped = dump_with_id(run, id=run.id, dt_keys=["ts", "finish_ts"])
+            dumped = dump_with_id(run, id=run.id, dt_keys=["ts", "finish_ts"], property_keys=self.property_keys_run)
             tasks.append(loop.create_task(create_or_replace(col, dumped)))
         await asyncio.gather(*tasks)
         return test_runs
@@ -164,15 +170,16 @@ class MongoDao:
     async def read_tf_tests_for_day(self, branch: str, date: datetime) -> list[GoTestRun]:
         start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = start_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-        runs: list[GoTestRun] = []
-        async for raw_run in self.runs.find(
-            {
-                "branch": branch,
-                "ts": {MongoQueryOperation.gte: start_date, MongoQueryOperation.lte: end_date},
-            }
-        ):
-            raw_run.pop("_id", None)
-            runs.append(parse_model(raw_run, t=GoTestRun))
+        query = {
+            "branch": branch,
+            "ts": {MongoQueryOperation.gte: start_date, MongoQueryOperation.lte: end_date},
+        }
+        return await self._find_runs(query)
+
+    async def _find_runs(self, query: dict) -> list[GoTestRun]:
+        runs = []
+        async for raw_run in self.runs.find(query):
+            runs.append(self._parse_run(raw_run))
         return runs
 
     async def read_error_classifications(
@@ -244,10 +251,15 @@ class MongoDao:
         raw = await self.runs.find_one({"_id": run_id})
         if raw is None:
             raise GoTestRunNotFound(run_id)
+        return self._parse_run(raw)
+
+    def _parse_run(self, raw: dict) -> GoTestRun:
         raw.pop("_id")
+        for key in self.property_keys_run:
+            raw.pop(key, None)  # Remove properties that are not part of the model
         return parse_model(raw, t=GoTestRun)
 
-    async def read_run_history_by_name(
+    async def read_run_history(
         self,
         test_name: str,
         branches: list[str] | None = None,
@@ -257,4 +269,28 @@ class MongoDao:
         end_date: datetime | None = None,
         envs: list[str] | None = None,
     ) -> list[GoTestRun]:
-        raise NotImplementedError
+        eq = MongoQueryOperation.eq
+        query = {
+            "name": {eq: test_name},
+        }
+        eq_parts = {
+            "package_url": {eq: package_url} if package_url else None,
+            "group_name": {eq: group_name} if group_name else None,
+        }
+        in_op = MongoQueryOperation.in_
+        in_parts = {
+            "branch": {in_op: branches} if branches else None,
+            "env": {in_op: envs} if envs else None,
+        }
+        date_parts = {
+            "ts": ignore_falsy(
+                **{
+                    MongoQueryOperation.lte: end_date or None,
+                    MongoQueryOperation.gte: start_date or None,
+                }
+            )
+        }
+        query |= ignore_falsy(**eq_parts, **in_parts, **date_parts)
+        if invalid_fields := set(query) - self._field_names_runs:
+            raise ValueError(f"Invalid fields in query: {invalid_fields}")
+        return await self._find_runs(query)

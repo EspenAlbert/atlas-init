@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import NamedTuple
 
 import pytest
@@ -82,10 +83,18 @@ _example_logs = """\
 2025-06-05T00:30:13.8320050Z --- FAIL: TestAccProjectAPI_basic (3.15s)"""
 
 
-def dummy_run(logs_str: str, name: str, ts: datetime | None = None):
+def _dummy_log_path(group_name: str) -> Path:
+    return Path(f"40216340925_tests-1.11.x-latest_tests-1.11.x-latest-false_{group_name}.txt")
+
+
+def dummy_run(
+    logs_str: str, name: str, ts: datetime | None = None, branch: str | None = None, group_name: str | None = None
+):
     ts = ts or utc_now()
     run = GoTestRun(name=name, output_lines=logs_str.splitlines(), ts=ts)
-    run.branch = "test_branch"
+    run.branch = branch or "test_branch"
+    if group_name:
+        run.log_path = _dummy_log_path(group_name)
     return run
 
 
@@ -219,3 +228,32 @@ async def test_runs(mongo_dao: MongoDao, subtests):
         assert r1_back == r1
         r2_back = await mongo_dao.read_tf_test_run(r2.id)
         assert r2_back == r2
+
+
+@pytest.mark.asyncio()
+async def test_read_run_history(mongo_dao: MongoDao, subtests):
+    start = utc_now()
+    start_plus1 = start + timedelta(days=1)
+    start_plus2 = start + timedelta(days=2)
+    test_name = "test_run_history"
+    r1 = dummy_run("test run 1", name=test_name, ts=start, branch="b1")
+    r2 = dummy_run("test run 2", name=test_name, ts=start_plus1, branch="b2", group_name="test_group")
+    r3 = dummy_run("test run 3", name=test_name, ts=start_plus2, branch="b3")
+    with subtests.test("create runs"):
+        runs = await mongo_dao.store_tf_test_runs([r1, r2, r3])
+        assert len(runs) == 3
+    with subtests.test("read history for test name"):
+        history = await mongo_dao.read_run_history(test_name=test_name)
+        assert len(history) == 3
+    with subtests.test("read history for test name with date range"):
+        history = await mongo_dao.read_run_history(test_name=test_name, start_date=start, end_date=start_plus1)
+        assert len(history) == 2
+        assert {run.id for run in history} == {r1.id, r2.id}
+    with subtests.test("read history for test name with branch"):
+        history = await mongo_dao.read_run_history(test_name=test_name, branches=["b1", "b3"])
+        assert len(history) == 2
+        assert {run.id for run in history} == {r1.id, r3.id}
+    with subtests.test("read history for a group_name"):
+        history = await mongo_dao.read_run_history(test_name=test_name, group_name="test_group")
+        assert len(history) == 1
+        assert history[0].id == r2.id

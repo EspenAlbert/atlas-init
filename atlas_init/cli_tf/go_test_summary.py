@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import asyncio
+import logging
 from collections import Counter
 from dataclasses import dataclass, field
-from enum import StrEnum
-import logging
 from datetime import date, datetime, timedelta
+from enum import StrEnum
 from functools import total_ordering
 from pathlib import Path
 from typing import ClassVar
@@ -355,9 +356,7 @@ class ErrorRowColumns(StrEnum):
             envs.update(row.last_env_runs.keys())
         columns: list[str] = [cls.GROUP_NAME, cls.TEST, cls.ERROR_CLASS, cls.DETAILS_SUMMARY]
         for env in sorted(envs):
-            for env_col in cls.__ENV_BASED__:
-                if env_col not in skip_columns:
-                    columns.append(f"{env_col} ({env})")
+            columns.extend(f"{env_col} ({env})" for env_col in cls.__ENV_BASED__ if env_col not in skip_columns)
         return [col for col in columns if col not in skip_columns]
 
 
@@ -391,10 +390,11 @@ class ErrorRow(Entity):
         time_since = {}
         for env, runs in self.last_env_runs.items():
             if not runs:
+                time_since[env] = "never run"
                 continue
-            if last_pass := next((run for run in reversed(runs) if run.status == GoTestStatus.PASS), None):
-                time_since[env] = last_pass.when
-            time_since[env] = "never passed"
+            time_since[env] = next(
+                (run.when for run in reversed(runs) if run.status == GoTestStatus.PASS), "never passed"
+            )
         return time_since
 
     def as_row(self, columns: list[str]) -> list[str]:
@@ -417,7 +417,9 @@ class ErrorRow(Entity):
                 case s if s.startswith(ErrorRowColumns.TIME_SINCE_PASS):
                     env = s.split(" (")[-1].rstrip(")")
                     values.append(time_since_pass.get(env, "never passed"))
-        # TODO: TEST ME
+                case _:
+                    logger.warning(f"Unknown column: {col}, skipping")
+                    values.append("N/A")
         return values
 
 
@@ -439,7 +441,7 @@ async def _collect_error_rows(
         branch_filter = []
         if branch and not event.skip_branch_filter:
             branch_filter.append(branch)
-        run_history = await dao.read_run_history_by_name(
+        run_history = await dao.read_run_history(
             test_name=error.run_name,
             package_url=package_url,
             group_name=group_name,
