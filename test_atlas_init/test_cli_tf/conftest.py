@@ -69,11 +69,9 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.skipif(os.environ.get("SDK_REPO_PATH", "") == "", reason="needs os.environ[SDK_REPO_PATH]")
 def sdk_repo_path() -> Path:
-    repo_path_str = os.environ.get("SDK_REPO_PATH", "")
-    if not repo_path_str:
-        pytest.skip("needs os.environ[SDK_REPO_PATH]")
-    return Path(repo_path_str)
+    return Path(os.environ["SDK_REPO_PATH"])
 
 
 @pytest.fixture
@@ -111,11 +109,9 @@ def go_schema_paths() -> Callable[[], dict[str, Path]]:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 def live_api_spec() -> OpenapiSchema:
-    spec_path_str = os.environ.get("API_SPEC_PATH", "")
-    if spec_path_str == "":
-        pytest.skip("needs os.environ[API_SPEC_PATH]")
-    api_path = Path(spec_path_str)
+    api_path = Path(os.environ["API_SPEC_PATH"])
     logger.info(f"parsing admin api spec: {api_path}")
     model = parse_model(api_path, t=OpenapiSchema)
     assert model, "unable to parse admin api spec"

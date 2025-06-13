@@ -116,3 +116,23 @@ def test_generate_tf_resources(resource_skip, tf_repo_path, resource_name):
         logger=logger,
         dry_run=False,
     ), f"Failed to generate Terraform resources for {resource_name}"
+
+
+def test_api_code_examples(live_api_spec, sdk_repo_path):
+    write_api_code_samples(live_api_spec, sdk_repo_path)
+
+
+def write_api_code_samples(live_api_spec, sdk_repo_path):
+    examples_out = sdk_repo_path / "examples" / "api_code_examples"
+    examples_out.mkdir(parents=True, exist_ok=True)
+    paths = list(live_api_spec.paths.keys())
+    for path in paths:
+        for method in live_api_spec.methods(path):
+            for sample in method.get("x-codeSamples", []):
+                if sample.get("lang") == "go":
+                    filename = f"{path.replace('/', '_')}_{method['operationId']}.go".lstrip("_")
+                    file_path = examples_out / filename
+                    src = sample["source"]
+                    src = "package main\n\n" + src  # Add package declaration for Go files
+                    file_path.write_text(src, encoding="utf-8")
+                    logger.info(f"Generated code example: {file_path}")
