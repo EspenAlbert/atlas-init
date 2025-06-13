@@ -2,7 +2,7 @@ from datetime import timedelta
 from zero_3rdparty.datetime_utils import utc_now
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import GoTestDefaultError, GoTestError, GoTestErrorClass
-from atlas_init.crud.tf_resource import (
+from atlas_init.crud.mongo_dao import (
     read_tf_error_by_run,
     read_tf_errors,
     store_or_update_tf_errors,

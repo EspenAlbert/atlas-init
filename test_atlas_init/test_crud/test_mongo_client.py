@@ -24,7 +24,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
 )
 from atlas_init.crud.mongo_client import CollectionConfig, get_collection, init_mongo
 from atlas_init.crud.mongo_utils import create_or_replace, dump_with_id
-from atlas_init.crud.tf_resource import MongoDao
+from atlas_init.crud.mongo_dao import MongoDao
 
 logger = logging.getLogger(__name__)
 

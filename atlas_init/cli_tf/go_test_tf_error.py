@@ -114,6 +114,11 @@ class CheckError(Entity):
             raise TypeError
         return (self.check_nr, self.attribute) < (other.check_nr, other.attribute)
 
+    def __str__(self) -> str:
+        if self.attribute and self.expected and self.got:
+            return f"{self.check_nr}({self.attribute}:expected:{self.expected}, got: {self.got})"
+        return f"{self.check_nr}"
+
     @classmethod
     def parse_from_output(cls, output: str) -> list[Self]:
         return [
@@ -157,9 +162,16 @@ class GoTestGeneralCheckError(Entity):
     step_nr: int = -1
     check_errors: list[CheckError] = Field(default_factory=list)
     error_check_str: str
+    test_name: str = ""
 
-    def add_info_fields(self, _: DetailsInfo) -> None:
-        pass
+    def add_info_fields(self, info: DetailsInfo) -> None:
+        self.test_name = info.run.name
+
+    def check_errors_str(self) -> str:
+        return ",".join(str(check) for check in sorted(self.check_errors))
+
+    def __str__(self) -> str:
+        return f"Step {self.step_nr} {self.check_errors_str()}"
 
 
 @dataclass
@@ -291,6 +303,8 @@ class GoTestError(Entity):
     @property
     def short_description(self) -> str:
         match self.details:
+            case GoTestGeneralCheckError():
+                return str(self.details)
             case GoTestResourceCheckError():
                 return f"CheckFailure for {self.details.tf_resource_type}.{self.details.tf_resource_name} at Step: {self.details.step_nr} Checks: {self.details.check_numbers_str}"
             case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:

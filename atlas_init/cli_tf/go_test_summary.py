@@ -1,17 +1,24 @@
+from __future__ import annotations
+import asyncio
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import StrEnum
 import logging
 from datetime import date, datetime, timedelta
 from functools import total_ordering
 from pathlib import Path
+from typing import ClassVar
 
+from ask_shell.rich_progress import new_task
 from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils, file_utils
+from zero_3rdparty.iter_utils import group_by_once
 
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
-from atlas_init.cli_tf.go_test_tf_error import GoTestError, GoTestErrorClassification
+from atlas_init.cli_tf.go_test_tf_error import GoTestError, GoTestErrorClass, GoTestErrorClassification
+from atlas_init.crud.mongo_dao import init_mongo_dao
 from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
@@ -292,10 +299,165 @@ class TFCITestOutput(Entity):
     classified_errors: list[GoTestErrorClassification] = Field(default_factory=list)
 
 
-class DailyReport(Entity):
+class DailyReportIn(Entity):
+    run_history_start: datetime
+    run_history_end: datetime
+    env_filter: list[str] = field(default_factory=list)
+    skip_branch_filter: bool = False
+    skip_columns: set[ErrorRowColumns] = field(default_factory=set)
+
+
+class DailyReportOut(Entity):
     summary_md: str
     details_md: str
 
 
-def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings) -> DailyReport:
-    raise NotImplementedError
+def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
+    errors = output.found_errors
+    error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
+    with new_task("Daily Report"):
+        with new_task("Collecting error rows") as task:
+            failure_rows = asyncio.run(_collect_error_rows(errors, error_classes, settings, event, task))
+        if not failure_rows:
+            return DailyReportOut(
+                summary_md="🎉All tests passed", details_md=f"Ran a total of {len(output.found_tests)}"
+            )
+    columns = ErrorRowColumns.column_names(failure_rows, event.skip_columns)
+    summary_md = [
+        "# Daily Report",
+        f"Ran a total of {len(output.found_tests)} tests",
+        f"Found {len(failure_rows)} errors",
+        "",
+        "## Errors Table",
+        " | ".join(columns),
+        " | ".join("---" for _ in columns),
+        *(" | ".join(row.as_row(columns)) for row in failure_rows),
+    ]
+    return DailyReportOut(summary_md="\n".join(summary_md), details_md="TODO")
+
+
+class ErrorRowColumns(StrEnum):
+    GROUP_NAME = "Group or Package"
+    TEST = "Test"
+    ERROR_CLASS = "Error Class"
+    DETAILS_SUMMARY = "Details Summary"
+    PASS_RATE = "Pass Rate"
+    TIME_SINCE_PASS = "Time Since PASS"
+
+    __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, TIME_SINCE_PASS]
+
+    @classmethod
+    def column_names(cls, rows: list[ErrorRow], skip_columns: set[ErrorRowColumns]) -> list[str]:
+        if not rows:
+            return []
+        envs = set()
+        for row in rows:
+            envs.update(row.last_env_runs.keys())
+        columns: list[str] = [cls.GROUP_NAME, cls.TEST, cls.ERROR_CLASS, cls.DETAILS_SUMMARY]
+        for env in sorted(envs):
+            for env_col in cls.__ENV_BASED__:
+                if env_col not in skip_columns:
+                    columns.append(f"{env_col} ({env})")
+        return [col for col in columns if col not in skip_columns]
+
+
+@total_ordering
+class ErrorRow(Entity):
+    group_name: str
+    package_url: str
+    test_name: str
+    error_class: GoTestErrorClass
+    details_summary: str
+    last_env_runs: dict[str, list[GoTestRun]] = field(default_factory=dict)
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, ErrorRow):
+            raise TypeError
+        return (self.group_name, self.test_name) < (other.group_name, other.test_name)
+
+    @property
+    def pass_rates(self) -> dict[str, float]:
+        rates = {}
+        for env, runs in self.last_env_runs.items():
+            if not runs:
+                continue
+            total = len(runs)
+            passed = sum(run.status == GoTestStatus.PASS for run in runs)
+            rates[env] = passed / total if total > 0 else 0.0
+        return rates
+
+    @property
+    def time_since_pass(self) -> dict[str, str]:
+        time_since = {}
+        for env, runs in self.last_env_runs.items():
+            if not runs:
+                continue
+            if last_pass := next((run for run in reversed(runs) if run.status == GoTestStatus.PASS), None):
+                time_since[env] = last_pass.when
+            time_since[env] = "never passed"
+        return time_since
+
+    def as_row(self, columns: list[str]) -> list[str]:
+        values = []
+        pass_rates = self.pass_rates
+        time_since_pass = self.time_since_pass
+        for col in columns:
+            match col:
+                case ErrorRowColumns.GROUP_NAME:
+                    values.append(self.group_name or self.package_url or "Unknown Group")
+                case ErrorRowColumns.TEST:
+                    values.append(self.test_name)
+                case ErrorRowColumns.ERROR_CLASS:
+                    values.append(self.error_class)
+                case ErrorRowColumns.DETAILS_SUMMARY:
+                    values.append(self.details_summary)
+                case s if s.startswith(ErrorRowColumns.PASS_RATE):
+                    env = s.split(" (")[-1].rstrip(")")
+                    values.append(f"{pass_rates.get(env, 0.0):.2%}" if env in pass_rates else "N/A")
+                case s if s.startswith(ErrorRowColumns.TIME_SINCE_PASS):
+                    env = s.split(" (")[-1].rstrip(")")
+                    values.append(time_since_pass.get(env, "never passed"))
+        # TODO: TEST ME
+        return values
+
+
+async def _collect_error_rows(
+    errors: list[GoTestError],
+    error_classes: dict[str, GoTestErrorClass],
+    settings: AtlasInitSettings,
+    event: DailyReportIn,
+    task: new_task,
+) -> list[ErrorRow]:
+    error_rows: list[ErrorRow] = []
+    dao = await init_mongo_dao(settings)
+    for error in errors:
+        package_url = error.run.package_url
+        group_name = error.run.group_name
+        package_url = error.run.package_url or ""
+        error_class = error_classes[error.run_id]
+        branch = error.run.branch
+        branch_filter = []
+        if branch and not event.skip_branch_filter:
+            branch_filter.append(branch)
+        run_history = await dao.read_run_history_by_name(
+            test_name=error.run_name,
+            package_url=package_url,
+            group_name=group_name,
+            start_date=event.run_history_start,
+            end_date=event.run_history_end,
+            envs=event.env_filter,
+            branches=branch_filter,
+        )
+        last_env_runs = group_by_once(run_history, key=lambda run: run.env or "unknown-env")
+        error_rows.append(
+            ErrorRow(
+                group_name=group_name,
+                package_url=package_url,
+                test_name=error.run_name,
+                error_class=error_class,
+                details_summary=error.short_description,
+                last_env_runs=last_env_runs,
+            )
+        )
+        task.update(advance=1)
+    return sorted(error_rows)

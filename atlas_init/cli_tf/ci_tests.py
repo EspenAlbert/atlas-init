@@ -38,7 +38,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     parse_error_details,
 )
 from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
-from atlas_init.crud.tf_resource import (
+from atlas_init.crud.mongo_dao import (
     TFResources,
     init_mongo_dao,
     read_tf_resources,

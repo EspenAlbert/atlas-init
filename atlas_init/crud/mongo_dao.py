@@ -246,3 +246,15 @@ class MongoDao:
             raise GoTestRunNotFound(run_id)
         raw.pop("_id")
         return parse_model(raw, t=GoTestRun)
+
+    async def read_run_history_by_name(
+        self,
+        test_name: str,
+        branches: list[str] | None = None,
+        package_url: str | None = None,
+        group_name: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        envs: list[str] | None = None,
+    ) -> list[GoTestRun]:
+        raise NotImplementedError
