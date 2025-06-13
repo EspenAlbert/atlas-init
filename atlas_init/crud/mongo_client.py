@@ -28,7 +28,9 @@ CollectionConfigsT: TypeAlias = dict[type, CollectionConfig]
 
 def default_document_models() -> CollectionConfigsT:
     return {
-        GoTestErrorClassification: CollectionConfig(indexes=[index_dec("ts"), IndexModel(["error_class"])]),
+        GoTestErrorClassification: CollectionConfig(
+            indexes=[index_dec("ts"), IndexModel(["error_class"]), IndexModel(["test_name"])]
+        ),
         GoTestRun: CollectionConfig(indexes=[index_dec("ts"), IndexModel(["branch"]), IndexModel(["status"])]),
     }
 

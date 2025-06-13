@@ -12,6 +12,7 @@ from zero_3rdparty import datetime_utils, file_utils
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
 from atlas_init.cli_tf.go_test_tf_error import GoTestError, GoTestErrorClassification
+from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
 _COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
@@ -296,7 +297,5 @@ class DailyReport(Entity):
     details_md: str
 
 
-def create_daily_report(
-    output: TFCITestOutput,
-) -> DailyReport:
+def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings) -> DailyReport:
     raise NotImplementedError

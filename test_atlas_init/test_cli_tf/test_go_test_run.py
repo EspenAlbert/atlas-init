@@ -314,6 +314,7 @@ def test_extract_error_details(test_name, expected_details):
     logs_str = read_test_logs(test_name)
     run = dummy_run(logs_str, "extract-error-details")
     assert expected_details == parse_error_details(run)
+    print(repr(expected_details))
 
 
 def dummy_run(logs_str: str, name: str):

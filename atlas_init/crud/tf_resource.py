@@ -1,23 +1,27 @@
 from __future__ import annotations
 
 import asyncio
-from functools import cached_property
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Self
 
-from motor.motor_asyncio import AsyncIOMotorCollection
 from model_lib import Entity, dump, parse_model
+from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import (
+    ErrorClassAuthor,
+    ErrorDetailsT,
+    GoTestAPIError,
     GoTestError,
     GoTestErrorClass,
     GoTestErrorClassification,
+    GoTestResourceCheckError,
 )
 from atlas_init.crud.mongo_client import get_collection, init_mongo
 from atlas_init.crud.mongo_utils import MongoQueryOperation, create_or_replace, dump_with_id
@@ -120,6 +124,12 @@ async def init_mongo_dao(settings: AtlasInitSettings) -> MongoDao:
     return await dao.connect()
 
 
+class GoTestRunNotFound(Exception):
+    def __init__(self, run_id: str) -> None:
+        self.run_id = run_id
+        super().__init__(run_id)
+
+
 @dataclass
 class MongoDao:
     settings: AtlasInitSettings
@@ -171,14 +181,68 @@ class MongoDao:
         run_ids = run_ids or []
         if not run_ids:
             return {}
+        query = {"_id": {MongoQueryOperation.in_: run_ids}}
+        return await self._find_classifications(query)
+
+    async def _find_classifications(self, query: dict) -> dict[str, GoTestErrorClassification]:
         classifications: dict[str, GoTestErrorClassification] = {}
-        async for raw_error in self.classifications.find({"_id": {MongoQueryOperation.in_: run_ids}}):
+        async for raw_error in self.classifications.find(query):
             run_id = raw_error.pop("_id", None)
             classification = parse_model(raw_error, t=GoTestErrorClassification)
             classifications[run_id] = classification
         return classifications
 
+    async def read_similar_error_classifications(
+        self, details: ErrorDetailsT, *, author_filter: ErrorClassAuthor | None = None
+    ) -> dict[str, GoTestErrorClassification]:
+        query = {}
+        if author_filter:
+            query["author"] = {MongoQueryOperation.eq: author_filter}
+        match details:
+            case GoTestAPIError(
+                api_error_code_str=api_error_code_str,
+                api_method=api_method,
+                api_response_code=api_response_code,
+                api_path_normalized=api_path_normalized,
+            ) if api_path_normalized:
+                query |= {
+                    "details.api_error_code_str": {MongoQueryOperation.eq: api_error_code_str},
+                    "details.api_method": {MongoQueryOperation.eq: api_method},
+                    "details.api_response_code": {MongoQueryOperation.eq: api_response_code},
+                    "details.api_path_normalized": {MongoQueryOperation.eq: api_path_normalized},
+                }
+            case GoTestResourceCheckError(
+                tf_resource_name=tf_resource_name,
+                tf_resource_type=tf_resource_type,
+                step_nr=step_nr,
+                check_errors=check_errors,
+                test_name=test_name,
+            ):
+                query |= {
+                    "details.tf_resource_name": {MongoQueryOperation.eq: tf_resource_name},
+                    "details.tf_resource_type": {MongoQueryOperation.eq: tf_resource_type},
+                    "details.step_nr": {MongoQueryOperation.eq: step_nr},
+                    "test_name": {MongoQueryOperation.eq: test_name},
+                }
+                classifications = await self._find_classifications(query)
+                return {
+                    run_id: classification
+                    for run_id, classification in classifications.items()
+                    if isinstance(classification.details, GoTestResourceCheckError)
+                    and classification.details.check_errors_match(check_errors)
+                }
+            case _:
+                return {}  # todo: vector search to match on error output
+        return await self._find_classifications(query)
+
     async def add_classification(self, classification: GoTestErrorClassification) -> bool:
         """Returns is_new"""
         raw = dump_with_id(classification, id=classification.run_id, dt_keys=["ts"])
         return await create_or_replace(self.classifications, raw)
+
+    async def read_tf_test_run(self, run_id: str) -> GoTestRun:
+        raw = await self.runs.find_one({"_id": run_id})
+        if raw is None:
+            raise GoTestRunNotFound(run_id)
+        raw.pop("_id")
+        return parse_model(raw, t=GoTestRun)

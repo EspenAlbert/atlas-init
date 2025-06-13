@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import NamedTuple, TypeAlias
 
 import humanize
-from model_lib import Entity, utc_datetime
+from model_lib import Entity, utc_datetime, utc_datetime_ms
 from pydantic import Field, model_validator
 from zero_3rdparty.datetime_utils import utc_now
 
@@ -122,9 +122,9 @@ class GoTestLastPassStat(NamedTuple):
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
-    ts: utc_datetime
+    ts: utc_datetime_ms
     output_lines: list[str] = Field(default_factory=list)
-    finish_ts: utc_datetime | None = None
+    finish_ts: utc_datetime_ms | None = None
     run_seconds: float | None = Field(default=None, init=False)
 
     package_url: str | None = Field(default=None, init=False)

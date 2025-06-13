@@ -4,15 +4,15 @@ import asyncio
 import logging
 import os
 import re
-from collections import deque
 from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
 from ask_shell import run_and_wait
-from ask_shell.rich_progress import new_task
+from ask_shell.interactive import confirm, select_list
 from ask_shell.rich_live import print_to_live_console
+from ask_shell.rich_progress import new_task
 from model_lib import Entity, Event
 from pydantic import Field, model_validator
 from pydantic_core import Url
@@ -31,10 +31,10 @@ from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
 from atlas_init.cli_tf.go_test_summary import TFCITestOutput, create_daily_report
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
+    ErrorClassAuthor,
     GoTestError,
     GoTestErrorClass,
     GoTestErrorClassification,
-    GoTestErrorClassificationAuthor,
     parse_error_details,
 )
 from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
@@ -42,12 +42,10 @@ from atlas_init.crud.tf_resource import (
     TFResources,
     init_mongo_dao,
     read_tf_resources,
-    store_or_update_tf_errors,
 )
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
-from atlas_init.settings.interactive2 import confirm, select_list
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +112,8 @@ def ci_tests(
         skip_error_parsing=skip_error_parsing,
     )
     out = asyncio.run(ci_tests_pipeline(event))
-    logger.info("will later add support for adding manual classifications")
-    daily = create_daily_report(out)
+    manual_classification(out.classified_errors, event.settings)
+    daily = create_daily_report(out, event.settings)
     print_to_live_console(Markdown(daily.summary_md))
     if summary_name:
         summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
@@ -156,15 +154,16 @@ async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
                 )
             )
         await dao.store_tf_test_runs(parse_job_output.test_runs)
-    with new_task("reading test runs from storage"):
-        found_tests = await dao.read_tf_tests_for_day(event.branch, event.report_date)
+    report_date = event.report_date
+    with new_task(f"reading test runs from storage for {report_date.date().isoformat()}"):
+        report_tests = await dao.read_tf_tests_for_day(event.branch, report_date)
     with new_task("parsing test errors"):
-        test_errors = parse_test_errors(found_tests)
+        report_errors = parse_test_errors(report_tests)
     with new_task("classifying errors"):
-        error_run_ids = [error.run_id for error in test_errors]
+        error_run_ids = [error.run_id for error in report_errors]
         existing_classifications = await dao.read_error_classifications(error_run_ids)
-        classified_errors = classify_errors(existing_classifications, test_errors)
-    return TFCITestOutput(log_paths=log_paths, found_tests=found_tests, classified_errors=classified_errors)
+        classified_errors = classify_errors(existing_classifications, report_errors)
+    return TFCITestOutput(log_paths=log_paths, found_tests=report_tests, classified_errors=classified_errors)
 
 
 def parse_test_errors(found_tests: list[GoTestRun]) -> list[GoTestError]:
@@ -185,11 +184,11 @@ def classify_errors(
     classified_errors: list[GoTestErrorClassification] = []
     for error in errors:
         if prev_classification := existing.get(error.run_id):
-            logger.info(f"found existing classification for {error.run.name}: {prev_classification}")
+            logger.info(f"found existing classification for {error.run_name}: {prev_classification}")
             classified_errors.append(prev_classification)
             continue
         if auto_class := GoTestErrorClass.auto_classification(error.run.output_lines_str):
-            logger.info(f"auto class for {error.run.name}: {auto_class}")
+            logger.info(f"auto class for {error.run_name}: {auto_class}")
             classified_errors.append(
                 GoTestErrorClassification(
                     error_class=auto_class,
@@ -197,7 +196,8 @@ def classify_errors(
                     details=error.details,
                     test_output=error.run.output_lines_str,
                     run_id=error.run_id,
-                    author=GoTestErrorClassificationAuthor.AUTO,
+                    author=ErrorClassAuthor.AUTO,
+                    test_name=error.run_name,
                 )
             )
         else:
@@ -205,21 +205,39 @@ def classify_errors(
     return classified_errors + add_llm_classifications(needs_classification)
 
 
-def manual_classification(settings: AtlasInitSettings, needs_classification: list[GoTestError]):
-    remaining_work = deque(needs_classification)
-    while remaining_work:
-        logger.info(f"remaining work: {len(remaining_work)}")
-        error = remaining_work.popleft()
-        if new_class := ask_user_to_classify_error(error):
-            error.set_human_and_bot_classification(new_class)
-            updated_errors = [error]
-            if similar_matches := [similar_error for similar_error in remaining_work if similar_error.match(error)]:
-                updated_errors.extend(similar_matches)
-                logger.info(f"found {len(similar_matches)} similar matches for {error.run.name}, using {new_class}")
-                for similar_error in similar_matches:
-                    similar_error.set_human_and_bot_classification(new_class)
-                    remaining_work.remove(similar_error)
-            store_or_update_tf_errors(settings, [error])
+def manual_classification(
+    classifications: list[GoTestErrorClassification], settings: AtlasInitSettings, confidence_threshold: float = 1.0
+):
+    needs_classification = [cls for cls in classifications if cls.needs_classification(confidence_threshold)]
+    with new_task("Manual Classification", total=len(needs_classification) + 1) as task:
+        asyncio.run(classify(needs_classification, settings, task))
+
+
+async def classify(
+    needs_classification: list[GoTestErrorClassification], settings: AtlasInitSettings, task: new_task
+) -> None:
+    dao = await init_mongo_dao(settings)
+
+    async def add_classification(
+        cls: GoTestErrorClassification, new_class: GoTestErrorClass, new_author: ErrorClassAuthor, confidence: float
+    ):
+        cls.error_class = new_class
+        cls.author = new_author
+        cls.confidence = confidence
+        is_new = await dao.add_classification(cls)
+        if not is_new:
+            logger.warning("replaced existing class")
+
+    for cls in needs_classification:
+        task.update(advance=1)
+        similars = await dao.read_similar_error_classifications(cls.details, author_filter=ErrorClassAuthor.HUMAN)
+        if similars and len({similar.error_class for similar in similars.values()}) == 1:
+            _, similar = similars.popitem()
+            await add_classification(cls, similar.error_class, ErrorClassAuthor.SIMILAR, 1.0)
+            continue
+        test = await dao.read_tf_test_run(cls.run_id)
+        if new_class := ask_user_to_classify_error(cls, test):
+            await add_classification(cls, new_class, ErrorClassAuthor.HUMAN, 1.0)
         elif confirm("do you want to stop classifying errors?", default=True):
             logger.info("stopping classification")
             return
@@ -235,7 +253,8 @@ def add_llm_classifications(needs_classification_errors: list[GoTestError]) -> l
             details=error.details,
             test_output=error.run.output_lines_str,
             run_id=error.run_id,
-            author=GoTestErrorClassificationAuthor.LLM,
+            author=ErrorClassAuthor.LLM,
+            test_name=error.run_name,
         )
         for error in needs_classification_errors
     ]
@@ -426,11 +445,13 @@ def parse_test_error(event: ParseTestErrorInput) -> GoTestError:
     return GoTestError(details=details, run=run)
 
 
-def ask_user_to_classify_error(error: GoTestError) -> GoTestErrorClass | None:
-    test = error.run
-    details = error.details
-    return select_list(
-        f"choose classification for {test.name_with_package} in {test.env} {details}\n{test.output_lines_str}\n",
-        choices=list(GoTestErrorClass),
-        default=error.bot_error_class,
-    )
+def ask_user_to_classify_error(cls: GoTestErrorClassification, test: GoTestRun) -> GoTestErrorClass | None:
+    details = cls.details
+    try:
+        return select_list(
+            f"choose classification for {test.name_with_package} in {test.env} {details}\n{test.output_lines_str}\n",
+            choices=list(GoTestErrorClass),
+            default=cls.error_class,
+        )  # type: ignore
+    except KeyboardInterrupt:
+        return None

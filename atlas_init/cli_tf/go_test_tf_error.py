@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from functools import total_ordering
 import re
 from dataclasses import dataclass
 from enum import StrEnum
+from functools import total_ordering
 from typing import Literal, NamedTuple, Self, TypeAlias
 
-from model_lib import Entity, utc_datetime
+from model_lib import Entity, utc_datetime_ms
 from pydantic import Field, model_validator
 from zero_3rdparty import iter_utils
 from zero_3rdparty.datetime_utils import utc_now
@@ -128,9 +128,10 @@ class GoTestResourceCheckError(Entity):
     tf_resource_type: str
     step_nr: int = -1
     check_errors: list[CheckError] = Field(default_factory=list)
+    test_name: str = ""
 
-    def add_info_fields(self, _: DetailsInfo) -> None:
-        pass
+    def add_info_fields(self, info: DetailsInfo) -> None:
+        self.test_name = info.run.name
 
     def __str__(self) -> str:
         return f"{self.tf_resource_type} {self.tf_resource_name} {self.step_nr} {self.check_errors}"
@@ -138,6 +139,17 @@ class GoTestResourceCheckError(Entity):
     @property
     def check_numbers_str(self) -> str:
         return ",".join(str(check.check_nr) for check in sorted(self.check_errors))
+
+    def check_errors_match(self, other_check_errors: list[CheckError]) -> bool:
+        if len(self.check_errors) != len(other_check_errors):
+            return False
+        return all(
+            any(
+                check.check_nr == other_check.check_nr and check.attribute == other_check.attribute
+                for other_check in other_check_errors
+            )
+            for check in self.check_errors
+        )
 
 
 class GoTestGeneralCheckError(Entity):
@@ -172,20 +184,28 @@ class ErrorClassified(NamedTuple):
     unclassified: list[GoTestError]
 
 
-class GoTestErrorClassificationAuthor(StrEnum):
+class ErrorClassAuthor(StrEnum):
     AUTO = "auto"
     HUMAN = "human"
     LLM = "llm"
+    SIMILAR = "similar"
 
 
 class GoTestErrorClassification(Entity):
     error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
-    ts: utc_datetime = Field(default_factory=utc_now)
-    author: GoTestErrorClassificationAuthor
+    ts: utc_datetime_ms = Field(default_factory=utc_now)
+    author: ErrorClassAuthor
     confidence: float = 0.0
     test_output: str = ""
     details: ErrorDetailsT
     run_id: str
+    test_name: str
+
+    def needs_classification(self, confidence_threshold: float = 1.0) -> bool:
+        return (
+            self.error_class in {GoTestErrorClass.UNCLASSIFIED, GoTestErrorClass.UNKNOWN}
+            or self.confidence <= confidence_threshold
+        )
 
 
 @total_ordering
@@ -203,6 +223,10 @@ class GoTestError(Entity):
     @property
     def run_id(self) -> str:
         return self.run.id
+
+    @property
+    def run_name(self) -> str:
+        return self.run.name
 
     @property
     def classifications(self) -> tuple[GoTestErrorClass, GoTestErrorClass] | None:

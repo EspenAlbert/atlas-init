@@ -13,11 +13,14 @@ from zero_3rdparty.datetime_utils import date_filename_with_seconds, utc_now
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import (
+    CheckError,
     ErrorDetailsT,
+    GoTestAPIError,
     GoTestDefaultError,
     GoTestErrorClass,
     GoTestErrorClassification,
-    GoTestErrorClassificationAuthor,
+    ErrorClassAuthor,
+    GoTestResourceCheckError,
 )
 from atlas_init.crud.mongo_client import CollectionConfig, get_collection, init_mongo
 from atlas_init.crud.mongo_utils import create_or_replace, dump_with_id
@@ -69,7 +72,7 @@ def db_name_test(request) -> str:
 async def mongo_dao(settings, db_name_test) -> MongoDao:
     settings.mongo_database = db_name_test
     logger.info(f"mongo url: {settings.mongo_url} db: {settings.mongo_database}")
-    return await MongoDao(settings).connect()
+    return await MongoDao(settings=settings).connect()
 
 
 _example_logs = """\
@@ -92,16 +95,18 @@ def dummy_classification(
     ts: datetime | None = None,
     logs_str: str = _example_logs,
     details: ErrorDetailsT | None = None,
+    test_name: str = "TestAccExample",
 ) -> GoTestErrorClassification:
     ts = ts or utc_now()
     details = details or GoTestDefaultError(error_str=logs_str)
     return GoTestErrorClassification(
-        author=GoTestErrorClassificationAuthor.AUTO,
+        author=ErrorClassAuthor.AUTO,
         error_class=error_class,
         ts=ts,
         run_id=run_id,
         test_output=logs_str,
         details=details,
+        test_name=test_name,
     )
 
 
@@ -157,7 +162,46 @@ async def test_classification_crud(mongo_dao, subtests):
 
 
 @pytest.mark.asyncio()
-async def test_runs(mongo_dao, subtests):
+async def test_classification_read_similar(mongo_dao: MongoDao, subtests):
+    api_error_details = GoTestAPIError(
+        type="api_error",
+        api_error_code_str="UNEXPECTED_ERROR",
+        api_path="/api/atlas/v2/groups/680ecbbe1ad7050ec5b1ebe3/backupCompliancePolicy",
+        api_method="DELETE",
+        api_response_code=500,
+        tf_resource_name="",
+        tf_resource_type="",
+        step_nr=-1,
+    )
+    api_error_details.api_path_normalized = api_error_details.api_path.replace("680ecbbe1ad7050ec5b1ebe3", "groupId")
+    c1_api = dummy_classification("r1")
+    c1_api.details = api_error_details
+    c2_check_details = dummy_classification("r2")
+    check_details = GoTestResourceCheckError(
+        type="check_error",
+        tf_resource_name="tenant",
+        tf_resource_type="cluster",
+        step_nr=2,
+        check_errors=[CheckError(attribute="", expected="", got="", check_nr=4)],
+        test_name=c2_check_details.test_name,
+    )
+    c2_check_details.details = check_details
+    await mongo_dao.add_classification(c1_api)
+    await mongo_dao.add_classification(c2_check_details)
+    with subtests.test("read similar error classification API error"):
+        similars1 = await mongo_dao.read_similar_error_classifications(details=api_error_details)
+        assert len(similars1) == 1
+        _, c1_found = similars1.popitem()
+        assert c1_api == c1_found
+    with subtests.test("read similar check details"):
+        similars2 = await mongo_dao.read_similar_error_classifications(check_details)
+        assert len(similars2) == 1
+        _, c2_found = similars2.popitem()
+        assert c2_check_details == c2_found
+
+
+@pytest.mark.asyncio()
+async def test_runs(mongo_dao: MongoDao, subtests):
     now = utc_now()
     now_plus1 = now + timedelta(seconds=1)
     r1 = dummy_run("test run 1", name="test_run_1", ts=now)
@@ -167,5 +211,11 @@ async def test_runs(mongo_dao, subtests):
         assert len(runs) == 2
     with subtests.test("read for day"):
         branch = r1.branch
+        assert branch
         runs = await mongo_dao.read_tf_tests_for_day(branch=branch, date=now)
         assert len(runs) == 2
+    with subtests.test("read single"):
+        r1_back = await mongo_dao.read_tf_test_run(r1.id)
+        assert r1_back == r1
+        r2_back = await mongo_dao.read_tf_test_run(r2.id)
+        assert r2_back == r2
