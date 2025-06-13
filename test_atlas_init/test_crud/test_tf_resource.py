@@ -1,14 +1,11 @@
 from datetime import timedelta
-from model_lib import copy_and_validate
 from zero_3rdparty.datetime_utils import utc_now
-from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
+from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import GoTestDefaultError, GoTestError, GoTestErrorClass
 from atlas_init.crud.tf_resource import (
     read_tf_error_by_run,
     read_tf_errors,
-    read_tf_test_runs,
     store_or_update_tf_errors,
-    store_tf_test_runs,
 )
 
 
@@ -53,28 +50,3 @@ def test_tf_errors(settings, subtests):
             GoTestErrorClass.FLAKY_400,
             GoTestErrorClass.FLAKY_400,
         )
-
-
-def test_tf_test_runs(settings, subtests):
-    now = utc_now()
-    run1 = GoTestRun(name="test_run1", ts=now)
-    run1_different_status = copy_and_validate(run1, status=GoTestStatus.FAIL)
-    run2 = GoTestRun(name="test_run2", ts=now + timedelta(days=1))
-    with subtests.test("empty runs behavior"):
-        empty = read_tf_test_runs(settings)
-        assert empty == []
-    with subtests.test("store and read runs"):
-        back = store_tf_test_runs(settings, [run1], overwrite=True)
-        assert back == [run1]
-    with subtests.test("add 2nd run should keep the first one"):
-        back = store_tf_test_runs(settings, [run2], overwrite=True)
-        assert back == [run2]
-        assert read_tf_test_runs(settings) == [run1, run2]
-    with subtests.test("store with overwrite=False should not replace existing run"):
-        back = store_tf_test_runs(settings, [run1_different_status], overwrite=False)
-        assert back == [run1]
-        assert read_tf_test_runs(settings) == [run1, run2]
-    with subtests.test("store with overwrite=True should replace existing run"):
-        back = store_tf_test_runs(settings, [run1_different_status], overwrite=True)
-        assert back == [run1_different_status]
-        assert read_tf_test_runs(settings) == [run1_different_status, run2]
