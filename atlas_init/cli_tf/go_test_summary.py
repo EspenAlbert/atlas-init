@@ -352,8 +352,8 @@ class ErrorRowColumns(StrEnum):
     TEST = "Test"
     ERROR_CLASS = "Error Class"
     DETAILS_SUMMARY = "Details Summary"
-    PASS_RATE = "Pass Rate"
-    TIME_SINCE_PASS = "Time Since PASS"
+    PASS_RATE = "Pass Rate"  # nosec B105 # This is not a security issue, just a column name
+    TIME_SINCE_PASS = "Time Since PASS"  # nosec B105 # This is not a security issue, just a column name
 
     __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, TIME_SINCE_PASS]
 
