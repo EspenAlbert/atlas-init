@@ -4,12 +4,14 @@ import re
 from dataclasses import dataclass
 from enum import StrEnum
 from functools import total_ordering
-from typing import Literal, NamedTuple, Self, TypeAlias
+from typing import ClassVar, Literal, NamedTuple, Self, TypeAlias
 
+import humanize
 from model_lib import Entity, utc_datetime_ms
 from pydantic import Field, model_validator
 from zero_3rdparty import iter_utils
 from zero_3rdparty.datetime_utils import utc_now
+from zero_3rdparty.str_utils import instance_repr
 
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.repos.go_sdk import ApiSpecPaths
@@ -213,11 +215,20 @@ class GoTestErrorClassification(Entity):
     run_id: str
     test_name: str
 
+    STR_COLUMNS: ClassVar[list[str]] = ["error_class", "author", "run_id", "confidence", "ts_when"]
+
     def needs_classification(self, confidence_threshold: float = 1.0) -> bool:
         return (
             self.error_class in {GoTestErrorClass.UNCLASSIFIED, GoTestErrorClass.UNKNOWN}
-            or self.confidence <= confidence_threshold
+            or self.confidence < confidence_threshold
         )
+
+    @property
+    def ts_when(self) -> str:
+        return humanize.naturaltime(self.ts)
+
+    def __str__(self) -> str:
+        return instance_repr(self, self.STR_COLUMNS)
 
 
 @total_ordering

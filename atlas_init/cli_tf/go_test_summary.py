@@ -186,19 +186,8 @@ def create_test_report(
             summary="No test runs found",
             error_details="",
         )
-    run_delta = GoTestRun.run_delta(runs)
-    pkg_test_names = {run.name_with_package for run in runs}
-    skipped = sum(run.status == GoTestStatus.SKIP for run in runs)
-    passed = sum(run.status == GoTestStatus.PASS for run in runs)
     envs = {run.env for run in runs if run.env}
-    envs_str = ", ".join(sorted(envs))
-    branches = {run.branch for run in runs if run.branch}
-    branches_str = (
-        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop()} branch"
-    )
-    lines = [
-        f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
-    ]
+    lines = [summary_line(runs, errors)]
     if errors:
         env_name_str = f" in {env_name}" if env_name else ""
         lines.append(f"\n\n## Errors Overview{env_name_str}")
@@ -218,6 +207,20 @@ def create_test_report(
         summary="\n".join(lines),
         error_details="\n".join(error_detail_lines),
     )
+
+
+def summary_line(runs: list[GoTestRun], errors: list[GoTestError]):
+    run_delta = GoTestRun.run_delta(runs)
+    envs = {run.env for run in runs if run.env}
+    pkg_test_names = {run.name_with_package for run in runs}
+    skipped = sum(run.status == GoTestStatus.SKIP for run in runs)
+    passed = sum(run.status == GoTestStatus.PASS for run in runs)
+    envs_str = ", ".join(sorted(envs))
+    branches = {run.branch for run in runs if run.branch}
+    branches_str = (
+        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop()} branch"
+    )
+    return f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {len(errors)} Errors, {skipped} Skipped, {passed} Passed"
 
 
 def error_overview_lines(errors: list[GoTestError], single_indent: str) -> list[str]:
@@ -294,13 +297,20 @@ def error_details(errors: list[GoTestError], include_env: bool) -> list[str]:
 
 
 class TFCITestOutput(Entity):
-    log_paths: list[Path] = Field(default_factory=list)
-    found_tests: list[GoTestRun] = Field(default_factory=list)
-    found_errors: list[GoTestError] = Field(default_factory=list)
-    classified_errors: list[GoTestErrorClassification] = Field(default_factory=list)
+    """Represent the CI Test Output for a day"""
+
+    log_paths: list[Path] = Field(
+        default_factory=list, description="Paths to the log files of the test runs analyzed by the run history."
+    )
+    found_tests: list[GoTestRun] = Field(default_factory=list, description="All tests for report day.")
+    found_errors: list[GoTestError] = Field(default_factory=list, description="All errors for the report day.")
+    classified_errors: list[GoTestErrorClassification] = Field(
+        default_factory=list, description="Classified errors for the report day."
+    )
 
 
 class DailyReportIn(Entity):
+    report_date: datetime
     run_history_start: datetime
     run_history_end: datetime
     env_filter: list[str] = field(default_factory=list)
@@ -316,18 +326,17 @@ class DailyReportOut(Entity):
 def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
     errors = output.found_errors
     error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
+    one_line_summary = summary_line(output.found_tests, errors)
+
     with new_task("Daily Report"):
         with new_task("Collecting error rows") as task:
             failure_rows = asyncio.run(_collect_error_rows(errors, error_classes, settings, event, task))
         if not failure_rows:
-            return DailyReportOut(
-                summary_md="🎉All tests passed", details_md=f"Ran a total of {len(output.found_tests)}"
-            )
+            return DailyReportOut(summary_md=f"🎉All tests passed\n{one_line_summary}", details_md="")
     columns = ErrorRowColumns.column_names(failure_rows, event.skip_columns)
     summary_md = [
         "# Daily Report",
-        f"Ran a total of {len(output.found_tests)} tests",
-        f"Found {len(failure_rows)} errors",
+        one_line_summary,
         "",
         "## Errors Table",
         " | ".join(columns),
@@ -393,7 +402,7 @@ class ErrorRow(Entity):
                 time_since[env] = "never run"
                 continue
             time_since[env] = next(
-                (run.when for run in reversed(runs) if run.status == GoTestStatus.PASS), "never passed"
+                (run.when for run in sorted(runs, reverse=True) if run.status == GoTestStatus.PASS), "never pass"
             )
         return time_since
 
@@ -413,7 +422,9 @@ class ErrorRow(Entity):
                     values.append(self.details_summary)
                 case s if s.startswith(ErrorRowColumns.PASS_RATE):
                     env = s.split(" (")[-1].rstrip(")")
-                    values.append(f"{pass_rates.get(env, 0.0):.2%}" if env in pass_rates else "N/A")
+                    env_pass_rate = pass_rates.get(env, 0.0)
+                    env_run_count = len(self.last_env_runs.get(env, []))
+                    values.append(f"{env_pass_rate:.2%} ({env_run_count} runs)" if env in pass_rates else "N/A")
                 case s if s.startswith(ErrorRowColumns.TIME_SINCE_PASS):
                     env = s.split(" (")[-1].rstrip(")")
                     values.append(time_since_pass.get(env, "never passed"))

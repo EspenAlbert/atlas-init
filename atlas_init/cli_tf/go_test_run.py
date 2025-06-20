@@ -283,7 +283,7 @@ class ParseResult(Entity):
             f"{test.name}-{test.status}" for test in self.tests if GoTestStatus.is_running(test.status)
         ]:
             raise ValueError(f"some tests are not completed: {incomplete_tests}")
-        if no_package_tests := [test.name for test in self.tests if test.package_url is None]:
+        if no_package_tests := [(test.name, test.log_path) for test in self.tests if test.package_url is None]:
             raise ValueError(f"some tests do not have package name: {no_package_tests}")
         test_names = {test.name for test in self.tests}
         test_group_names = {name.split("/")[0] for name in test_names if "/" in name}
@@ -411,8 +411,16 @@ package_patterns = [
         re.compile(ts_pattern("ts") + r"FAIL\s+(?P<package_url>\S+)\s+" + runtime_pattern_no_parenthesis),
     ),
     (
+        GoTestStatus.FAIL,
+        re.compile(ts_pattern("ts") + r"FAIL\s+(?P<package_url>\S+)\s+\(cached\)"),
+    ),
+    (
         GoTestStatus.PKG_OK,
         re.compile(ts_pattern("ts") + r"ok\s+(?P<package_url>\S+)\s+" + runtime_pattern_no_parenthesis),
+    ),
+    (
+        GoTestStatus.PKG_OK,
+        re.compile(ts_pattern("ts") + r"ok\s+(?P<package_url>\S+)\s+\(cached\)"),
     ),
 ]
 

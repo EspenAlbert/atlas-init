@@ -178,18 +178,17 @@ class MultipleResourceNames(ValueError):
 
 
 def find_tf_resource_name_in_test(path: Path, provider_prefix: str = "mongodbatlas_") -> str:
-    candidates = []
-    candidates.extend(
+    candidates: set[str] = {
         match.group(1) for match in re.finditer(rf"=\s\"{provider_prefix}([a-zA-Z0-9_]+)\.?", path.read_text())
-    )
+    }
     if len(candidates) > 1:
         pkg_name = path.parent.name
         for candidate in candidates:
             if candidate.replace("_", "") == pkg_name:
                 return candidate
         logger.warning(f"multiple resource names found in {path}: {candidates}")
-        raise MultipleResourceNames(candidates)
-    return candidates[0] if candidates else ""
+        raise MultipleResourceNames(sorted(candidates))
+    return candidates.pop() if candidates else ""
 
 
 def find_pkg_test_names(pkg_path: Path, prefix: str = "Test") -> list[str]:

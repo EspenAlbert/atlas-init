@@ -82,7 +82,7 @@ async def ensure_collection_exist(
     else:
         if indexes:
             await collection.create_indexes(indexes)
-    logger.info(f"mongo collection {name} is ready")
+    logger.debug(f"mongo collection {name} is ready")
     return collection
 
 

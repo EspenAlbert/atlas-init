@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def sync_on_done(return_value, s3_profile_bucket: str = "", use_clipboard: str = "", **kwargs):
-    logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
+    logger.debug(f"sync_on_done return_value={return_value} and {kwargs}")
     settings = init_settings(skip_ambiguous_check=True)
     if s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")

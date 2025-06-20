@@ -9,18 +9,15 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
-from ask_shell import run_and_wait
-from ask_shell.interactive import confirm, select_list
-from ask_shell.rich_live import print_to_live_console
-from ask_shell.rich_progress import new_task
+from ask_shell import confirm, select_list, print_to_live, new_task, run_and_wait
 from model_lib import Entity, Event
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import Url
 from rich.markdown import Markdown
 from zero_3rdparty import file_utils, str_utils
 from zero_3rdparty.datetime_utils import utc_now
 
-from atlas_init.cli_helper.run import run_command_receive_result
+from atlas_init.cli_helper.run import add_to_clipboard, run_command_receive_result
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     download_job_safely,
@@ -28,7 +25,7 @@ from atlas_init.cli_tf.github_logs import (
     tf_repo,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
-from atlas_init.cli_tf.go_test_summary import TFCITestOutput, create_daily_report
+from atlas_init.cli_tf.go_test_summary import DailyReportIn, TFCITestOutput, create_daily_report
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     ErrorClassAuthor,
@@ -63,6 +60,10 @@ class TFCITestInput(Event):
     summary_name: str = ""
     report_date: datetime = Field(default_factory=utc_now)
 
+    @field_validator("report_date", mode="before")
+    def support_today(cls, value: str | datetime) -> datetime | str:
+        return utc_now() if isinstance(value, str) and value == "today" else value
+
     @model_validator(mode="after")
     def set_workflow_file_stems(self) -> TFCITestInput:
         if not self.workflow_file_stems:
@@ -92,6 +93,17 @@ def ci_tests(
     skip_error_parsing: bool = typer.Option(
         False, "-sep", "--skip-error-parsing", help="skip parsing errors, usually together with --skip-log-download"
     ),
+    copy_to_clipboard: bool = typer.Option(
+        False,
+        "--copy",
+        help="copy the summary to clipboard",
+    ),
+    report_date: str = typer.Option(
+        "today",
+        "-rd",
+        "--report-day",
+        help="the day to generate the report for, defaults to today, format=YYYY-MM-DD",
+    ),
 ):
     names_set: set[str] = set()
     if names:
@@ -104,6 +116,7 @@ def ci_tests(
     event = TFCITestInput(
         test_group_name=test_group_name,
         max_days_ago=max_days_ago,
+        report_date=report_date,  # type: ignore
         branch=branch,
         workflow_file_stems=set(workflow_file_stems.split(",")),
         names=names_set,
@@ -112,14 +125,23 @@ def ci_tests(
         skip_error_parsing=skip_error_parsing,
     )
     out = asyncio.run(ci_tests_pipeline(event))
-    manual_classification(out.classified_errors, event.settings)
-    daily = create_daily_report(out, event.settings)
-    print_to_live_console(Markdown(daily.summary_md))
+    settings = event.settings
+    manual_classification(out.classified_errors, settings)
+    daily_in = DailyReportIn(
+        report_date=event.report_date,
+        run_history_start=event.report_date - timedelta(days=event.max_days_ago),
+        run_history_end=event.report_date,
+        env_filter=[summary_env_name] if summary_env_name else [],
+    )
+    daily_out = create_daily_report(out, settings, daily_in)
+    print_to_live(Markdown(daily_out.summary_md))
+    if copy_to_clipboard:
+        add_to_clipboard(daily_out.summary_md, logger=logger)
     if summary_name:
-        summary_path = event.settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        file_utils.ensure_parents_write_text(summary_path, daily.summary_md)
+        summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
+        file_utils.ensure_parents_write_text(summary_path, daily_out.summary_md)
         logger.info(f"summary written to {summary_path}")
-        if report_details_md := daily.details_md:
+        if report_details_md := daily_out.details_md:
             details_path = summary_path.with_name(f"{summary_path.stem}_details.md")
             file_utils.ensure_parents_write_text(details_path, report_details_md)
             logger.info(f"summary details written to {details_path}")
@@ -134,6 +156,7 @@ async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
     download_input = DownloadJobLogsInput(
         branch=branch,
         max_days_ago=event.max_days_ago,
+        end_date=event.report_date,
         workflow_file_stems=event.workflow_file_stems,
         repo_path=repo_path,
     )
@@ -163,7 +186,9 @@ async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
         error_run_ids = [error.run_id for error in report_errors]
         existing_classifications = await dao.read_error_classifications(error_run_ids)
         classified_errors = classify_errors(existing_classifications, report_errors)
-    return TFCITestOutput(log_paths=log_paths, found_tests=report_tests, classified_errors=classified_errors)
+    return TFCITestOutput(
+        log_paths=log_paths, found_tests=report_tests, classified_errors=classified_errors, found_errors=report_errors
+    )
 
 
 def parse_test_errors(found_tests: list[GoTestRun]) -> list[GoTestError]:
@@ -184,7 +209,7 @@ def classify_errors(
     classified_errors: list[GoTestErrorClassification] = []
     for error in errors:
         if prev_classification := existing.get(error.run_id):
-            logger.info(f"found existing classification for {error.run_name}: {prev_classification}")
+            logger.info(f"found existing classification{error.run_name}: {prev_classification}")
             classified_errors.append(prev_classification)
             continue
         if auto_class := GoTestErrorClass.auto_classification(error.run.output_lines_str):
@@ -209,7 +234,7 @@ def manual_classification(
     classifications: list[GoTestErrorClassification], settings: AtlasInitSettings, confidence_threshold: float = 1.0
 ):
     needs_classification = [cls for cls in classifications if cls.needs_classification(confidence_threshold)]
-    with new_task("Manual Classification", total=len(needs_classification) + 1) as task:
+    with new_task("Manual Classification", total=len(needs_classification) + 1, log_updates=True) as task:
         asyncio.run(classify(needs_classification, settings, task))
 
 
@@ -226,15 +251,20 @@ async def classify(
         cls.confidence = confidence
         is_new = await dao.add_classification(cls)
         if not is_new:
-            logger.warning("replaced existing class")
+            logger.debug("replaced existing class")
 
     for cls in needs_classification:
         task.update(advance=1)
         similars = await dao.read_similar_error_classifications(cls.details, author_filter=ErrorClassAuthor.HUMAN)
+        if (existing := similars.get(cls.run_id)) and not existing.needs_classification():
+            logger.debug(f"found existing classification: {existing}")
+            continue
         if similars and len({similar.error_class for similar in similars.values()}) == 1:
             _, similar = similars.popitem()
-            await add_classification(cls, similar.error_class, ErrorClassAuthor.SIMILAR, 1.0)
-            continue
+            if not similar.needs_classification(0.0):
+                logger.info(f"using similar classification: {similar}")
+                await add_classification(cls, similar.error_class, ErrorClassAuthor.SIMILAR, 1.0)
+                continue
         test = await dao.read_tf_test_run(cls.run_id)
         if new_class := ask_user_to_classify_error(cls, test):
             await add_classification(cls, new_class, ErrorClassAuthor.HUMAN, 1.0)
@@ -395,7 +425,11 @@ def parse_job_tf_test_logs(
     for log_path in event.log_paths:
         log_text = log_path.read_text()
         env = find_env_of_mongodb_base_url(log_text)
-        result = parse_tests(log_text.splitlines())
+        try:
+            result = parse_tests(log_text.splitlines())
+        except ValidationError as e:
+            logger.warning(f"failed to parse tests from {log_path}: {e}")
+            continue
         for test in result:
             test.log_path = log_path
             test.env = env or "unknown"
@@ -448,8 +482,10 @@ def parse_test_error(event: ParseTestErrorInput) -> GoTestError:
 def ask_user_to_classify_error(cls: GoTestErrorClassification, test: GoTestRun) -> GoTestErrorClass | None:
     details = cls.details
     try:
+        print_to_live(test.output_lines_str)
+        print_to_live(f"error details: {details}")
         return select_list(
-            f"choose classification for {test.name_with_package} in {test.env} {details}\n{test.output_lines_str}\n",
+            f"choose classification for test='{test.name_with_package}' in {test.env}",
             choices=list(GoTestErrorClass),
             default=cls.error_class,
         )  # type: ignore

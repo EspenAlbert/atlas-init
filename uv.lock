@@ -22,19 +22,23 @@ wheels = [
 
 [[package]]
 name = "ask-shell"
-version = "1.0.0+rc1"
+version = "0.0.2"
 source = { directory = "../py-libs/ask-shell" }
 dependencies = [
+    { name = "model-lib", extra = ["toml"] },
     { name = "questionary" },
     { name = "rich" },
     { name = "typer" },
+    { name = "zero-3rdparty" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "model-lib", extras = ["toml"], editable = "../py-libs/model-lib" },
     { name = "questionary", specifier = ">=2.1.0" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "typer", specifier = ">=0.16.0" },
+    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
 ]
 
 [[package]]
@@ -429,13 +433,20 @@ wheels = [
 
 [[package]]
 name = "model-lib"
-version = "1.0.0b4"
-source = { directory = "../py-libs/model-lib" }
+version = "1.0.0b5"
+source = { editable = "../py-libs/model-lib" }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "zero-3rdparty" },
+]
+
+[package.optional-dependencies]
+toml = [
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "tomli-w" },
 ]
 
 [package.metadata]
@@ -981,6 +992,15 @@ wheels = [
 ]
 
 [[package]]
+name = "tomli-w"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/19/b65f1a088ee23e37cdea415b357843eca8b1422a7b11a9eee6e35d4ec273/tomli_w-1.1.0.tar.gz", hash = "sha256:49e847a3a304d516a169a601184932ef0f6b61623fe680f836a2aa7128ed0d33", size = 6929 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c4/ac/ce90573ba446a9bbe65838ded066a805234d159b4446ae9f8ec5bbd36cbd/tomli_w-1.1.0-py3-none-any.whl", hash = "sha256:1403179c78193e3184bfaade390ddbd071cba48a32a2e62ba11aae47490c63f7", size = 6440 },
+]
+
+[[package]]
 name = "trove-classifiers"
 version = "2025.4.11.15"
 source = { registry = "https://pypi.org/simple" }
@@ -1064,5 +1084,5 @@ wheels = [
 
 [[package]]
 name = "zero-3rdparty"
-version = "1.0.0b2"
+version = "1.0.0b3"
 source = { editable = "../py-libs/zero-3rdparty" }
