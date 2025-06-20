@@ -2,11 +2,11 @@ from collections import defaultdict
 from pathlib import Path
 
 import requests
-from model_lib import parse_model
+from model_lib import Entity, parse_model
 
-from atlas_init.cli_tf.debug_logs_test_data import ApiSpecPath
+from atlas_init.cli_tf.debug_logs_test_data import ApiSpecPath, find_normalized_path
 from atlas_init.cli_tf.schema import logger
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema
+from atlas_init.cli_tf.openapi import OpenapiSchema
 
 
 def go_sdk_breaking_changes(repo_path: Path, go_sdk_rel_path: str = "../atlas-sdk-go") -> Path:
@@ -19,6 +19,15 @@ def go_sdk_breaking_changes(repo_path: Path, go_sdk_rel_path: str = "../atlas-sd
 
 def api_spec_path_transformed(sdk_repo_path: Path) -> Path:
     return sdk_repo_path / "openapi/atlas-api-transformed.yaml"
+
+
+class ApiSpecPaths(Entity):
+    method_paths: dict[str, list[ApiSpecPath]]
+
+    def normalize_path(self, method: str, path: str) -> str:
+        if path.startswith("/api/atlas/v1.0"):
+            return ""
+        return find_normalized_path(path, self.method_paths[method]).path
 
 
 def parse_api_spec_paths(api_spec_path: Path) -> dict[str, list[ApiSpecPath]]:

@@ -12,12 +12,12 @@ variable "atlas_base_url" {
 }
 
 variable "user_id" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "is_mongodbgov_cloud" {
-  type = bool
+  type    = bool
   default = false
 }
 
@@ -44,7 +44,7 @@ variable "project_name" {
 }
 
 variable "use_project_myip" {
-  type = bool
+  type    = bool
   default = false
 }
 
@@ -54,13 +54,13 @@ variable "out_dir" {
 
 variable "cfn_config" {
   type = object({
-    profile = string
-    region  = string
+    profile     = string
+    region      = string
     use_kms_key = bool
   })
   default = {
-    profile = ""
-    region  = "eu-west-1"
+    profile     = ""
+    region      = "eu-west-1"
     use_kms_key = false
   }
 }

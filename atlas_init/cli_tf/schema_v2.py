@@ -8,11 +8,12 @@ from fnmatch import fnmatch
 from pathlib import Path
 from queue import Queue
 from tempfile import TemporaryDirectory
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from model_lib import Entity, copy_and_validate, parse_model
 from pydantic import ConfigDict, Field, model_validator
 from zero_3rdparty.enum_utils import StrEnum
+from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.cli_helper.run import run_binary_command_is_ok
 from atlas_init.humps import decamelize, pascalize
@@ -50,6 +51,13 @@ class SchemaAttribute(Entity):
     validators: list[SchemaAttributeValidator] = Field(default_factory=list)
     # not used during dumping but backtrace which parameters are used in the api spec
     parameter_ref: str = ""
+    additional_properties: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def additional_properties_ref(self) -> str:
+        if props := self.additional_properties:
+            return props.get("$ref", "")
+        return ""
 
     @property
     def tf_name(self) -> str:
@@ -88,6 +96,7 @@ class SchemaAttribute(Entity):
             plan_modifiers=self.plan_modifiers + other.plan_modifiers,
             validators=self.validators + other.validators,
             parameter_ref=self.parameter_ref or other.parameter_ref,
+            additional_properties=self.additional_properties | other.additional_properties,
         )
 
     def set_attribute_type(
@@ -175,6 +184,29 @@ class SDKConversion(Entity):
         return bool(self.sdk_start_refs)
 
 
+class Discriminator(Entity):
+    mapping: dict[str, str] = Field(default_factory=dict)
+    property_name: str = Field(alias="propertyName")
+
+
+class OneOf(Entity):
+    ref: str = Field(alias="$ref", default="")
+
+
+class AllOf(Entity):
+    ref: str = Field(alias="$ref", default="")
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def nested_refs(self) -> set[str]:
+        refs = set()
+        for prop, prop_value in self.properties.items():
+            if isinstance(prop_value, dict):
+                if ref := prop_value.get("$ref"):
+                    refs.add(ref)
+        return refs
+
+
 class SchemaResource(Entity):
     name: str = ""  # populated by the key of the resources dict
     description: str = ""
@@ -183,6 +215,16 @@ class SchemaResource(Entity):
     paths: list[str] = Field(default_factory=list)
     attribute_type_modifiers: AttributeTypeModifiers = Field(default_factory=AttributeTypeModifiers)
     conversion: SDKConversion = Field(default_factory=SDKConversion)
+    discriminator: Discriminator | None = None
+    one_of: list[OneOf] = Field(default_factory=list)
+    all_of: list[AllOf] = Field(default_factory=list)
+
+    def extra_refs(self) -> set[str]:
+        return (
+            {one_of.ref for one_of in self.one_of if one_of.ref}
+            | {all_of.ref for all_of in self.all_of if all_of.ref}
+            | {ref for ref in flat_map(all_of.nested_refs for all_of in self.all_of) if ref}
+        )
 
     @model_validator(mode="after")
     def set_attribute_names(self):

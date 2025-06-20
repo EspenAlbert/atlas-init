@@ -4,12 +4,22 @@ from pathlib import Path
 
 from model_lib import dump, parse_model, parse_payload
 import typer
+from lark.exceptions import VisitError
 from zero_3rdparty.file_utils import clean_dir, copy, iter_paths_and_relative
 from zero_3rdparty.dict_nested import read_nested
 
+from atlas_init.cli_helper.run import run_binary_command_is_ok
 from atlas_init.cli_tf.hcl.modifier import read_block_attribute_object_keys
+from atlas_init.cli_tf.hcl.modifier2 import (
+    AttributeChange,
+    attribute_transfomer,
+    update_attribute_object_str_value_for_block,
+    safe_parse,
+    write_tree,
+)
 from atlas_init.repos.cfn import cfn_examples_dir
 from atlas_init.settings.config import AtlasInitConfig
+from atlas_init.settings.rich_utils import configure_logging
 
 REL_PATH_FILES = [
     "atlas_init.yaml",
@@ -122,5 +132,36 @@ def clean():
     typer.echo("Clean complete: ✅")
 
 
+@app.command()
+def provider_version(
+    atlas_version: str = typer.Option(
+        "1.33", "--atlas-version", "-a", help="MongoDB Atlas Terraform provider version upgrade"
+    ),
+):
+    all_changes: list[AttributeChange] = []
+    for tf_path, _ in iter_paths_and_relative(TF_SRC_PATH, "*.tf"):
+        tree = safe_parse(tf_path)
+        assert tree, f"failed to parse provider.tf @ {tf_path}"
+        version_transformer, version_changes = attribute_transfomer("mongodbatlas", "version", atlas_version)
+        try:
+            new_tree = update_attribute_object_str_value_for_block(tree, "terraform", version_transformer)
+        except VisitError as e:
+            logger.warning(f"failed to update {tf_path}: {e}")
+            continue
+        if not version_changes:
+            continue
+        all_changes.extend(version_changes)
+        for version_change in version_changes:
+            logger.info(f"updating {tf_path} with {version_change.old_value} -> {version_change.new_value}")
+        new_tf = write_tree(new_tree)
+        tf_path.write_text(new_tf)
+    if all_changes:
+        logger.info(f"updated {len(all_changes)} provider.tf files, formatting")
+        run_binary_command_is_ok("terraform", "fmt -recursive .", cwd=TF_SRC_PATH, logger=logger)
+    else:
+        logger.info("no provider.tf files updated")
+
+
 if __name__ == "__main__":
+    configure_logging(app, log_level="INFO")
     app()

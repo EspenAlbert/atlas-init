@@ -28,9 +28,7 @@ examples = read_examples()
 ERROR_PREFIX = "# error: "
 
 
-@pytest.mark.parametrize(
-    "name,legacy,expected", examples, ids=[name for name, *_ in examples]
-)
+@pytest.mark.parametrize("name,legacy,expected", examples, ids=[name for name, *_ in examples])
 def test_convert_cluster(name, legacy, expected):
     if expected.startswith(ERROR_PREFIX):
         with pytest.raises(ValueError) as exc:
@@ -43,12 +41,11 @@ def test_convert_cluster(name, legacy, expected):
     assert new_config == expected
 
 
-@pytest.mark.skipif(
-    os.environ.get("TF_DIR", "") == "", reason="needs os.environ[TF_DIR]"
-)
+@pytest.mark.skipif(os.environ.get("TF_DIR", "") == "", reason="needs os.environ[TF_DIR]")
 def test_live_no_plan_changes():
     tf_dir = Path(os.environ["TF_DIR"])
     assert convert_clusters(tf_dir)
+
 
 _main_tf = """\
 terraform {
@@ -81,11 +78,13 @@ resource "mongodbatlas_project" "this" {
 }
 """
 
+
 def _replace_project_id_and_cluster_name(hcl: str, name: str) -> str:
-    project_id_pattern = re.compile(r'^\s+project_id\s*=(.*)$', re.M)
-    hcl = project_id_pattern.sub(r'  project_id = mongodbatlas_project.this.id', hcl)
-    name_pattern = re.compile(r'^\s+name\s*=(.*)$', re.M)
+    project_id_pattern = re.compile(r"^\s+project_id\s*=(.*)$", re.M)
+    hcl = project_id_pattern.sub(r"  project_id = mongodbatlas_project.this.id", hcl)
+    name_pattern = re.compile(r"^\s+name\s*=(.*)$", re.M)
     return name_pattern.sub(rf'  name = "{name}"', hcl)
+
 
 _example = """\
 resource "mongodbatlas_cluster" "this" {
@@ -94,24 +93,38 @@ resource "mongodbatlas_cluster" "this" {
   cluster_type = "REPLICASET"
 }"""
 
+
 def test_replace_project_id_and_cluster_name():
-    assert _replace_project_id_and_cluster_name(_example, "pytest") == """\
+    assert (
+        _replace_project_id_and_cluster_name(_example, "pytest")
+        == """\
 resource "mongodbatlas_cluster" "this" {
   project_id = mongodbatlas_project.this.id
   name = "pytest"
   cluster_type = "REPLICASET"
 }"""
-
+    )
 
 
 def _project_main_tf(org_id: str) -> str:
     return _main_tf.replace("ORG_ID", org_id)
 
+
 def _shorten_name(name: str) -> str:
     return Path(name).stem.split("_", maxsplit=1)[1].replace("_", "-")
 
+
 @pytest.mark.skipif(
-    any(os.environ.get(name, "") == "" for name in ["MONGODB_ATLAS_BASE_URL", "TF_DIR", "MONGODB_ATLAS_PUBLIC_KEY", "MONGODB_ATLAS_PRIVATE_KEY", "MONGODB_ATLAS_ORG_ID"]),
+    any(
+        os.environ.get(name, "") == ""
+        for name in [
+            "MONGODB_ATLAS_BASE_URL",
+            "TF_DIR",
+            "MONGODB_ATLAS_PUBLIC_KEY",
+            "MONGODB_ATLAS_PRIVATE_KEY",
+            "MONGODB_ATLAS_ORG_ID",
+        ]
+    ),
     reason='needs env vars: ["MONGODB_ATLAS_BASE_URL", "TF_DIR", "MONGODB_ATLAS_PUBLIC_KEY", "MONGODB_ATLAS_PRIVATE_KEY", "MONGODB_ATLAS_ORG_ID"]),',
 )
 def test_generated_examples_actually_has_no_plan_changes():
@@ -129,6 +142,7 @@ def test_generated_examples_actually_has_no_plan_changes():
         cluster_path.write_text(_replace_project_id_and_cluster_name(legacy, _shorten_name(name)))
     ensure_no_plan_changes(tf_dir)
     convert_and_validate(tf_dir, is_interactive=False)
+
 
 @pytest.mark.skipif(os.environ.get("CLI_TF_HCL_PATH", "") == "", reason="needs os.environ[CLI_TF_HCL_PATH]")
 def test_generate_standalone_script():

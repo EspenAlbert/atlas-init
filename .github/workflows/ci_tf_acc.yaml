@@ -22,6 +22,8 @@ env:
   ATLAS_INIT_TEST_SUITES: federated
   TF_VAR_federated_settings_id: ${{ secrets.TF_VAR_federated_settings_id }}
   NON_INTERACTIVE: "true"
+  MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER: "true"
+
   
 jobs:
   cli_check:

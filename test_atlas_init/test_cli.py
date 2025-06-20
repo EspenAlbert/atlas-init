@@ -8,7 +8,6 @@ from typer.testing import CliRunner
 from atlas_init.cli import app
 from atlas_init.settings.env_vars import (
     ENV_PROFILE,
-    ENV_PROJECT_NAME,
     AtlasInitSettings,
     EnvVarsError,
     init_settings,
@@ -44,7 +43,14 @@ def test_normal_help_command_is_ok():
 
 def test_missing_env_vars(settings):
     error = run_expect_error("plan", error=EnvVarsError)
-    assert error.missing == ['AWS_REGION', 'MONGODB_ATLAS_BASE_URL', 'MONGODB_ATLAS_ORG_ID', 'MONGODB_ATLAS_PRIVATE_KEY', 'MONGODB_ATLAS_PUBLIC_KEY']
+    assert error.missing == [
+        "AWS_REGION",
+        "MONGODB_ATLAS_BASE_URL",
+        "MONGODB_ATLAS_ORG_ID",
+        "MONGODB_ATLAS_PRIVATE_KEY",
+        "MONGODB_ATLAS_PUBLIC_KEY",
+    ]
+
 
 def test_cli_project_name(settings):
     write_required_vars(settings)

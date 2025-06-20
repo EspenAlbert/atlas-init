@@ -1,0 +1,46 @@
+TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:01.8116397Z === RUN   TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:01.8128008Z === CONT  TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:05.2244212Z === NAME  TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:05.2244878Z     resource_cluster_test.go:1369: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:25:05.2245585Z         
+2025-04-09T00:25:05.2246122Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.2246941Z         
+2025-04-09T00:25:05.2247261Z           with mongodbatlas_project.test,
+2025-04-09T00:25:05.2247996Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.2248557Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.2248852Z         
+2025-04-09T00:25:05.2249207Z         error deleting project (67f5be5fe7455b55f206ba40):
+2025-04-09T00:25:05.2249870Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings
+2025-04-09T00:25:05.2250562Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.2251214Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings. Reason:
+2025-04-09T00:25:05.2251888Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings],
+2025-04-09T00:25:05.2252329Z         BadRequestDetail: 
+2025-04-09T00:25:05.2744864Z --- FAIL: TestAccCluster_create_RedactClientLogData (3.46s)
+NEXT_TEST
+TestAccCluster_tenant
+2025-04-09T00:25:01.8107100Z === RUN   TestAccCluster_tenant
+2025-04-09T00:25:01.8129603Z === CONT  TestAccCluster_tenant
+2025-04-09T00:59:12.0130422Z === NAME  TestAccCluster_tenant
+2025-04-09T00:59:12.0131855Z     resource_cluster_test.go:1029: Step 2/2 error: Check failed: Check 4/5 error: mongodbatlas_cluster.tenant: Attribute 'disk_size_gb' expected "10", got "5"
+2025-04-09T01:00:42.6195226Z --- FAIL: TestAccCluster_tenant (2140.81s)
+NEXT_TEST
+TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:01.8117740Z === RUN   TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:01.8120842Z === CONT  TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:05.8150197Z === NAME  TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:05.8150912Z     resource_cluster_test.go:1399: Step 1/7 error: Error running apply: exit status 1
+2025-04-09T00:25:05.8151338Z         
+2025-04-09T00:25:05.8151883Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.8152250Z         
+2025-04-09T00:25:05.8152658Z           with mongodbatlas_project.test,
+2025-04-09T00:25:05.8153361Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.8154373Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.8154679Z         
+2025-04-09T00:25:05.8155033Z         error deleting project (67f5be5fe7455b55f206ba3e):
+2025-04-09T00:25:05.8155686Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings
+2025-04-09T00:25:05.8156649Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.8157317Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings. Reason:
+2025-04-09T00:25:05.8157985Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings],
+2025-04-09T00:25:05.8158436Z         BadRequestDetail: 
+2025-04-09T00:25:05.8592892Z --- FAIL: TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade (4.05s)

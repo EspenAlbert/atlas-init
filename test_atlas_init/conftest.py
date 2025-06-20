@@ -7,6 +7,7 @@ from typing import Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
+from _pytest.python import CallSpec2
 from model_lib import dump, field_names
 from pydantic import BaseModel, Field
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
@@ -35,15 +36,45 @@ REQUIRED_FIELDS = [
 ]
 
 
+def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:
+    markers = getattr(fixture_def.func, "pytestmark", [])
+    return any(marker.name.startswith("skip") for marker in markers)
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip tests that are marked with @pytest.mark.skip
+    To avoid the terminal session in VS Code that might have extra env-vars set accidentally run marked tests"""
+    skip_marked_tests = os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
+    if not skip_marked_tests:
+        return
+    for item in items:
+        if any(marker.name.startswith("skip") for marker in item.own_markers):
+            item.add_marker(pytest.mark.skip(reason="Skipping test due to SKIP_MARKED_TESTS environment variable"))
+            continue
+        item_session: pytest.Session = item.session
+        fixture_manager = item_session._fixturemanager
+        call_spec: CallSpec2 | None = getattr(item, "callspec", None)
+        for fixture_name in item.fixturenames:
+            if fixture_name == "request" or call_spec and fixture_name in call_spec.params:
+                continue
+            fixturedefs: list = fixture_manager.getfixturedefs(fixture_name, item)  # type: ignore
+            if not fixturedefs:
+                logger.warning(f"No fixture definitions found for {fixture_name} in {item}")
+                continue
+            assert len(fixturedefs) == 1, f"Expected one fixture definition for {fixture_name}, got {len(fixturedefs)}"
+            if _fixture_has_skip_marker(fixture_name, fixturedefs[0]):
+                item.add_marker(
+                    pytest.mark.skip(reason=f"Skipping test due to fixture {fixture_name} having skip marker")
+                )
+                break
+
+
 @pytest.fixture(
-    autouse=True,
-    scope="function"
+    autouse=True, scope="function"
 )  # autouse to avoid any test modifying the os.environ and leaving side effects for next test
 def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     env_before = {**os.environ}
-    if existing_in_env := {
-        key: os.environ[key] for key in REQUIRED_FIELDS if key in os.environ
-    }:
+    if existing_in_env := {key: os.environ[key] for key in REQUIRED_FIELDS if key in os.environ}:
         for k, v in existing_in_env.items():
             logger.warning(f"Environment variables already set: {k}={v}")
     static_dir = tmp_path / "static"
@@ -106,13 +137,9 @@ class CLIArgs:
         if self.is_dry_run:
             self.env_vars_in_file |= mongodb_atlas_required_vars()
         if self.commands_expected:
-            self.assertions.extend(
-                [RunAssertion(command) for command in self.commands_expected]
-            )
+            self.assertions.extend([RunAssertion(command) for command in self.commands_expected])
         if self.files_glob_expected:
-            self.assertions.extend(
-                [FileAssertion(glob=glob) for glob in self.files_glob_expected]
-            )
+            self.assertions.extend([FileAssertion(glob=glob) for glob in self.files_glob_expected])
 
 
 class _AssertionOutput(BaseModel):
@@ -163,9 +190,7 @@ def cli_configure(
             remotes=[
                 MagicMock(
                     name="origin",
-                    urls=[
-                        f"https://github.com/{GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES}"
-                    ],
+                    urls=[f"https://github.com/{GH_OWNER_MONGODBATLAS_CLOUDFORMATION_RESOURCES}"],
                 )
             ],
         )
@@ -203,26 +228,18 @@ def cli_assertions(file_regression, caplog, tmp_path):
                 case RunAssertion(substring):
                     for log_text in caplog.messages:
                         if substring in log_text:
-                            output.commands_run[substring] = normalize_cmd(
-                                substring, log_text
-                            )
+                            output.commands_run[substring] = normalize_cmd(substring, log_text)
                             break
                     else:
-                        output.commands_missing.append(
-                            f"substring no match: {substring}"
-                        )
+                        output.commands_missing.append(f"substring no match: {substring}")
                 case FileAssertion(base, glob, rglob):
                     if base != "cwd":
                         raise NotImplementedError(f"base: {base}")
                     cwd = current_dir()
                     files = sorted(cwd.glob(glob)) if glob else sorted(cwd.rglob(rglob))
                     if not files:
-                        output.files_missing.append(
-                            f"no files found in {base}: {glob or rglob}"
-                        )
-                    output.files |= {
-                        str(file.relative_to(cwd)): file.read_text() for file in files
-                    }
+                        output.files_missing.append(f"no files found in {base}: {glob or rglob}")
+                    output.files |= {str(file.relative_to(cwd)): file.read_text() for file in files}
         yaml_text = dump(output, "yaml")
         file_regression.check(yaml_text, extension=".yaml")
         assert output.commands_missing == [], output.commands_missing
@@ -254,3 +271,11 @@ def write_generated_vars(paths: AtlasInitSettings, env_vars_in_file: dict[str, s
 def cfn_resource_path(repo_path: Path, resource_name: str) -> Path:
     root = resource_root(repo_path)
     return root / resource_name
+
+
+@pytest.fixture()
+@pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
+def tf_repo_path() -> Path:
+    tf_repo_path = Path(os.environ["TF_REPO_PATH"])
+    assert tf_repo_path.exists(), f"TF_REPO_PATH does not exist: {tf_repo_path}"
+    return tf_repo_path

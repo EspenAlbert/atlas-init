@@ -1,0 +1,43 @@
+TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7853337Z === RUN   TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7866680Z === CONT  TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7874630Z 2024/06/26 00:44:09 timeout elapsed ....
+2024-06-26T00:58:20.7875196Z 2024/06/26 00:44:10 timeout elapsed ....
+2024-06-26T00:58:20.7875704Z 2024/06/26 00:44:19 timeout elapsed ....
+2024-06-26T00:58:20.7876244Z 2024/06/26 00:44:19 timeout elapsed ....
+2024-06-26T00:58:20.7876742Z querying for job 
+2024-06-26T00:58:20.7877660Z querying for job 
+2024-06-26T00:58:20.7878126Z querying for job 
+2024-06-26T00:58:20.7878488Z querying for job 
+2024-06-26T00:58:20.7878947Z 2024/06/26 00:44:39 timeout elapsed ....
+2024-06-26T00:58:20.7879483Z 2024/06/26 00:44:41 timeout elapsed ....
+2024-06-26T00:58:20.7879955Z 2024/06/26 00:44:49 timeout elapsed ....
+2024-06-26T00:58:20.7880687Z 2024/06/26 00:44:49 timeout elapsed ....
+2024-06-26T00:58:20.7881171Z querying for job 
+2024-06-26T00:58:20.7881664Z querying for job 
+2024-06-26T00:58:20.7882036Z querying for job 
+2024-06-26T00:58:20.7882414Z querying for job 
+2024-06-26T00:58:20.7916997Z === NAME  TestAccBackupRSOnlineArchive
+2024-06-26T00:58:20.7918346Z     resource_online_archive_test.go:32: Step 2/7 error: Error running apply: exit status 1
+2024-06-26T00:58:20.7919682Z         
+2024-06-26T00:58:20.7920573Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7921224Z         
+2024-06-26T00:58:20.7921829Z           with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7923085Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7924127Z           52: 	resource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7924792Z         
+2024-06-26T00:58:20.7946475Z --- FAIL: TestAccBackupRSOnlineArchive (1149.23s)
+NEXT_TEST
+TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7859743Z === RUN   TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7864780Z === CONT  TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7938870Z === NAME  TestAccBackupRSOnlineArchiveWithProcessRegion
+2024-06-26T00:58:20.7939774Z     resource_online_archive_test.go:183: Step 2/4 error: Error running apply: exit status 1
+2024-06-26T00:58:20.7940563Z         
+2024-06-26T00:58:20.7941236Z         Error: error creating MongoDB Atlas Online Archive:: undefined response type
+2024-06-26T00:58:20.7941974Z         
+2024-06-26T00:58:20.7942499Z           with mongodbatlas_online_archive.users_archive,
+2024-06-26T00:58:20.7943507Z           on terraform_plugin_test.tf line 52, in resource "mongodbatlas_online_archive" "users_archive":
+2024-06-26T00:58:20.7944500Z           52: 	resource "mongodbatlas_online_archive" "users_archive" {
+2024-06-26T00:58:20.7945036Z         
+2024-06-26T00:58:20.7945708Z --- FAIL: TestAccBackupRSOnlineArchiveWithProcessRegion (1139.13s)

@@ -1,13 +1,3 @@
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "1.19.0"
-    }
-  }
-  required_version = ">= 1.0"
-}
-
 variable "atlas_vpc_cidr" {
   description = "Atlas CIDR"
   default     = "192.168.232.0/21"

@@ -64,6 +64,9 @@ class AtlasInitSettings(StaticSettings):
 
     non_interactive: bool = False
 
+    mongo_database: str = "atlas_init"
+    mongo_url: str = "mongodb://user:pass@localhost:27017?retryWrites=true&w=majority&authSource=admin"
+
     @property
     def is_interactive(self) -> bool:
         return not self.non_interactive
@@ -234,6 +237,7 @@ def find_missing_env_vars(required_env_vars: list[str], manual_env_vars: dict[st
 
 def init_settings(
     *settings_classes: type[BaseModel],
+    skip_ambiguous_check: bool = False,
 ) -> AtlasInitSettings:
     settings = AtlasInitSettings.from_env()
     profile_env_vars = settings.manual_env_vars
@@ -241,7 +245,7 @@ def init_settings(
     if vscode_env_vars.exists():
         profile_env_vars |= load_dotenv(vscode_env_vars)
     required_env_vars = collect_required_env_vars(list(settings_classes))
-    ambiguous = detect_ambiguous_env_vars(profile_env_vars)
+    ambiguous = [] if skip_ambiguous_check else detect_ambiguous_env_vars(profile_env_vars)
     missing_env_vars = find_missing_env_vars(required_env_vars, profile_env_vars)
 
     if ambiguous:

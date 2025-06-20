@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Callable
@@ -8,9 +9,12 @@ from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
 from model_lib import parse_model
 
+from atlas_init.cli_tf.openapi import OpenapiSchema, add_api_spec_info
 from atlas_init.cli_tf.schema_v2 import SchemaV2, parse_schema
-from atlas_init.cli_tf.schema_v2_api_parsing import OpenapiSchema, add_api_spec_info
 from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
+
+
+logger = logging.getLogger(__name__)
 
 
 def as_step(name: str) -> WorkflowStep:
@@ -65,11 +69,9 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
 
 
 @pytest.fixture(scope="session")
+@pytest.mark.skipif(os.environ.get("SDK_REPO_PATH", "") == "", reason="needs os.environ[SDK_REPO_PATH]")
 def sdk_repo_path() -> Path:
-    repo_path_str = os.environ.get("SDK_REPO_PATH", "")
-    if not repo_path_str:
-        pytest.skip("needs os.environ[SDK_REPO_PATH]")
-    return Path(repo_path_str)
+    return Path(os.environ["SDK_REPO_PATH"])
 
 
 @pytest.fixture
@@ -78,15 +80,13 @@ def parse_resource_v3(spec_resources_v3_paths):
         assert resource_name in spec_resources_v3_paths
         spec_path = spec_resources_v3_paths[resource_name]
         return parse_model(spec_path, t=ResourceSchemaV3)
+
     return parse_resource
 
 
 @pytest.fixture
 def spec_resources_v3_paths(tf_test_data_dir) -> dict[str, Path]:
-    resources: dict[str, Path] = {
-        yml_path.stem: yml_path
-        for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml")
-    }
+    resources: dict[str, Path] = {yml_path.stem: yml_path for yml_path in (tf_test_data_dir / "tf_spec").glob("*.yaml")}
     return resources
 
 
@@ -98,16 +98,21 @@ def go_schema_paths() -> Callable[[], dict[str, Path]]:
             "GO_SCHEMA_TPF_PATH",
         ]
         paths = {
-            name.removeprefix("GO_SCHEMA_").removesuffix("_PATH"): os.environ.get(
-                name, ""
-            )
-            for name in env_var_names
+            name.removeprefix("GO_SCHEMA_").removesuffix("_PATH"): os.environ.get(name, "") for name in env_var_names
         }
         missing_paths = {name: path for name, path in paths.items() if path == ""}
         if missing_paths:
-            pytest.skip(
-                f"needs os.environ[{', '.join(missing_paths.keys())}] {env_var_names}"
-            )
+            pytest.skip(f"needs os.environ[{', '.join(missing_paths.keys())}] {env_var_names}")
         return {name: Path(path) for name, path in paths.items()}
 
     return _go_file_path
+
+
+@pytest.fixture(scope="session")
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
+def live_api_spec() -> OpenapiSchema:
+    api_path = Path(os.environ["API_SPEC_PATH"])
+    logger.info(f"parsing admin api spec: {api_path}")
+    model = parse_model(api_path, t=OpenapiSchema)
+    assert model, "unable to parse admin api spec"
+    return model

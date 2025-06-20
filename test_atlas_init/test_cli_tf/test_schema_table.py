@@ -15,6 +15,7 @@ from atlas_init.cli_tf.schema_table_models import TFSchemaTableColumn
 
 logger = logging.getLogger(__name__)
 
+
 def test_sorted_schema_paths():
     paths = ["", "a", "d", "a.b"]
     shuffle(paths)
@@ -24,9 +25,7 @@ def test_sorted_schema_paths():
 @pytest.mark.parametrize("schema_name", ["TPF", "SDKv2"])
 def test_schema_table(go_schema_paths, schema_name, file_regression):
     path = go_schema_paths()[schema_name]
-    table = schema_table(
-        TFSchemaTableInput(sources=[TFSchemaSrc(name=schema_name, file_path=path)])
-    )
+    table = schema_table(TFSchemaTableInput(sources=[TFSchemaSrc(name=schema_name, file_path=path)]))
     file_regression.check(table, extension=".md", basename=schema_name)
 
 

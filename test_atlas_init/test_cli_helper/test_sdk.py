@@ -125,10 +125,7 @@ def test_find_breaking_changes(sdk_path):
         version="v20231115009",
         line="- FederationIdentityProvider.AudienceClaim: removed",
     )
-    assert (
-        format_breaking_changes(_example_code, {change: breaking_change})
-        == _example_code_warning
-    )
+    assert format_breaking_changes(_example_code, {change: breaking_change}) == _example_code_warning
 
 
 def test_find_latest_sdk_version():

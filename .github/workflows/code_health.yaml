@@ -7,6 +7,7 @@ on:
     branches: "*"
 env:
   FORCE_COLOR: "yes"
+  SKIP_MARKED_TESTS: "true" # Avoids running any tests marked with `@skip` or depending on a fixture with `@skip` annotation.
 jobs:
   pre_job:
     runs-on: ubuntu-latest

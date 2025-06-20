@@ -19,14 +19,13 @@ from atlas_init.settings.env_vars import (
     ENV_S3_PROFILE_BUCKET,
     init_settings,
 )
-from atlas_init.settings.rich_utils import configure_logging, hide_secrets
 
 logger = logging.getLogger(__name__)
 
 
 def sync_on_done(return_value, s3_profile_bucket: str = "", use_clipboard: str = "", **kwargs):
-    logger.info(f"sync_on_done return_value={return_value} and {kwargs}")
-    settings = init_settings()
+    logger.debug(f"sync_on_done return_value={return_value} and {kwargs}")
+    settings = init_settings(skip_ambiguous_check=True)
     if s3_profile_bucket:
         logger.info(f"using s3 bucket for profile sync: {s3_profile_bucket}")
         upload_to_s3(settings.profile_dir, s3_profile_bucket)
@@ -59,10 +58,11 @@ app_command = partial(
 
 
 def extra_root_commands():
-    from atlas_init.cli_root import go_test, trigger
+    from atlas_init.cli_root import go_test, trigger, mms_released
 
     assert trigger
     assert go_test
+    assert mms_released
 
 
 @app.callback(invoke_without_command=True)
@@ -105,7 +105,6 @@ def main(
     if use_clipboard:
         os.environ[ENV_CLIPBOARD_COPY] = use_clipboard
     is_running_in_repo = running_in_repo()
-    handler = configure_logging(app, log_level, is_running_in_repo=is_running_in_repo)
     logger.info(f"running in atlas-init repo: {is_running_in_repo} python location:{sys.executable}")
     logger.info(f"in the app callback, log-level: {log_level}, command: {format_cmd(ctx)}")
     if s3_bucket := s3_profile_bucket:
@@ -113,9 +112,6 @@ def main(
         settings = init_settings()
         download_from_s3(settings.profile_dir, s3_bucket)
     settings = init_settings()
-    if not show_secrets:
-        # must happen after init_settings that might load some env-vars
-        hide_secrets(handler, {**os.environ})
 
 
 def format_cmd(ctx: typer.Context) -> str:

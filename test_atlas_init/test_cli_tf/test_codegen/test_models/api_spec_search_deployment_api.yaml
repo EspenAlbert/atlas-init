@@ -1,0 +1,286 @@
+openapi: 3.0.1
+info:
+  description: minimal spec
+  version: '2.0'
+  title: MongoDB Atlas Administration API
+paths:
+  /api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment:
+    delete:
+      description: Deletes the Search Nodes for the specified cluster.
+      operationId: deleteAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to delete.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      responses:
+        '204':
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              x-xgen-version: '2024-05-30'
+          description: This endpoint does not return a response body.
+      summary: Delete Search Nodes
+      tags:
+      - Atlas Search
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X DELETE \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api deleteAtlasSearchDeployment --help
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/deleteAtlasSearchDeployment
+    get:
+      description: 'Returns the Search Nodes for the specified cluster. Deprecated versions: v2-{2024-05-30}, v2-{2023-01-01}'
+      operationId: getAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to return the Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2025-03-12+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2025-03-12'
+          description: OK
+      summary: Return Search Nodes
+      tags:
+      - Atlas Search
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  -X GET \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment?pretty=true\""
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api getAtlasSearchDeployment --help
+      x-xgen-changelog:
+        '2025-03-12': Updates the return of the API when no nodes exist, the endpoint returns 200 with an empty JSON ({}) instead of 400.
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/getAtlasSearchDeployment
+    patch:
+      description: 'Updates the Search Nodes for the specified cluster. Deprecated versions: v2-{2023-01-01}'
+      operationId: updateAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to update the Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+        description: Updates the Search Nodes for the specified cluster.
+        required: true
+      responses:
+        '200':
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2024-05-30'
+          description: OK
+      summary: Update Search Nodes
+      tags:
+      - Atlas Search
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X PATCH \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api updateAtlasSearchDeployment --help
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/updateAtlasSearchDeployment
+    post:
+      description: Creates Search Nodes for the specified cluster.
+      operationId: createAtlasSearchDeployment
+      parameters:
+      - $ref: '#/components/parameters/envelope'
+      - $ref: '#/components/parameters/pretty'
+      - $ref: '#/components/parameters/groupId'
+      - description: Label that identifies the cluster to create Search Nodes for.
+        in: path
+        name: clusterName
+        required: true
+        schema:
+          pattern: ^[a-zA-Z0-9][a-zA-Z0-9-]*$
+          type: string
+      requestBody:
+        content:
+          application/vnd.atlas.2024-05-30+json:
+            schema:
+              $ref: '#/components/schemas/ApiSearchDeploymentRequestView'
+        description: Creates Search Nodes for the specified cluster.
+        required: true
+      responses:
+        '201':
+          content:
+            application/vnd.atlas.2024-05-30+json:
+              schema:
+                $ref: '#/components/schemas/ApiSearchDeploymentResponseView'
+              x-xgen-version: '2024-05-30'
+          description: Created
+      summary: Create Search Nodes
+      tags:
+      - Atlas Search
+      x-codeSamples:
+      - label: curl
+        lang: cURL
+        source: "curl --user \"{PUBLIC-KEY}:{PRIVATE-KEY}\" \\\n  --digest \\\n  --header \"Accept: application/vnd.atlas.2025-03-12+json\" \\\n  --header \"Content-Type: application/vnd.atlas.2025-03-12+json\" \\\n  -X POST \"https://cloud.mongodb.com/api/atlas/v2/groups/{groupId}/clusters/{clusterName}/search/deployment\"\n  -d { <Payload> }"
+      - label: Atlas CLI
+        lang: cURL
+        source: atlas api createAtlasSearchDeployment --help
+      x-xgen-docs-url: https://mongodb.com/docs/atlas/reference/api-resources-spec/v2/#tag/Atlas-Search/operation/createAtlasSearchDeployment
+components:
+  schemas:
+    ApiSearchDeploymentRequestView:
+      properties:
+        specs:
+          description: 'List of settings that configure the Search Nodes for your cluster.
+
+
+            **NOTE**: We accept a single configuration for all nodes currently.'
+          items:
+            $ref: '#/components/schemas/ApiSearchDeploymentSpecView'
+          maxItems: 1
+          minItems: 1
+          type: array
+      required:
+      - specs
+      type: object
+    ApiSearchDeploymentResponseView:
+      properties:
+        encryptionAtRestProvider:
+          description: Cloud service provider that manages your customer keys to provide an additional layer of Encryption At Rest for the cluster.
+          enum:
+          - NONE
+          - AWS
+          - AZURE
+          - GCP
+          externalDocs:
+            description: Encryption at Rest using Customer Key Management
+            url: https://www.mongodb.com/docs/atlas/security-kms-encryption/
+          readOnly: true
+          type: string
+        groupId:
+          description: Unique 24-hexadecimal character string that identifies the project.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+        id:
+          description: Unique 24-hexadecimal digit string that identifies the search deployment.
+          example: 32b6e34b3d91647abb20e7b8
+          pattern: ^([a-f0-9]{24})$
+          readOnly: true
+          type: string
+        specs:
+          description: List of settings that configure the Search Nodes for your cluster. The configuration will be returned for each region and shard.
+          items:
+            $ref: '#/components/schemas/ApiSearchDeploymentSpecView'
+          readOnly: true
+          type: array
+        stateName:
+          description: Human-readable label that indicates the current operating condition of this search deployment.
+          enum:
+          - IDLE
+          - PAUSED
+          - UPDATING
+          readOnly: true
+          type: string
+      type: object
+    ApiSearchDeploymentSpecView:
+      properties:
+        instanceSize:
+          description: Hardware specification for the Search Node instance sizes.
+          enum:
+          - S20_HIGHCPU_NVME
+          - S30_HIGHCPU_NVME
+          - S40_HIGHCPU_NVME
+          - S50_HIGHCPU_NVME
+          - S60_HIGHCPU_NVME
+          - S70_HIGHCPU_NVME
+          - S80_HIGHCPU_NVME
+          - S30_LOWCPU_NVME
+          - S40_LOWCPU_NVME
+          - S50_LOWCPU_NVME
+          - S60_LOWCPU_NVME
+          - S70_LOWCPU_NVME
+          - S80_LOWCPU_NVME
+          - S90_LOWCPU_NVME
+          - S100_LOWCPU_NVME
+          - S110_LOWCPU_NVME
+          - S120_LOWCPU_NVME
+          - S130_LOWCPU_NVME
+          - S135_LOWCPU_NVME
+          - S140_LOWCPU_NVME
+          - S40_STORAGE_NVME
+          - S50_STORAGE_NVME
+          - S60_STORAGE_NVME
+          - S80_STORAGE_NVME
+          - S90_STORAGE_NVME
+          type: string
+        nodeCount:
+          description: Number of Search Nodes in the cluster.
+          example: 2
+          format: int32
+          maximum: 32
+          minimum: 2
+          type: integer
+      required:
+      - instanceSize
+      - nodeCount
+      type: object
+  parameters:
+    envelope:
+      description: Flag that indicates whether Application wraps the response in an `envelope` JSON object. Some API clients cannot access the HTTP response headers or status code. To remediate this, set envelope=true in the query. Endpoints that return a list of results use the results object as an envelope. Application adds the status parameter to the response body.
+      in: query
+      name: envelope
+      schema:
+        default: false
+        type: boolean
+    groupId:
+      description: 'Unique 24-hexadecimal digit string that identifies your project. Use the [/groups](#tag/Projects/operation/listProjects) endpoint to retrieve all projects to which the authenticated user has access.
+
+
+        **NOTE**: Groups and projects are synonymous terms. Your group id is the same as your project id. For existing groups, your group/project id remains the same. The resource and corresponding endpoints use the term groups.'
+      in: path
+      name: groupId
+      required: true
+      schema:
+        example: 32b6e34b3d91647abb20e7b8
+        pattern: ^([a-f0-9]{24})$
+        type: string
+      x-xgen-IPA-exception:
+        xgen-IPA-117-description-should-not-use-inline-links: Parameters don't support externalDocs
+    pretty:
+      description: Flag that indicates whether the response body should be in the prettyprint format.
+      in: query
+      name: pretty
+      schema:
+        default: false
+        externalDocs:
+          description: Prettyprint
+          url: https://en.wikipedia.org/wiki/Prettyprint
+        type: boolean
+tags: []

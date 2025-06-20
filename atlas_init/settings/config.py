@@ -12,7 +12,7 @@ from typing import Any
 from model_lib import Entity, IgnoreFalsy
 from pydantic import Field, model_validator
 
-from atlas_init.repos.path import as_repo_alias, go_package_prefix, owner_project_name, package_glob
+from atlas_init.repos.path import as_repo_alias, find_test_names, go_package_prefix, owner_project_name, package_glob
 
 logger = logging.getLogger(__name__)
 
@@ -95,11 +95,8 @@ class TestSuite(IgnoreFalsy):
         for package in packages:
             pkg_name = f"{go_package_prefix(repo_path)}/{package}"
             for go_file in repo_path.glob(f"{package}/*.go"):
-                with go_file.open() as f:
-                    for line in f:
-                        if line.startswith(f"func {prefix}"):
-                            test_name = line.split("(")[0].strip().removeprefix("func ")
-                            names[pkg_name][test_name] = go_file.parent
+                for name in find_test_names(go_file, prefix):
+                    names[pkg_name][name] = go_file.parent
         return names
 
     def is_active(self, repo_alias: str, change_paths: Iterable[str]) -> bool:

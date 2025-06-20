@@ -141,9 +141,9 @@ module "aws_kms" {
   access_iam_role_arns = {
     atlas = module.cloud_provider[0].iam_role_arn
   }
-  aws_account_id       = local.aws_account_id
-  aws_region           = var.aws_region
-  key_suffix           = var.project_name
+  aws_account_id = local.aws_account_id
+  aws_region     = var.aws_region
+  key_suffix     = var.project_name
 }
 
 module "federated_vars" {

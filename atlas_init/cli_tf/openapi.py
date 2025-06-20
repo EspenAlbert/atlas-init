@@ -5,7 +5,7 @@ import re
 from collections.abc import Iterable
 from pathlib import Path
 from queue import Queue
-from typing import ClassVar
+from typing import ClassVar, NamedTuple
 
 from model_lib import Entity, dump
 from pydantic import Field
@@ -48,6 +48,21 @@ def parse_openapi_schema_after_modifications(schema: SchemaV2, api_spec_path: Pa
     return api_spec_text_changes(schema, original)
 
 
+class PathMethodCode(NamedTuple):
+    path: str
+    method: str
+    code: str
+
+
+def extract_api_version_content_header(header: str) -> str | None:
+    """
+    Extracts the API version from the content header.
+    The header should be in the format 'application/vnd.atlas.v1+json'.
+    """
+    match = re.match(r"application/vnd\.atlas\.v?(?P<version>[\d-]+)\+json", header)
+    return match.group("version") if match else None
+
+
 class OpenapiSchema(Entity):
     PARAMETERS_PREFIX: ClassVar[str] = "#/components/parameters/"
     SCHEMAS_PREFIX: ClassVar[str] = "#/components/schemas/"
@@ -64,13 +79,32 @@ class OpenapiSchema(Entity):
     def read_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("get")
 
+    def delete_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("delete")
+
+    def patch_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("patch")
+
+    def put_method(self, path: str) -> dict | None:
+        return self.paths.get(path, {}).get("patch")
+
+    def methods(self, path: str) -> Iterable[dict]:
+        for method_name in ["post", "get", "delete", "patch", "put"]:
+            if method := self.paths.get(path, {}).get(method_name):
+                yield method
+
     def method_refs(self, path: str) -> Iterable[str]:
-        for method in [self.create_method(path), self.read_method(path)]:
+        for method in self.methods(path):
             if method:
-                if req_ref := self.method_request_body_ref(method):
-                    yield req_ref
-                if resp_ref := self.method_response_ref(method):
-                    yield resp_ref
+                yield from self.method_request_body_ref(method)
+                yield from self.method_response_ref(method)
+
+    def parameter_refs(self, path: str) -> Iterable[str]:
+        for method in self.methods(path):
+            parameters = method.get("parameters", [])
+            for param in parameters:
+                if param_ref := param.get("$ref"):
+                    yield param_ref
 
     def parameter(self, ref: str) -> dict:
         assert ref.startswith(OpenapiSchema.PARAMETERS_PREFIX)
@@ -91,23 +125,50 @@ class OpenapiSchema(Entity):
             prop["name"] = name
             yield prop
 
-    def method_request_body_ref(self, method: dict) -> str | None:
+    def method_request_body_ref(self, method: dict) -> Iterable[str]:
         request_body = method.get("requestBody", {})
-        return self._unpack_schema_ref(request_body)
+        yield from self._unpack_schema_ref(request_body)
 
-    def method_response_ref(self, method: dict) -> str | None:
+    def method_response_ref(self, method: dict) -> Iterable[str]:
         responses = method.get("responses", {})
         ok_response = responses.get("200", {})
-        return self._unpack_schema_ref(ok_response)
+        yield from self._unpack_schema_ref(ok_response)
 
-    def _unpack_schema_ref(self, response: dict) -> str | None:
+    def _unpack_schema_ref(self, response: dict) -> Iterable[str]:
         content = {**response.get("content", {})}  # avoid side effects
         if not content:
             return None
-        key, value = content.popitem()
-        if not isinstance(key, str) or not key.endswith("json"):
-            return None
-        return value.get("schema", {}).get("$ref")
+        while content:
+            key, value = content.popitem()
+            if not isinstance(key, str) or not key.endswith("json"):
+                continue
+            if ref := value.get("schema", {}).get("$ref"):
+                yield ref
+
+    def _unpack_schema_versions(self, response: dict) -> list[str]:
+        content: dict[str, dict] = {**response.get("content", {})}
+        versions = []
+        while content:
+            key, value = content.popitem()
+            if not isinstance(value, dict) or not key.endswith("json"):
+                continue
+            if version := value.get("x-xgen-version"):
+                versions.append(version)
+                continue
+            if version := extract_api_version_content_header(key):
+                versions.append(version)
+        return versions
+
+    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[str]]]:
+        for path, methods in self.paths.items():
+            for method_name, method_dict in methods.items():
+                if not isinstance(method_dict, dict):
+                    continue
+                responses = method_dict.get("responses", {})
+                for code, response_dict in responses.items():
+                    if api_versions := self._unpack_schema_versions(response_dict):
+                        key = PathMethodCode(path, method_name, code)
+                        yield key, api_versions
 
     def schema_ref_component(self, ref: str, attributes_skip: set[str]) -> SchemaResource:
         schemas = self.components.get("schemas", {})
@@ -128,6 +189,9 @@ class OpenapiSchema(Entity):
             name=ref,
             description=schema.get("description", ""),
             attributes_skip=attributes_skip,
+            discriminator=schema.get("discriminator"),
+            one_of=schema.get("oneOf", []),
+            all_of=schema.get("allOf", []),
         )
         required_names = schema.get("required", [])
         for prop in self.schema_properties(ref):
@@ -143,6 +207,16 @@ class OpenapiSchema(Entity):
         elif ref.startswith(self.SCHEMAS_PREFIX):
             prefix = self.SCHEMAS_PREFIX
             parent_dict = self.components["schemas"]
+            ref_value.pop("name", None)
+            if properties := ref_value.get("properties"):
+                properties_no_name = {
+                    k: {nested_k: nested_v for nested_k, nested_v in v.items() if nested_k != "name"}
+                    for k, v in properties.items()
+                }
+                if ref.removeprefix(prefix).endswith("DBRoleToExecute"):
+                    logger.warning(f"debug me: {properties_no_name}")
+                ref_value["properties"] = properties_no_name
+
         else:
             err_msg = f"Unknown schema_ref {ref}"
             raise ValueError(err_msg)
@@ -168,12 +242,14 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
         case {"$ref": ref, "name": name} if ref.startswith(OpenapiSchema.SCHEMAS_PREFIX):
             # nested attribute
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type="object",
                 name=name,
                 schema_ref=ref,
             )
         case {"type": "array", "items": {"$ref": ref}, "name": name}:
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type="array",
                 name=name,
                 schema_ref=ref,
@@ -183,6 +259,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
             )
         case {"name": name, "schema": schema}:
             attribute = SchemaAttribute(
+                additional_properties=param.get("additionalProperties", {}),
                 type=schema["type"],
                 name=name,
                 description=param.get("description", ""),
@@ -196,6 +273,7 @@ def parse_api_spec_param(api_spec: OpenapiSchema, param: dict, resource: SchemaR
                 description=param.get("description", ""),
                 is_computed=param.get("readOnly", False),
                 is_required=param.get("required", False),
+                additional_properties=param.get("additionalProperties", {}),
             )
         case _:
             raise NotImplementedError
@@ -220,7 +298,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 continue
             for param in create_method.get("parameters", []):
                 parse_api_spec_param(api_spec, param, resource)
-            if req_ref := api_spec.method_request_body_ref(create_method):
+            for req_ref in api_spec.method_request_body_ref(create_method):
                 for property_dict in api_spec.schema_properties(req_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
         for path in resource.paths:
@@ -229,7 +307,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 continue
             for param in read_method.get("parameters", []):
                 parse_api_spec_param(api_spec, param, resource)
-            if response_ref := api_spec.method_response_ref(read_method):
+            for response_ref in api_spec.method_response_ref(read_method):
                 for property_dict in api_spec.schema_properties(response_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
     if minimal_refs:

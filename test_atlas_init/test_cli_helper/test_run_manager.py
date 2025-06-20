@@ -16,9 +16,7 @@ def test_terminate_on_exit(tmp_path):
         for i in range(4):
             store = ResultStore()
             stores.append(store)
-            process_future = manager.run_process(
-                f"echo {i}; sleep 10", logger=logger, cwd=tmp_path, result_store=store
-            )
+            process_future = manager.run_process(f"echo {i}; sleep 10", logger=logger, cwd=tmp_path, result_store=store)
             futures.append(process_future)
         time.sleep(0.2)
     wait(futures, timeout=11)
@@ -49,9 +47,7 @@ def test_run_process_wait_on_log(tmp_path):
 def test_normal_wait(tmp_path):
     start = time.monotonic()
     with RunManager() as manager:
-        result = manager.run_process(
-            "echo hello; sleep 1", logger=logger, cwd=tmp_path
-        ).result()
+        result = manager.run_process("echo hello; sleep 1", logger=logger, cwd=tmp_path).result()
         assert result.exit_code == 0
     end = time.monotonic()
     assert end - start > 1.0

@@ -29,7 +29,6 @@ resource/mongodbatlas_federated_settings_org_config: Supports detaching and upda
 ```"""
 
 
-
 def test_convert_to_changelog():
     output = convert_to_changelog(_example1)
     assert output == changelog

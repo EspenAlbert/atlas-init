@@ -10,7 +10,7 @@ resource "random_password" "username" {
 
 data "http" "myip" {
   count = var.use_project_myip ? 1 : 0
-  url = "https://ipv4.icanhazip.com"
+  url   = "https://ipv4.icanhazip.com"
 }
 
 data "http" "last_provider_version" {
@@ -35,18 +35,18 @@ resource "mongodbatlas_project" "project" {
   name   = var.project_name
   org_id = var.org_id
 
-  tags = local.tags
+  tags                      = local.tags
   region_usage_restrictions = var.is_mongodbgov_cloud ? "GOV_REGIONS_ONLY" : null
-  project_owner_id = length(var.user_id) > 0 ? var.user_id : null
+  project_owner_id          = length(var.user_id) > 0 ? var.user_id : null
 }
 
 resource "mongodbatlas_project_ip_access_list" "mongo-access" {
-  count = var.use_project_myip ? 1 : 0
+  count      = var.use_project_myip ? 1 : 0
   project_id = mongodbatlas_project.project.id
   cidr_block = "${chomp(data.http.myip[0].response_body)}/32"
 }
 
 data "mongodbatlas_atlas_user" "this" {
-  count = length(var.user_id) > 0 ? 1 : 0
+  count   = length(var.user_id) > 0 ? 1 : 0
   user_id = var.user_id
 }

@@ -5,6 +5,7 @@ from pydoc import locate
 from typing import Literal
 
 import typer
+from ask_shell.typer_command import configure_logging
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
@@ -255,6 +256,7 @@ def repo_clone():
 
 def typer_main():
     extra_root_commands()
+    configure_logging(app)
     app()
 
 

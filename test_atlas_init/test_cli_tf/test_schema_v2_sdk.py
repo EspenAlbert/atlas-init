@@ -39,11 +39,7 @@ def test_parse_sdk_model(sdk_repo_path):
         "policies",
         "version",
     ]
-    assert {
-        attr.struct_name: attr.struct_type_name
-        for attr in sdk_model.attributes.values()
-        if attr.is_nested
-    } == {
+    assert {attr.struct_name: attr.struct_type_name for attr in sdk_model.attributes.values() if attr.is_nested} == {
         "CreatedByUser": "ApiAtlasUserMetadata",
         "LastUpdatedByUser": "ApiAtlasUserMetadata",
         "Policies": "ApiAtlasPolicy",
@@ -67,12 +63,8 @@ def test_model_conversion(schema_v2):
 
 
 @pytest.mark.parametrize("resource_name", ["resource_policy"])
-def test_model_go(
-    sdk_repo_path, schema_with_api_info: SchemaV2, resource_name, file_regression
-):
+def test_model_go(sdk_repo_path, schema_with_api_info: SchemaV2, resource_name, file_regression):
     schema = schema_with_api_info
-    sdk_model = parse_sdk_model(
-        sdk_repo_path, schema.resources[resource_name].conversion.sdk_start_refs[0].name
-    )
+    sdk_model = parse_sdk_model(sdk_repo_path, schema.resources[resource_name].conversion.sdk_start_refs[0].name)
     actual = generate_model_go(schema, schema.resources[resource_name], sdk_model)
     file_regression.check(actual, basename=resource_name, extension=".go")

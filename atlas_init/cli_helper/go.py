@@ -9,10 +9,8 @@ from pydantic import Field
 
 from atlas_init.cli_helper.run import run_command_is_ok_output
 from atlas_init.cli_tf.go_test_run import (
-    GoTestContext,
-    GoTestContextStep,
     GoTestRun,
-    parse,
+    parse_tests,
 )
 from atlas_init.settings.config import TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
@@ -179,7 +177,7 @@ def resolve_env_vars(
     test_env_vars |= {
         "TF_ACC": "1",
         "TF_LOG": "DEBUG",
-        "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "false" if use_old_schema else "true",
+        "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": ("false" if use_old_schema else "true"),
     }
     test_env_vars |= env_vars_for_capture(capture_mode)
     logger.info(f"go test env-vars-extra: {sorted(test_env_vars)}")
@@ -231,17 +229,15 @@ def _run_tests(
             logger.exception(f"failed to run command for {name}")
             results.failure_names.add(name)
             continue
-        context = GoTestContext(
-            name=name,
-            html_url=f"file://{_log_path(logs_dir, name)}",
-            steps=[GoTestContextStep(name="local-run")],
-        )
         try:
-            parsed_tests = list(parse(command_out.splitlines(), context, test_step_nr=0))
+            parsed_tests = parse_tests(command_out.splitlines())
         except Exception:
             logger.exception(f"failed to parse tests for {name}")
             results.failure_names.add(name)
             continue
+        for test in parsed_tests:
+            test.log_path = _log_path(logs_dir, name)
+            # todo: possible add other fields
         if not parsed_tests and not ok:
             results.failure_names.add(name)
             logger.error(f"failed to run tests for {name}: {command_out}")

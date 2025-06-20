@@ -1,0 +1,71 @@
+TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-27T00:47:25.4407749Z === RUN   TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-27T00:47:25.4408915Z     resource_test.go:171: Testing: Verifies a processor can transition from STOPPED to STARTED state
+2025-04-27T00:47:25.4415387Z === CONT  TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-27T00:47:25.4433348Z === NAME  TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted
+2025-04-27T00:47:25.4434045Z     resource_test.go:172: Step 1/3 error: Error running apply: exit status 1
+2025-04-27T00:47:25.4434424Z         
+2025-04-27T00:47:25.4434818Z         Error: error creating resource
+2025-04-27T00:47:25.4435097Z         
+2025-04-27T00:47:25.4435552Z           with mongodbatlas_stream_processor.processor,
+2025-04-27T00:47:25.4436464Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-27T00:47:25.4437255Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-27T00:47:25.4437596Z         
+2025-04-27T00:47:25.4438929Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/processor
+2025-04-27T00:47:25.4439967Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-27T00:47:25.4440616Z         Detail: Streams Processor with this name (processor-stopped-to-started) had a
+2025-04-27T00:47:25.4441404Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-27T00:47:25.4442041Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-27T00:47:25.4442673Z         [processor-stopped-to-started failed to acquire resources for stream
+2025-04-27T00:47:25.4443301Z         processor validation: global resource manager returned no resources],
+2025-04-27T00:47:25.4443839Z         BadRequestDetail: 
+2025-04-27T00:47:25.4457968Z    test_name=TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted test_terraform_path=/home/runner/work/_temp/a66f83f8-c7ea-48d2-abd1-f97810bc2ede/terraform
+2025-04-27T00:47:25.4459177Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-27T00:47:25.4459616Z         
+2025-04-27T00:47:25.4459897Z         Error: error deleting resource
+2025-04-27T00:47:25.4460167Z         
+2025-04-27T00:47:25.4461174Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED/connections/sample_stream_solar
+2025-04-27T00:47:25.4462038Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-27T00:47:25.4462568Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-27T00:47:25.4463549Z         name test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED has active
+2025-04-27T00:47:25.4464217Z         processors, and cannot be changed. Reason: Forbidden. Params:
+2025-04-27T00:47:25.4464861Z         [test-acc-tf-8577699112048547047-STARTED-STOPPED-STARTED], BadRequestDetail: 
+2025-04-27T00:47:25.4481022Z    test_name=TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStopped test_terraform_path=/home/runner/work/_temp/a66f83f8-c7ea-48d2-abd1-f97810bc2ede/terraform test_working_directory=/tmp/plugintest222090315 test_step_number=1
+2025-04-27T00:47:25.4511892Z     --- FAIL: TestAccStreamProcessor_StateTransitionsUpdates/StoppedToStarted (4.03s)
+NEXT_TEST
+TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-27T00:47:25.4661450Z === RUN   TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-27T00:47:25.4662136Z     resource_test.go:250: Testing: Verifies a processor cannot transition from STOPPED to CREATED state
+2025-04-27T00:47:25.4666328Z === CONT  TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-27T00:47:25.4683124Z   
+2025-04-27T00:47:25.4728612Z === NAME  TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-27T00:47:25.4729329Z     resource_test.go:251: Step 1/3 error: Error running apply: exit status 1
+2025-04-27T00:47:25.4729700Z         
+2025-04-27T00:47:25.4729976Z         Error: error creating resource
+2025-04-27T00:47:25.4730252Z         
+2025-04-27T00:47:25.4730616Z           with mongodbatlas_stream_processor.processor,
+2025-04-27T00:47:25.4731312Z           on terraform_plugin_test.tf line 28, in resource "mongodbatlas_stream_processor" "processor":
+2025-04-27T00:47:25.4731956Z           28: 		resource "mongodbatlas_stream_processor" "processor" {
+2025-04-27T00:47:25.4732284Z         
+2025-04-27T00:47:25.4733181Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-5861445080829721334-STARTED-STOPPED-CREATED/processor
+2025-04-27T00:47:25.4734105Z         POST: HTTP 400 Bad Request (Error code: "STREAM_PROCESSOR_GENERIC_ERROR")
+2025-04-27T00:47:25.4734761Z         Detail: Streams Processor with this name (processor-stopped-to-created) had a
+2025-04-27T00:47:25.4735431Z         problem occur: failed to acquire resources for stream processor validation:
+2025-04-27T00:47:25.4736078Z         global resource manager returned no resources. Reason: Bad Request. Params:
+2025-04-27T00:47:25.4736713Z         [processor-stopped-to-created failed to acquire resources for stream
+2025-04-27T00:47:25.4737452Z         processor validation: global resource manager returned no resources],
+2025-04-27T00:47:25.4737881Z         BadRequestDetail: 
+2025-04-27T00:47:25.4754604Z   
+2025-04-27T00:47:25.4778279Z === NAME  TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated
+2025-04-27T00:47:25.4778976Z     panic.go:636: Error running post-test destroy, there may be dangling resources: exit status 1
+2025-04-27T00:47:25.4779411Z         
+2025-04-27T00:47:25.4779689Z         Error: error deleting resource
+2025-04-27T00:47:25.4779965Z         
+2025-04-27T00:47:25.4780980Z         https://cloud-qa.mongodb.com/api/atlas/v2/groups/680d7a6ff71e7361cf7450a7/streams/test-acc-tf-5861445080829721334-STARTED-STOPPED-CREATED/connections/sample_stream_solar
+2025-04-27T00:47:25.4781842Z         DELETE: HTTP 403 Forbidden (Error code:
+2025-04-27T00:47:25.4782381Z         "STREAM_CONNECTION_HAS_STREAM_PROCESSORS") Detail: Stream connection with
+2025-04-27T00:47:25.4782998Z         name test-acc-tf-5861445080829721334-STARTED-STOPPED-CREATED has active
+2025-04-27T00:47:25.4783581Z         processors, and cannot be changed. Reason: Forbidden. Params:
+2025-04-27T00:47:25.4784220Z         [test-acc-tf-5861445080829721334-STARTED-STOPPED-CREATED], BadRequestDetail: 
+2025-04-27T00:47:25.4804465Z   
+2025-04-27T00:47:25.4812988Z     --- FAIL: TestAccStreamProcessor_InvalidStateTransitionUpdates/StoppedToCreated (4.57s)

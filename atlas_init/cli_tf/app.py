@@ -1,34 +1,18 @@
 import logging
-import os
 import sys
-from collections import defaultdict
-from datetime import timedelta
 from pathlib import Path
 
 import typer
-from zero_3rdparty.datetime_utils import utc_now
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_args import option_sdk_repo_path
 from atlas_init.cli_helper.run import (
-    add_to_clipboard,
     run_binary_command_is_ok,
     run_command_exit_on_failure,
-    run_command_receive_result,
 )
+from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.changelog import convert_to_changelog
 from atlas_init.cli_tf.example_update import update_example_cmd
-from atlas_init.cli_tf.github_logs import (
-    GH_TOKEN_ENV_NAME,
-    find_test_runs,
-    include_filestems,
-    include_test_jobs,
-)
-from atlas_init.cli_tf.go_test_run import GoTestRun
-from atlas_init.cli_tf.go_test_summary import (
-    create_detailed_summary,
-    create_short_summary,
-)
 from atlas_init.cli_tf.log_clean import log_clean
 from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
 from atlas_init.cli_tf.schema import (
@@ -41,7 +25,7 @@ from atlas_init.cli_tf.schema_v2 import (
     generate_resource_go_resource_schema,
     parse_schema,
 )
-from atlas_init.cli_tf.schema_v2_api_parsing import add_api_spec_info
+from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
 from atlas_init.repos.go_sdk import download_admin_api
 from atlas_init.repos.path import Repo, current_repo_path
@@ -52,6 +36,7 @@ app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
 app.command(name="example-update")(update_example_cmd)
 app.command(name="log-clean")(log_clean)
+app.command(name="ci-tests")(ci_tests)
 logger = logging.getLogger(__name__)
 
 
@@ -151,72 +136,6 @@ def example_gen(
     for path, rel_path in file_utils.iter_paths_and_relative(in_path, "*.tf", "*.sh", "*.py", "*.md", rglob=False):
         dest_path = out_path / rel_path
         file_utils.copy(path, dest_path, clean_dest=False)
-
-
-@app.command()
-def ci_tests(
-    test_group_name: str = typer.Option("", "-g"),
-    max_days_ago: int = typer.Option(1, "-d", "--days"),
-    branch: str = typer.Option("master", "-b", "--branch"),
-    workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
-    only_last_workflow: bool = typer.Option(False, "-l", "--last"),
-    names: str = typer.Option(
-        "",
-        "-n",
-        "--test-names",
-        help="comma separated list of test names to filter, e.g., TestAccCloudProviderAccessAuthorizationAzure_basic,TestAccBackupSnapshotExportBucket_basicAzure",
-    ),
-    summary_name: str = typer.Option(
-        "",
-        "-s",
-        "--summary",
-        help="the name of the summary directory to store detailed test results",
-    ),
-):  # sourcery skip: use-named-expression
-    names_set: set[str] = set()
-    if names:
-        names_set.update(names.split(","))
-        logger.info(f"filtering tests by names: {names_set}")
-    repo_path = current_repo_path(Repo.TF)
-    token = run_command_receive_result("gh auth token", cwd=repo_path, logger=logger)
-    os.environ[GH_TOKEN_ENV_NAME] = token
-    end_test_date = utc_now()
-    start_test_date = end_test_date - timedelta(days=max_days_ago)
-    job_runs = find_test_runs(
-        start_test_date,
-        include_job=include_test_jobs(test_group_name),
-        branch=branch,
-        include_workflow=include_filestems(set(workflow_file_stems.split(","))),
-    )
-    test_results: dict[str, list[GoTestRun]] = defaultdict(list)
-    workflow_ids = set()
-    for key in sorted(job_runs.keys(), reverse=True):
-        workflow_id, job_id = key
-        workflow_ids.add(workflow_id)
-        if only_last_workflow and len(workflow_ids) > 1:
-            logger.info("only showing last workflow")
-            break
-        runs = job_runs[key]
-        if not runs:
-            logger.warning(f"no go tests for job_id={job_id}")
-            continue
-        for run in runs:
-            test_name = run.name
-            if names_set and test_name not in names_set:
-                continue
-            test_results[test_name].append(run)
-
-    if summary_name:
-        summary = create_detailed_summary(summary_name, end_test_date, start_test_date, test_results, names_set)
-    else:
-        failing_names = [name for name, name_runs in test_results.items() if all(run.is_failure for run in name_runs)]
-        if not failing_names:
-            logger.info("ALL TESTS PASSED! ✅")
-            return
-        summary = create_short_summary(test_results, failing_names)
-    summary_str = "\n".join(summary)
-    add_to_clipboard(summary_str, logger)
-    logger.info(summary_str)
 
 
 @app.command()

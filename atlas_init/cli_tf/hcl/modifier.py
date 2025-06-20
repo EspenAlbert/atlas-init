@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Callable
 
 import hcl2
-from lark import Token, Tree, UnexpectedToken
+from lark import Token, Tree
+
+from atlas_init.cli_tf.hcl.modifier2 import safe_parse
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +16,12 @@ BLOCK_TYPE_OUTPUT = "output"
 
 
 def process_token(node: Token, indent=0):
-    logger.debug(f"[{indent}] (token)\t|", " " * indent, node.type, node.value)
+    debug_log(f"token:{node.type}:{node.value}", indent)
     return deepcopy(node)
+
+
+def debug_log(message: str, depth=0):
+    logger.debug("  " * depth + message.rstrip("\n"))
 
 
 def is_identifier_block_type(tree: Tree | Token, block_type: str) -> bool:
@@ -43,7 +49,7 @@ def update_description(tree: Tree, new_descriptions: dict[str, str], existing_na
     existing_names[name].append(old_description)
     new_description = new_descriptions.get(name, "")
     if not new_description:
-        logger.debug(f"no description found for variable {name}")
+        debug_log(f"no description found for variable {name}", 0)
         return tree
     new_children[2] = update_body_with_description(variable_body, new_description)
     return Tree(tree.data, new_children)
@@ -112,7 +118,7 @@ def process_generic(
     depth=0,
 ):
     new_children = []
-    logger.debug(f"[{depth}] (tree)\t|", " " * depth, node.data)
+    debug_log(f"tree:{node.data}", depth)
     for child in node.children:
         if isinstance(child, Tree):
             if tree_match(child):
@@ -146,10 +152,8 @@ def process_descriptions(
 
 
 def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: str) -> tuple[str, dict[str, list[str]]]:
-    try:
-        tree = hcl2.parses(tf_path.read_text())  # type: ignore
-    except UnexpectedToken as e:
-        logger.warning(f"failed to parse {tf_path}: {e}")
+    tree = safe_parse(tf_path)
+    if tree is None:
         return "", {}
     existing_descriptions = defaultdict(list)
     new_tree = process_descriptions(
@@ -210,10 +214,8 @@ def _read_object_elem_key(tree_body: Tree) -> str:
 
 
 def read_block_attribute_object_keys(tf_path: Path, block_type: str, block_name: str, block_key: str) -> list[str]:
-    try:
-        tree = hcl2.parses(tf_path.read_text())  # type: ignore
-    except UnexpectedToken as e:
-        logger.warning(f"failed to parse {tf_path}: {e}")
+    tree = safe_parse(tf_path)
+    if tree is None:
         return []
     env_vars = []
 

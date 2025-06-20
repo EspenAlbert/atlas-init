@@ -54,7 +54,7 @@ def test_mock_tf_log(
         output_dir=test_data,
         admin_api_path=api_spec_path_transformed,
         keep_duplicates=False,
-        package_name=pkg_name
+        package_name=pkg_name,
     )
     output_path = mock_tf_log(req)
     parsed_again = parse_payload(output_path)

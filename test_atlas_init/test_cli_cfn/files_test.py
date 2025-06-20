@@ -30,7 +30,9 @@ def test_iterate_schemas(tmp_path):
 
 
 def test_has_md_link():
-    assert has_md_link("some text [Cloudformation examples](https://github.com/aws-cloudformation/aws-cloudformation-samples/tree/main/resource-types/typescript-example-website-monitor)")
+    assert has_md_link(
+        "some text [Cloudformation examples](https://github.com/aws-cloudformation/aws-cloudformation-samples/tree/main/resource-types/typescript-example-website-monitor)"
+    )
     assert not has_md_link("some other text [with] some random syntax")
 
 

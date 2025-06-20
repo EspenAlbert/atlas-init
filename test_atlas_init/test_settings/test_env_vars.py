@@ -15,9 +15,7 @@ from test_atlas_init.conftest import mongodb_atlas_required_vars, write_required
 
 
 def test_set_profiles_path(settings, tmp_path):
-    assert str(settings.profiles_path) == str(
-        settings.static_root / "profiles"
-    )
+    assert str(settings.profiles_path) == str(settings.static_root / "profiles")
     assert str(settings.profiles_path).startswith(str(tmp_path))
 
 
@@ -58,17 +56,14 @@ ENV_VARS_CHECKS = [
     ),
     _TestCase(
         "ambiguous project_name",
-        env_vars_in_file={key: f"value_{key}" for key in REQUIRED_FIELDS}
-        | {ENV_PROJECT_NAME: "my-project"},
+        env_vars_in_file={key: f"value_{key}" for key in REQUIRED_FIELDS} | {ENV_PROJECT_NAME: "my-project"},
         explicit_env_vars={ENV_PROJECT_NAME: "different-name"},
         expected_ambiguous=[ENV_PROJECT_NAME],
     ),
 ]
 
 
-@pytest.mark.parametrize(
-    "test_case", ENV_VARS_CHECKS, ids=[test_case.name for test_case in ENV_VARS_CHECKS]
-)
+@pytest.mark.parametrize("test_case", ENV_VARS_CHECKS, ids=[test_case.name for test_case in ENV_VARS_CHECKS])
 def test_check_env_vars(monkeypatch, test_case, settings):
     # sourcery skip: no-conditionals-in-tests
     if env_vars_in_file := test_case.env_vars_in_file:

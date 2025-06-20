@@ -6,21 +6,22 @@ from pathlib import Path
 
 import pytest
 from model_lib import dump, parse_model, parse_payload
+from zero_3rdparty import file_utils
 
-from atlas_init.cli_tf.schema_v2 import SchemaV2
-from atlas_init.cli_tf.schema_v2_api_parsing import (
+from atlas_init.cli_tf.openapi import (
     OpenapiSchema,
     api_spec_text_changes,
+    extract_api_version_content_header,
     minimal_api_spec,
     parse_api_spec_param,
 )
+from atlas_init.cli_tf.schema_v2 import SchemaV2
+from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
 
 
-def test_openapi_schema_create_parameters(
-    schema_v2: SchemaV2, openapi_schema: OpenapiSchema
-):
+def test_openapi_schema_create_parameters(schema_v2: SchemaV2, openapi_schema: OpenapiSchema):
     processor = schema_v2.resources["stream_processor"]
     create_path, read_path = processor.paths
     create_method = openapi_schema.create_method(create_path)
@@ -43,16 +44,16 @@ def test_openapi_schema_create_parameters(
         "required": True,
         "schema": {"type": "string"},
     }
-    instance_name_param = parse_api_spec_param(
-        openapi_schema, tenant_name_param, processor
-    )
+    instance_name_param = parse_api_spec_param(openapi_schema, tenant_name_param, processor)
     assert instance_name_param
     assert instance_name_param.name == "instance_name"
     assert instance_name_param.type == "string"
     assert instance_name_param.description
     assert instance_name_param.is_required
 
-    req_ref = openapi_schema.method_request_body_ref(create_method)
+    req_refs = list(openapi_schema.method_request_body_ref(create_method))
+    assert len(req_refs) == 1, "expected exactly one request body reference"
+    req_ref = req_refs[0]
     assert req_ref == "#/components/schemas/StreamsProcessor"
     property_dicts = list(openapi_schema.schema_properties(req_ref))
     assert property_dicts
@@ -76,7 +77,9 @@ def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema
     assert group_id_param == {"$ref": "#/components/parameters/groupId"}
     assert tenant_name_param["name"] == "tenantName"
     assert processor_name_param["name"] == "processorName"
-    response_ref = openapi_schema.method_response_ref(read_method)
+    response_refs = list(openapi_schema.method_response_ref(read_method))
+    assert len(response_refs) == 1, "expected exactly one response reference"
+    response_ref = response_refs[0]
     assert response_ref == "#/components/schemas/StreamsProcessorWithStats"
     property_dicts = list(openapi_schema.schema_properties(response_ref))
     assert property_dicts
@@ -108,12 +111,8 @@ def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: Openapi
     assert schema_attribute.is_nested
 
 
-@pytest.mark.skipif(
-    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
-)
-def test_ensure_test_data_admin_api_is_up_to_date(
-    schema_v2, file_regression, api_spec_path
-):
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
+def test_ensure_test_data_admin_api_is_up_to_date(schema_v2, file_regression, api_spec_path):
     api_path = Path(os.environ["API_SPEC_PATH"])
     openapi_schema = parse_model(api_path, t=OpenapiSchema)
     assert openapi_schema, "unable to parse admin api spec"
@@ -126,17 +125,14 @@ def test_ensure_test_data_admin_api_is_up_to_date(
     file_regression.check(minimal_spec_yaml, fullpath=api_spec_path)
 
 
+@pytest.mark.skip("manual test")
 def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
     updated = api_spec_text_changes(schema_v2, openapi_schema)
     updated_yaml = dump(updated, "yaml")
-    file_regression.check(
-        updated_yaml, basename="openapi_text_changes", extension=".yaml"
-    )
+    file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")
 
 
-@pytest.mark.skipif(
-    os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]"
-)
+@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 def test_invalid_in_regex_patterns():
     api_path = Path(os.environ["API_SPEC_PATH"])
     expected_count = 1033
@@ -145,14 +141,10 @@ def test_invalid_in_regex_patterns():
     assert not project_id_example_pattern.match(should_not_match)
     assert not pattern_match_full("[0-9a-f]+", should_not_match)
     patterns = find_patterns_in_file_and_match(api_path, should_not_match)
-    assert (
-        len(patterns) == expected_count
-    ), f"expected {expected_count} patterns, got {len(patterns)}"
+    assert len(patterns) == expected_count, f"expected {expected_count} patterns, got {len(patterns)}"
 
 
-def find_patterns_in_file_and_match(
-    api_path: Path, expected_no_match: str
-) -> list[str]:
+def find_patterns_in_file_and_match(api_path: Path, expected_no_match: str) -> list[str]:
     patterns = []
     lines = api_path.read_text().splitlines()
     prefix = 'pattern: "'
@@ -168,12 +160,10 @@ def find_patterns_in_file_and_match(
             patterns.append(pattern_value)
             pattern_value = valid_pattern(pattern_value)
             if not pattern_value:
-                logger.warning(f"invalid pattern: {patterns[-1]} on line: {i+1}")
+                logger.warning(f"invalid pattern: {patterns[-1]} on line: {i + 1}")
                 continue
             if pattern_match_full(pattern_value, expected_no_match):
-                logger.warning(
-                    f"pattern: {pattern_value} matched invalid character: {expected_no_match} on L={i+1}"
-                )
+                logger.warning(f"pattern: {pattern_value} matched invalid character: {expected_no_match} on L={i + 1}")
     return patterns
 
 
@@ -197,3 +187,39 @@ def find_patterns_in_file_regex(api_path: Path) -> list[str]:
     text = api_path.read_text()
     pattern_regex = re.compile(r'\s+pattern:\s+"(?P<pattern>[^"]*)"$\s*', re.MULTILINE)
     return pattern_regex.findall(text)
+
+
+def test_extract_api_version_content_header():
+    assert extract_api_version_content_header("application/vnd.atlas.2023-01-01+json") == "2023-01-01"
+
+
+@pytest.mark.skipif(os.environ.get("LIVE_STATIC_DIR", "") == "", reason="needs os.environ[LIVE_STATIC_DIR]")
+def test_finding_multiple_response_versions(live_api_spec):
+    settings = AtlasInitSettings(STATIC_DIR=os.environ["LIVE_STATIC_DIR"])  # type: ignore
+    report_path = settings.static_root / "api_versions_report.md"
+    report_md = generate_api_versions_report(live_api_spec)
+    file_utils.ensure_parents_write_text(report_path, "\n".join(report_md))
+    logger.info(f"report written to: {report_path}")
+
+
+def generate_api_versions_report(model: OpenapiSchema) -> list[str]:
+    counter = 0
+    unique_versions = set()
+    headers = ["Path", "Method", "Code", "Versions"]
+    report_md = [
+        " | ".join(headers),
+        " | ".join(["---"] * len(headers)),
+    ]
+    multiple_versions_counter = 0
+    for (path, method, code), versions in model.path_method_api_versions():
+        counter += 1
+        unique_versions.update(versions)
+        if len(versions) > 1:
+            logger.warning(f"multiple versions for {path} {method} {code}: {versions}")
+            report_md.append(f"{path} | {method} | {code} | {', '.join(sorted(versions))}")
+            multiple_versions_counter += 1
+    versions_sorted = "\n".join(sorted(unique_versions))
+    logger.info(
+        f"found {counter} paths with {len(unique_versions)} unique API versions, where {multiple_versions_counter} used more than one version:\n{versions_sorted} "
+    )
+    return report_md

@@ -1,0 +1,13 @@
+TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-28T00:28:58.3752937Z === RUN   TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-28T00:28:58.3778357Z === CONT  TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-28T00:29:00.9060428Z === NAME  TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-28T00:29:00.9061129Z     resource_cluster_test.go:1088: Step 1/1 error: Error running apply: exit status 1
+2025-04-28T00:29:00.9061671Z         
+2025-04-28T00:29:00.9064275Z         Error: error creating MongoDB Cluster: POST https://cloud-dev.mongodb.com/api/atlas/v1.0/groups/680ecbc7122f5b15cc627ba5/clusters: 409 (request "OUT_OF_CAPACITY") The requested region is currently out of capacity for the requested instance size.
+2025-04-28T00:29:00.9065883Z         
+2025-04-28T00:29:00.9066209Z           with mongodbatlas_cluster.test,
+2025-04-28T00:29:00.9066852Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_cluster" "test":
+2025-04-28T00:29:00.9067533Z           12: 	resource "mongodbatlas_cluster" "test" {
+2025-04-28T00:29:00.9067841Z         
+2025-04-28T00:29:00.9610855Z --- FAIL: TestAccCluster_basicGCPRegionNameWesternUS (2.58s)

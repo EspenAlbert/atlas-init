@@ -1,0 +1,570 @@
+ï»¿2025-04-09T00:24:12.9942884Z Current runner version: '2.323.0'
+2025-04-09T00:24:12.9966952Z ##[group]Operating System
+2025-04-09T00:24:12.9967838Z Ubuntu
+2025-04-09T00:24:12.9968492Z 24.04.2
+2025-04-09T00:24:12.9969041Z LTS
+2025-04-09T00:24:12.9969569Z ##[endgroup]
+2025-04-09T00:24:12.9970223Z ##[group]Runner Image
+2025-04-09T00:24:12.9970856Z Image: ubuntu-24.04
+2025-04-09T00:24:12.9971522Z Version: 20250316.1.0
+2025-04-09T00:24:12.9972638Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250316.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-04-09T00:24:12.9974093Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250316.1
+2025-04-09T00:24:12.9975100Z ##[endgroup]
+2025-04-09T00:24:12.9975686Z ##[group]Runner Image Provisioner
+2025-04-09T00:24:12.9976679Z 2.0.422.1
+2025-04-09T00:24:12.9977257Z ##[endgroup]
+2025-04-09T00:24:12.9978266Z ##[group]GITHUB_TOKEN Permissions
+2025-04-09T00:24:12.9980173Z Metadata: read
+2025-04-09T00:24:12.9980797Z ##[endgroup]
+2025-04-09T00:24:12.9983512Z Secret source: Actions
+2025-04-09T00:24:12.9984452Z Prepare workflow directory
+2025-04-09T00:24:13.0502461Z Prepare all required actions
+2025-04-09T00:24:13.0539082Z Getting action download info
+2025-04-09T00:24:13.2653506Z Download action repository 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' (SHA:11bd71901bbe5b1630ceea73d27597364c9af683)
+2025-04-09T00:24:13.3701938Z Download action repository 'actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b' (SHA:0aaccfd150d50ccaeb58ebd88d36e91967a5f35b)
+2025-04-09T00:24:13.6248635Z Download action repository 'hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd' (SHA:b9cd54a3c349d3f38e8881555d616ced269862dd)
+2025-04-09T00:24:13.8375554Z Uses: mongodb/terraform-provider-mongodbatlas/.github/workflows/acceptance-tests-runner.yml@refs/heads/master (317ca9b559ed1aec33c6f69acdf5c05ed9942b6b)
+2025-04-09T00:24:13.8410053Z Complete job name: tests-1.11.x-latest / tests-1.11.x-latest-false / cluster
+2025-04-09T00:24:13.9075992Z ##[group]Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+2025-04-09T00:24:13.9077392Z with:
+2025-04-09T00:24:13.9077903Z   ref: refs/heads/master
+2025-04-09T00:24:13.9078548Z   repository: mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:13.9079427Z   token: ***
+2025-04-09T00:24:13.9079919Z   ssh-strict: true
+2025-04-09T00:24:13.9080428Z   ssh-user: git
+2025-04-09T00:24:13.9080960Z   persist-credentials: true
+2025-04-09T00:24:13.9081524Z   clean: true
+2025-04-09T00:24:13.9082053Z   sparse-checkout-cone-mode: true
+2025-04-09T00:24:13.9082645Z   fetch-depth: 1
+2025-04-09T00:24:13.9083137Z   fetch-tags: false
+2025-04-09T00:24:13.9083663Z   show-progress: true
+2025-04-09T00:24:13.9084188Z   lfs: false
+2025-04-09T00:24:13.9084673Z   submodules: false
+2025-04-09T00:24:13.9085186Z   set-safe-directory: true
+2025-04-09T00:24:13.9085921Z env:
+2025-04-09T00:24:13.9086532Z   TF_ACC: 1
+2025-04-09T00:24:13.9087007Z   TF_LOG: ERROR
+2025-04-09T00:24:13.9087556Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:13.9088100Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:13.9088811Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:13.9090269Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:13.9090985Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:13.9091629Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:13.9092442Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:13.9093092Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:13.9093843Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:13.9094593Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:13.9096032Z ##[endgroup]
+2025-04-09T00:24:14.0333525Z Syncing repository: mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:14.0335539Z ##[group]Getting Git version info
+2025-04-09T00:24:14.0336992Z Working directory is '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-09T00:24:14.0338414Z [command]/usr/bin/git version
+2025-04-09T00:24:14.0457253Z git version 2.48.1
+2025-04-09T00:24:14.0499183Z ##[endgroup]
+2025-04-09T00:24:14.0517858Z Temporarily overriding HOME='/home/runner/work/_temp/c7eccea9-6a6b-4900-9f62-305f00c90291' before making global git config changes
+2025-04-09T00:24:14.0520054Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-09T00:24:14.0536057Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T00:24:14.0581987Z Deleting the contents of '/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas'
+2025-04-09T00:24:14.0586355Z ##[group]Initializing the repository
+2025-04-09T00:24:14.0593385Z [command]/usr/bin/git init /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T00:24:14.0676815Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-04-09T00:24:14.0678424Z hint: is subject to change. To configure the initial branch name to use in all
+2025-04-09T00:24:14.0679427Z hint: of your new repositories, which will suppress this warning, call:
+2025-04-09T00:24:14.0680181Z hint:
+2025-04-09T00:24:14.0680782Z hint: 	git config --global init.defaultBranch <name>
+2025-04-09T00:24:14.0681992Z hint:
+2025-04-09T00:24:14.0682770Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-04-09T00:24:14.0684247Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-04-09T00:24:14.0685824Z hint:
+2025-04-09T00:24:14.0686923Z hint: 	git branch -m <name>
+2025-04-09T00:24:14.0688978Z Initialized empty Git repository in /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/.git/
+2025-04-09T00:24:14.0698056Z [command]/usr/bin/git remote add origin https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:14.0735398Z ##[endgroup]
+2025-04-09T00:24:14.0737151Z ##[group]Disabling automatic garbage collection
+2025-04-09T00:24:14.0840223Z [command]/usr/bin/git config --local gc.auto 0
+2025-04-09T00:24:14.0843479Z ##[endgroup]
+2025-04-09T00:24:14.0844813Z ##[group]Setting up auth
+2025-04-09T00:24:14.0846388Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-09T00:24:14.0850202Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-09T00:24:14.1145760Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-09T00:24:14.1178649Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-09T00:24:14.1420280Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-04-09T00:24:14.1468202Z ##[endgroup]
+2025-04-09T00:24:14.1469122Z ##[group]Fetching the repository
+2025-04-09T00:24:14.1480448Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/master:refs/remotes/origin/master
+2025-04-09T00:24:14.4364231Z From https://github.com/mongodb/terraform-provider-mongodbatlas
+2025-04-09T00:24:14.4366657Z  * [new branch]      master     -> origin/master
+2025-04-09T00:24:14.4392427Z ##[endgroup]
+2025-04-09T00:24:14.4393830Z ##[group]Determining the checkout info
+2025-04-09T00:24:14.4395528Z ##[endgroup]
+2025-04-09T00:24:14.4401574Z [command]/usr/bin/git sparse-checkout disable
+2025-04-09T00:24:14.4442599Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-04-09T00:24:14.4472581Z ##[group]Checking out the ref
+2025-04-09T00:24:14.4475268Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2025-04-09T00:24:14.5339275Z Reset branch 'master'
+2025-04-09T00:24:14.5341239Z branch 'master' set up to track 'origin/master'.
+2025-04-09T00:24:14.5352047Z ##[endgroup]
+2025-04-09T00:24:14.5391656Z [command]/usr/bin/git log -1 --format=%H
+2025-04-09T00:24:14.5415387Z 317ca9b559ed1aec33c6f69acdf5c05ed9942b6b
+2025-04-09T00:24:14.5682895Z ##[group]Run actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
+2025-04-09T00:24:14.5684690Z with:
+2025-04-09T00:24:14.5685664Z   go-version-file: go.mod
+2025-04-09T00:24:14.5687068Z   check-latest: false
+2025-04-09T00:24:14.5688463Z   token: ***
+2025-04-09T00:24:14.5689441Z   cache: true
+2025-04-09T00:24:14.5690408Z env:
+2025-04-09T00:24:14.5691316Z   TF_ACC: 1
+2025-04-09T00:24:14.5692269Z   TF_LOG: ERROR
+2025-04-09T00:24:14.5693307Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:14.5694463Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:14.5696021Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:14.5699567Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:14.5701131Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:14.5702486Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:14.5704277Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:14.5705703Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:14.5707461Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:14.5709046Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:14.5712185Z ##[endgroup]
+2025-04-09T00:24:14.7327535Z Setup go version spec 1.24.1
+2025-04-09T00:24:14.7339088Z Attempting to download 1.24.1...
+2025-04-09T00:24:15.0343687Z matching 1.24.1...
+2025-04-09T00:24:15.0376503Z Acquiring 1.24.1 from https://github.com/actions/go-versions/releases/download/1.24.1-13667719799/go-1.24.1-linux-x64.tar.gz
+2025-04-09T00:24:15.5264887Z Extracting Go...
+2025-04-09T00:24:15.5401482Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/52992a7d-c178-48b5-bb71-cb12a565af79 -f /home/runner/work/_temp/e7ea0002-ef37-49df-adf0-c231b202d316
+2025-04-09T00:24:17.3274270Z Successfully extracted go to /home/runner/work/_temp/52992a7d-c178-48b5-bb71-cb12a565af79
+2025-04-09T00:24:17.3275164Z Adding to the cache ...
+2025-04-09T00:24:21.9044877Z Successfully cached go to /opt/hostedtoolcache/go/1.24.1/x64
+2025-04-09T00:24:21.9046680Z Added go to the path
+2025-04-09T00:24:21.9052202Z Successfully set up Go version 1.24.1
+2025-04-09T00:24:21.9247778Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOMODCACHE
+2025-04-09T00:24:21.9278528Z [command]/opt/hostedtoolcache/go/1.24.1/x64/bin/go env GOCACHE
+2025-04-09T00:24:21.9312837Z /home/runner/go/pkg/mod
+2025-04-09T00:24:21.9327796Z /home/runner/.cache/go-build
+2025-04-09T00:24:21.9781542Z Cache hit for: setup-go-Linux-x64-ubuntu24-go-1.24.1-9f1a6a4794311cf0a02a5503066292baa3f66becb0a872f76a0a6b8632bec774
+2025-04-09T00:24:23.0373365Z Received 226492416 of 471895081 (48.0%), 211.4 MBs/sec
+2025-04-09T00:24:23.9829433Z Received 471895081 of 471895081 (100.0%), 228.7 MBs/sec
+2025-04-09T00:24:23.9830610Z Cache Size: ~450 MB (471895081 B)
+2025-04-09T00:24:23.9912005Z [command]/usr/bin/tar -xf /home/runner/work/_temp/71b6b938-846d-4ee3-9aeb-727dff103246/cache.tzst -P -C /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas --use-compress-program unzstd
+2025-04-09T00:24:28.5571286Z Cache restored successfully
+2025-04-09T00:24:28.6555598Z Cache restored from key: setup-go-Linux-x64-ubuntu24-go-1.24.1-9f1a6a4794311cf0a02a5503066292baa3f66becb0a872f76a0a6b8632bec774
+2025-04-09T00:24:28.6577861Z go version go1.24.1 linux/amd64
+2025-04-09T00:24:28.6578078Z 
+2025-04-09T00:24:28.6578390Z ##[group]go env
+2025-04-09T00:24:28.7713516Z AR='ar'
+2025-04-09T00:24:28.7714027Z CC='gcc'
+2025-04-09T00:24:28.7714417Z CGO_CFLAGS='-O2 -g'
+2025-04-09T00:24:28.7714773Z CGO_CPPFLAGS=''
+2025-04-09T00:24:28.7715092Z CGO_CXXFLAGS='-O2 -g'
+2025-04-09T00:24:28.7715387Z CGO_ENABLED='1'
+2025-04-09T00:24:28.7715656Z CGO_FFLAGS='-O2 -g'
+2025-04-09T00:24:28.7715934Z CGO_LDFLAGS='-O2 -g'
+2025-04-09T00:24:28.7716417Z CXX='g++'
+2025-04-09T00:24:28.7716735Z GCCGO='gccgo'
+2025-04-09T00:24:28.7717021Z GO111MODULE=''
+2025-04-09T00:24:28.7717708Z GOAMD64='v1'
+2025-04-09T00:24:28.7718038Z GOARCH='amd64'
+2025-04-09T00:24:28.7718288Z GOAUTH='netrc'
+2025-04-09T00:24:28.7718546Z GOBIN=''
+2025-04-09T00:24:28.7718824Z GOCACHE='/home/runner/.cache/go-build'
+2025-04-09T00:24:28.7719174Z GOCACHEPROG=''
+2025-04-09T00:24:28.7719431Z GODEBUG=''
+2025-04-09T00:24:28.7719719Z GOENV='/home/runner/.config/go/env'
+2025-04-09T00:24:28.7720037Z GOEXE=''
+2025-04-09T00:24:28.7720282Z GOEXPERIMENT=''
+2025-04-09T00:24:28.7720542Z GOFIPS140='off'
+2025-04-09T00:24:28.7720790Z GOFLAGS=''
+2025-04-09T00:24:28.7721654Z GOGCCFLAGS='-fPIC -m64 -pthread -Wl,--no-gc-sections -fmessage-length=0 -ffile-prefix-map=/tmp/go-build2458311588=/tmp/go-build -gno-record-gcc-switches'
+2025-04-09T00:24:28.7722697Z GOHOSTARCH='amd64'
+2025-04-09T00:24:28.7722991Z GOHOSTOS='linux'
+2025-04-09T00:24:28.7723252Z GOINSECURE=''
+2025-04-09T00:24:28.7723803Z GOMOD='/home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas/go.mod'
+2025-04-09T00:24:28.7724428Z GOMODCACHE='/home/runner/go/pkg/mod'
+2025-04-09T00:24:28.7724759Z GONOPROXY=''
+2025-04-09T00:24:28.7725006Z GONOSUMDB=''
+2025-04-09T00:24:28.7725253Z GOOS='linux'
+2025-04-09T00:24:28.7725507Z GOPATH='/home/runner/go'
+2025-04-09T00:24:28.7725797Z GOPRIVATE=''
+2025-04-09T00:24:28.7726690Z GOPROXY='https://proxy.golang.org,direct'
+2025-04-09T00:24:28.7727145Z GOROOT='/opt/hostedtoolcache/go/1.24.1/x64'
+2025-04-09T00:24:28.7727519Z GOSUMDB='sum.golang.org'
+2025-04-09T00:24:28.7727813Z GOTELEMETRY='local'
+2025-04-09T00:24:28.7728148Z GOTELEMETRYDIR='/home/runner/.config/go/telemetry'
+2025-04-09T00:24:28.7728911Z GOTMPDIR=''
+2025-04-09T00:24:28.7729163Z GOTOOLCHAIN='auto'
+2025-04-09T00:24:28.7729644Z GOTOOLDIR='/opt/hostedtoolcache/go/1.24.1/x64/pkg/tool/linux_amd64'
+2025-04-09T00:24:28.7730077Z GOVCS=''
+2025-04-09T00:24:28.7730445Z GOVERSION='go1.24.1'
+2025-04-09T00:24:28.7730677Z GOWORK=''
+2025-04-09T00:24:28.7730900Z PKG_CONFIG='pkg-config'
+2025-04-09T00:24:28.7731063Z 
+2025-04-09T00:24:28.7731397Z ##[endgroup]
+2025-04-09T00:24:28.7886897Z ##[group]Run hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
+2025-04-09T00:24:28.7887363Z with:
+2025-04-09T00:24:28.7887585Z   terraform_version: 1.11.x
+2025-04-09T00:24:28.7887850Z   terraform_wrapper: false
+2025-04-09T00:24:28.7888150Z   cli_config_credentials_hostname: app.terraform.io
+2025-04-09T00:24:28.7888455Z env:
+2025-04-09T00:24:28.7888644Z   TF_ACC: 1
+2025-04-09T00:24:28.7888844Z   TF_LOG: ERROR
+2025-04-09T00:24:28.7889056Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:28.7889297Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:28.7889644Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:28.7890559Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:28.7890925Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:28.7891241Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:28.7891636Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:28.7891979Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:28.7892360Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:28.7892734Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:28.7893456Z ##[endgroup]
+2025-04-09T00:24:29.2110937Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/03b23eeb-529a-427f-9835-cce97bf64794
+2025-04-09T00:24:29.8409417Z ##[group]Run make testacc
+2025-04-09T00:24:29.8409763Z [36;1mmake testacc[0m
+2025-04-09T00:24:29.8461294Z shell: /usr/bin/bash -e {0}
+2025-04-09T00:24:29.8461564Z env:
+2025-04-09T00:24:29.8461758Z   TF_ACC: 1
+2025-04-09T00:24:29.8461991Z   TF_LOG: ERROR
+2025-04-09T00:24:29.8462262Z   ACCTEST_TIMEOUT: 300m
+2025-04-09T00:24:29.8462516Z   ACCTEST_REGEX_RUN: ^Test(Acc|Mig)
+2025-04-09T00:24:29.8462863Z   MONGODB_ATLAS_BASE_URL: https://cloud-dev.mongodb.com/
+2025-04-09T00:24:29.8463589Z   MONGODB_ATLAS_PUBLIC_KEY: ***
+2025-04-09T00:24:29.8463943Z   MONGODB_ATLAS_PRIVATE_KEY: ***
+2025-04-09T00:24:29.8464248Z   MONGODB_ATLAS_PUBLIC_KEY_READ_ONLY: ***
+2025-04-09T00:24:29.8464633Z   MONGODB_ATLAS_PRIVATE_KEY_READ_ONLY: ***
+2025-04-09T00:24:29.8464945Z   MONGODB_ATLAS_GOV_PUBLIC_KEY: ***
+2025-04-09T00:24:29.8465311Z   MONGODB_ATLAS_GOV_PRIVATE_KEY: ***
+2025-04-09T00:24:29.8465699Z   MONGODB_ATLAS_GOV_BASE_URL: https://cloud-dev.mongodbgov.com
+2025-04-09T00:24:29.8466702Z   MONGODB_ATLAS_LAST_VERSION: 1.31.0
+2025-04-09T00:24:29.8466995Z   ACCTEST_PACKAGES: ./internal/service/cluster
+2025-04-09T00:24:29.8467506Z ##[endgroup]
+2025-04-09T00:24:29.8800880Z ==> Checking that code complies with gofmt requirements...
+2025-04-09T00:24:30.1107032Z TF_ACC=1 go test ./internal/service/cluster -run '^Test(Acc|Mig)' -v -parallel 50  -timeout 300m -ldflags="-s -w -X 'github.com/mongodb/terraform-provider-mongodbatlas/version.ProviderVersion=317ca9b'"
+2025-04-09T00:24:30.1251896Z go: downloading github.com/hashicorp/terraform-plugin-testing v1.12.0
+2025-04-09T00:24:30.2000487Z go: downloading github.com/stretchr/testify v1.10.0
+2025-04-09T00:24:30.2945042Z go: downloading github.com/hashicorp/hc-install v0.9.1
+2025-04-09T00:24:30.2946045Z go: downloading github.com/hashicorp/terraform-exec v0.22.0
+2025-04-09T00:24:30.2946937Z go: downloading github.com/davecgh/go-spew v1.1.1
+2025-04-09T00:24:30.3103825Z go: downloading github.com/pmezard/go-difflib v1.0.0
+2025-04-09T00:24:30.3374412Z go: downloading github.com/hashicorp/terraform-json v0.24.0
+2025-04-09T00:24:30.3379940Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2025-04-09T00:24:30.5794488Z go: downloading github.com/hashicorp/go-checkpoint v0.5.0
+2025-04-09T00:24:30.5819720Z go: downloading golang.org/x/mod v0.22.0
+2025-04-09T00:24:30.5824666Z go: downloading github.com/ProtonMail/go-crypto v1.1.3
+2025-04-09T00:24:30.5891772Z go: downloading github.com/hashicorp/go-retryablehttp v0.7.7
+2025-04-09T00:24:30.6372503Z go: downloading github.com/cloudflare/circl v1.3.7
+2025-04-09T00:24:54.2436682Z === RUN   TestMigCluster_basicAWS_simple
+2025-04-09T00:24:56.9490455Z === PAUSE TestMigCluster_basicAWS_simple
+2025-04-09T00:24:56.9491137Z === RUN   TestMigCluster_partial_advancedConf
+2025-04-09T00:24:56.9491876Z === PAUSE TestMigCluster_partial_advancedConf
+2025-04-09T00:24:56.9493064Z === RUN   TestMigDefaultWriteReadAdvancedConf_advancedConf
+2025-04-09T00:24:56.9494270Z === PAUSE TestMigDefaultWriteReadAdvancedConf_advancedConf
+2025-04-09T00:24:56.9495075Z === RUN   TestAccClusterRSClusterMigrateState_empty_advancedConfig
+2025-04-09T00:24:56.9498177Z --- PASS: TestAccClusterRSClusterMigrateState_empty_advancedConfig (0.00s)
+2025-04-09T00:24:56.9498982Z === RUN   TestAccClusterRSClusterMigrateState_with_advancedConfig
+2025-04-09T00:24:56.9501164Z --- PASS: TestAccClusterRSClusterMigrateState_with_advancedConfig (0.00s)
+2025-04-09T00:24:56.9501871Z === RUN   TestAccClusterRSClusterMigrateState_with_defaultAdvancedConfig_v0_5_1
+2025-04-09T00:24:56.9503846Z --- PASS: TestAccClusterRSClusterMigrateState_with_defaultAdvancedConfig_v0_5_1 (0.00s)
+2025-04-09T00:24:56.9504690Z === RUN   TestAccCluster_basicAWS_simple
+2025-04-09T00:24:56.9505347Z === PAUSE TestAccCluster_basicAWS_simple
+2025-04-09T00:24:56.9505919Z === RUN   TestAccCluster_partial_advancedConf
+2025-04-09T00:24:56.9507160Z === PAUSE TestAccCluster_partial_advancedConf
+2025-04-09T00:24:56.9507839Z === RUN   TestAccCluster_basic_DefaultWriteRead_AdvancedConf
+2025-04-09T00:24:56.9508555Z === PAUSE TestAccCluster_basic_DefaultWriteRead_AdvancedConf
+2025-04-09T00:24:56.9509180Z === RUN   TestAccCluster_emptyAdvancedConf
+2025-04-09T00:24:56.9509735Z === PAUSE TestAccCluster_emptyAdvancedConf
+2025-04-09T00:24:56.9510254Z === RUN   TestAccCluster_basicAdvancedConf
+2025-04-09T00:24:56.9510764Z === PAUSE TestAccCluster_basicAdvancedConf
+2025-04-09T00:24:56.9511216Z === RUN   TestAccCluster_basicAzure
+2025-04-09T00:24:56.9511659Z === PAUSE TestAccCluster_basicAzure
+2025-04-09T00:24:56.9512123Z === RUN   TestAccCluster_basicGCP
+2025-04-09T00:24:56.9512601Z === PAUSE TestAccCluster_basicGCP
+2025-04-09T00:24:56.9513106Z === RUN   TestAccCluster_WithBiConnectorGCP
+2025-04-09T00:24:59.5512532Z === PAUSE TestAccCluster_WithBiConnectorGCP
+2025-04-09T00:24:59.5513298Z === RUN   TestAccCluster_MultiRegion
+2025-04-09T00:24:59.5513983Z === PAUSE TestAccCluster_MultiRegion
+2025-04-09T00:24:59.5514683Z === RUN   TestAccCluster_ProviderRegionName
+2025-04-09T00:24:59.5515273Z === PAUSE TestAccCluster_ProviderRegionName
+2025-04-09T00:24:59.5515717Z === RUN   TestAccCluster_Global
+2025-04-09T00:24:59.5516396Z === PAUSE TestAccCluster_Global
+2025-04-09T00:24:59.5517328Z === RUN   TestAccCluster_AWSWithLabels
+2025-04-09T00:25:01.8091458Z === PAUSE TestAccCluster_AWSWithLabels
+2025-04-09T00:25:01.8092157Z === RUN   TestAccCluster_WithTags
+2025-04-09T00:25:01.8092745Z === PAUSE TestAccCluster_WithTags
+2025-04-09T00:25:01.8093399Z === RUN   TestAccCluster_withPrivateEndpointLink
+2025-04-09T00:25:01.8094383Z     resource_cluster_test.go:771: 
+2025-04-09T00:25:01.8095119Z --- SKIP: TestAccCluster_withPrivateEndpointLink (0.00s)
+2025-04-09T00:25:01.8095932Z === RUN   TestAccCluster_withAzureNetworkPeering
+2025-04-09T00:25:01.8096970Z     resource_cluster_test.go:807: 
+2025-04-09T00:25:01.8097684Z --- SKIP: TestAccCluster_withAzureNetworkPeering (0.00s)
+2025-04-09T00:25:01.8098493Z === RUN   TestAccCluster_withGCPNetworkPeering
+2025-04-09T00:25:01.8099276Z     resource_cluster_test.go:842: 
+2025-04-09T00:25:01.8099966Z --- SKIP: TestAccCluster_withGCPNetworkPeering (0.00s)
+2025-04-09T00:25:01.8100648Z === RUN   TestAccCluster_withAzureAndContainerID
+2025-04-09T00:25:01.8101287Z     resource_cluster_test.go:876: 
+2025-04-09T00:25:01.8101842Z --- SKIP: TestAccCluster_withAzureAndContainerID (0.00s)
+2025-04-09T00:25:01.8102458Z === RUN   TestAccCluster_withAWSAndContainerID
+2025-04-09T00:25:01.8103054Z     resource_cluster_test.go:907: 
+2025-04-09T00:25:01.8103590Z --- SKIP: TestAccCluster_withAWSAndContainerID (0.00s)
+2025-04-09T00:25:01.8104181Z === RUN   TestAccCluster_withGCPAndContainerID
+2025-04-09T00:25:01.8104783Z     resource_cluster_test.go:938: 
+2025-04-09T00:25:01.8105326Z --- SKIP: TestAccCluster_withGCPAndContainerID (0.00s)
+2025-04-09T00:25:01.8105906Z === RUN   TestAccCluster_withAutoScalingAWS
+2025-04-09T00:25:01.8106587Z === PAUSE TestAccCluster_withAutoScalingAWS
+2025-04-09T00:25:01.8107100Z === RUN   TestAccCluster_tenant
+2025-04-09T00:25:01.8107545Z === PAUSE TestAccCluster_tenant
+2025-04-09T00:25:01.8107990Z === RUN   TestAccCluster_tenant_m5
+2025-04-09T00:25:01.8108457Z === PAUSE TestAccCluster_tenant_m5
+2025-04-09T00:25:01.8108990Z === RUN   TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-09T00:25:01.8109617Z === PAUSE TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-09T00:25:01.8110242Z === RUN   TestAccCluster_basicGCPRegionNameUSWest2
+2025-04-09T00:25:01.8110616Z === PAUSE TestAccCluster_basicGCPRegionNameUSWest2
+2025-04-09T00:25:01.8111090Z === RUN   TestAccCluster_RegionsConfig
+2025-04-09T00:25:01.8111588Z === PAUSE TestAccCluster_RegionsConfig
+2025-04-09T00:25:01.8112131Z === RUN   TestAccCluster_basicAWS_UnpauseToPaused
+2025-04-09T00:25:01.8112730Z === PAUSE TestAccCluster_basicAWS_UnpauseToPaused
+2025-04-09T00:25:01.8113328Z === RUN   TestAccCluster_basicAWS_PausedToUnpaused
+2025-04-09T00:25:01.8113967Z === PAUSE TestAccCluster_basicAWS_PausedToUnpaused
+2025-04-09T00:25:01.8114886Z === RUN   TestAccCluster_basic_RedactClientLogData
+2025-04-09T00:25:01.8115589Z === PAUSE TestAccCluster_basic_RedactClientLogData
+2025-04-09T00:25:01.8116397Z === RUN   TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:01.8117031Z === PAUSE TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:01.8117740Z === RUN   TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:01.8118547Z === PAUSE TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:01.8119203Z === CONT  TestMigCluster_basicAWS_simple
+2025-04-09T00:25:01.8119726Z === CONT  TestAccCluster_AWSWithLabels
+2025-04-09T00:25:01.8120225Z === CONT  TestAccCluster_Global
+2025-04-09T00:25:01.8120842Z === CONT  TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:01.8121548Z === CONT  TestAccCluster_basicGCPRegionNameUSWest2
+2025-04-09T00:25:01.8122137Z === CONT  TestAccCluster_basicAdvancedConf
+2025-04-09T00:25:01.8122693Z === CONT  TestAccCluster_ProviderRegionName
+2025-04-09T00:25:01.8123261Z === CONT  TestAccCluster_emptyAdvancedConf
+2025-04-09T00:25:01.8123877Z === CONT  TestAccCluster_basic_DefaultWriteRead_AdvancedConf
+2025-04-09T00:25:01.8124524Z === CONT  TestAccCluster_partial_advancedConf
+2025-04-09T00:25:01.8125079Z === CONT  TestAccCluster_basicAWS_simple
+2025-04-09T00:25:01.8125977Z === CONT  TestAccCluster_basicGCPRegionNameWesternUS
+2025-04-09T00:25:01.8126829Z === CONT  TestMigDefaultWriteReadAdvancedConf_advancedConf
+2025-04-09T00:25:01.8127460Z === CONT  TestAccCluster_MultiRegion
+2025-04-09T00:25:01.8128008Z === CONT  TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:01.8128606Z === CONT  TestMigCluster_partial_advancedConf
+2025-04-09T00:25:01.8129142Z === CONT  TestAccCluster_tenant_m5
+2025-04-09T00:25:01.8129603Z === CONT  TestAccCluster_tenant
+2025-04-09T00:25:01.8148200Z === CONT  TestAccCluster_WithBiConnectorGCP
+2025-04-09T00:25:01.8149183Z === CONT  TestAccCluster_basic_RedactClientLogData
+2025-04-09T00:25:01.8206804Z === CONT  TestAccCluster_basicAWS_PausedToUnpaused
+2025-04-09T00:25:01.8211053Z === CONT  TestAccCluster_withAutoScalingAWS
+2025-04-09T00:25:01.8212505Z === CONT  TestAccCluster_basicAWS_UnpauseToPaused
+2025-04-09T00:25:01.8214453Z === CONT  TestAccCluster_WithTags
+2025-04-09T00:25:01.8217724Z === CONT  TestAccCluster_basicAzure
+2025-04-09T00:25:01.8220681Z === CONT  TestAccCluster_basicGCP
+2025-04-09T00:25:01.8221171Z === CONT  TestAccCluster_RegionsConfig
+2025-04-09T00:25:03.8224798Z 2025-04-09T00:25:03.822Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=3fdcf262-0c84-ba00-010c-9a137891c933 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_cluster diagnostic_detail="" diagnostic_severity=ERROR diagnostic_summary="error creating MongoDB Cluster: provider_region_name attribute must be set ONLY for single-region clusters"
+2025-04-09T00:25:05.2181958Z 2025-04-09T00:25:05.217Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_detail="error deleting project (67f5be5fe7455b55f206ba40): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings], BadRequestDetail: " tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_req_id=857e37c9-d572-bbee-234b-ae8017e24831 tf_resource_type=mongodbatlas_project diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings"
+2025-04-09T00:25:05.2234158Z 2025-04-09T00:25:05.223Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1 test_name=TestAccCluster_create_RedactClientLogData test_terraform_path=/home/runner/work/_temp/e1168678-8c07-4b7c-90e2-5cd1a4ad8c2c/terraform test_working_directory=/tmp/plugintest1689344284
+2025-04-09T00:25:05.2236500Z   error=
+2025-04-09T00:25:05.2236946Z   | Error running apply: exit status 1
+2025-04-09T00:25:05.2237386Z   | 
+2025-04-09T00:25:05.2237883Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.2238229Z   | 
+2025-04-09T00:25:05.2238481Z   |   with mongodbatlas_project.test,
+2025-04-09T00:25:05.2239168Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.2239769Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.2240068Z   | 
+2025-04-09T00:25:05.2240385Z   | error deleting project (67f5be5fe7455b55f206ba40):
+2025-04-09T00:25:05.2241110Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings
+2025-04-09T00:25:05.2241905Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.2242554Z   | find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings. Reason:
+2025-04-09T00:25:05.2243225Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings],
+2025-04-09T00:25:05.2243672Z   | BadRequestDetail: 
+2025-04-09T00:25:05.2243958Z   
+2025-04-09T00:25:05.2244212Z === NAME  TestAccCluster_create_RedactClientLogData
+2025-04-09T00:25:05.2244878Z     resource_cluster_test.go:1369: Step 1/1 error: Error running apply: exit status 1
+2025-04-09T00:25:05.2245585Z         
+2025-04-09T00:25:05.2246122Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.2246941Z         
+2025-04-09T00:25:05.2247261Z           with mongodbatlas_project.test,
+2025-04-09T00:25:05.2247996Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.2248557Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.2248852Z         
+2025-04-09T00:25:05.2249207Z         error deleting project (67f5be5fe7455b55f206ba40):
+2025-04-09T00:25:05.2249870Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings
+2025-04-09T00:25:05.2250562Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.2251214Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings. Reason:
+2025-04-09T00:25:05.2251888Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba40/settings],
+2025-04-09T00:25:05.2252329Z         BadRequestDetail: 
+2025-04-09T00:25:05.2744864Z --- FAIL: TestAccCluster_create_RedactClientLogData (3.46s)
+2025-04-09T00:25:05.8058856Z 2025-04-09T00:25:05.805Z [ERROR] sdk.proto: Response contains error diagnostic: tf_req_id=4a266c66-1fcc-d401-18f4-de79e3f42d6c tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas diagnostic_severity=ERROR diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5fe7455b55f206ba3e): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings], BadRequestDetail: " tf_proto_version=6.8 tf_resource_type=mongodbatlas_project tf_rpc=ApplyResourceChange
+2025-04-09T00:25:05.8140004Z 2025-04-09T00:25:05.813Z [ERROR] sdk.helper_resource: Unexpected error: test_step_number=1
+2025-04-09T00:25:05.8140547Z   error=
+2025-04-09T00:25:05.8140916Z   | Error running apply: exit status 1
+2025-04-09T00:25:05.8141191Z   | 
+2025-04-09T00:25:05.8141616Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.8141971Z   | 
+2025-04-09T00:25:05.8142204Z   |   with mongodbatlas_project.test,
+2025-04-09T00:25:05.8142763Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.8143327Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.8143610Z   | 
+2025-04-09T00:25:05.8144170Z   | error deleting project (67f5be5fe7455b55f206ba3e):
+2025-04-09T00:25:05.8144795Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings
+2025-04-09T00:25:05.8145437Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.8146434Z   | find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings. Reason:
+2025-04-09T00:25:05.8147116Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings],
+2025-04-09T00:25:05.8147618Z   | BadRequestDetail: 
+2025-04-09T00:25:05.8148971Z    test_name=TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade test_terraform_path=/home/runner/work/_temp/e1168678-8c07-4b7c-90e2-5cd1a4ad8c2c/terraform test_working_directory=/tmp/plugintest1140974665
+2025-04-09T00:25:05.8150197Z === NAME  TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade
+2025-04-09T00:25:05.8150912Z     resource_cluster_test.go:1399: Step 1/7 error: Error running apply: exit status 1
+2025-04-09T00:25:05.8151338Z         
+2025-04-09T00:25:05.8151883Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:05.8152250Z         
+2025-04-09T00:25:05.8152658Z           with mongodbatlas_project.test,
+2025-04-09T00:25:05.8153361Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:05.8154373Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:25:05.8154679Z         
+2025-04-09T00:25:05.8155033Z         error deleting project (67f5be5fe7455b55f206ba3e):
+2025-04-09T00:25:05.8155686Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings
+2025-04-09T00:25:05.8156649Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:05.8157317Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings. Reason:
+2025-04-09T00:25:05.8157985Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba3e/settings],
+2025-04-09T00:25:05.8158436Z         BadRequestDetail: 
+2025-04-09T00:25:05.8592892Z --- FAIL: TestAccCluster_pinnedFCVWithVersionUpgradeAndDowngrade (4.05s)
+2025-04-09T00:25:06.4085396Z 2025-04-09T00:25:06.407Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" diagnostic_detail="error deleting project (67f5be5fe7455b55f206ba41): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings], BadRequestDetail: " diagnostic_severity=ERROR tf_resource_type=mongodbatlas_project tf_req_id=e483a539-400b-0766-a657-6c82e9864469 tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange
+2025-04-09T00:25:06.4130064Z 2025-04-09T00:25:06.412Z [ERROR] sdk.helper_resource: Unexpected error:
+2025-04-09T00:25:06.4130705Z   error=
+2025-04-09T00:25:06.4131062Z   | Error running apply: exit status 1
+2025-04-09T00:25:06.4131342Z   | 
+2025-04-09T00:25:06.4131688Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:25:06.4132052Z   | 
+2025-04-09T00:25:06.4132321Z   |   with mongodbatlas_project.cluster_project,
+2025-04-09T00:25:06.4132842Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "cluster_project":
+2025-04-09T00:25:06.4133363Z   |   12: \t\tresource "mongodbatlas_project" "cluster_project" {
+2025-04-09T00:25:06.4133672Z   | 
+2025-04-09T00:25:06.4133950Z   | error deleting project (67f5be5fe7455b55f206ba41):
+2025-04-09T00:25:06.4134494Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings
+2025-04-09T00:25:06.4135069Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:06.4136056Z   | find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings. Reason:
+2025-04-09T00:25:06.4137047Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings],
+2025-04-09T00:25:06.4137630Z   | BadRequestDetail: 
+2025-04-09T00:25:06.4138764Z    test_name=TestAccCluster_WithTags test_terraform_path=/home/runner/work/_temp/e1168678-8c07-4b7c-90e2-5cd1a4ad8c2c/terraform test_working_directory=/tmp/plugintest3133690186 test_step_number=1
+2025-04-09T00:25:06.4139753Z === NAME  TestAccCluster_WithTags
+2025-04-09T00:25:06.4140290Z     resource_cluster_test.go:698: Step 1/3 error: Error running apply: exit status 1
+2025-04-09T00:25:06.4140787Z         
+2025-04-09T00:25:06.4141283Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:06.4141698Z         
+2025-04-09T00:25:06.4142108Z           with mongodbatlas_project.cluster_project,
+2025-04-09T00:25:06.4143057Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "cluster_project":
+2025-04-09T00:25:06.4143734Z           12: 		resource "mongodbatlas_project" "cluster_project" {
+2025-04-09T00:25:06.4144077Z         
+2025-04-09T00:25:06.4144437Z         error deleting project (67f5be5fe7455b55f206ba41):
+2025-04-09T00:25:06.4145097Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings
+2025-04-09T00:25:06.4145971Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:06.4146865Z         find resource /api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings. Reason:
+2025-04-09T00:25:06.4147556Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fe7455b55f206ba41/settings],
+2025-04-09T00:25:06.4147996Z         BadRequestDetail: 
+2025-04-09T00:25:06.4335519Z 2025-04-09T00:25:06.432Z [ERROR] sdk.proto: Response contains error diagnostic: diagnostic_summary="error during project deletion when getting project settings" tf_provider_addr=registry.terraform.io/hashicorp/mongodbatlas tf_proto_version=6.8 tf_rpc=ApplyResourceChange tf_resource_type=mongodbatlas_project tf_req_id=4f9c6cf6-685a-91f7-c461-74449c9ff8bb diagnostic_detail="error deleting project (67f5be5fac5f3766222b19e9): https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings GET: HTTP 404 Not Found (Error code: \"RESOURCE_NOT_FOUND\") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings], BadRequestDetail: " diagnostic_severity=ERROR
+2025-04-09T00:25:06.4391136Z 2025-04-09T00:25:06.438Z [ERROR] sdk.helper_resource: Unexpected error: test_name=TestAccCluster_basic_RedactClientLogData test_terraform_path=/home/runner/work/_temp/e1168678-8c07-4b7c-90e2-5cd1a4ad8c2c/terraform test_working_directory=/tmp/plugintest4025225842 test_step_number=1
+2025-04-09T00:25:06.4392523Z   error=
+2025-04-09T00:25:06.4392787Z   | Error running apply: exit status 1
+2025-04-09T00:25:06.4393090Z   | 
+2025-04-09T00:25:06.4393524Z   | Error: error during project deletion when getting project settings
+2025-04-09T00:25:06.4393892Z   | 
+2025-04-09T00:25:06.4394209Z   |   with mongodbatlas_project.test,
+2025-04-09T00:25:06.4394667Z   |   on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:06.4395258Z   |   12: \t\tresource "mongodbatlas_project" "test" {
+2025-04-09T00:25:06.4395630Z   | 
+2025-04-09T00:25:06.4395964Z   | error deleting project (67f5be5fac5f3766222b19e9):
+2025-04-09T00:25:06.4397151Z   | https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings
+2025-04-09T00:25:06.4397977Z   | GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:06.4398891Z   | find resource /api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings. Reason:
+2025-04-09T00:25:06.4399867Z   | Not Found. Params: [/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings],
+2025-04-09T00:25:06.4400565Z   | BadRequestDetail: 
+2025-04-09T00:25:06.4400938Z   
+2025-04-09T00:25:06.4401594Z === NAME  TestAccCluster_basic_RedactClientLogData
+2025-04-09T00:25:06.4402332Z     resource_cluster_test.go:1329: Step 1/4 error: Error running apply: exit status 1
+2025-04-09T00:25:06.4402830Z         
+2025-04-09T00:25:06.4403459Z         Error: error during project deletion when getting project settings
+2025-04-09T00:25:06.4403940Z         
+2025-04-09T00:25:06.4404431Z           with mongodbatlas_project.test,
+2025-04-09T00:25:06.4405350Z           on terraform_plugin_test.tf line 12, in resource "mongodbatlas_project" "test":
+2025-04-09T00:25:06.4405993Z           12: 		resource "mongodbatlas_project" "test" {
+2025-04-09T00:25:06.4406523Z         
+2025-04-09T00:25:06.4407031Z         error deleting project (67f5be5fac5f3766222b19e9):
+2025-04-09T00:25:06.4407809Z         https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings
+2025-04-09T00:25:06.4408594Z         GET: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot
+2025-04-09T00:25:06.4409348Z         find resource /api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings. Reason:
+2025-04-09T00:25:06.4410119Z         Not Found. Params: [/api/atlas/v2/groups/67f5be5fac5f3766222b19e9/settings],
+2025-04-09T00:25:06.4410646Z         BadRequestDetail: 
+2025-04-09T00:25:06.4619009Z --- FAIL: TestAccCluster_WithTags (4.64s)
+2025-04-09T00:25:06.4888025Z --- FAIL: TestAccCluster_basic_RedactClientLogData (4.67s)
+2025-04-09T00:25:06.8105991Z === NAME  TestMigCluster_basicAWS_simple
+2025-04-09T00:25:06.8108472Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:06.810272298Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-7620919456182580585
+2025-04-09T00:25:11.8137735Z === NAME  TestAccCluster_AWSWithLabels
+2025-04-09T00:25:11.8140035Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:11.813473992Z, ProjectID: 67f5be5bac5f3766222b146b, Cluster name: test-acc-tf-c-290104398383210411
+2025-04-09T00:25:16.8175869Z === NAME  TestAccCluster_basicAdvancedConf
+2025-04-09T00:25:16.8177442Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:16.815169393Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-3769093334283633600
+2025-04-09T00:25:21.8188526Z === NAME  TestAccCluster_emptyAdvancedConf
+2025-04-09T00:25:21.8190155Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:21.818575058Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-386286460070499317
+2025-04-09T00:25:26.8214704Z === NAME  TestAccCluster_basic_DefaultWriteRead_AdvancedConf
+2025-04-09T00:25:26.8215858Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:26.821200533Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-1725614834934149723
+2025-04-09T00:25:31.8242673Z === NAME  TestAccCluster_partial_advancedConf
+2025-04-09T00:25:31.8244035Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:31.823989875Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-6333391281169509585
+2025-04-09T00:25:36.8267589Z === NAME  TestAccCluster_basicAWS_simple
+2025-04-09T00:25:36.8269108Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:36.826462495Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-8340267201877659232
+2025-04-09T00:25:41.8302974Z === NAME  TestMigDefaultWriteReadAdvancedConf_advancedConf
+2025-04-09T00:25:41.8304886Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:41.830002946Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-5093366983847057415
+2025-04-09T00:25:46.8319906Z === NAME  TestMigCluster_partial_advancedConf
+2025-04-09T00:25:46.8321554Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:46.831683863Z, ProjectID: 67f5be56ac5f3766222b0fa2, Cluster name: test-acc-tf-c-5207962382734823207
+2025-04-09T00:25:51.8352926Z === NAME  TestAccCluster_basicAWS_PausedToUnpaused
+2025-04-09T00:25:51.8355298Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:51.834968714Z, ProjectID: 67f5be5bac5f3766222b146b, Cluster name: test-acc-tf-c-4784541871906638285
+2025-04-09T00:25:56.8373161Z === NAME  TestAccCluster_withAutoScalingAWS
+2025-04-09T00:25:56.8374515Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:25:56.837047429Z, ProjectID: 67f5be5bac5f3766222b146b, Cluster name: test-acc-tf-c-2213764904443010286
+2025-04-09T00:26:01.8402916Z === NAME  TestAccCluster_basicAWS_UnpauseToPaused
+2025-04-09T00:26:01.8404227Z     pre_check.go:40: Time before creating cluster: 2025-04-09T00:26:01.840041712Z, ProjectID: 67f5be5bac5f3766222b146b, Cluster name: test-acc-tf-c-8903026348730665682
+2025-04-09T00:29:06.7039822Z --- PASS: TestAccCluster_tenant_m5 (244.89s)
+2025-04-09T00:34:10.9677114Z 2025/04/09 00:34:10 error setting `transaction_lifetime_limit_seconds` for MongoDB Cluster (): 0
+2025-04-09T00:35:17.6671909Z --- PASS: TestMigCluster_partial_advancedConf (615.86s)
+2025-04-09T00:36:54.5709475Z --- PASS: TestMigCluster_basicAWS_simple (715.47s)
+2025-04-09T00:37:03.6955946Z --- PASS: TestAccCluster_basic_DefaultWriteRead_AdvancedConf (721.88s)
+2025-04-09T00:37:09.9321023Z --- PASS: TestAccCluster_partial_advancedConf (728.12s)
+2025-04-09T00:37:10.1901524Z --- PASS: TestAccCluster_emptyAdvancedConf (728.38s)
+2025-04-09T00:39:10.2613100Z --- PASS: TestMigDefaultWriteReadAdvancedConf_advancedConf (848.45s)
+2025-04-09T00:39:35.9169570Z --- PASS: TestAccCluster_withAutoScalingAWS (874.09s)
+2025-04-09T00:39:36.9898817Z --- PASS: TestAccCluster_basicAdvancedConf (875.18s)
+2025-04-09T00:39:48.9815247Z --- PASS: TestAccCluster_Global (887.17s)
+2025-04-09T00:40:24.0180671Z --- PASS: TestAccCluster_basicAWS_simple (922.21s)
+2025-04-09T00:40:38.6182296Z --- PASS: TestAccCluster_basicGCPRegionNameWesternUS (936.81s)
+2025-04-09T00:41:01.1353951Z --- PASS: TestAccCluster_basicAzure (959.31s)
+2025-04-09T00:42:11.4145447Z --- PASS: TestAccCluster_WithBiConnectorGCP (1032.20s)
+2025-04-09T00:42:11.4854163Z --- PASS: TestAccCluster_basicGCP (1029.65s)
+2025-04-09T00:42:39.3654670Z --- PASS: TestAccCluster_basicGCPRegionNameUSWest2 (1057.55s)
+2025-04-09T00:44:40.2159657Z --- PASS: TestAccCluster_basicAWS_UnpauseToPaused (1178.38s)
+2025-04-09T00:45:19.5082144Z --- PASS: TestAccCluster_basicAWS_PausedToUnpaused (1217.69s)
+2025-04-09T00:46:41.5666939Z --- PASS: TestAccCluster_AWSWithLabels (1302.01s)
+2025-04-09T00:54:23.2883880Z --- PASS: TestAccCluster_ProviderRegionName (1761.48s)
+2025-04-09T00:56:53.7374949Z --- PASS: TestAccCluster_MultiRegion (1911.93s)
+2025-04-09T00:59:12.0128028Z 2025-04-09T00:59:12.012Z [ERROR] sdk.helper_resource: Unexpected error: test_terraform_path=/home/runner/work/_temp/e1168678-8c07-4b7c-90e2-5cd1a4ad8c2c/terraform test_name=TestAccCluster_tenant test_working_directory=/tmp/plugintest2004256053 test_step_number=2 error="Check failed: Check 4/5 error: mongodbatlas_cluster.tenant: Attribute 'disk_size_gb' expected \"10\", got \"5\""
+2025-04-09T00:59:12.0130422Z === NAME  TestAccCluster_tenant
+2025-04-09T00:59:12.0131855Z     resource_cluster_test.go:1029: Step 2/2 error: Check failed: Check 4/5 error: mongodbatlas_cluster.tenant: Attribute 'disk_size_gb' expected "10", got "5"
+2025-04-09T01:00:42.6195226Z --- FAIL: TestAccCluster_tenant (2140.81s)
+2025-04-09T01:07:37.0117403Z --- PASS: TestAccCluster_RegionsConfig (2555.18s)
+2025-04-09T01:07:37.0118203Z FAIL
+2025-04-09T01:07:37.0118785Z Deleting execution project (1): test-acc-tf-p-6748486689259177197, id: 67f5be56ac5f3766222b0fa2
+2025-04-09T01:07:37.0486715Z Project deletion failed: 67f5be56ac5f3766222b0fa2, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be56ac5f3766222b0fa2 DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be56ac5f3766222b0fa2. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be56ac5f3766222b0fa2], BadRequestDetail: Deleting execution project (2): test-acc-tf-p-5826291014520825301, id: 67f5be58ac5f3766222b1200
+2025-04-09T01:07:37.0861469Z Project deletion failed: 67f5be58ac5f3766222b1200, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be58ac5f3766222b1200 DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be58ac5f3766222b1200. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be58ac5f3766222b1200], BadRequestDetail: Deleting execution project (3): test-acc-tf-p-2667184404520592440, id: 67f5be5bac5f3766222b146b
+2025-04-09T01:07:37.1136890Z Project deletion failed: 67f5be5bac5f3766222b146b, error: https://cloud-dev.mongodb.com/api/atlas/v2/groups/67f5be5bac5f3766222b146b DELETE: HTTP 404 Not Found (Error code: "RESOURCE_NOT_FOUND") Detail: Cannot find resource /api/atlas/v2/groups/67f5be5bac5f3766222b146b. Reason: Not Found. Params: [/api/atlas/v2/groups/67f5be5bac5f3766222b146b], BadRequestDetail: 
+2025-04-09T01:07:37.1138774Z FAIL	github.com/mongodb/terraform-provider-mongodbatlas/internal/service/cluster	2562.882s
+2025-04-09T01:07:37.1270729Z FAIL
+2025-04-09T01:07:37.2503828Z make: *** [Makefile:78: testacc] Error 1
+2025-04-09T01:07:37.2522709Z ##[error]Process completed with exit code 2.
+2025-04-09T01:07:37.2601435Z Post job cleanup.
+2025-04-09T01:07:37.3522422Z [command]/usr/bin/git version
+2025-04-09T01:07:37.3557876Z git version 2.48.1
+2025-04-09T01:07:37.3601583Z Temporarily overriding HOME='/home/runner/work/_temp/03a10b7e-cfa2-48c8-9f64-d6e53bee4c24' before making global git config changes
+2025-04-09T01:07:37.3603003Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-09T01:07:37.3617139Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/terraform-provider-mongodbatlas/terraform-provider-mongodbatlas
+2025-04-09T01:07:37.3655123Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-09T01:07:37.3688398Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-09T01:07:37.3926538Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-09T01:07:37.3946731Z http.https://github.com/.extraheader
+2025-04-09T01:07:37.3959253Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-04-09T01:07:37.3989969Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-09T01:07:37.4325668Z Cleaning up orphan processes

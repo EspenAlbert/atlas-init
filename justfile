@@ -4,16 +4,22 @@ default:
     just --list
 pre-push: lint fmt-check build test
   @echo "All checks passed"
+quick: fmt fix lint
+  @echo "All quick checks passed"
 build:
   uv run scripts/file_utils.py check
   uv run scripts/file_utils.py copy
   uv run scripts/file_utils.py generate
   uv build
   uv run scripts/file_utils.py clean
+clean:
+  uv run scripts/file_utils.py clean
 file-check:
   uv run scripts/file_utils.py check
 file-generate:
   uv run scripts/file_utils.py generate
+file-provider:
+  uv run scripts/file_utils.py provider-version
 fix:
   uv run ruff check --fix .
 fix-unsafe:
@@ -31,7 +37,7 @@ sec-test:
 test-cov reportFormat="xml":
   uv run pytest --cov --cov-report={{reportFormat}}
 test:
-  uv run pytest
+  export SKIP_MARKED_TESTS=true && uv run pytest
 test-file filename:
   uv run pytest {{filename}}
 type-check:
