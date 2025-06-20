@@ -155,8 +155,8 @@ def create_short_summary(test_results: dict[str, list[GoTestRun]], failing_names
         fail_tests = test_results[fail_name]
         summary.append(f"- {fail_name} has {len(fail_tests)} failures:")
         summary.extend(
-            f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})"
-            for fail_run in fail_tests  # type: ignore
+            f"  - [{fail_run.when} failed in {fail_run.runtime_human}]({fail_run.url})"  # type: ignore
+            for fail_run in fail_tests
         )
         summary_fail_details.append(f"\n\n ## {fail_name} details:")
         summary_fail_details.extend(f"```\n{fail_run.finish_summary()}\n```" for fail_run in fail_tests)  # type: ignore
