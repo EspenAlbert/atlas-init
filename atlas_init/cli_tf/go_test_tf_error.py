@@ -92,10 +92,8 @@ class GoTestAPIError(Entity):
         return self
 
     def add_info_fields(self, info: DetailsInfo) -> None:
-        path = self.api_path
-        method = self.api_method
         if api_paths := info.paths:
-            self.api_path_normalized = api_paths.normalize_path(method, path)
+            self.api_path_normalized = api_paths.normalize_path(self.api_method, self.api_path)
 
     def __str__(self) -> str:
         resource_part = f"{self.tf_resource_type} " if self.tf_resource_type else ""

@@ -89,7 +89,9 @@ class ApiResourcesConfig(BaseModel):
     def get_resources_with_operation(self, operation: str) -> List[str]:
         """Get list of resources that support a specific operation"""
         result = []
-        for name, config in self.resources.items():
-            if hasattr(config, operation) and getattr(config, operation) is not None:
-                result.append(name)
+        result.extend(
+            name
+            for name, config in self.resources.items()
+            if hasattr(config, operation) and getattr(config, operation) is not None
+        )
         return result

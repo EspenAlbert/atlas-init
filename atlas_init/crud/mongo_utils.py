@@ -73,15 +73,11 @@ class MongoQueryOperation(StrEnum):
 
     @classmethod
     def in_or_none(cls, options: Iterable[Any] | None) -> dict | None:
-        if options is None:
-            return None
-        return {cls.in_: list(options)}
+        return None if options is None else {cls.in_: list(options)}
 
     @classmethod
     def nin_or_none(cls, options: Iterable[Any] | None) -> dict | None:
-        if options is None:
-            return None
-        return {cls.nin: list(options)}
+        return None if options is None else {cls.nin: list(options)}
 
 
 duplicate_key_regex = re.compile(
@@ -146,9 +142,7 @@ def raise_mongo_constraint_error(f: T = None, *, cls: Type[ConstraintSubT] = Mon
 
         return inner
 
-    if f:
-        return decorator(f)  # type: ignore
-    return decorator  # type: ignore
+    return decorator(f) if f else decorator  # type: ignore
 
 
 def dump_with_id(

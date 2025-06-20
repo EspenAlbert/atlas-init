@@ -28,6 +28,7 @@ def test_terraform_resource_test_names(tf_repo_path):
     tests = terraform_resource_test_names(tf_repo_path)
     assert tests
     logger.info(f"found {len(tests)} resources")
+    # sourcery skip: no-loop-in-tests
     for name, resource_tests in tests.items():
         logger.info(f"resource: {name}")
         for test_name in resource_tests:

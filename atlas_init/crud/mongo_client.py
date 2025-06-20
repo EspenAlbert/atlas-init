@@ -53,15 +53,15 @@ def get_db(mongo_url: str, db_name: str) -> AsyncIOMotorDatabase:
 async def init_mongo(
     mongo_url: str, db_name: str, clean_collections: bool = False, document_models: CollectionConfigsT | None = None
 ) -> None:
-    db: AsyncIOMotorDatabase = get_db(mongo_url, db_name)
+    db = get_db(mongo_url, db_name)
     document_models = document_models or default_document_models()
-    for t, config in document_models.items():
-        name = config.name or t.__name__
-        col = await ensure_collection_exist(db, name, config.indexes, clean_collection=clean_collections)
-        _collections[t] = col
+    for model, cfg in document_models.items():
+        name = cfg.name or model.__name__
+        col = await ensure_collection_exist(db, name, cfg.indexes, clean_collections)
+        _collections[model] = col
+
     if clean_collections:
-        await _empty_collections()
-        logger.info(f"MongoDB collections in database '{db_name}' have been cleaned.")
+        logger.info(f"MongoDB collections in '{db_name}' have been cleaned.")
 
 
 async def ensure_collection_exist(
@@ -70,20 +70,20 @@ async def ensure_collection_exist(
     indexes: list[IndexModel] | None = None,
     clean_collection: bool = False,
 ) -> AsyncIOMotorCollection:
-    try:
-        collection = await db.create_collection(name)
-    except Exception as e:
-        if "already exists" not in str(e):
-            raise e
-        collection = db[name]
-        if clean_collection:
-            await collection.drop()
-        collection = db[name]
-    else:
-        if indexes:
-            await collection.create_indexes(indexes)
-    logger.debug(f"mongo collection {name} is ready")
-    return collection
+    existing = await db.list_collection_names()
+    if clean_collection and name in existing:
+        await db.drop_collection(name)
+        existing.remove(name)
+
+    if name not in existing:
+        await db.create_collection(name)
+
+    if indexes:
+        # always (re-)create indexes after new creation or drop
+        await db[name].create_indexes(indexes)
+
+    logger.debug(f"mongo collection {name!r} is ready")
+    return db[name]
 
 
 def duplicate_key_pattern(error: DuplicateKeyError) -> str | None:

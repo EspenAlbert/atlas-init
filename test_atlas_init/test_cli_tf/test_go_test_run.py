@@ -122,7 +122,6 @@ def test_parsing_ci_logs(
         if found_tests_by_name[test_name].status != expected_status
     ]
     assert not non_matching_statuses, f"Test statuses do not match: {non_matching_statuses}"
-    # sourcery skip: no-loop-in-tests
     # sourcery skip: no-conditionals-in-tests
     if not test_output:
         return
