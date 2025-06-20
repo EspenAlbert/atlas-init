@@ -152,7 +152,7 @@ def raise_mongo_constraint_error(f: T = None, *, cls: Type[ConstraintSubT] = Mon
 
 
 def dump_with_id(
-    model: ModelT,
+    model: BaseModel,
     id: str = "",
     dt_keys: Optional[List[str]] = None,
     property_keys: Optional[List[str]] = None,
@@ -163,7 +163,7 @@ def dump_with_id(
         If you want to index on datetime, you have to set them afterwards
         As they will be dumped as strings
     """
-    raw = dump_as_dict(model) if exclude is None else dump_as_dict(model.dict(exclude=exclude))
+    raw = dump_as_dict(model) if exclude is None else dump_as_dict(model.model_dump(exclude=exclude))
     if id:
         raw["_id"] = id
     if dt_keys:
