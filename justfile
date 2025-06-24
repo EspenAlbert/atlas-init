@@ -50,3 +50,8 @@ bump bump-type='patch':
 [positional-arguments]
 run *args:
   uv run atlas-init {{args}}
+
+[positional-arguments]
+tf-dep *args:
+  uv run tf-dep {{args}}
+
