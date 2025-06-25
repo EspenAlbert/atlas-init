@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import ClassVar
@@ -51,12 +52,30 @@ class TfVarUsage(IgnoreFalsy):
         payload["example_paths"] = sorted(self.example_paths)
         return payload
 
+    def name_match(self, name_substrings: list[str]) -> bool:
+        return any(substring in self.name for substring in name_substrings)
+
 
 class TfVarsUsage(RootModel[dict[str, TfVarUsage]]):
     def add_variable(self, variable: str, variable_description: str | None, example_dir: Path):
         if variable not in self.root:
             self.root[variable] = TfVarUsage(name=variable, example_paths=[])
         self.root[variable].update(variable_description, example_dir)
+
+    def external_vars(self, name_substrings: list[str], name_skip_substrings: list[str]) -> TfVarsUsage:
+        return type(self)(
+            root={
+                name: usage
+                for name, usage in self.root.items()
+                if usage.name_match(name_substrings) and not usage.name_match(name_skip_substrings)
+            }
+        )
+
+
+def vars_usage_dumping(variables: TfVarsUsage) -> str:
+    vars_model = variables.model_dump()
+    vars_model = dict(sorted(vars_model.items()))
+    return dump(vars_model, format="yaml")
 
 
 def tf_vars(
@@ -71,12 +90,17 @@ def tf_vars(
     logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
     variables = parse_all_variables(example_dirs)
     logger.info(f"Found {len(variables.root)} variables in the examples.")
-    vars_model = variables.model_dump()
-    vars_model = dict(sorted(vars_model.items()))
-    vars_yaml = dump(vars_model, format="yaml")
-    out_path = settings.vars_file_path
-    ensure_parents_write_text(out_path, vars_yaml)
-    logger.info(f"Variables usage written to {out_path}")
+    vars_yaml = vars_usage_dumping(variables)
+    ensure_parents_write_text(settings.vars_file_path, vars_yaml)
+    logger.info(f"Variables usage written to {settings.vars_file_path}")
+    external_vars = variables.external_vars(
+        name_substrings=["aws", "gcp", "azure"], name_skip_substrings=["atlas", "mongo"]
+    )
+    if external_vars.root:
+        logger.info(f"Found {len(external_vars.root)} external variables: {', '.join(external_vars.root.keys())}")
+        external_vars_yaml = vars_usage_dumping(external_vars)
+        ensure_parents_write_text(settings.vars_external_file_path, external_vars_yaml)
+        logger.info(f"External variables usage written to {settings.vars_external_file_path}")
 
 
 def parse_schema_resource_types(example_dir: Path) -> list[str]:
