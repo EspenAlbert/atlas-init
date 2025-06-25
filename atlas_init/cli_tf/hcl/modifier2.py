@@ -58,21 +58,38 @@ def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> tuple[
     return AttributeTransformer(with_meta=True), changes
 
 
-def variable_reader(tree: Tree) -> set[str]:
+def variable_reader(tree: Tree) -> dict[str, str | None]:
     """
     Reads the variable names from a parsed HCL2 tree.
-    Returns a set of variable names.
+    Returns a variable_name -> description, None if no description is found.
     """
-    variables = set()
+    variables: dict[str, str | None] = {}
+
+    class DescriptionReader(DictTransformer):
+        def __init__(self, with_meta: bool = False, *, name: str):
+            super().__init__(with_meta)
+            self.name = name
+            self.description: str | None = None
+
+        def attribute(self, args: list) -> Attribute:
+            name = args[0]
+            if name == "description":
+                description = args[-1]
+                if isinstance(description, Token):
+                    self.description = token_name(description)
+                else:
+                    self.description = description.strip('"')
+            return super().attribute(args)
 
     class BlockReader(Transformer):
         @v_args(tree=True)
         def block(self, block_tree: Tree) -> Tree:
             current_block_name = _identifier_name(block_tree)
             if current_block_name == "variable":
-                variable_token = block_tree.children[1]
-                assert isinstance(variable_token, Token)
-                variables.add(variable_token.value.strip('"'))
+                variable_name = token_name(block_tree.children[1])
+                reader = DescriptionReader(name=variable_name)
+                reader.transform(block_tree)
+                variables[variable_name] = reader.description
             return block_tree
 
     BlockReader().transform(tree)
@@ -122,6 +139,10 @@ def _block_resource_name(tree: Tree) -> str | None:
     if block_name != "resource":
         return None
     token = tree.children[1]
+    return token_name(token)
+
+
+def token_name(token):
     assert isinstance(token, Token)
     token_value = token.value
     assert isinstance(token_value, str)

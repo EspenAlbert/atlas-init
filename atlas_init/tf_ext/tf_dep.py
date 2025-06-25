@@ -15,9 +15,9 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fi
 from typer import Typer
 from zero_3rdparty.iter_utils import flat_map
 
-from atlas_init.cli_tf.hcl.modifier2 import safe_parse, variable_reader, variable_usages
 from atlas_init.settings.rich_utils import configure_logging
-from atlas_init.tf_ext.args import REPO_PATH_ARG
+from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.paths import find_variable_resource_type_usages, find_variables, get_example_directories
 from atlas_init.tf_ext.settings import TfDepSettings
 
 logger = logging.getLogger(__name__)
@@ -37,12 +37,6 @@ def is_v2_example_dir(example_dir: Path) -> bool:
     parent_dir = example_dir.parent.name
     grand_parent_dir = example_dir.parent.parent.name
     return parent_dir in v2_parent_dir or grand_parent_dir in v2_grand_parent_dirs
-
-
-def default_skippped_directories() -> list[str]:
-    return [
-        "prometheus-and-teams",  #  Provider registry.terraform.io/hashicorp/template v2.2.0 does not have a package available for your current platform, darwin_arm64.
-    ]
 
 
 def default_modules() -> list[str]:
@@ -67,13 +61,7 @@ def default_skippped_module_resource_types() -> list[str]:
 
 def tf_dep(
     repo_path: Path = REPO_PATH_ARG,
-    skip_names: list[str] = typer.Option(
-        ...,
-        "--skip-examples",
-        help="Skip example directories with these names",
-        default_factory=default_skippped_directories,
-        show_default=True,
-    ),
+    skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
     modules: list[str] = typer.Option(
         ...,
         "-m",
@@ -96,12 +84,7 @@ def tf_dep(
     settings = TfDepSettings.from_env()
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
-    example_dirs = find_example_dirs(repo_path)
-    logger.info(f"Found {len(example_dirs)} exaple directories in {repo_path}")
-    if skip_names:
-        len_before = len(example_dirs)
-        example_dirs = [d for d in example_dirs if d.name not in skip_names]
-        logger.info(f"Skipped {len_before - len(example_dirs)} example directories with names: {skip_names}")
+    example_dirs = get_example_directories(repo_path, skip_names)
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = parse_graphs(example_dirs, task)
         for src, dsts in sorted(atlas_graph.parent_child_edges.items()):
@@ -124,13 +107,6 @@ def tf_dep(
 def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
     out_path.mkdir(parents=True, exist_ok=True)
     dot_graph.write_png(out_path / filename)  # type: ignore
-
-
-def find_example_dirs(repo_path: Path) -> list[Path]:
-    example_dirs: set[Path] = {
-        tf_file.parent for tf_file in (repo_path / "examples").rglob("*.tf") if ".terraform" not in tf_file.parts
-    }
-    return sorted(example_dirs)
 
 
 def print_edges(graph: pydot.Dot):
@@ -280,7 +256,7 @@ class AtlasGraph:
         """Use the variables to find the resource dependencies."""
         if not (variables := find_variables(example_dir / "variables.tf")):
             return
-        usages = find_variable_resource_type_usages(variables, example_dir)
+        usages = find_variable_resource_type_usages(set(variables), example_dir)
         for variable, resource_types in usages.items():
             if parent_type := VARIABLE_RESOURCE_MAPPING.get(variable):
                 for child_type in resource_types:
@@ -289,27 +265,6 @@ class AtlasGraph:
                     if child_type.startswith(ATLAS_PROVIDER_NAME):
                         logger.info(f"Adding variable edge: {parent_type} -> {child_type}")
                         self.parent_child_edges[parent_type].add(child_type)
-
-
-def find_variables(variables_tf: Path) -> set[str]:
-    tree = safe_parse(variables_tf)
-    if not tree:
-        logger.warning(f"Failed to parse {variables_tf}")
-        return set()
-    return variable_reader(tree)
-
-
-def find_variable_resource_type_usages(variables: set[str], example_dir: Path) -> dict[str, set[str]]:
-    usages = defaultdict(set)
-    for path in example_dir.glob("*.tf"):
-        tree = safe_parse(path)
-        if not tree:
-            logger.warning(f"Failed to parse {path}")
-            continue
-        path_usages = variable_usages(variables, tree)
-        for variable, resources in path_usages.items():
-            usages[variable].update(resources)
-    return usages
 
 
 def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16, max_dirs: int = 9999) -> AtlasGraph:
