@@ -1,5 +1,8 @@
+from pathlib import Path
 from model_lib import StaticSettings
 
 
 class TfDepSettings(StaticSettings):
-    pass
+    @property
+    def vars_file_path(self) -> Path:
+        return self.static_root / "tf_vars.yaml"

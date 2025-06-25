@@ -3,11 +3,13 @@ from pathlib import Path
 from typing import ClassVar
 
 from ask_shell import run_and_wait
-from model_lib import Entity
-from pydantic import Field
+from model_lib import IgnoreFalsy, dump
+from pydantic import Field, RootModel
+from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
 from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
 from atlas_init.tf_ext.paths import find_variables, get_example_directories
+from atlas_init.tf_ext.settings import TfDepSettings
 from atlas_init.tf_ext.tf_dep import ATLAS_PROVIDER_NAME
 
 logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ def parse_provider_resurce_schema(schema: dict, provider_name: str) -> dict:
     raise ValueError(f"Provider '{provider_name}' not found in schema.")
 
 
-class TfVarUsage(Entity):
+class TfVarUsage(IgnoreFalsy):
     name: str = Field(..., description="Name of the Terraform variable.")
     descriptions: set[str] = Field(default_factory=set, description="Set of descriptions for the variable.")
     example_paths: list[Path] = Field(
@@ -44,29 +46,37 @@ class TfVarUsage(Entity):
     def __str__(self):
         return instance_repr(self, ["name", "descriptions", "paths_str"])
 
+    def dump_dict_modifier(self, payload: dict) -> dict:
+        payload["descriptions"] = sorted(self.descriptions)
+        payload["example_paths"] = sorted(self.example_paths)
+        return payload
 
-class TfVarsUsage(Entity):
-    variables: dict[str, TfVarUsage] = Field(
-        default_factory=dict, description="List of Terraform variable usages in the repository."
-    )
 
+class TfVarsUsage(RootModel[dict[str, TfVarUsage]]):
     def add_variable(self, variable: str, variable_description: str | None, example_dir: Path):
-        if variable not in self.variables:
-            self.variables[variable] = TfVarUsage(name=variable, example_paths=[])
-        self.variables[variable].update(variable_description, example_dir)
+        if variable not in self.root:
+            self.root[variable] = TfVarUsage(name=variable, example_paths=[])
+        self.root[variable].update(variable_description, example_dir)
 
 
 def tf_vars(
     repo_path: Path = REPO_PATH_ARG,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
 ):
+    settings = TfDepSettings.from_env()
     logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
     example_dirs = get_example_directories(repo_path, skip_names)
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
     resource_types = parse_schema_resource_types(example_dirs[0])
     logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
     variables = parse_all_variables(example_dirs)
-    logger.info(f"Found {len(variables.variables)} variables in the examples.")
+    logger.info(f"Found {len(variables.root)} variables in the examples.")
+    vars_model = variables.model_dump()
+    vars_model = dict(sorted(vars_model.items()))
+    vars_yaml = dump(vars_model, format="yaml")
+    out_path = settings.vars_file_path
+    ensure_parents_write_text(out_path, vars_yaml)
+    logger.info(f"Variables usage written to {out_path}")
 
 
 def parse_schema_resource_types(example_dir: Path) -> list[str]:
@@ -77,7 +87,7 @@ def parse_schema_resource_types(example_dir: Path) -> list[str]:
 
 
 def parse_all_variables(examples_dirs: list[Path]) -> TfVarsUsage:
-    variables_usage = TfVarsUsage()
+    variables_usage = TfVarsUsage(root={})
     for example_dir in examples_dirs:
         variables_tf = example_dir / "variables.tf"
         if not variables_tf.exists():
