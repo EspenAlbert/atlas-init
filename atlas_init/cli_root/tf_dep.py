@@ -74,7 +74,7 @@ def tf_dep(
         ...,
         "--skip-examples",
         help="Skip example directories with these names",
-        default_factory=list,
+        default_factory=default_skippped_directories,
         show_default=True,
     ),
     modules: list[str] = typer.Option(
@@ -94,12 +94,14 @@ def tf_dep(
         show_default=True,
     ),
 ):
-    example_dirs = find_example_dirs(repo_path)
-    logger.info(f"Found {len(example_dirs)} example directories in {repo_path}")
     settings = TfDepSettings.from_env()
+    output_dir = settings.static_root
+    logger.info(f"Using output directory: {output_dir}")
+    example_dirs = find_example_dirs(repo_path)
+    logger.info(f"Found {len(example_dirs)} exaple directories in {repo_path}")
     if skip_names:
         len_before = len(example_dirs)
-        example_dirs = [d for d in example_dirs if not any(skip_name == d.name for skip_name in skip_names)]
+        example_dirs = [d for d in example_dirs if d.name not in skip_names]
         logger.info(f"Skipped {len_before - len(example_dirs)} example directories with names: {skip_names}")
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = parse_graphs(example_dirs, task)
@@ -107,7 +109,7 @@ def tf_dep(
             logger.info(f"{src} -> {', '.join(sorted(dsts))}")
     with new_task("Write graphs"):
         write_graph(create_internal_dependencies(atlas_graph), settings.static_root, "atlas_internal.png")
-        write_graph(create_external_dependencies(atlas_graph), settings.static_root, "atlas_external.png")
+        write_graph(create_external_dependencies(atlas_graph), output_dir, "atlas_external.png")
     with new_task("Write module graphs"):
         used_resource_types: set[str] = set(
             skipped_module_resource_types
@@ -121,8 +123,8 @@ def tf_dep(
 
 
 def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    dot_graph.write_png(filename)  # type: ignore
+    out_path.mkdir(parents=True, exist_ok=True)
+    dot_graph.write_png(out_path / filename)  # type: ignore
 
 
 def find_example_dirs(repo_path: Path) -> list[Path]:
@@ -369,7 +371,7 @@ class EmptyGraphOutputError(Exception):
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_fixed(1),
-    retry=retry_if_exception_type(),
+    retry=retry_if_exception_type(EmptyGraphOutputError),
     reraise=True,
 )
 def parse_graph(example_dir: Path) -> tuple[Path, str]:
