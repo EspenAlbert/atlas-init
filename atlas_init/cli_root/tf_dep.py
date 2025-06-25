@@ -60,10 +60,11 @@ def default_modules() -> list[str]:
 def default_skippped_module_resource_types() -> list[str]:
     return [
         "mongodbatlas_cluster",
-        "mongodbatlas_stream_processor",
+        "mongodbatlas_flex_cluster",
         "mongodbatlas_stream_connection",
         "mongodbatlas_stream_instance",
-        "mongodbatlas_flex_cluster",
+        "mongodbatlas_stream_privatelink_endpoint",
+        "mongodbatlas_stream_processor",
     ]
 
 
