@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from pydot import Graph
 import pytest
 from atlas_init.cli_root.tf_dep import (
-    create_dot_graph,
+    create_internal_dependencies,
     find_variable_resource_type_usages,
     find_variables,
     parse_graphs,
@@ -25,7 +25,11 @@ def test_parse_graph(monkeypatch):
         "mongodbatlas_cloud_provider_access_authorization": {"mongodbatlas_encryption_at_rest"},
         "mongodbatlas_encryption_at_rest": {"mongodbatlas_advanced_cluster"},
     }
-    dot_graph: Graph = create_dot_graph(atlas_graph)
+    assert atlas_graph.external_parents == {
+        "mongodbatlas_cloud_provider_access_authorization": {"aws_iam_role"},
+        "mongodbatlas_encryption_at_rest": {"aws_kms_key"},
+    }
+    dot_graph: Graph = create_internal_dependencies(atlas_graph)
     assert dot_graph is not None
 
 

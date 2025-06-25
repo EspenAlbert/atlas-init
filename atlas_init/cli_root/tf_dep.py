@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from typing import Iterable, NamedTuple
 
+from model_lib import StaticSettings
 from pydantic import BaseModel
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from typer import Typer
@@ -37,6 +38,10 @@ def is_v2_example_dir(example_dir: Path) -> bool:
     return parent_dir in v2_parent_dir or grand_parent_dir in v2_grand_parent_dirs
 
 
+class TfDepSettings(StaticSettings):
+    pass
+
+
 @app.command()
 def tf_dep(
     repo_path: Path = typer.Argument(),
@@ -44,6 +49,7 @@ def tf_dep(
 ):
     example_dirs = find_example_dirs(repo_path)
     logger.info(f"Found {len(example_dirs)} example directories in {repo_path}")
+    settings = TfDepSettings.from_env()
     if skip_names:
         len_before = len(example_dirs)
         example_dirs = [d for d in example_dirs if not any(skip_name == d.name for skip_name in skip_names)]
@@ -52,8 +58,14 @@ def tf_dep(
         atlas_graph = parse_graphs(example_dirs, task)
         for src, dsts in sorted(atlas_graph.parent_child_edges.items()):
             logger.info(f"{src} -> {', '.join(sorted(dsts))}")
-        dot_graph = create_dot_graph(atlas_graph)
-        dot_graph.write_png("atlas-dependencies.png")  # type: ignore
+    with new_task("Write graphs"):
+        dot_graph = create_internal_dependencies(atlas_graph)
+        write_graph(dot_graph, settings.static_root, "atlas_internal_dependencies.png")
+
+
+def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    dot_graph.write_png(filename)  # type: ignore
 
 
 def find_example_dirs(repo_path: Path) -> list[Path]:
@@ -92,6 +104,10 @@ class ResourceRef(BaseModel):
     @property
     def provider_name(self) -> str:
         return self._resource_parts().provider_name
+
+    @property
+    def is_external(self) -> bool:
+        return self.provider_name != ATLAS_PROVIDER_NAME
 
     @property
     def is_atlas_resource(self) -> bool:
@@ -134,6 +150,11 @@ class EdgeParsed(BaseModel):
     def is_resource_edge(self) -> bool:
         return not self.has_module_edge and not self.has_data_edge
 
+    @property
+    def is_external_to_internal_edge(self) -> bool:
+        return self.parent.is_external and self.child.is_atlas_resource
+
+    @property
     def is_internal_atlas_edge(self) -> bool:
         return self.parent.is_atlas_resource and self.child.is_atlas_resource
 
@@ -161,26 +182,39 @@ def skip_variable_edge(src: str, dst: str) -> bool:
 
 @dataclass
 class AtlasGraph:
+    # atlas_resource_type -> set[atlas_resource_type]
     parent_child_edges: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
-    external_parent_child_edges: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    # atlas_resource_type -> set[exteranl_resource_type]
+    external_parents: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
 
     @property
-    def all_nodes(self) -> set[str]:
+    def all_internal_nodes(self) -> set[str]:
         return set(flat_map([src] + list(dsts) for src, dsts in self.parent_child_edges.items()))
 
-    def iterate_edges(self) -> Iterable[tuple[str, str]]:
-        for src, dsts in self.parent_child_edges.items():
-            for dst in dsts:
-                yield src, dst
+    def iterate_internal_edges(self) -> Iterable[tuple[str, str]]:
+        for parent, children in self.parent_child_edges.items():
+            for child in children:
+                yield parent, child
+
+    @property
+    def all_external_nodes(self) -> set[str]:
+        return set(flat_map([src] + list(dsts) for src, dsts in self.external_parents.items()))
+
+    def iterate_external_edges(self) -> Iterable[tuple[str, str]]:
+        for child, parents in self.external_parents.items():
+            for parent in parents:
+                yield parent, child
 
     def add_edges(self, edges: list[pydot.Edge]):
         for edge in edges:
             parsed = EdgeParsed.from_edge(edge)
-            if parsed.is_internal_atlas_edge():
-                self.parent_child_edges[parsed.parent.resource_type].add(parsed.child.resource_type)
+            parent = parsed.parent
+            child = parsed.child
+            if parsed.is_internal_atlas_edge:
+                self.parent_child_edges[parent.resource_type].add(child.resource_type)
                 # edges shows from child --> parent, so we reverse the order
-            else:
-                logger.warning(f"Skipping non-Atlas edge: {edge.get_source()} -> {edge.get_destination()}")
+            elif parsed.is_external_to_internal_edge:
+                self.external_parents[child.resource_type].add(parent.resource_type)
 
     def add_variable_edges(self, example_dir: Path) -> None:
         """Use the variables to find the resource dependencies."""
@@ -292,12 +326,31 @@ def parse_graph(example_dir: Path) -> tuple[Path, str]:
     raise EmptyGraphOutputError(example_dir)
 
 
-def create_dot_graph(atlas_graph: AtlasGraph) -> pydot.Dot:
-    graph = pydot.Dot("Atlas Dependencies", graph_type="graph", bgcolor="yellow")
-    for node in atlas_graph.all_nodes:
-        graph.add_node(pydot.Node(node, shape="box", style="filled", fillcolor="lightgrey"))
-    for src, dst in atlas_graph.iterate_edges():
-        graph.add_edge(pydot.Edge(src, dst, color="blue"))
+def create_internal_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
+    graph_name = "Atlas Internal Dependencies"
+    nodes = atlas_graph.all_internal_nodes
+    edges = list(atlas_graph.iterate_internal_edges())
+    return create_dot_graph(graph_name, nodes, edges, keep_provider_name=False)
+
+
+def create_external_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
+    graph_name = "Atlas External Dependencies"
+    nodes = atlas_graph.all_external_nodes
+    edges = list(atlas_graph.iterate_external_edges())
+    return create_dot_graph(graph_name, nodes, edges, keep_provider_name=True)
+
+
+def create_dot_graph(
+    name: str, nodes: set[str], edges: list[tuple[str, str]], *, keep_provider_name: bool = False
+) -> pydot.Dot:
+    def node_name(full_name: str) -> str:
+        return full_name if keep_provider_name else full_name.split("_", 1)[-1]
+
+    graph = pydot.Dot(name, graph_type="graph", bgcolor="yellow")
+    for node in nodes:
+        graph.add_node(pydot.Node(node_name(node), shape="box", style="filled", fillcolor="lightgrey"))
+    for src, dst in edges:
+        graph.add_edge(pydot.Edge(node_name(src), node_name(dst), color="blue"))
     return graph
 
 
