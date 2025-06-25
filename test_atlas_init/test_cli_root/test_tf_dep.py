@@ -4,7 +4,12 @@ from pathlib import Path
 from unittest.mock import MagicMock
 from pydot import Graph
 import pytest
-from atlas_init.cli_root.tf_dep import create_dot_graph, parse_graphs
+from atlas_init.cli_root.tf_dep import (
+    create_dot_graph,
+    find_variable_resource_type_usages,
+    find_variables,
+    parse_graphs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,3 +27,14 @@ def test_parse_graph(monkeypatch):
     }
     dot_graph: Graph = create_dot_graph(atlas_graph)
     assert dot_graph is not None
+
+
+@pytest.mark.skipif(os.environ.get("TF_VARIABLES_PATH", "") == "", reason="needs os.environ[TF_VARIABLES_PATH]")
+def test_find_variables():
+    path = Path(os.environ["TF_VARIABLES_PATH"])
+    expected_vars = {"org_id", "private_key", "public_key"}
+    assert find_variables(path) == expected_vars
+    usages = find_variable_resource_type_usages(expected_vars, path.parent)
+    assert usages == {
+        "org_id": {"mongodbatlas_project"},
+    }

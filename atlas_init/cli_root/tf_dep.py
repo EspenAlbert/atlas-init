@@ -3,8 +3,9 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 import logging
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, NamedTuple
 
+from pydantic import BaseModel
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from typer import Typer
 import typer
@@ -12,6 +13,7 @@ import pydot
 
 from ask_shell import ShellError, new_task, run_and_wait
 from zero_3rdparty.iter_utils import flat_map
+from atlas_init.cli_tf.hcl.modifier2 import safe_parse, variable_reader, variable_usages
 from atlas_init.settings.rich_utils import configure_logging
 
 
@@ -24,6 +26,9 @@ v2_grand_parent_dirs = {
     "mongodbatlas_backup_compliance_policy",
 }
 v2_parent_dir = {"cluster_with_schedule"}
+ATLAS_PROVIDER_NAME = "mongodbatlas"
+MODULE_PREFIX = "module."
+DATA_PREFIX = "data."
 
 
 def is_v2_example_dir(example_dir: Path) -> bool:
@@ -33,9 +38,16 @@ def is_v2_example_dir(example_dir: Path) -> bool:
 
 
 @app.command()
-def tf_dep(repo_path: Path = typer.Argument()):
+def tf_dep(
+    repo_path: Path = typer.Argument(),
+    skip_names: list[str] = typer.Option([], "-s", "--skip-names", help="Skip example directories with these names"),
+):
     example_dirs = find_example_dirs(repo_path)
     logger.info(f"Found {len(example_dirs)} example directories in {repo_path}")
+    if skip_names:
+        len_before = len(example_dirs)
+        example_dirs = [d for d in example_dirs if not any(skip_name == d.name for skip_name in skip_names)]
+        logger.info(f"Skipped {len_before - len(example_dirs)} example directories with names: {skip_names}")
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = parse_graphs(example_dirs, task)
         for src, dsts in sorted(atlas_graph.parent_child_edges.items()):
@@ -45,20 +57,10 @@ def tf_dep(repo_path: Path = typer.Argument()):
 
 
 def find_example_dirs(repo_path: Path) -> list[Path]:
-    example_dirs: set[Path] = set()
-    for tf_file in (repo_path / "examples").rglob("*.tf"):
-        if ".terraform" in tf_file.parts:
-            continue
-        example_dirs.add(tf_file.parent)
+    example_dirs: set[Path] = {
+        tf_file.parent for tf_file in (repo_path / "examples").rglob("*.tf") if ".terraform" not in tf_file.parts
+    }
     return sorted(example_dirs)
-
-
-def is_atlas_resource(resource: str) -> bool:
-    return resource.startswith("mongodbatlas_")
-
-
-def atlas_resource_type(resource: str) -> str:
-    return resource.split(".")[0] if is_atlas_resource(resource) else ""
 
 
 def print_edges(graph: pydot.Dot):
@@ -67,13 +69,100 @@ def print_edges(graph: pydot.Dot):
         logger.info(f"{edge.get_source()} -> {edge.get_destination()}")
 
 
+class ResourceParts(NamedTuple):
+    resource_type: str
+    resource_name: str
+
+    @property
+    def provider_name(self) -> str:
+        return self.resource_type.split("_")[0]
+
+
+class ResourceRef(BaseModel):
+    full_ref: str
+
+    def _resource_parts(self) -> ResourceParts:
+        match self.full_ref.split("."):
+            case [resource_type, resource_name] if "_" in resource_type:
+                return ResourceParts(resource_type, resource_name)
+            case [*_, resource_type, resource_name] if "_" in resource_type:
+                return ResourceParts(resource_type, resource_name)
+        raise ValueError(f"Invalid resource reference: {self.full_ref}")
+
+    @property
+    def provider_name(self) -> str:
+        return self._resource_parts().provider_name
+
+    @property
+    def is_atlas_resource(self) -> bool:
+        return not self.is_module and not self.is_data and self.provider_name == ATLAS_PROVIDER_NAME
+
+    @property
+    def is_module(self) -> bool:
+        return self.full_ref.startswith(MODULE_PREFIX)
+
+    @property
+    def is_data(self) -> bool:
+        return self.full_ref.startswith(DATA_PREFIX)
+
+    @property
+    def resource_type(self) -> str:
+        return self._resource_parts().resource_type
+
+
+class EdgeParsed(BaseModel):
+    parent: ResourceRef
+    child: ResourceRef
+
+    @classmethod
+    def from_edge(cls, edge: pydot.Edge) -> "EdgeParsed":
+        return cls(
+            # edges shows from child --> parent, so we reverse the order
+            parent=ResourceRef(full_ref=edge_plain(edge.get_destination())),
+            child=ResourceRef(full_ref=edge_plain(edge.get_source())),
+        )
+
+    @property
+    def has_module_edge(self) -> bool:
+        return self.parent.is_module or self.child.is_module
+
+    @property
+    def has_data_edge(self) -> bool:
+        return self.parent.is_data or self.child.is_data
+
+    @property
+    def is_resource_edge(self) -> bool:
+        return not self.has_module_edge and not self.has_data_edge
+
+    def is_internal_atlas_edge(self) -> bool:
+        return self.parent.is_atlas_resource and self.child.is_atlas_resource
+
+
 def edge_plain(edge_endpoint: pydot.EdgeEndpoint) -> str:
     return str(edge_endpoint).strip('"').strip()
+
+
+VARIABLE_RESOURCE_MAPPING: dict[str, str] = {
+    "org_id": "mongodbatlas_organization",
+    "project_id": "mongodbatlas_project",
+    "cluster_name": "mongodbatlas_advanced_cluster",
+}
+SKIP_NODES: set[str] = {"mongodbatlas_cluster"}
+
+
+def skip_variable_edge(src: str, dst: str) -> bool:
+    # sourcery skip: assign-if-exp, boolean-if-exp-identity, reintroduce-else, remove-unnecessary-cast
+    if src == dst:
+        return True
+    if src == "mongodbatlas_advanced_cluster" and "_cluster" in dst:
+        return True
+    return False
 
 
 @dataclass
 class AtlasGraph:
     parent_child_edges: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    external_parent_child_edges: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
 
     @property
     def all_nodes(self) -> set[str]:
@@ -86,21 +175,47 @@ class AtlasGraph:
 
     def add_edges(self, edges: list[pydot.Edge]):
         for edge in edges:
-            src_resource_type = atlas_resource_type(edge_plain(edge.get_source()))
-            dst_resource_type = atlas_resource_type(edge_plain(edge.get_destination()))
-            if src_resource_type and dst_resource_type:
-                self.parent_child_edges[dst_resource_type].add(src_resource_type)
+            parsed = EdgeParsed.from_edge(edge)
+            if parsed.is_internal_atlas_edge():
+                self.parent_child_edges[parsed.parent.resource_type].add(parsed.child.resource_type)
                 # edges shows from child --> parent, so we reverse the order
             else:
                 logger.warning(f"Skipping non-Atlas edge: {edge.get_source()} -> {edge.get_destination()}")
 
     def add_variable_edges(self, example_dir: Path) -> None:
-        """
-        Add variable edges to the graph based on the example directory.
-        This is a placeholder for future implementation.
-        """
-        # Implementation can be added later if needed
-        pass
+        """Use the variables to find the resource dependencies."""
+        if not (variables := find_variables(example_dir / "variables.tf")):
+            return
+        usages = find_variable_resource_type_usages(variables, example_dir)
+        for variable, resource_types in usages.items():
+            if parent_type := VARIABLE_RESOURCE_MAPPING.get(variable):
+                for child_type in resource_types:
+                    if skip_variable_edge(parent_type, child_type):
+                        continue
+                    if child_type.startswith(ATLAS_PROVIDER_NAME):
+                        logger.info(f"Adding variable edge: {parent_type} -> {child_type}")
+                        self.parent_child_edges[parent_type].add(child_type)
+
+
+def find_variables(variables_tf: Path) -> set[str]:
+    tree = safe_parse(variables_tf)
+    if not tree:
+        logger.warning(f"Failed to parse {variables_tf}")
+        return set()
+    return variable_reader(tree)
+
+
+def find_variable_resource_type_usages(variables: set[str], example_dir: Path) -> dict[str, set[str]]:
+    usages = defaultdict(set)
+    for path in example_dir.glob("*.tf"):
+        tree = safe_parse(path)
+        if not tree:
+            logger.warning(f"Failed to parse {path}")
+            continue
+        path_usages = variable_usages(variables, tree)
+        for variable, resources in path_usages.items():
+            usages[variable].update(resources)
+    return usages
 
 
 def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16, max_dirs: int = 9999) -> AtlasGraph:
