@@ -55,3 +55,6 @@ run *args:
 tf-dep *args:
   uv run tf-dep {{args}}
 
+[positional-arguments]
+tf-ext *args:
+  uv run tf-ext {{args}}

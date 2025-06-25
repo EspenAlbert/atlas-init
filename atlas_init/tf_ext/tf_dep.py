@@ -9,6 +9,7 @@ from typing import Iterable, NamedTuple
 import pydot
 import typer
 from ask_shell import AskShellSettings, ShellError, new_task, run_and_wait
+from ask_shell._run import stop_runs_and_pool
 from pydantic import BaseModel
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from typer import Typer
@@ -16,6 +17,7 @@ from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.cli_tf.hcl.modifier2 import safe_parse, variable_reader, variable_usages
 from atlas_init.settings.rich_utils import configure_logging
+from atlas_init.tf_ext.args import REPO_PATH_ARG
 from atlas_init.tf_ext.settings import TfDepSettings
 
 logger = logging.getLogger(__name__)
@@ -64,7 +66,7 @@ def default_skippped_module_resource_types() -> list[str]:
 
 
 def tf_dep(
-    repo_path: Path = typer.Argument(),
+    repo_path: Path = REPO_PATH_ARG,
     skip_names: list[str] = typer.Option(
         ...,
         "--skip-examples",
@@ -325,6 +327,10 @@ def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16
             except ShellError as e:
                 logger.error(f"Error parsing graph for {futures[future]}: {e}")
                 continue
+            except KeyboardInterrupt:
+                logger.error("KeyboardInterrupt received, stopping graph parsing.")
+                stop_runs_and_pool("KeyboardInterrupt", immediate=True)
+                break
             try:
                 graph = graphs[example_dir] = parse_graph_output(example_dir, graph_output)
             except GraphParseError as e:
