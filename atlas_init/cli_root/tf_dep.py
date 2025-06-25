@@ -42,10 +42,57 @@ class TfDepSettings(StaticSettings):
     pass
 
 
+def default_skippped_directories() -> list[str]:
+    return [
+        "prometheus-and-teams",  #  Provider registry.terraform.io/hashicorp/template v2.2.0 does not have a package available for your current platform, darwin_arm64.
+    ]
+
+
+def default_modules() -> list[str]:
+    return [
+        "mongodbatlas_advanced_cluster",
+        "mongodbatlas_cloud_provider_access_authorization",
+        "mongodbatlas_project",
+        "mongodbatlas_organization",
+    ]
+
+
+def default_skippped_module_resource_types() -> list[str]:
+    return [
+        "mongodbatlas_cluster",
+        "mongodbatlas_stream_processor",
+        "mongodbatlas_stream_connection",
+        "mongodbatlas_stream_instance",
+        "mongodbatlas_flex_cluster",
+    ]
+
+
 @app.command()
 def tf_dep(
     repo_path: Path = typer.Argument(),
-    skip_names: list[str] = typer.Option([], "-s", "--skip-names", help="Skip example directories with these names"),
+    skip_names: list[str] = typer.Option(
+        ...,
+        "--skip-examples",
+        help="Skip example directories with these names",
+        default_factory=list,
+        show_default=True,
+    ),
+    modules: list[str] = typer.Option(
+        ...,
+        "-m",
+        "--modules",
+        help="List of module names to create graphs for. Should start with the deepest in the hierarchy, for example cluster, project, organization.",
+        default_factory=default_modules,
+        show_default=True,
+    ),
+    skipped_module_resource_types: list[str] = typer.Option(
+        ...,
+        "-s",
+        "--skip-resource-types",
+        help="List of resource types to skip when creating module graphs",
+        default_factory=default_skippped_module_resource_types,
+        show_default=True,
+    ),
 ):
     example_dirs = find_example_dirs(repo_path)
     logger.info(f"Found {len(example_dirs)} example directories in {repo_path}")
@@ -59,8 +106,18 @@ def tf_dep(
         for src, dsts in sorted(atlas_graph.parent_child_edges.items()):
             logger.info(f"{src} -> {', '.join(sorted(dsts))}")
     with new_task("Write graphs"):
-        dot_graph = create_internal_dependencies(atlas_graph)
-        write_graph(dot_graph, settings.static_root, "atlas_internal_dependencies.png")
+        write_graph(create_internal_dependencies(atlas_graph), settings.static_root, "atlas_internal.png")
+        write_graph(create_external_dependencies(atlas_graph), settings.static_root, "atlas_external.png")
+    with new_task("Write module graphs"):
+        used_resource_types: set[str] = set(
+            skipped_module_resource_types
+        )  # avoid the same resource_type in multiple module graphs
+        for module in modules:
+            internal_graph, external_graph = create_module_graphs(
+                atlas_graph, module, used_resource_types=used_resource_types
+            )
+            write_graph(internal_graph, settings.static_root, f"{module}_internal.png")
+            write_graph(external_graph, settings.static_root, f"{module}_external.png")
 
 
 def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
@@ -214,6 +271,8 @@ class AtlasGraph:
                 self.parent_child_edges[parent.resource_type].add(child.resource_type)
                 # edges shows from child --> parent, so we reverse the order
             elif parsed.is_external_to_internal_edge:
+                if parent.provider_name in {"random", "cedar"}:
+                    continue  # skip random provider edges
                 self.external_parents[child.resource_type].add(parent.resource_type)
 
     def add_variable_edges(self, example_dir: Path) -> None:
@@ -328,30 +387,63 @@ def parse_graph(example_dir: Path) -> tuple[Path, str]:
 
 def create_internal_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
     graph_name = "Atlas Internal Dependencies"
-    nodes = atlas_graph.all_internal_nodes
-    edges = list(atlas_graph.iterate_internal_edges())
-    return create_dot_graph(graph_name, nodes, edges, keep_provider_name=False)
+    return create_dot_graph(graph_name, atlas_graph.iterate_internal_edges(), keep_provider_name=False)
 
 
 def create_external_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
     graph_name = "Atlas External Dependencies"
-    nodes = atlas_graph.all_external_nodes
-    edges = list(atlas_graph.iterate_external_edges())
-    return create_dot_graph(graph_name, nodes, edges, keep_provider_name=True)
+    return create_dot_graph(graph_name, atlas_graph.iterate_external_edges(), keep_provider_name=True)
 
 
-def create_dot_graph(
-    name: str, nodes: set[str], edges: list[tuple[str, str]], *, keep_provider_name: bool = False
-) -> pydot.Dot:
+def create_module_graphs(
+    atlas_graph: AtlasGraph, module_resource_type: str, *, used_resource_types: set[str] | None = None
+) -> tuple[pydot.Dot, pydot.Dot]:
+    used_resource_types = used_resource_types or set()
+    """Create two graphs: one for internal-only module dependencies and one for all module dependencies."""
+    internal_children = [
+        child for child in atlas_graph.parent_child_edges[module_resource_type] if child not in used_resource_types
+    ]
+    child_edges = [(module_resource_type, child) for child in internal_children]
+    internal_only_edges = [
+        (module_resource_type, child) for child in internal_children if child not in atlas_graph.external_parents
+    ]
+    internal_graph = create_dot_graph(
+        f"{module_resource_type} Internal Only Dependencies",
+        internal_only_edges,
+        keep_provider_name=False,
+    )
+    external_edges = [
+        (parent, child)
+        for child, parents in atlas_graph.external_parents.items()
+        if child in internal_children
+        for parent in parents
+    ]
+    external_graph = create_dot_graph(
+        f"{module_resource_type} External Dependencies",
+        child_edges + external_edges,
+        keep_provider_name=True,
+    )
+    used_resource_types.add(module_resource_type)
+    used_resource_types |= as_nodes(child_edges)
+    return internal_graph, external_graph
+
+
+def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, keep_provider_name: bool = False) -> pydot.Dot:
     def node_name(full_name: str) -> str:
         return full_name if keep_provider_name else full_name.split("_", 1)[-1]
 
+    edges = sorted(edges)
     graph = pydot.Dot(name, graph_type="graph", bgcolor="yellow")
+    nodes = as_nodes(edges)
     for node in nodes:
         graph.add_node(pydot.Node(node_name(node), shape="box", style="filled", fillcolor="lightgrey"))
     for src, dst in edges:
         graph.add_edge(pydot.Edge(node_name(src), node_name(dst), color="blue"))
     return graph
+
+
+def as_nodes(edges: Iterable[tuple[str, str]]) -> set[str]:
+    return set(flat_map((parent, child) for parent, child in edges))
 
 
 def typer_main():
