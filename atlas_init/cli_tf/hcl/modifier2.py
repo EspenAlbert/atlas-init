@@ -74,11 +74,8 @@ def variable_reader(tree: Tree) -> dict[str, str | None]:
         def attribute(self, args: list) -> Attribute:
             name = args[0]
             if name == "description":
-                description = args[-1]
-                if isinstance(description, Token):
-                    self.description = token_name(description)
-                else:
-                    self.description = description.strip('"')
+                description = _parse_attribute_value(args)
+                self.description = description
             return super().attribute(args)
 
     class BlockReader(Transformer):
@@ -94,6 +91,46 @@ def variable_reader(tree: Tree) -> dict[str, str | None]:
 
     BlockReader().transform(tree)
     return variables
+
+
+def _parse_attribute_value(args: list) -> str:
+    description = args[-1]
+    return token_name(description) if isinstance(description, Token) else description.strip('"')
+
+
+def resource_types_vars_usage(tree: Tree) -> dict[str, dict[str, str]]:
+    """
+    Reads the resource types and their variable usages from a parsed HCL2 tree.
+    Returns a dictionary where keys are resource type names and values are dictionaries
+    of variable names and the attribute paths they are used in.
+    """
+    resource_types: dict[str, dict[str, str]] = defaultdict(dict)
+
+    class ResourceBlockAttributeReader(DictTransformer):
+        def __init__(self, with_meta: bool = False, resource_type: str = ""):
+            self.resource_type = resource_type
+            super().__init__(with_meta)
+
+        def attribute(self, args: list) -> Attribute:
+            try:
+                value = _parse_attribute_value(args)
+            except AttributeError:
+                return super().attribute(args)
+            if value.startswith("var."):
+                variable_name = value[4:]
+                resource_types[self.resource_type][variable_name] = args[0]
+            return super().attribute(args)
+
+    class BlockReader(Transformer):
+        @v_args(tree=True)
+        def block(self, block_tree: Tree) -> Tree:
+            block_resource_name = _block_resource_name(block_tree)
+            if block_resource_name is not None:
+                ResourceBlockAttributeReader(with_meta=True, resource_type=block_resource_name).transform(block_tree)
+            return block_tree
+
+    BlockReader().transform(tree)
+    return resource_types
 
 
 def variable_usages(variable_names: set[str], tree: Tree) -> dict[str, set[str]]:

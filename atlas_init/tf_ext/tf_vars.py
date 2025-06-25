@@ -3,17 +3,38 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from ask_shell import run_and_wait
+from ask_shell import new_task, run_and_wait
 from model_lib import IgnoreFalsy, dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
 from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
-from atlas_init.tf_ext.paths import find_variables, get_example_directories
+from atlas_init.tf_ext.paths import (
+    ResourceTypes,
+    find_resource_types_with_usages,
+    find_variables,
+    get_example_directories,
+)
 from atlas_init.tf_ext.settings import TfDepSettings
 from atlas_init.tf_ext.tf_dep import ATLAS_PROVIDER_NAME
 
 logger = logging.getLogger(__name__)
+
+
+def tf_vars(
+    repo_path: Path = REPO_PATH_ARG,
+    skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
+):
+    settings = TfDepSettings.from_env()
+    logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
+    example_dirs = get_example_directories(repo_path, skip_names)
+    assert example_dirs, "No example directories found. Please check the repository path and skip names."
+    resource_types = parse_schema_resource_types(example_dirs[0])
+    logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
+    with new_task("Parsing variables from examples"):
+        update_variables(settings, example_dirs)
+    with new_task("Parsing resource types from examples", total=len(example_dirs)) as task:
+        update_resource_types(settings, example_dirs, task)
 
 
 def parse_provider_resurce_schema(schema: dict, provider_name: str) -> dict:
@@ -78,16 +99,21 @@ def vars_usage_dumping(variables: TfVarsUsage) -> str:
     return dump(vars_model, format="yaml")
 
 
-def tf_vars(
-    repo_path: Path = REPO_PATH_ARG,
-    skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
-):
-    settings = TfDepSettings.from_env()
-    logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
-    example_dirs = get_example_directories(repo_path, skip_names)
-    assert example_dirs, "No example directories found. Please check the repository path and skip names."
-    resource_types = parse_schema_resource_types(example_dirs[0])
-    logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
+def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
+    resource_types = ResourceTypes(root={})
+    for example_dir in example_dirs:
+        example_resources = find_resource_types_with_usages(example_dir)
+        for resource_type, usages in example_resources.root.items():
+            resource_types.add_resource_type(resource_type, usages.example_files, usages.variable_usage)
+        task.update(advance=1)
+    logger.info(f"Found {len(resource_types.root)} resource types in the examples.")
+    resource_types_model = resource_types.model_dump()
+    resource_types_yaml = dump(dict(sorted(resource_types_model.items())), format="yaml")
+    ensure_parents_write_text(settings.resource_types_file_path, resource_types_yaml)
+    logger.info(f"Resource types usage written to {settings.resource_types_file_path}")
+
+
+def update_variables(settings: TfDepSettings, example_dirs: list[Path]):
     variables = parse_all_variables(example_dirs)
     logger.info(f"Found {len(variables.root)} variables in the examples.")
     vars_yaml = vars_usage_dumping(variables)
