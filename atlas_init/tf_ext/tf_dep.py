@@ -1,25 +1,24 @@
+import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-import logging
 from pathlib import Path
+from shutil import rmtree
 from typing import Iterable, NamedTuple
 
-from model_lib import StaticSettings
+import pydot
+import typer
+from ask_shell import AskShellSettings, ShellError, new_task, run_and_wait
 from pydantic import BaseModel
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from typer import Typer
-import typer
-import pydot
-
-from ask_shell import ShellError, new_task, run_and_wait
 from zero_3rdparty.iter_utils import flat_map
+
 from atlas_init.cli_tf.hcl.modifier2 import safe_parse, variable_reader, variable_usages
 from atlas_init.settings.rich_utils import configure_logging
-
+from atlas_init.tf_ext.settings import TfDepSettings
 
 logger = logging.getLogger(__name__)
-app = Typer()
 v2_grand_parent_dirs = {
     "module_maintainer",
     "module_user",
@@ -36,10 +35,6 @@ def is_v2_example_dir(example_dir: Path) -> bool:
     parent_dir = example_dir.parent.name
     grand_parent_dir = example_dir.parent.parent.name
     return parent_dir in v2_parent_dir or grand_parent_dir in v2_grand_parent_dirs
-
-
-class TfDepSettings(StaticSettings):
-    pass
 
 
 def default_skippped_directories() -> list[str]:
@@ -68,7 +63,6 @@ def default_skippped_module_resource_types() -> list[str]:
     ]
 
 
-@app.command()
 def tf_dep(
     repo_path: Path = typer.Argument(),
     skip_names: list[str] = typer.Option(
@@ -95,6 +89,8 @@ def tf_dep(
         show_default=True,
     ),
 ):
+    ask_shell_settings = AskShellSettings.from_env()
+    rmtree(ask_shell_settings.run_logs)  # todo: fix upstream
     settings = TfDepSettings.from_env()
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
@@ -450,6 +446,8 @@ def as_nodes(edges: Iterable[tuple[str, str]]) -> set[str]:
 
 
 def typer_main():
+    app = Typer()
+    app.command()(tf_dep)
     configure_logging(app)
     app()
 
