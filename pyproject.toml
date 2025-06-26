@@ -34,14 +34,13 @@ dependencies = [
   "stringcase==1.2.0",
   "tenacity==9.0.0",
   "typer>=0.15.1",
-  # "ask-shell>=0.0.2",
-  "ask-shell==9.9.5",
+  "ask-shell>=0.0.3",
   "model-lib",
   "zero-3rdparty",
 ]
 
-[tool.uv.sources]
-ask-shell = { path = "../py-libs/ask-shell" }
+# [tool.uv.sources]
+# ask-shell = { path = "../py-libs/ask-shell" }
 # model-lib = {path = "../py-libs/model-lib"}
 # zero-3rdparty = {path = "../py-libs/zero-3rdparty"}
 

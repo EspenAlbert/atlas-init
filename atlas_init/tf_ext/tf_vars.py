@@ -29,12 +29,15 @@ def tf_vars(
     logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
     example_dirs = get_example_directories(repo_path, skip_names)
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
-    resource_types = parse_schema_resource_types(example_dirs[0])
+    with new_task("Parsing provider schema") as task:
+        resource_types = parse_schema_resource_types(example_dirs[0])
     logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
-    with new_task("Parsing variables from examples"):
-        update_variables(settings, example_dirs)
+    with new_task("Parsing variables from examples") as task:
+        update_variables(settings, example_dirs, task)
     with new_task("Parsing resource types from examples", total=len(example_dirs)) as task:
-        update_resource_types(settings, example_dirs, task)
+        example_resource_types = update_resource_types(settings, example_dirs, task)
+    if missing_example_resource_types := set(resource_types) - set(example_resource_types.root):
+        logger.warning(f"Missing resource types in examples:\n{'\n'.join(sorted(missing_example_resource_types))}")
 
 
 def parse_provider_resurce_schema(schema: dict, provider_name: str) -> dict:
@@ -99,7 +102,7 @@ def vars_usage_dumping(variables: TfVarsUsage) -> str:
     return dump(vars_model, format="yaml")
 
 
-def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
+def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
     resource_types = ResourceTypes(root={})
     for example_dir in example_dirs:
         example_resources = find_resource_types_with_usages(example_dir)
@@ -111,10 +114,11 @@ def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], tas
     resource_types_yaml = dump(dict(sorted(resource_types_model.items())), format="yaml")
     ensure_parents_write_text(settings.resource_types_file_path, resource_types_yaml)
     logger.info(f"Resource types usage written to {settings.resource_types_file_path}")
+    return resource_types
 
 
-def update_variables(settings: TfDepSettings, example_dirs: list[Path]):
-    variables = parse_all_variables(example_dirs)
+def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
+    variables = parse_all_variables(example_dirs, task)
     logger.info(f"Found {len(variables.root)} variables in the examples.")
     vars_yaml = vars_usage_dumping(variables)
     ensure_parents_write_text(settings.vars_file_path, vars_yaml)
@@ -136,7 +140,7 @@ def parse_schema_resource_types(example_dir: Path) -> list[str]:
     return sorted(resource_schema.keys())
 
 
-def parse_all_variables(examples_dirs: list[Path]) -> TfVarsUsage:
+def parse_all_variables(examples_dirs: list[Path], task: new_task) -> TfVarsUsage:
     variables_usage = TfVarsUsage(root={})
     for example_dir in examples_dirs:
         variables_tf = example_dir / "variables.tf"
@@ -144,4 +148,5 @@ def parse_all_variables(examples_dirs: list[Path]) -> TfVarsUsage:
             continue
         for variable, variable_desc in find_variables(variables_tf).items():
             variables_usage.add_variable(variable, variable_desc, example_dir)
+        task.update(advance=1)
     return variables_usage

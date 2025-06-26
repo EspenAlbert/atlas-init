@@ -22,8 +22,8 @@ wheels = [
 
 [[package]]
 name = "ask-shell"
-version = "9.9.5"
-source = { directory = "../py-libs/ask-shell" }
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "model-lib", extra = ["toml"] },
     { name = "questionary" },
@@ -31,14 +31,9 @@ dependencies = [
     { name = "typer" },
     { name = "zero-3rdparty" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "model-lib", extras = ["toml"], editable = "../py-libs/model-lib" },
-    { name = "questionary", specifier = ">=2.1.0" },
-    { name = "rich", specifier = ">=13.9.4" },
-    { name = "typer", specifier = ">=0.16.0" },
-    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
+sdist = { url = "https://files.pythonhosted.org/packages/71/eb/427d17b87eba2c0cdb6103e742551988978a7164d4d6614a741b8e96816c/ask_shell-0.0.3.tar.gz", hash = "sha256:2543e6a450c658af7eb14f5bdce77e2d89a8075ece2f849efb78fd72c65bad55", size = 20654 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/3e/b7c66bc22df4ecab12af4627c356a6429b8b70040e70fcd30eb102f525b3/ask_shell-0.0.3-py3-none-any.whl", hash = "sha256:59f5b52e62d33c8e12e0d31b43947cef7c25b6f68128f454e04116be7b4f9ea7", size = 26574 },
 ]
 
 [[package]]
@@ -83,7 +78,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
-    { name = "ask-shell", directory = "../py-libs/ask-shell" },
+    { name = "ask-shell", specifier = ">=0.0.3" },
     { name = "boto3", specifier = "==1.35.92" },
     { name = "gitpython", specifier = "==3.1.42" },
     { name = "humanize", specifier = "==4.9.0" },
@@ -436,12 +431,16 @@ wheels = [
 [[package]]
 name = "model-lib"
 version = "1.0.0b5"
-source = { editable = "../py-libs/model-lib" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "zero-3rdparty" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/2c/1d5b8de960e9c82ad19cb868d107f25b6a2ebe8ea63eb49012d4692ed24b/model_lib-1.0.0b5.tar.gz", hash = "sha256:219a323699a3dfd68f55f76a9dbef26e4fba5aae78f4924d4c5e775f96b83d3d", size = 16894 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/d5/756b13e54cb2bfe00d38bd5c041be545a3d12b1ddf2809be742364d0ff61/model_lib-1.0.0b5-py3-none-any.whl", hash = "sha256:6d2687b28c26da7138550f5ebe11e83bc80ff5254771edbcc64376833a28b764", size = 24474 },
 ]
 
 [package.optional-dependencies]
@@ -450,18 +449,6 @@ toml = [
     { name = "pydantic-settings" },
     { name = "tomli-w" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "pydantic", specifier = "~=2.10.4" },
-    { name = "pydantic", marker = "extra == 'toml'", specifier = "~=2.10.4" },
-    { name = "pydantic-settings", specifier = "~=2.7.1" },
-    { name = "pydantic-settings", marker = "extra == 'toml'", specifier = "~=2.7.1" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "tomli-w", marker = "extra == 'toml'", specifier = "~=1.1.0" },
-    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
-]
-provides-extras = ["toml"]
 
 [[package]]
 name = "motor"
@@ -1108,4 +1095,8 @@ wheels = [
 [[package]]
 name = "zero-3rdparty"
 version = "1.0.0b3"
-source = { editable = "../py-libs/zero-3rdparty" }
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/95/44/fdf274fd0ed583ba37934b3f06bb48fd1915f1b4448f627a08f768b97c49/zero_3rdparty-1.0.0b3.tar.gz", hash = "sha256:0f47d8a3ec11ea4ee547ada1fa6bd0c2913f573a8712e913877df49f4f9d5880", size = 29384 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/78/be/cff6baf44e44209ba8955e0f73509c6d5463ca7115e4d464c5e9f6c7d667/zero_3rdparty-1.0.0b3-py3-none-any.whl", hash = "sha256:471852d8a0fddf5c23f69b1598e8f7212bd05ae37f48b82302cb8a4e50727ab1", size = 37841 },
+]

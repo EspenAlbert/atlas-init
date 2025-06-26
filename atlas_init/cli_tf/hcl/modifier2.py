@@ -109,6 +109,7 @@ def resource_types_vars_usage(tree: Tree) -> dict[str, dict[str, str]]:
     class ResourceBlockAttributeReader(DictTransformer):
         def __init__(self, with_meta: bool = False, resource_type: str = ""):
             self.resource_type = resource_type
+            resource_types.setdefault(self.resource_type, {})
             super().__init__(with_meta)
 
         def attribute(self, args: list) -> Attribute:
