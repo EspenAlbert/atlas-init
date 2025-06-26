@@ -17,7 +17,7 @@ from rich.markdown import Markdown
 from zero_3rdparty import file_utils, str_utils
 from zero_3rdparty.datetime_utils import utc_now
 
-from atlas_init.cli_helper.run import add_to_clipboard, run_command_receive_result
+from atlas_init.cli_helper.run import add_to_clipboard
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     download_job_safely,
@@ -148,24 +148,30 @@ def ci_tests(
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
     if summary_name:
-        monthly_out = create_monthly_report(
-            settings,
-            MonthlyReportIn(
-                name=summary_name,
-                branch=branch,
-                history_filter=history_filter,
-            ),
+        monthly_input = MonthlyReportIn(
+            name=summary_name,
+            branch=event.branch,
+            history_filter=history_filter,
         )
-        summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        file_utils.ensure_parents_write_text(summary_path, daily_out.summary_md)
-        logger.info(f"summary written to {summary_path}")
-        details_dir = summary_path.with_name(f"{summary_path.stem}_details")
-        logger.info(f"Writing details to {details_dir}")
-        for name, details_md in monthly_out.test_details_md.items():
-            details_path = details_dir / f"{name}.md"
-            file_utils.ensure_parents_write_text(details_path, details_md)
-        if confirm(f"do you want to open the summary file? {summary_path}", default=False):
-            run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
+        generate_monthly_summary(settings, monthly_input)
+
+
+def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: MonthlyReportIn):
+    monthly_out = create_monthly_report(
+        settings,
+        monthly_input,
+    )
+    summary_name = monthly_input.name
+    print_to_live(Markdown(monthly_out.summary_md))
+    summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
+    file_utils.ensure_parents_write_text(summary_path, monthly_out.summary_md)
+    logger.info(f"summary written to {summary_path}")
+    logger.info(f"Writing details to {settings.github_ci_summary_details_path(summary_name, 'dummy').parent}")
+    for name, details_md in monthly_out.test_details_md.items():
+        details_path = settings.github_ci_summary_details_path(summary_name, name)
+        file_utils.ensure_parents_write_text(details_path, details_md)
+    if confirm(f"do you want to open the summary file? {summary_path}", default=False):
+        run_and_wait(f'code "{summary_path}"')
 
 
 async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
