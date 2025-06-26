@@ -5,11 +5,11 @@ from unittest.mock import MagicMock
 from pydot import Graph
 import pytest
 from atlas_init.tf_ext.tf_dep import (
-    create_internal_dependencies,
     find_variable_resource_type_usages,
     find_variables,
     parse_graphs,
 )
+from atlas_init.tf_ext.tf_modules import create_internal_dependencies
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,13 @@ def test_parse_graph(monkeypatch):
 
 
 def test_find_variables(tf_variables_path):
-    expected_vars = {"org_id", "private_key", "public_key"}
+    expected_vars = {
+        "public_key": "Public API key to authenticate to Atlas",
+        "private_key": "Private API key to authenticate to Atlas",
+        "org_id": "Unique 24-hexadecimal digit string that identifies your Atlas Organization",
+    }
     assert find_variables(tf_variables_path) == expected_vars
-    usages = find_variable_resource_type_usages(expected_vars, tf_variables_path.parent)
+    usages = find_variable_resource_type_usages(set(expected_vars), tf_variables_path.parent)
     assert usages == {
         "org_id": {"mongodbatlas_project"},
     }
