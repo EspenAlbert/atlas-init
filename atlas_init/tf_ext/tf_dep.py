@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -36,7 +37,8 @@ VARIABLE_RESOURCE_MAPPING: dict[str, str] = {
     "project_id": "mongodbatlas_project",
     "cluster_name": "mongodbatlas_advanced_cluster",
 }
-SKIP_NODES: set[str] = {"mongodbatlas_cluster"}
+SKIP_NODES: set[str] = {"mongodbatlas_cluster", "mongodbatlas_flex_cluster"}
+FORCE_INTERNAL_NODES: set[str] = {"mongodbatlas_project_ip_access_list"}
 
 
 def is_v2_example_dir(example_dir: Path) -> bool:
@@ -108,6 +110,40 @@ def tf_dep(
             )
             write_graph(internal_graph, settings.static_root, f"{module}_internal.png")
             write_graph(external_graph, settings.static_root, f"{module}_external.png")
+
+
+class NodeSkippedError(Exception):
+    """Raised when a node is skipped during graph creation."""
+
+    def __init__(self, resource_type: str):
+        self.resource_type = resource_type
+        super().__init__(f"Node skipped: {resource_type}. This is expected for some resource types.")
+
+
+@dataclass
+class ColorCoder:
+    graph: AtlasGraph
+    keep_provider_name: bool
+
+    ATLAS_EXTERNAL_COLOR: str = "red"
+    ATLAS_INTERNAL_COLOR: str = "green"
+    EXTERNAL_COLOR: str = "purple"
+
+    def create_node(self, resource_type: str) -> pydot.Node:
+        if resource_type.startswith(ATLAS_PROVIDER_NAME):
+            color = (
+                "red"
+                if resource_type in self.graph.all_external_nodes and resource_type not in FORCE_INTERNAL_NODES
+                else "green"
+            )
+        else:
+            color = self.EXTERNAL_COLOR
+        return pydot.Node(self.node_name(resource_type), shape="box", style="filled", fillcolor=color)
+
+    def node_name(self, resource_type: str) -> str:
+        if resource_type in SKIP_NODES:
+            raise NodeSkippedError(resource_type)
+        return resource_type if self.keep_provider_name else resource_type.split("_", 1)[-1]
 
 
 def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
@@ -345,12 +381,16 @@ def parse_graph(example_dir: Path) -> tuple[Path, str]:
 
 def create_internal_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
     graph_name = "Atlas Internal Dependencies"
-    return create_dot_graph(graph_name, atlas_graph.iterate_internal_edges(), keep_provider_name=False)
+    return create_dot_graph(
+        graph_name, atlas_graph.iterate_internal_edges(), color_coder=ColorCoder(atlas_graph, keep_provider_name=False)
+    )
 
 
 def create_external_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
     graph_name = "Atlas External Dependencies"
-    return create_dot_graph(graph_name, atlas_graph.iterate_external_edges(), keep_provider_name=True)
+    return create_dot_graph(
+        graph_name, atlas_graph.iterate_external_edges(), color_coder=ColorCoder(atlas_graph, keep_provider_name=True)
+    )
 
 
 def create_module_graphs(
@@ -368,7 +408,7 @@ def create_module_graphs(
     internal_graph = create_dot_graph(
         f"{module_resource_type} Internal Only Dependencies",
         internal_only_edges,
-        keep_provider_name=False,
+        color_coder=ColorCoder(atlas_graph, keep_provider_name=False),
     )
     external_edges = [
         (parent, child)
@@ -379,24 +419,27 @@ def create_module_graphs(
     external_graph = create_dot_graph(
         f"{module_resource_type} External Dependencies",
         child_edges + external_edges,
-        keep_provider_name=True,
+        color_coder=ColorCoder(atlas_graph, keep_provider_name=True),
     )
     used_resource_types.add(module_resource_type)
     used_resource_types |= as_nodes(child_edges)
     return internal_graph, external_graph
 
 
-def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, keep_provider_name: bool = False) -> pydot.Dot:
-    def node_name(full_name: str) -> str:
-        return full_name if keep_provider_name else full_name.split("_", 1)[-1]
-
+def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder: ColorCoder) -> pydot.Dot:
     edges = sorted(edges)
-    graph = pydot.Dot(name, graph_type="graph", bgcolor="yellow")
+    graph = pydot.Dot(name, graph_type="graph")
     nodes = as_nodes(edges)
     for node in nodes:
-        graph.add_node(pydot.Node(node_name(node), shape="box", style="filled", fillcolor="lightgrey"))
+        try:
+            graph.add_node(color_coder.create_node(node))
+        except NodeSkippedError:
+            continue
     for src, dst in edges:
-        graph.add_edge(pydot.Edge(node_name(src), node_name(dst), color="blue"))
+        try:
+            graph.add_edge(pydot.Edge(color_coder.node_name(src), color_coder.node_name(dst), color="blue"))
+        except NodeSkippedError:
+            continue
     return graph
 
 
