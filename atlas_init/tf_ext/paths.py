@@ -1,12 +1,16 @@
-from collections import defaultdict
+from __future__ import annotations
+
 import logging
+from collections import defaultdict
 from pathlib import Path
+from typing import Self
 
 from model_lib import Entity
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import iter_paths
 
 from atlas_init.cli_tf.hcl.modifier2 import resource_types_vars_usage, safe_parse, variable_reader, variable_usages
+from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME, DEFAULT_EXTERNAL_SUBSTRINGS, DEFAULT_INTERNAL_SUBSTRINGS
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,16 @@ class ResourceVarUsage(Entity):
     attribute_path: str
 
 
+def is_variable_name_external(
+    name: str, external_substrings: list[str] | None = None, internal_substrings: list[str] | None = None
+) -> bool:
+    external_substrings = external_substrings or DEFAULT_EXTERNAL_SUBSTRINGS
+    internal_substrings = internal_substrings or DEFAULT_INTERNAL_SUBSTRINGS
+    if any(substring in name for substring in internal_substrings):
+        return False
+    return any(substring in name for substring in external_substrings)
+
+
 class ResourceTypeUsage(Entity):
     name: str
     example_files: list[Path] = Field(default_factory=list)
@@ -67,6 +81,10 @@ class ResourceTypeUsage(Entity):
                 self.example_files.append(example_file)
         self.variable_usage.extend(variable_usages)
 
+    @property
+    def external_var_usages(self) -> list[str]:
+        return [usage.var_name for usage in self.variable_usage if is_variable_name_external(usage.var_name)]
+
 
 class ResourceTypes(RootModel[dict[str, ResourceTypeUsage]]):
     def add_resource_type(self, resource_type: str, example_files: list[Path], variable_usages: list[ResourceVarUsage]):
@@ -74,6 +92,21 @@ class ResourceTypes(RootModel[dict[str, ResourceTypeUsage]]):
             self.root[resource_type] = ResourceTypeUsage(name=resource_type)
         resource_type_usage = self.root[resource_type]
         resource_type_usage.add_usage(example_files, variable_usages)
+
+    def atlas_resource_type_with_external_var_usages(self) -> Self:
+        return type(self)(
+            root={
+                name: usage
+                for name, usage in self.root.items()
+                if name.startswith(ATLAS_PROVIDER_NAME) and usage.external_var_usages
+            }
+        )
+
+    def dump_with_external_vars(self) -> dict[str, dict]:
+        return {
+            name: usages.model_dump() | {"external_var_usages": usages.external_var_usages}
+            for name, usages in self.root.items()
+        }
 
 
 def find_resource_types_with_usages(example_dir: Path):

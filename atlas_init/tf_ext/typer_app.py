@@ -9,7 +9,7 @@ def typer_main():
         name="tf-ext",
         help="Terraform extension commands for Atlas Init",
     )
-    app.command()(tf_dep.tf_dep)
+    app.command(name="dep")(tf_dep.tf_dep)
     app.command(name="vars")(tf_vars.tf_vars)
     configure_logging(app)
     app()

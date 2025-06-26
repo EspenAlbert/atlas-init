@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import ClassVar
@@ -8,15 +9,17 @@ from model_lib import IgnoreFalsy, dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
+
 from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.paths import (
     ResourceTypes,
     find_resource_types_with_usages,
     find_variables,
     get_example_directories,
+    is_variable_name_external,
 )
 from atlas_init.tf_ext.settings import TfDepSettings
-from atlas_init.tf_ext.tf_dep import ATLAS_PROVIDER_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +79,6 @@ class TfVarUsage(IgnoreFalsy):
         payload["example_paths"] = sorted(self.example_paths)
         return payload
 
-    def name_match(self, name_substrings: list[str]) -> bool:
-        return any(substring in self.name for substring in name_substrings)
-
 
 class TfVarsUsage(RootModel[dict[str, TfVarUsage]]):
     def add_variable(self, variable: str, variable_description: str | None, example_dir: Path):
@@ -86,14 +86,8 @@ class TfVarsUsage(RootModel[dict[str, TfVarUsage]]):
             self.root[variable] = TfVarUsage(name=variable, example_paths=[])
         self.root[variable].update(variable_description, example_dir)
 
-    def external_vars(self, name_substrings: list[str], name_skip_substrings: list[str]) -> TfVarsUsage:
-        return type(self)(
-            root={
-                name: usage
-                for name, usage in self.root.items()
-                if usage.name_match(name_substrings) and not usage.name_match(name_skip_substrings)
-            }
-        )
+    def external_vars(self) -> TfVarsUsage:
+        return type(self)(root={name: usage for name, usage in self.root.items() if is_variable_name_external(name)})
 
 
 def vars_usage_dumping(variables: TfVarsUsage) -> str:
@@ -110,11 +104,22 @@ def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], tas
             resource_types.add_resource_type(resource_type, usages.example_files, usages.variable_usage)
         task.update(advance=1)
     logger.info(f"Found {len(resource_types.root)} resource types in the examples.")
-    resource_types_model = resource_types.model_dump()
-    resource_types_yaml = dump(dict(sorted(resource_types_model.items())), format="yaml")
+    resource_types_yaml = resource_types_dumping(resource_types)
     ensure_parents_write_text(settings.resource_types_file_path, resource_types_yaml)
     logger.info(f"Resource types usage written to {settings.resource_types_file_path}")
+    atlas_external_resource_types = resource_types.atlas_resource_type_with_external_var_usages()
+    logger.info(f"Found {len(atlas_external_resource_types.root)} Atlas resource types with external variable usages.")
+    atlas_external_resource_types_yaml = resource_types_dumping(atlas_external_resource_types, with_external=True)
+    ensure_parents_write_text(settings.resource_types_external_file_path, atlas_external_resource_types_yaml)
+    logger.info(
+        f"Atlas resource types with external variable usages written to {settings.resource_types_external_file_path}"
+    )
     return resource_types
+
+
+def resource_types_dumping(resource_types: ResourceTypes, with_external: bool = False) -> str:
+    resource_types_model = resource_types.dump_with_external_vars() if with_external else resource_types.model_dump()
+    return dump(dict(sorted(resource_types_model.items())), format="yaml")
 
 
 def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
@@ -123,9 +128,7 @@ def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: ne
     vars_yaml = vars_usage_dumping(variables)
     ensure_parents_write_text(settings.vars_file_path, vars_yaml)
     logger.info(f"Variables usage written to {settings.vars_file_path}")
-    external_vars = variables.external_vars(
-        name_substrings=["aws", "gcp", "azure"], name_skip_substrings=["atlas", "mongo"]
-    )
+    external_vars = variables.external_vars()
     if external_vars.root:
         logger.info(f"Found {len(external_vars.root)} external variables: {', '.join(external_vars.root.keys())}")
         external_vars_yaml = vars_usage_dumping(external_vars)

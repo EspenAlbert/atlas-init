@@ -17,6 +17,7 @@ from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.settings.rich_utils import configure_logging
 from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.paths import find_variable_resource_type_usages, find_variables, get_example_directories
 from atlas_init.tf_ext.settings import TfDepSettings
 
@@ -28,9 +29,14 @@ v2_grand_parent_dirs = {
     "mongodbatlas_backup_compliance_policy",
 }
 v2_parent_dir = {"cluster_with_schedule"}
-ATLAS_PROVIDER_NAME = "mongodbatlas"
 MODULE_PREFIX = "module."
 DATA_PREFIX = "data."
+VARIABLE_RESOURCE_MAPPING: dict[str, str] = {
+    "org_id": "mongodbatlas_organization",
+    "project_id": "mongodbatlas_project",
+    "cluster_name": "mongodbatlas_advanced_cluster",
+}
+SKIP_NODES: set[str] = {"mongodbatlas_cluster"}
 
 
 def is_v2_example_dir(example_dir: Path) -> bool:
@@ -195,14 +201,6 @@ class EdgeParsed(BaseModel):
 
 def edge_plain(edge_endpoint: pydot.EdgeEndpoint) -> str:
     return str(edge_endpoint).strip('"').strip()
-
-
-VARIABLE_RESOURCE_MAPPING: dict[str, str] = {
-    "org_id": "mongodbatlas_organization",
-    "project_id": "mongodbatlas_project",
-    "cluster_name": "mongodbatlas_advanced_cluster",
-}
-SKIP_NODES: set[str] = {"mongodbatlas_cluster"}
 
 
 def skip_variable_edge(src: str, dst: str) -> bool:
