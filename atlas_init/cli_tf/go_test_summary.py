@@ -426,7 +426,7 @@ def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, eve
 
 
 class ErrorRowColumns(StrEnum):
-    GROUP_NAME = "Group or Package"
+    GROUP_NAME = "Group with Package"
     TEST = "Test"
     ERROR_CLASS = "Error Class"
     DETAILS_SUMMARY = "Details Summary"
@@ -452,6 +452,7 @@ class ErrorRowColumns(StrEnum):
 class TestRow(Entity):
     group_name: str
     package_url: str
+    full_name: str
     test_name: str
     error_classes: list[GoTestErrorClass]
     details_summary: str
@@ -501,7 +502,8 @@ class TestRow(Entity):
         for col in columns:
             match col:
                 case ErrorRowColumns.GROUP_NAME:
-                    values.append(self.group_name or self.package_url or "Unknown Group")
+                    group_part = self.full_name.removesuffix(self.test_name).rstrip("/")
+                    values.append(group_part or "Unknown Group")
                 case ErrorRowColumns.TEST:
                     values.append(self.test_name)
                 case ErrorRowColumns.ERROR_CLASS:
@@ -546,11 +548,11 @@ async def _collect_monthly_test_rows_and_summaries(
 ) -> tuple[list[TestRow], dict[str, str]]:
     dao = await init_mongo_dao(settings)
     last_day_test_names = await dao.read_tf_tests_for_day(branch, history_filter.run_history_end)
-    test_runs_by_name: dict[str, GoTestRun] = {run.name_with_package: run for run in last_day_test_names}
+    test_runs_by_name: dict[str, GoTestRun] = {run.full_name: run for run in last_day_test_names}
     test_rows = []
     detail_files_md: dict[str, str] = {}
     with new_task("Collecting monthly error rows", total=len(last_day_test_names)) as task:
-        for name_with_package, test_run in test_runs_by_name.items():
+        for name_with_group, test_run in test_runs_by_name.items():
             test_row, runs = await _create_test_row(
                 history_filter,
                 dao,
@@ -560,9 +562,11 @@ async def _collect_monthly_test_rows_and_summaries(
             run_ids = [run.id for run in runs]
             classifications = await dao.read_error_classifications(run_ids)
             test_row.error_classes = [cls.error_class for cls in classifications.values()]
-            test_row.details_summary = f"[{run_statuses(runs)}]({settings.github_ci_summary_details_rel_path(summary_name, name_with_package)})"
-            summary = GoTestSummary(name=name_with_package, results=runs, classifications=classifications)
-            detail_files_md[name_with_package] = test_detail_md(
+            test_row.details_summary = (
+                f"[{run_statuses(runs)}]({settings.github_ci_summary_details_rel_path(summary_name, name_with_group)})"
+            )
+            summary = GoTestSummary(name=name_with_group, results=runs, classifications=classifications)
+            detail_files_md[name_with_group] = test_detail_md(
                 summary, history_filter.run_history_start, history_filter.run_history_end
             )
             task.update(advance=1)
@@ -596,6 +600,7 @@ async def _create_test_row(
     last_env_runs = group_by_once(run_history, key=lambda run: run.env or "unknown-env")
     error_classes = [error_class] if error_class else []
     return TestRow(
+        full_name=test_run.full_name,
         group_name=group_name,
         package_url=package_url,
         test_name=test_name,
