@@ -25,7 +25,14 @@ from atlas_init.cli_tf.github_logs import (
     tf_repo,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
-from atlas_init.cli_tf.go_test_summary import DailyReportIn, TFCITestOutput, create_daily_report
+from atlas_init.cli_tf.go_test_summary import (
+    DailyReportIn,
+    MonthlyReportIn,
+    RunHistoryFilter,
+    TFCITestOutput,
+    create_daily_report,
+    create_monthly_report,
+)
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     ErrorClassAuthor,
@@ -127,24 +134,36 @@ def ci_tests(
     out = asyncio.run(ci_tests_pipeline(event))
     settings = event.settings
     manual_classification(out.classified_errors, settings)
-    daily_in = DailyReportIn(
-        report_date=event.report_date,
+    history_filter = RunHistoryFilter(
         run_history_start=event.report_date - timedelta(days=event.max_days_ago),
         run_history_end=event.report_date,
         env_filter=[summary_env_name] if summary_env_name else [],
+    )
+    daily_in = DailyReportIn(
+        report_date=event.report_date,
+        history_filter=history_filter,
     )
     daily_out = create_daily_report(out, settings, daily_in)
     print_to_live(Markdown(daily_out.summary_md))
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
     if summary_name:
+        monthly_out = create_monthly_report(
+            settings,
+            MonthlyReportIn(
+                name=summary_name,
+                branch=branch,
+                history_filter=history_filter,
+            ),
+        )
         summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
         file_utils.ensure_parents_write_text(summary_path, daily_out.summary_md)
         logger.info(f"summary written to {summary_path}")
-        if report_details_md := daily_out.details_md:
-            details_path = summary_path.with_name(f"{summary_path.stem}_details.md")
-            file_utils.ensure_parents_write_text(details_path, report_details_md)
-            logger.info(f"summary details written to {details_path}")
+        details_dir = summary_path.with_name(f"{summary_path.stem}_details")
+        logger.info(f"Writing details to {details_dir}")
+        for name, details_md in monthly_out.test_details_md.items():
+            details_path = details_dir / f"{name}.md"
+            file_utils.ensure_parents_write_text(details_path, details_md)
         if confirm(f"do you want to open the summary file? {summary_path}", default=False):
             run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
 
