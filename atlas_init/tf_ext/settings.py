@@ -4,6 +4,10 @@ from model_lib import StaticSettings
 
 class TfDepSettings(StaticSettings):
     @property
+    def atlas_graph_path(self) -> Path:
+        return self.static_root / "atlas_graph.yaml"
+
+    @property
     def vars_file_path(self) -> Path:
         return self.static_root / "tf_vars.yaml"
 
