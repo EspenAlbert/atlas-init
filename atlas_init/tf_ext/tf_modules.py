@@ -1,17 +1,17 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Self
+from typing import ClassVar, Iterable
 
-from model_lib import Entity, parse_list, parse_model
-from pydantic import Field, RootModel, model_validator
 import pydot
-from rich.tree import Tree
 import typer
 from ask_shell import new_task, print_to_live
+from model_lib import parse_list, parse_model
+from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
+from atlas_init.tf_ext.models import ModuleConfig, ModuleConfigs
 from atlas_init.tf_ext.settings import TfDepSettings
 from atlas_init.tf_ext.tf_dep import FORCE_INTERNAL_NODES, SKIP_NODES, AtlasGraph, edge_src_dest
 
@@ -31,133 +31,87 @@ def default_skippped_module_resource_types() -> list[str]:
     return [
         "mongodbatlas_cluster",
         "mongodbatlas_flex_cluster",
-        "mongodbatlas_stream_connection",
-        "mongodbatlas_stream_instance",
-        "mongodbatlas_stream_privatelink_endpoint",
-        "mongodbatlas_stream_processor",
     ]
 
 
-_emojii_list = [
-    "1️⃣",
-    "2️⃣",
-    "3️⃣",
-    "4️⃣",
-    "5️⃣",
-    "6️⃣",
-    "7️⃣",
-    "8️⃣",
-    "9️⃣",
-    "🔟",
-]
-_emoji_counter = 0
-
-
-def choose_next_emoji() -> str:
-    global _emoji_counter
-    emoji = _emojii_list[_emoji_counter % len(_emojii_list)]
-    _emoji_counter += 1
-    return emoji
-
-
-def default_allowed_multi_parents() -> set[str]:
-    return {
-        "mongodbatlas_project",
-    }
-
-
-class ModuleState(Entity):
-    resource_types: set[str] = Field(default_factory=set, description="Set of resource types in the module.")
-
-
-class ModuleConfig(Entity):
-    name: str = Field(..., description="Name of the module.")
-    root_resource_types: list[str] = Field(..., description="List of root resource types for the module.")
-    force_include_children: list[str] = Field(
-        default_factory=list, description="List of resource types that should always be included as children."
+def default_module_configs() -> ModuleConfigs:
+    return ModuleConfigs(
+        root={
+            "auth": ModuleConfig(
+                name="Authentication",
+                root_resource_types=[
+                    "mongodbatlas_api_key",
+                    "mongodbatlas_custom_db_role",
+                    "mongodbatlas_database_user",
+                    "mongodbatlas_ldap_configuration",
+                    "mongodbatlas_ldap_provider",
+                    "mongodbatlas_ldap_verify",
+                    "mongodbatlas_project_api_key",
+                    "mongodbatlas_team",
+                ],
+                force_include_children=[
+                    "mongodbatlas_access_list_api_key",
+                ],
+            ),
+            "federated": ModuleConfig(
+                name="Federated Authentication",
+                root_resource_types=[
+                    "mongodbatlas_federated_settings_identity_provider",
+                ],
+                force_include_children=[
+                    "mongodbatlas_federated_settings_org_config",
+                ],
+            ),
+            "network": ModuleConfig(
+                name="Network",
+                root_resource_types=[
+                    "mongodbatlas_encryption_at_rest_private_endpoint",
+                    "mongodbatlas_network_container",
+                    "mongodbatlas_private_endpoint_regional_mode",
+                    "mongodbatlas_privatelink_endpoint_service_data_federation_online_archive",
+                    "mongodbatlas_privatelink_endpoint_service",
+                    "mongodbatlas_privatelink_endpoint",
+                    "mongodbatlas_stream_privatelink_endpoint",
+                ],
+                force_include_children=["mongodbatlas_network_peering"],
+            ),
+            "cloud_provider": ModuleConfig(
+                name="Cloud Provider",
+                root_resource_types=["mongodbatlas_cloud_provider_access_setup"],
+                allow_external_dependencies=True,
+                extra_nested_resource_types=["mongodbatlas_cloud_provider_access_authorization"],
+                force_include_children=["mongodbatlas_encryption_at_rest"],
+            ),
+            "streams": ModuleConfig(
+                name="Streams",
+                root_resource_types=["mongodbatlas_stream_instance"],
+                extra_nested_resource_types=["mongodbatlas_stream_connection"],
+                force_include_children=["mongodbatlas_stream_processor"],
+            ),
+            "cluster": ModuleConfig(
+                name="Cluster",
+                root_resource_types=["mongodbatlas_advanced_cluster"],
+            ),
+            "project": ModuleConfig(
+                name="Project",
+                root_resource_types=["mongodbatlas_project"],
+                force_include_children=[
+                    "mongodbatlas_project_ip_access_list"  # the external aws_vpc dependency is not really needed
+                ],
+            ),
+            "organization": ModuleConfig(
+                name="Organization",
+                root_resource_types=["mongodbatlas_organization"],
+            ),
+            "cloud_backup_actions": ModuleConfig(
+                name="Cloud Backup Actions",
+                root_resource_types=[
+                    "mongodbatlas_cloud_backup_snapshot",
+                    "mongodbatlas_cloud_backup_snapshot_export_bucket",
+                ],
+            ),
+        }
     )
-    emojii: str = Field(init=False, default_factory=choose_next_emoji)
-    allowed_multi_parents: set[str] = Field(
-        default_factory=default_allowed_multi_parents,
-        description="Set of parents that a child resource type can have in addition to the root_resource_type.",
-    )
-    allow_external_dependencies: bool = Field(
-        default=False, description="Whether to allow external dependencies for the module."
-    )
-    extra_nested_resource_types: list[str] = Field(
-        default_factory=list,
-        description="List of additional nested resource types that should be included in the module.",
-    )
-
-    state: ModuleState = Field(default_factory=ModuleState, description="Internal state of the module.")
-
-    @model_validator(mode="after")
-    def update_state(self) -> Self:
-        self.state.resource_types.update(self.root_resource_types)
-        return self
-
-    @property
-    def tree_label(self) -> str:
-        return f"{self.emojii} {self.name}"
-
-    def include_child(self, child: str, atlas_graph: AtlasGraph) -> bool:
-        if child in self.force_include_children or child in self.extra_nested_resource_types:
-            self.state.resource_types.add(child)
-            return True
-        has_external_dependencies = len(atlas_graph.external_parents.get(child, [])) > 0
-        if self.allow_external_dependencies and has_external_dependencies:
-            has_external_dependencies = False
-        is_a_parent = bool(atlas_graph.parent_child_edges.get(child))
-        extra_parents = (
-            set(atlas_graph.all_parents(child))
-            - self.allowed_multi_parents
-            - set(self.root_resource_types)
-            - set(self.extra_nested_resource_types)
-        )
-        has_extra_parents = len(extra_parents) > 0
-        if has_external_dependencies or is_a_parent or has_extra_parents:
-            return False
-        self.state.resource_types.add(child)
-        return True
-
-
-class ModuleConfigs(RootModel[dict[str, ModuleConfig]]):
-    pass
-
-
-default_module_configs = ModuleConfigs(
-    root={
-        "cloud_provider": ModuleConfig(
-            name="Cloud Provider",
-            root_resource_types=["mongodbatlas_cloud_provider_access_setup"],
-            allow_external_dependencies=True,
-            extra_nested_resource_types=["mongodbatlas_cloud_provider_access_authorization"],
-            force_include_children=["mongodbatlas_encryption_at_rest"],
-        ),
-        "cluster": ModuleConfig(
-            name="Cluster",
-            root_resource_types=["mongodbatlas_advanced_cluster"],
-        ),
-        "project": ModuleConfig(
-            name="Project",
-            root_resource_types=["mongodbatlas_project"],
-            force_include_children=[
-                "mongodbatlas_project_ip_access_list"  # the external aws_vpc dependency is not really needed
-            ],
-        ),
-        "organization": ModuleConfig(
-            name="Organization",
-            root_resource_types=["mongodbatlas_organization"],
-        ),
-        "cloud_backup_actions": ModuleConfig(
-            name="Cloud Backup Actions",
-            root_resource_types=[
-                "mongodbatlas_cloud_backup_snapshot",
-                "mongodbatlas_cloud_backup_snapshot_export_bucket",
-            ],
-        ),
-    }
-)
 
 
 def tf_modules(
@@ -173,61 +127,78 @@ def tf_modules(
     settings = TfDepSettings.from_env()
     atlas_graph = parse_atlas_graph(settings)
     output_dir = settings.static_root
-    color_coder_internal = ColorCoder(atlas_graph, keep_provider_name=False)
-    color_coder_external = ColorCoder(atlas_graph, keep_provider_name=True)
     with new_task("Write graphs"):
+        color_coder_internal = color_coder(atlas_graph, keep_provider_name=False)
         internal_graph = create_internal_dependencies(atlas_graph, color_coder=color_coder_internal)
         add_unused_nodes_to_graph(settings, atlas_graph, color_coder_internal, internal_graph)
         write_graph(internal_graph, output_dir, "atlas_internal.png")
-        write_graph(create_external_dependencies(atlas_graph, color_coder_external), output_dir, "atlas_external.png")
+        write_graph(create_external_dependencies(atlas_graph), output_dir, "atlas_external.png")
     with new_task("Write module graphs"):
-        tree = Tree(
-            "Module graphs",
+        modules = generate_module_graphs(skipped_module_resource_types, settings, atlas_graph)
+    with new_task("Internal Graph with Module Numbers"):
+        module_color_coder = ModuleColorCoder(
+            atlas_graph,
+            keep_provider_name=False,
+            modules=modules,
         )
-        used_resource_types: set[str] = set(
-            skipped_module_resource_types
-        )  # avoid the same resource_type in multiple module graphs
-        for name, module_config in default_module_configs.root.items():
-            internal_graph, external_graph = create_module_graphs(
-                atlas_graph,
-                module_config,
-                color_coder_internal=color_coder_internal,
-                color_coder_external=color_coder_external,
-                used_resource_types=used_resource_types,
+        internal_graph_with_numbers = create_internal_dependencies(atlas_graph, module_color_coder)
+        add_unused_nodes_to_graph(settings, atlas_graph, module_color_coder, internal_graph_with_numbers)
+        write_graph(internal_graph_with_numbers, settings.static_root, "atlas_internal_with_numbers.png")
+
+
+def generate_module_graphs(skipped_module_resource_types, settings, atlas_graph):
+    tree = Tree(
+        "Module graphs",
+    )
+    used_resource_types: set[str] = set(
+        skipped_module_resource_types
+    )  # avoid the same resource_type in multiple module graphs
+    modules = default_module_configs()
+    for name, module_config in modules.root.items():
+        internal_graph, external_graph = create_module_graphs(
+            atlas_graph,
+            module_config,
+            color_coder_internal=color_coder(atlas_graph, keep_provider_name=False),
+            color_coder_external=color_coder(atlas_graph, keep_provider_name=True),
+            used_resource_types=used_resource_types,
+        )
+        module_tree = tree.add(module_config.tree_label)
+        module_trees: dict[str, Tree] = {
+            resource_type: module_tree.add(remove_provider_name(resource_type))
+            for resource_type in module_config.root_resource_types
+        }
+
+        def get_tree(resource_type: str) -> Tree | None:
+            return next(
+                tree
+                for src, tree in module_trees.items()
+                if src.endswith(resource_type)  # provider name might be removed
             )
-            module_tree = tree.add(module_config.tree_label)
-            module_trees: dict[str, Tree] = {}
 
-            def get_tree(resource_type: str) -> Tree | None:
-                return next(
-                    tree
-                    for src, tree in module_trees.items()
-                    if src.endswith(resource_type)  # provider name might be removed
+        def prefer_root_src_over_nested(src_dest: tuple[str, str]) -> tuple[bool, str, str]:
+            src, dest = src_dest
+            is_root = any(root.endswith(src) for root in module_config.root_resource_types)
+            return (not is_root, src, dest)  # sort by whether src is a
+
+        for src, dest in sorted(
+            (edge_src_dest(edge) for edge in internal_graph.get_edge_list()), key=prefer_root_src_over_nested
+        ):
+            try:
+                tree_src = get_tree(src)
+            except StopIteration:
+                resource_type = next(
+                    root
+                    for root in module_config.root_resource_types + module_config.extra_nested_resource_types
+                    if root.endswith(src)  # provider name might be removed
                 )
-
-            def prefer_root_src_over_nested(src_dest: tuple[str, str]) -> tuple[bool, str, str]:
-                src, dest = src_dest
-                is_root = any(root.endswith(src) for root in module_config.root_resource_types)
-                return (not is_root, src, dest)  # sort by whether src is a
-
-            for src, dest in sorted(
-                (edge_src_dest(edge) for edge in internal_graph.get_edge_list()), key=prefer_root_src_over_nested
-            ):
-                try:
-                    tree_src = get_tree(src)
-                except StopIteration:
-                    resource_type = next(
-                        root
-                        for root in module_config.root_resource_types + module_config.extra_nested_resource_types
-                        if root.endswith(src)  # provider name might be removed
-                    )
-                    tree_src = module_tree.add(resource_type)
-                    module_trees[resource_type] = tree_src
-                assert tree_src is not None, f"Source {src} not found in module tree"
-                module_trees[dest] = tree_src.add(dest)
-            write_graph(internal_graph, settings.static_root, f"{name}_internal.png")
-            write_graph(external_graph, settings.static_root, f"{name}_external.png")
+                tree_src = module_tree.add(src)
+                module_trees[resource_type] = tree_src
+            assert tree_src is not None, f"Source {src} not found in module tree"
+            module_trees[dest] = tree_src.add(dest)
+        write_graph(internal_graph, settings.static_root, f"{name}_internal.png")
+        write_graph(external_graph, settings.static_root, f"{name}_external.png")
     print_to_live(tree)
+    return modules
 
 
 def parse_atlas_graph(settings):
@@ -257,10 +228,10 @@ class ColorCoder:
     graph: AtlasGraph
     keep_provider_name: bool
 
-    ATLAS_EXTERNAL_COLOR: str = "red"
-    ATLAS_INTERNAL_COLOR: str = "green"
-    ATLAS_INTERNAL_UNUSED_COLOR: str = "gray"
-    EXTERNAL_COLOR: str = "purple"
+    ATLAS_EXTERNAL_COLOR: ClassVar[str] = "red"
+    ATLAS_INTERNAL_COLOR: ClassVar[str] = "green"
+    ATLAS_INTERNAL_UNUSED_COLOR: ClassVar[str] = "gray"
+    EXTERNAL_COLOR: ClassVar[str] = "purple"
 
     def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
         if is_unused:
@@ -279,6 +250,20 @@ class ColorCoder:
         if resource_type in SKIP_NODES:
             raise NodeSkippedError(resource_type)
         return resource_type if self.keep_provider_name else remove_provider_name(resource_type)
+
+
+def color_coder(atlas_graph: AtlasGraph, keep_provider_name: bool = False) -> ColorCoder:
+    return ColorCoder(atlas_graph, keep_provider_name=keep_provider_name)
+
+
+@dataclass
+class ModuleColorCoder(ColorCoder):
+    modules: ModuleConfigs
+
+    def node_name(self, resource_type: str) -> str:
+        if emoji_prefix := self.modules.module_emoji_prefix(resource_type):
+            return f"{emoji_prefix} {super().node_name(resource_type)}"
+        return super().node_name(resource_type)
 
 
 def remove_provider_name(resource_type: str) -> str:
@@ -324,7 +309,7 @@ def create_module_graphs(
     child_edges = [
         (root_resource_type, child)
         for root_resource_type in module_config.root_resource_types
-        for child in atlas_graph.parent_child_edges[root_resource_type]
+        for child in atlas_graph.parent_child_edges.get(root_resource_type, [])
         if child not in used_resource_types
     ]
     child_edges.extend(
@@ -365,6 +350,8 @@ def create_internal_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCode
     return create_dot_graph(graph_name, atlas_graph.iterate_internal_edges(), color_coder=color_coder)
 
 
-def create_external_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCoder) -> pydot.Dot:
+def create_external_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
     graph_name = "Atlas External Dependencies"
-    return create_dot_graph(graph_name, atlas_graph.iterate_external_edges(), color_coder=color_coder)
+    return create_dot_graph(
+        graph_name, atlas_graph.iterate_external_edges(), color_coder=color_coder(atlas_graph, keep_provider_name=True)
+    )
