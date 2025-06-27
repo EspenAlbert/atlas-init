@@ -151,6 +151,11 @@ def edge_plain(edge_endpoint: pydot.EdgeEndpoint) -> str:
     return str(edge_endpoint).strip('"').strip()
 
 
+def edge_src_dest(edge: pydot.Edge) -> tuple[str, str]:
+    """Get the source and destination of the edge as plain strings."""
+    return edge_plain(edge.get_source()), edge_plain(edge.get_destination())
+
+
 def skip_variable_edge(src: str, dst: str) -> bool:
     # sourcery skip: assign-if-exp, boolean-if-exp-identity, reintroduce-else, remove-unnecessary-cast
     if src == dst:
@@ -165,6 +170,11 @@ class AtlasGraph(Entity):
     parent_child_edges: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
     # atlas_resource_type -> set[external_resource_type]
     external_parents: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
+
+    def all_parents(self, child: str) -> Iterable[str]:
+        for parent, children in self.parent_child_edges.items():
+            if child in children:
+                yield parent
 
     def dump_yaml(self) -> str:
         parent_child_edges = {name: sorted(children) for name, children in sorted(self.parent_child_edges.items())}

@@ -22,3 +22,7 @@ class TfDepSettings(StaticSettings):
     @property
     def resource_types_external_file_path(self) -> Path:
         return self.static_root / "tf_resource_types_external.yaml"
+
+    @property
+    def schema_resource_types_path(self) -> Path:
+        return self.static_root / "tf_schema_resource_types.yaml"

@@ -34,6 +34,8 @@ def tf_vars(
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
     with new_task("Parsing provider schema") as task:
         resource_types = parse_schema_resource_types(example_dirs[0])
+        ensure_parents_write_text(settings.schema_resource_types_path, dump(sorted(resource_types), format="yaml"))
+        logger.info(f"Provider schema resource types written to {settings.schema_resource_types_path}")
     logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
     with new_task("Parsing variables from examples") as task:
         update_variables(settings, example_dirs, task)
