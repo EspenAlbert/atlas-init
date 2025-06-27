@@ -65,13 +65,19 @@ def default_module_configs() -> ModuleConfigs:
                     "mongodbatlas_ldap_verify",
                 ],
             ),
-            "federated": ModuleConfig(
+            "federated auth": ModuleConfig(
                 name="Federated Authentication",
                 root_resource_types=[
                     "mongodbatlas_federated_settings_identity_provider",
                 ],
                 force_include_children=[
                     "mongodbatlas_federated_settings_org_config",
+                ],
+            ),
+            "federated DB": ModuleConfig(
+                name="Federated Database",
+                root_resource_types=[
+                    "mongodbatlas_federated_database_instance",
                 ],
             ),
             "network": ModuleConfig(
@@ -156,6 +162,16 @@ def tf_modules(
         internal_graph_with_numbers = create_internal_dependencies(atlas_graph, module_color_coder)
         add_unused_nodes_to_graph(settings, atlas_graph, module_color_coder, internal_graph_with_numbers)
         write_graph(internal_graph_with_numbers, settings.static_root, "atlas_internal_with_numbers.png")
+    with new_task("Missing modules"):
+        all_resources: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
+        missing_resources = [
+            resource_type
+            for resource_type in all_resources
+            if modules.module_emoji_prefix(resource_type) == ""
+            and resource_type not in skipped_module_resource_types
+            and resource_type not in atlas_graph.deprecated_resource_types
+        ]
+        logger.info(f"Missing modules: \n{'\n'.join(missing_resources)}")
 
 
 def generate_module_graphs(skipped_module_resource_types, settings, atlas_graph):
