@@ -9,16 +9,24 @@ from atlas_init.tf_ext.tf_dep import (
     find_variables,
     parse_graphs,
 )
-from atlas_init.tf_ext.tf_modules import create_internal_dependencies
+from atlas_init.tf_ext.tf_modules import color_coder, create_internal_dependencies
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(os.environ.get("EXAMPLE_PATH", "") == "", reason="needs os.environ[EXAMPLE_PATH]")
-def test_parse_graph(monkeypatch):
-    path = os.environ["PATH"]
+@pytest.fixture(autouse=True)
+def ensure_tf_in_path(monkeypatch):
+    """
+    Ensure that the Terraform binary is in the PATH for the tests.
+    """
+    path = os.environ.get("PATH", "")
     extra_path = os.environ.get("EXTRA_PATH", "")
     monkeypatch.setenv("PATH", f"{path}:{extra_path}")
+    logger.info(f"Set PATH to: {os.environ['PATH']}")
+
+
+@pytest.mark.skipif(os.environ.get("EXAMPLE_PATH", "") == "", reason="needs os.environ[EXAMPLE_PATH]")
+def test_parse_graph():
     path = Path(os.environ["EXAMPLE_PATH"])
     atlas_graph = parse_graphs([path], MagicMock())
     assert atlas_graph.parent_child_edges == {
@@ -29,8 +37,13 @@ def test_parse_graph(monkeypatch):
         "mongodbatlas_cloud_provider_access_authorization": {"aws_iam_role"},
         "mongodbatlas_encryption_at_rest": {"aws_kms_key"},
     }
-    dot_graph: Graph = create_internal_dependencies(atlas_graph)
+    dot_graph: Graph = create_internal_dependencies(atlas_graph, color_coder(atlas_graph, keep_provider_name=False))
     assert dot_graph is not None
+
+
+def test_parse_search_deployment_graph(tf_search_deployment_example_path):
+    graph = parse_graphs([tf_search_deployment_example_path], MagicMock())
+    assert graph.parent_child_edges["mongodbatlas_advanced_cluster"] == {"mongodbatlas_search_deployment"}
 
 
 def test_find_variables(tf_variables_path):

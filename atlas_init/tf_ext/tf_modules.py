@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -37,20 +38,31 @@ def default_skippped_module_resource_types() -> list[str]:
 def default_module_configs() -> ModuleConfigs:
     return ModuleConfigs(
         root={
+            "alerts": ModuleConfig(
+                name="Alerts",
+                root_resource_types=[
+                    "mongodbatlas_alert_configuration",
+                ],
+            ),
             "auth": ModuleConfig(
                 name="Authentication",
                 root_resource_types=[
                     "mongodbatlas_api_key",
                     "mongodbatlas_custom_db_role",
                     "mongodbatlas_database_user",
-                    "mongodbatlas_ldap_configuration",
-                    "mongodbatlas_ldap_provider",
-                    "mongodbatlas_ldap_verify",
                     "mongodbatlas_project_api_key",
                     "mongodbatlas_team",
+                    "mongodbatlas_x509_authentication_database_user",
                 ],
                 force_include_children=[
                     "mongodbatlas_access_list_api_key",
+                ],
+            ),
+            "ldap": ModuleConfig(
+                name="LDAP",
+                root_resource_types=[
+                    "mongodbatlas_ldap_configuration",
+                    "mongodbatlas_ldap_verify",
                 ],
             ),
             "federated": ModuleConfig(
@@ -201,18 +213,24 @@ def generate_module_graphs(skipped_module_resource_types, settings, atlas_graph)
     return modules
 
 
-def parse_atlas_graph(settings):
+def parse_atlas_graph(settings: TfDepSettings) -> AtlasGraph:
     atlas_graph = parse_model(settings.atlas_graph_path, t=AtlasGraph)
+    deprecated_resources = parse_list(settings.schema_resource_types_deprecated_path, format="yaml")
+    atlas_graph.deprecated_resource_types.update(deprecated_resources)
     atlas_graph.parent_child_edges["mongodbatlas_project"].add("mongodbatlas_auditing")
+    atlas_graph.parent_child_edges["mongodbatlas_project"].add("mongodbatlas_custom_dns_configuration_cluster_aws")
+    atlas_graph.parent_child_edges["mongodbatlas_advanced_cluster"].add("mongodbatlas_global_cluster_config")
     return atlas_graph
 
 
-def add_unused_nodes_to_graph(settings, atlas_graph, internal_color_coder, internal_graph):
+def add_unused_nodes_to_graph(
+    settings: TfDepSettings, atlas_graph: AtlasGraph, color_coder: ColorCoder, internal_graph: pydot.Dot
+):
     schema_resource_types: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
     all_nodes = atlas_graph.all_internal_nodes
     for resource_type in schema_resource_types:
         if resource_type not in all_nodes:
-            internal_graph.add_node(internal_color_coder.create_node(resource_type, is_unused=True))
+            internal_graph.add_node(color_coder.create_node(resource_type, is_unused=True))
 
 
 class NodeSkippedError(Exception):
@@ -231,10 +249,13 @@ class ColorCoder:
     ATLAS_EXTERNAL_COLOR: ClassVar[str] = "red"
     ATLAS_INTERNAL_COLOR: ClassVar[str] = "green"
     ATLAS_INTERNAL_UNUSED_COLOR: ClassVar[str] = "gray"
+    ATLAS_DEPRECATED_COLOR: ClassVar[str] = "orange"
     EXTERNAL_COLOR: ClassVar[str] = "purple"
 
     def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
-        if is_unused:
+        if resource_type in self.graph.deprecated_resource_types:
+            color = self.ATLAS_DEPRECATED_COLOR
+        elif is_unused:
             color = self.ATLAS_INTERNAL_UNUSED_COLOR
         elif resource_type.startswith(ATLAS_PROVIDER_NAME):
             color = (

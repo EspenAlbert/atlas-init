@@ -17,13 +17,15 @@ _emojii_list = [
     "8️⃣",
     "9️⃣",
     "🔟",
+    "1️⃣1️⃣",
+    "1️⃣2️⃣",
 ]
 _emoji_counter = 0
 
 
 def choose_next_emoji() -> str:
     global _emoji_counter
-    emoji = _emojii_list[_emoji_counter % len(_emojii_list)]
+    emoji = _emojii_list[_emoji_counter]
     _emoji_counter += 1
     return emoji
 
@@ -69,6 +71,8 @@ class ModuleConfig(Entity):
         return f"{self.emojii} {self.name}"
 
     def include_child(self, child: str, atlas_graph: AtlasGraph) -> bool:
+        if child in atlas_graph.deprecated_resource_types:
+            return False
         if child in self.force_include_children or child in self.extra_nested_resource_types:
             self.state.resource_types.add(child)
             return True

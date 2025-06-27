@@ -55,6 +55,7 @@ def tf_dep_graph(
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
     example_dirs = get_example_directories(repo_path, skip_names)
+    logger.info(f"example_dirs: \n{'\n'.join(str(d) for d in sorted(example_dirs))}")
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = parse_graphs(example_dirs, task)
     with new_task("Dump graph"):
@@ -170,6 +171,7 @@ class AtlasGraph(Entity):
     parent_child_edges: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
     # atlas_resource_type -> set[external_resource_type]
     external_parents: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
+    deprecated_resource_types: set[str] = Field(default_factory=set)
 
     def all_parents(self, child: str) -> Iterable[str]:
         for parent, children in self.parent_child_edges.items():

@@ -26,3 +26,7 @@ class TfDepSettings(StaticSettings):
     @property
     def schema_resource_types_path(self) -> Path:
         return self.static_root / "tf_schema_resource_types.yaml"
+
+    @property
+    def schema_resource_types_deprecated_path(self) -> Path:
+        return self.static_root / "tf_schema_resource_types_deprecated.yaml"
