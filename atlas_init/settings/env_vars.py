@@ -9,7 +9,7 @@ from typing import Any, NamedTuple, TypeVar
 
 from model_lib import StaticSettings, parse_payload
 from pydantic import BaseModel, ValidationError, field_validator
-from zero_3rdparty import iter_utils
+from zero_3rdparty import iter_utils, str_utils
 
 from atlas_init.settings.config import (
     AtlasInitConfig,
@@ -135,6 +135,17 @@ class AtlasInitSettings(StaticSettings):
     @property
     def github_ci_summary_dir(self) -> Path:
         return self.cache_root / "github_ci_summary"
+
+    def github_ci_summary_path(self, summary_name: str) -> Path:
+        return self.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
+
+    def github_ci_summary_details_path(self, summary_name: str, test_name: str) -> Path:
+        return self.github_ci_summary_path(summary_name).parent / self.github_ci_summary_details_rel_path(
+            summary_name, test_name
+        )
+
+    def github_ci_summary_details_rel_path(self, summary_name: str, test_name: str) -> str:
+        return f"{summary_name.removesuffix('.md')}_details/{test_name}.md"
 
     @property
     def go_test_logs_dir(self) -> Path:
