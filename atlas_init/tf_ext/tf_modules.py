@@ -173,13 +173,13 @@ def tf_modules(
     settings = TfDepSettings.from_env()
     atlas_graph = parse_atlas_graph(settings)
     output_dir = settings.static_root
-    internal_color_coder = ColorCoder(atlas_graph, keep_provider_name=False)
-    external_color_coder = ColorCoder(atlas_graph, keep_provider_name=True)
+    color_coder_internal = ColorCoder(atlas_graph, keep_provider_name=False)
+    color_coder_external = ColorCoder(atlas_graph, keep_provider_name=True)
     with new_task("Write graphs"):
-        internal_graph = create_internal_dependencies(atlas_graph)
-        add_unused_nodes_to_graph(settings, atlas_graph, internal_color_coder, internal_graph)
+        internal_graph = create_internal_dependencies(atlas_graph, color_coder=color_coder_internal)
+        add_unused_nodes_to_graph(settings, atlas_graph, color_coder_internal, internal_graph)
         write_graph(internal_graph, output_dir, "atlas_internal.png")
-        write_graph(create_external_dependencies(atlas_graph), output_dir, "atlas_external.png")
+        write_graph(create_external_dependencies(atlas_graph, color_coder_external), output_dir, "atlas_external.png")
     with new_task("Write module graphs"):
         tree = Tree(
             "Module graphs",
@@ -189,7 +189,11 @@ def tf_modules(
         )  # avoid the same resource_type in multiple module graphs
         for name, module_config in default_module_configs.root.items():
             internal_graph, external_graph = create_module_graphs(
-                atlas_graph, module_config, used_resource_types=used_resource_types
+                atlas_graph,
+                module_config,
+                color_coder_internal=color_coder_internal,
+                color_coder_external=color_coder_external,
+                used_resource_types=used_resource_types,
             )
             module_tree = tree.add(module_config.tree_label)
             module_trees: dict[str, Tree] = {}
@@ -308,7 +312,12 @@ def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder
 
 
 def create_module_graphs(
-    atlas_graph: AtlasGraph, module_config: ModuleConfig, *, used_resource_types: set[str] | None = None
+    atlas_graph: AtlasGraph,
+    module_config: ModuleConfig,
+    *,
+    color_coder_internal: ColorCoder,
+    color_coder_external: ColorCoder,
+    used_resource_types: set[str],
 ) -> tuple[pydot.Dot, pydot.Dot]:
     used_resource_types = used_resource_types or set()
     """Create two graphs: one for internal-only module dependencies and one for all module dependencies."""
@@ -333,7 +342,7 @@ def create_module_graphs(
     internal_graph = create_dot_graph(
         f"{module_name} Internal Only Dependencies",
         internal_only_edges,
-        color_coder=ColorCoder(atlas_graph, keep_provider_name=False),
+        color_coder=color_coder_internal,
     )
     external_edges = [
         (parent, child)
@@ -344,22 +353,18 @@ def create_module_graphs(
     external_graph = create_dot_graph(
         f"{module_name} External Dependencies",
         child_edges + external_edges,
-        color_coder=ColorCoder(atlas_graph, keep_provider_name=True),
+        color_coder=color_coder_external,
     )
     used_resource_types.update(module_config.root_resource_types)  # in case a root_resource_type doesn't have children
     used_resource_types |= as_nodes(internal_only_edges)
     return internal_graph, external_graph
 
 
-def create_internal_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
+def create_internal_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCoder) -> pydot.Dot:
     graph_name = "Atlas Internal Dependencies"
-    return create_dot_graph(
-        graph_name, atlas_graph.iterate_internal_edges(), color_coder=ColorCoder(atlas_graph, keep_provider_name=False)
-    )
+    return create_dot_graph(graph_name, atlas_graph.iterate_internal_edges(), color_coder=color_coder)
 
 
-def create_external_dependencies(atlas_graph: AtlasGraph) -> pydot.Dot:
+def create_external_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCoder) -> pydot.Dot:
     graph_name = "Atlas External Dependencies"
-    return create_dot_graph(
-        graph_name, atlas_graph.iterate_external_edges(), color_coder=ColorCoder(atlas_graph, keep_provider_name=True)
-    )
+    return create_dot_graph(graph_name, atlas_graph.iterate_external_edges(), color_coder=color_coder)
