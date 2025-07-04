@@ -23,6 +23,7 @@ class GoTestErrorClass(StrEnum):
     FLAKY_400 = "flaky_400"
     FLAKY_500 = "flaky_500"
     FLAKY_CHECK = "flaky_check"
+    FLAKY_CLIENT = "flaky_client"
     OUT_OF_CAPACITY = "out_of_capacity"
     PROJECT_LIMIT_EXCEEDED = "project_limit_exceeded"
     DANGLING_RESOURCE = "dangling_resource"
@@ -36,6 +37,7 @@ class GoTestErrorClass(StrEnum):
         FLAKY_400: "retry",
         FLAKY_500: "retry",
         FLAKY_CHECK: "retry",
+        FLAKY_CLIENT: "retry",
         PROVIDER_DOWNLOAD: "retry",
         OUT_OF_CAPACITY: "retry_later",
         PROJECT_LIMIT_EXCEEDED: "clean_project",
@@ -47,6 +49,7 @@ class GoTestErrorClass(StrEnum):
     __CONTAINS_MAPPING__ = {
         OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
         FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
+        FLAKY_CLIENT: ("dial tcp: lookup", "i/o timeout"),
         PROVIDER_DOWNLOAD: [
             "mongodbatlas: failed to retrieve authentication checksums for provider",
             "Error: Failed to install provider github.com: bad response",
