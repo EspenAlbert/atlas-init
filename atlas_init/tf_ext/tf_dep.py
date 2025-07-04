@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Iterable, NamedTuple
 
 import pydot
 from ask_shell import ShellError, new_task, run_and_wait
+from ask_shell.run_pool import run_pool
 from ask_shell._run import stop_runs_and_pool
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field
@@ -237,7 +237,7 @@ class AtlasGraph(Entity):
 
 def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16, max_dirs: int = 9999) -> AtlasGraph:
     atlas_graph = AtlasGraph()
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with run_pool("parse example graphs", total=len(example_dirs)) as executor:
         futures = {
             executor.submit(parse_graph, example_dir): example_dir
             for i, example_dir in enumerate(example_dirs)

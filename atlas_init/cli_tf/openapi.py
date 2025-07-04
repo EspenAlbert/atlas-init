@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import re
 from collections.abc import Iterable
@@ -76,7 +77,7 @@ class OpenapiSchema(Entity):
     def create_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("post")
 
-    def read_method(self, path: str) -> dict | None:
+    def get_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("get")
 
     def delete_method(self, path: str) -> dict | None:
@@ -145,7 +146,7 @@ class OpenapiSchema(Entity):
             if ref := value.get("schema", {}).get("$ref"):
                 yield ref
 
-    def _unpack_schema_versions(self, response: dict) -> list[str]:
+    def _unpack_schema_versions(self, response: dict) -> list[datetime.date]:
         content: dict[str, dict] = {**response.get("content", {})}
         versions = []
         while content:
@@ -159,7 +160,7 @@ class OpenapiSchema(Entity):
                 versions.append(version)
         return versions
 
-    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[str]]]:
+    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[datetime.date]]]:
         for path, methods in self.paths.items():
             for method_name, method_dict in methods.items():
                 if not isinstance(method_dict, dict):
@@ -302,7 +303,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 for property_dict in api_spec.schema_properties(req_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
         for path in resource.paths:
-            read_method = api_spec.read_method(path)
+            read_method = api_spec.get_method(path)
             if not read_method:
                 continue
             for param in read_method.get("parameters", []):

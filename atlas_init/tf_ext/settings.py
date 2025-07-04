@@ -30,3 +30,7 @@ class TfDepSettings(StaticSettings):
     @property
     def schema_resource_types_deprecated_path(self) -> Path:
         return self.static_root / "tf_schema_resource_types_deprecated.yaml"
+
+    @property
+    def api_calls_path(self) -> Path:
+        return self.static_root / "tf_api_calls.yaml"
