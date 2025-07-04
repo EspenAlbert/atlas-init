@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "ask-shell"
-version = "0.0.3"
+version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "model-lib", extra = ["toml"] },
@@ -31,9 +31,9 @@ dependencies = [
     { name = "typer" },
     { name = "zero-3rdparty" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/71/eb/427d17b87eba2c0cdb6103e742551988978a7164d4d6614a741b8e96816c/ask_shell-0.0.3.tar.gz", hash = "sha256:2543e6a450c658af7eb14f5bdce77e2d89a8075ece2f849efb78fd72c65bad55", size = 20654 }
+sdist = { url = "https://files.pythonhosted.org/packages/23/b1/9d51629aeb62e866739b4e7e1629941d173049b542dbf1db7e823cf5141c/ask_shell-0.0.4.tar.gz", hash = "sha256:8574d0e28b7eb309480bcd8f48415179ad9d8f28d6ad59cf6cd461df585e0baf", size = 23473 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/3e/b7c66bc22df4ecab12af4627c356a6429b8b70040e70fcd30eb102f525b3/ask_shell-0.0.3-py3-none-any.whl", hash = "sha256:59f5b52e62d33c8e12e0d31b43947cef7c25b6f68128f454e04116be7b4f9ea7", size = 26574 },
+    { url = "https://files.pythonhosted.org/packages/5e/a4/eb8e6b7bd6cb6d9d9ff48f53c99af446e27ea30be6f3321ac06f269aab69/ask_shell-0.0.4-py3-none-any.whl", hash = "sha256:326b7a5bb1ecaf8bcf16ee0a90bdf15c43e946814121e8982485589441d4b15f", size = 30064 },
 ]
 
 [[package]]
@@ -78,7 +78,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
-    { name = "ask-shell", specifier = ">=0.0.3" },
+    { name = "ask-shell", specifier = ">=0.0.4" },
     { name = "boto3", specifier = "==1.35.92" },
     { name = "gitpython", specifier = "==3.1.42" },
     { name = "humanize", specifier = "==4.9.0" },
