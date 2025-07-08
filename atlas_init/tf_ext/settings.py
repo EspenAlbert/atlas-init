@@ -34,3 +34,6 @@ class TfDepSettings(StaticSettings):
     @property
     def api_calls_path(self) -> Path:
         return self.static_root / "tf_api_calls.yaml"
+
+    def pagination_output_path(self, query_string: str) -> Path:
+        return self.static_root / "pagination_output" / f"query_is_{query_string or 'empty'}.md"
