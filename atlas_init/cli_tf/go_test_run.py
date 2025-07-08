@@ -163,6 +163,10 @@ class GoTestRun(Entity):
         return self.status in {GoTestStatus.FAIL, GoTestStatus.TIMEOUT}
 
     @property
+    def is_skipped(self) -> bool:
+        return self.status == GoTestStatus.SKIP
+
+    @property
     def is_pass(self) -> bool:
         return self.status == GoTestStatus.PASS
 

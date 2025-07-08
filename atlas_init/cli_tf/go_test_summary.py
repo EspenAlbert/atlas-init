@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 from functools import total_ordering
 from pathlib import Path
-from typing import ClassVar
+from typing import Callable, ClassVar
 
 from ask_shell.rich_progress import new_task
 from model_lib import Entity
@@ -360,6 +360,15 @@ class MonthlyReportIn(Entity):
     branch: str
     history_filter: RunHistoryFilter
     skip_columns: set[ErrorRowColumns] = Field(default_factory=set)
+    skip_rows: list[Callable[[TestRow], bool]] = Field(default_factory=list)
+
+    @classmethod
+    def skip_skipped(cls, test: TestRow) -> bool:
+        return all(run.is_skipped for runs in test.last_env_runs.values() for run in runs)
+
+    @classmethod
+    def skip_if_no_failures(cls, test: TestRow) -> bool:
+        return not any(run.is_failure for runs in test.last_env_runs.values() for run in runs)
 
 
 class MonthlyReportOut(Entity):
@@ -371,13 +380,24 @@ def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -
     with new_task(f"Monthly Report for {event.name} on {event.branch}"):
         test_rows, detail_files_md = asyncio.run(
             _collect_monthly_test_rows_and_summaries(
-                settings, event.history_filter, event.branch, summary_name=event.name
+                settings, event.history_filter, event.branch, summary_name=event.name, skip_rows=event.skip_rows
             )
         )
         assert test_rows, "No error rows found for monthly report"
     columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
+    skip_rows = (
+        []
+        if event.skip_rows == []
+        else [
+            "",
+            "## Skip Test Filters",
+            *[f"- {method.__name__}" for method in event.skip_rows],
+            "",
+        ]
+    )
     summary_md = [
         f"# Monthly Report for {event.name} on {event.branch} from {event.history_filter.run_history_start:%Y-%m-%d} to {event.history_filter.run_history_end:%Y-%m-%d} Found {len(test_rows)} unique Tests",
+        *skip_rows,
         "## Test Run Table",
         " | ".join(columns),
         " | ".join("---" for _ in columns),
@@ -544,7 +564,11 @@ async def _collect_daily_error_rows(
 
 
 async def _collect_monthly_test_rows_and_summaries(
-    settings: AtlasInitSettings, history_filter: RunHistoryFilter, branch: str, summary_name: str
+    settings: AtlasInitSettings,
+    history_filter: RunHistoryFilter,
+    branch: str,
+    summary_name: str,
+    skip_rows: list[Callable[[TestRow], bool]],
 ) -> tuple[list[TestRow], dict[str, str]]:
     dao = await init_mongo_dao(settings)
     last_day_test_names = await dao.read_tf_tests_for_day(branch, history_filter.run_history_end)
@@ -558,6 +582,8 @@ async def _collect_monthly_test_rows_and_summaries(
                 dao,
                 test_run,
             )
+            if any(skip(test_row) for skip in skip_rows):
+                continue
             test_rows.append(test_row)
             run_ids = [run.id for run in runs]
             classifications = await dao.read_error_classifications(run_ids)

@@ -9,12 +9,12 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
-from ask_shell import confirm, select_list, print_to_live, new_task, run_and_wait
-from model_lib import Entity, Event
+from ask_shell import confirm, new_task, print_to_live, run_and_wait, select_list
+from model_lib import Entity, Event, copy_and_validate
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import Url
 from rich.markdown import Markdown
-from zero_3rdparty import file_utils, str_utils
+from zero_3rdparty import file_utils
 from zero_3rdparty.datetime_utils import utc_now
 
 from atlas_init.cli_helper.run import add_to_clipboard
@@ -47,6 +47,7 @@ from atlas_init.crud.mongo_dao import (
     init_mongo_dao,
     read_tf_resources,
 )
+from atlas_init.html_out.md_export import MonthlyReportPaths, export_ci_tests_markdown_to_html
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
@@ -90,16 +91,19 @@ def ci_tests(
         help="comma separated list of test names to filter, e.g., TestAccCloudProviderAccessAuthorizationAzure_basic,TestAccBackupSnapshotExportBucket_basicAzure",
     ),
     summary_name: str = typer.Option(
-        "",
+        ...,
         "-s",
         "--summary",
         help="the name of the summary directory to store detailed test results",
+        default_factory=lambda: utc_now().strftime("%Y-%m-%d"),
     ),
     summary_env_name: str = typer.Option("", "--env", help="filter summary based on tests/errors only in dev/qa"),
     skip_log_download: bool = typer.Option(False, "-sld", "--skip-log-download", help="skip downloading logs"),
     skip_error_parsing: bool = typer.Option(
         False, "-sep", "--skip-error-parsing", help="skip parsing errors, usually together with --skip-log-download"
     ),
+    skip_daily: bool = typer.Option(False, "-sd", "--skip-daily", help="skip daily report"),
+    skip_monthly: bool = typer.Option(False, "-sm", "--skip-monthly", help="skip monthly report"),
     copy_to_clipboard: bool = typer.Option(
         False,
         "--copy",
@@ -131,14 +135,33 @@ def ci_tests(
         skip_log_download=skip_log_download,
         skip_error_parsing=skip_error_parsing,
     )
-    out = asyncio.run(ci_tests_pipeline(event))
-    settings = event.settings
-    manual_classification(out.classified_errors, settings)
     history_filter = RunHistoryFilter(
         run_history_start=event.report_date - timedelta(days=event.max_days_ago),
         run_history_end=event.report_date,
         env_filter=[summary_env_name] if summary_env_name else [],
     )
+    settings = event.settings
+    if skip_daily:
+        logger.info("skipping daily report")
+    else:
+        run_daily_report(event, settings, history_filter, copy_to_clipboard)
+    if summary_name.lower() != "none":
+        monthly_input = MonthlyReportIn(
+            name=summary_name,
+            branch=event.branch,
+            history_filter=history_filter,
+        )
+        if skip_monthly:
+            logger.info("skipping monthly report")
+            report_paths = MonthlyReportPaths.from_settings(settings, summary_name)
+        else:
+            report_paths = generate_monthly_summary(settings, monthly_input)
+        export_ci_tests_markdown_to_html(settings, report_paths)
+
+
+def run_daily_report(event, settings, history_filter, copy_to_clipboard):
+    out = asyncio.run(ci_tests_pipeline(event))
+    manual_classification(out.classified_errors, settings)
     daily_in = DailyReportIn(
         report_date=event.report_date,
         history_filter=history_filter,
@@ -147,31 +170,35 @@ def ci_tests(
     print_to_live(Markdown(daily_out.summary_md))
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
-    if summary_name:
-        monthly_input = MonthlyReportIn(
-            name=summary_name,
-            branch=event.branch,
-            history_filter=history_filter,
-        )
-        generate_monthly_summary(settings, monthly_input)
 
 
-def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: MonthlyReportIn):
+def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: MonthlyReportIn) -> MonthlyReportPaths:
     monthly_out = create_monthly_report(
         settings,
         monthly_input,
     )
     summary_name = monthly_input.name
-    print_to_live(Markdown(monthly_out.summary_md))
-    summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
+    paths = MonthlyReportPaths.from_settings(settings, summary_name)
+    summary_path = paths.summary_path
     file_utils.ensure_parents_write_text(summary_path, monthly_out.summary_md)
     logger.info(f"summary written to {summary_path}")
-    logger.info(f"Writing details to {settings.github_ci_summary_details_path(summary_name, 'dummy').parent}")
+    details_dir = paths.details_dir
+    logger.info(f"Writing details to {details_dir}")
     for name, details_md in monthly_out.test_details_md.items():
-        details_path = settings.github_ci_summary_details_path(summary_name, name)
+        details_path = details_dir / name
         file_utils.ensure_parents_write_text(details_path, details_md)
+    monthly_error_only_out = create_monthly_report(
+        settings,
+        event=copy_and_validate(monthly_input, skip_rows=[MonthlyReportIn.skip_if_no_failures]),
+    )
+    error_only_path = paths.error_only_path
+    file_utils.ensure_parents_write_text(error_only_path, monthly_error_only_out.summary_md)
+    logger.info(f"error-only summary written to {error_only_path}")
     if confirm(f"do you want to open the summary file? {summary_path}", default=False):
         run_and_wait(f'code "{summary_path}"')
+    if confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
+        run_and_wait(f'code "{error_only_path}"')
+    return paths
 
 
 async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:

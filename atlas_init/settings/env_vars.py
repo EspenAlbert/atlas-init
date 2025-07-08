@@ -54,6 +54,7 @@ class AtlasInitSettings(StaticSettings):
     atlas_init_tf_src_path: Path = DEFAULT_TF_SRC_PATH  # /tf directory of repo
     atlas_init_tf_schema_config_path: Path = DEFAULT_ATLAS_INIT_SCHEMA_CONFIG_PATH  # /terraform.yaml
     atlas_init_schema_out_path: Path | None = None  # override this for the generated schema
+    atlas_init_static_html_path: Path | None = None
 
     atlas_init_cfn_profile: str = ""
     atlas_init_cfn_region: str = ""
