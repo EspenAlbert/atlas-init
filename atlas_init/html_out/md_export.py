@@ -8,6 +8,7 @@ from ask_shell import ShellRun, confirm, kill, run, run_and_wait
 from ask_shell.models import ShellRunEventT, ShellRunStdOutput
 from zero_3rdparty import str_utils
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
+from zero_3rdparty.future import chain_future
 from atlas_init.settings.env_vars import AtlasInitSettings
 from pathlib import Path
 from model_lib import Event
@@ -122,6 +123,7 @@ def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
     run_event = run(
         "uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
     )
+    chain_future(run_event._complete_flag, future)
     future.result(timeout=MKDOCS_SERVE_TIMEOUT)
     return MKDOCS_SERVE_URL, run_event
 
