@@ -119,7 +119,9 @@ def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
                 return True
         return False
 
-    run_event = run(" uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message])
+    run_event = run(
+        "uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
+    )
     future.result(timeout=MKDOCS_SERVE_TIMEOUT)
     return MKDOCS_SERVE_URL, run_event
 

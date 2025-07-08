@@ -121,12 +121,13 @@ def timeline_lines(summary: GoTestSummary, start_date: datetime, end_date: datet
             error_classification = summary.classifications.get(test.id)
             classification_lines = [str(error_classification)] if error_classification else []
             details_lines = [details_short_description(error_classification.details)] if error_classification else []
+            output_lines = [f"```\n{test.output_lines_str}\n```"] if test.is_failure else []
             lines.extend(
                 [
                     f"#### {format_test_oneline(test)}",
                     *classification_lines,
                     *details_lines,
-                    f"```\n{test.output_lines_str}\n```",
+                    *output_lines,
                 ]
             )
     return lines
@@ -502,7 +503,8 @@ class TestRow(Entity):
                 time_since[env] = "never run"
                 continue
             time_since[env] = next(
-                (run.when for run in sorted(runs, reverse=True) if run.status == GoTestStatus.PASS), "never pass"
+                (run.ts.strftime("%Y-%m-%d") for run in sorted(runs, reverse=True) if run.status == GoTestStatus.PASS),
+                "never pass",
             )
         return time_since
 
@@ -534,7 +536,11 @@ class TestRow(Entity):
                     env = s.split(" (")[-1].rstrip(")")
                     env_pass_rate = pass_rates.get(env, 0.0)
                     env_run_count = len(self.last_env_runs.get(env, []))
-                    values.append(f"{env_pass_rate:.2%} ({env_run_count} runs)" if env in pass_rates else "N/A")
+                    pass_rate_pct = f"{env_pass_rate:.2%} ({env_run_count} runs)" if env in pass_rates else "N/A"
+                    if pass_rate_pct.startswith("100.00%"):
+                        values.append("always")  # use always to avoid sorting errors, 100% showing before 2%
+                    else:
+                        values.append(pass_rate_pct)
                 case s if s.startswith(ErrorRowColumns.TIME_SINCE_PASS):
                     env = s.split(" (")[-1].rstrip(")")
                     values.append(time_since_pass.get(env, "never passed"))

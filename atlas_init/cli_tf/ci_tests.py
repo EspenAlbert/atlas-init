@@ -16,6 +16,7 @@ from pydantic_core import Url
 from rich.markdown import Markdown
 from zero_3rdparty import file_utils
 from zero_3rdparty.datetime_utils import utc_now
+from zero_3rdparty.str_utils import ensure_suffix
 
 from atlas_init.cli_helper.run import add_to_clipboard
 from atlas_init.cli_tf.github_logs import (
@@ -104,6 +105,7 @@ def ci_tests(
     ),
     skip_daily: bool = typer.Option(False, "-sd", "--skip-daily", help="skip daily report"),
     skip_monthly: bool = typer.Option(False, "-sm", "--skip-monthly", help="skip monthly report"),
+    ask_to_open: bool = typer.Option(False, "--open", "--ask-to-open", help="ask to open the reports"),
     copy_to_clipboard: bool = typer.Option(
         False,
         "--copy",
@@ -155,7 +157,7 @@ def ci_tests(
             logger.info("skipping monthly report")
             report_paths = MonthlyReportPaths.from_settings(settings, summary_name)
         else:
-            report_paths = generate_monthly_summary(settings, monthly_input)
+            report_paths = generate_monthly_summary(settings, monthly_input, ask_to_open)
         export_ci_tests_markdown_to_html(settings, report_paths)
 
 
@@ -172,7 +174,9 @@ def run_daily_report(event, settings, history_filter, copy_to_clipboard):
         add_to_clipboard(daily_out.summary_md, logger=logger)
 
 
-def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: MonthlyReportIn) -> MonthlyReportPaths:
+def generate_monthly_summary(
+    settings: AtlasInitSettings, monthly_input: MonthlyReportIn, ask_to_open: bool = False
+) -> MonthlyReportPaths:
     monthly_out = create_monthly_report(
         settings,
         monthly_input,
@@ -183,9 +187,10 @@ def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: Monthly
     file_utils.ensure_parents_write_text(summary_path, monthly_out.summary_md)
     logger.info(f"summary written to {summary_path}")
     details_dir = paths.details_dir
+    file_utils.clean_dir(details_dir, recreate=True)
     logger.info(f"Writing details to {details_dir}")
     for name, details_md in monthly_out.test_details_md.items():
-        details_path = details_dir / name
+        details_path = details_dir / ensure_suffix(name, ".md")
         file_utils.ensure_parents_write_text(details_path, details_md)
     monthly_error_only_out = create_monthly_report(
         settings,
@@ -194,9 +199,9 @@ def generate_monthly_summary(settings: AtlasInitSettings, monthly_input: Monthly
     error_only_path = paths.error_only_path
     file_utils.ensure_parents_write_text(error_only_path, monthly_error_only_out.summary_md)
     logger.info(f"error-only summary written to {error_only_path}")
-    if confirm(f"do you want to open the summary file? {summary_path}", default=False):
+    if ask_to_open and confirm(f"do you want to open the summary file? {summary_path}", default=False):
         run_and_wait(f'code "{summary_path}"')
-    if confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
+    if ask_to_open and confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
         run_and_wait(f'code "{error_only_path}"')
     return paths
 
