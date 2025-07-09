@@ -194,7 +194,11 @@ def generate_monthly_summary(
         file_utils.ensure_parents_write_text(details_path, details_md)
     monthly_error_only_out = create_monthly_report(
         settings,
-        event=copy_and_validate(monthly_input, skip_rows=[MonthlyReportIn.skip_if_no_failures]),
+        event=copy_and_validate(
+            monthly_input,
+            skip_rows=[MonthlyReportIn.skip_if_no_failures],
+            existing_details_md=monthly_out.test_details_md,
+        ),
     )
     error_only_path = paths.error_only_path
     file_utils.ensure_parents_write_text(error_only_path, monthly_error_only_out.summary_md)

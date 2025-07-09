@@ -6,9 +6,9 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
-from functools import total_ordering
+from functools import reduce, total_ordering
 from pathlib import Path
-from typing import Callable, ClassVar
+from typing import Callable, ClassVar, TypeVar
 
 from ask_shell.rich_progress import new_task
 from model_lib import Entity
@@ -50,7 +50,8 @@ class GoTestSummary(Entity):
     def success_rate(self) -> float:
         total = self.total_completed
         if total == 0:
-            logger.warning(f"No results to calculate success rate for {self.name}")
+            if not self.is_skipped:
+                logger.warning(f"No results to calculate success rate for {self.name}")
             return 0
         return sum(r.status == "PASS" for r in self.results) / total
 
@@ -102,6 +103,7 @@ def test_detail_md(summary: GoTestSummary, start_date: datetime, end_date: datet
             summary_line(summary.results),
             f"Success rate: {summary.success_rate_human}",
             "",
+            *error_table(summary),
             "## Timeline",
             *timeline_lines(summary, start_date, end_date),
         ]
@@ -145,6 +147,25 @@ def failure_details(summary: GoTestSummary) -> list[str]:
                 )
             )
     return lines
+
+
+def error_table(summary: GoTestSummary) -> list[str]:
+    error_rows: list[dict] = []
+    for test in summary.results:
+        if test.is_failure:
+            row = {
+                "Date": test.ts.strftime("%Y-%m-%d %H:%M"),
+                "Env": test.env,
+                "Runtime": f"{test.run_seconds:.2f}s",
+            }
+            error_rows.append(row)
+            if error_cls := summary.classifications.get(test.id):
+                row["Error Class"] = error_cls.error_class
+                row["Details"] = details_short_description(error_cls.details)
+    if not error_rows:
+        return []
+    headers = sorted(reduce(lambda x, y: x.union(y.keys()), error_rows, set()))
+    return markdown_table_lines("Error Table", error_rows, headers, lambda row: [row.get(key, "") for key in headers])
 
 
 def format_test_oneline(test: GoTestRun) -> str:
@@ -362,6 +383,7 @@ class MonthlyReportIn(Entity):
     history_filter: RunHistoryFilter
     skip_columns: set[ErrorRowColumns] = Field(default_factory=set)
     skip_rows: list[Callable[[TestRow], bool]] = Field(default_factory=list)
+    existing_details_md: dict[str, str] = Field(default_factory=dict)
 
     @classmethod
     def skip_skipped(cls, test: TestRow) -> bool:
@@ -379,11 +401,7 @@ class MonthlyReportOut(Entity):
 
 def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
     with new_task(f"Monthly Report for {event.name} on {event.branch}"):
-        test_rows, detail_files_md = asyncio.run(
-            _collect_monthly_test_rows_and_summaries(
-                settings, event.history_filter, event.branch, summary_name=event.name, skip_rows=event.skip_rows
-            )
-        )
+        test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
         assert test_rows, "No error rows found for monthly report"
     columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
     skip_rows = (
@@ -399,10 +417,7 @@ def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -
     summary_md = [
         f"# Monthly Report for {event.name} on {event.branch} from {event.history_filter.run_history_start:%Y-%m-%d} to {event.history_filter.run_history_end:%Y-%m-%d} Found {len(test_rows)} unique Tests",
         *skip_rows,
-        "## Test Run Table",
-        " | ".join(columns),
-        " | ".join("---" for _ in columns),
-        *(" | ".join(row.as_row(columns)) for row in test_rows),
+        *markdown_table_lines("Test Run Table", test_rows, columns, lambda row: row.as_row(columns)),
     ]
     return MonthlyReportOut(
         summary_md="\n".join(summary_md),
@@ -419,6 +434,24 @@ class DailyReportIn(Entity):
 class DailyReportOut(Entity):
     summary_md: str
     details_md: str
+
+
+T = TypeVar("T")
+
+
+def markdown_table_lines(
+    header: str, rows: list[T], columns: list[str], row_to_line: Callable[[T], list[str]], *, header_level: int = 2
+) -> list[str]:
+    if not rows:
+        return []
+    return [
+        f"{'# ' * header_level} {header}",
+        "",
+        " | ".join(columns),
+        " | ".join("---" for _ in columns),
+        *(" | ".join(row_to_line(row)) for row in rows),
+        "",
+    ]
 
 
 def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
@@ -438,10 +471,7 @@ def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, eve
         f"# Daily Report on {event.report_date:%Y-%m-%d}",
         one_line_summary,
         "",
-        "## Errors Table",
-        " | ".join(columns),
-        " | ".join("---" for _ in columns),
-        *(" | ".join(row.as_row(columns)) for row in failure_rows),
+        *markdown_table_lines("Errors Table", failure_rows, columns, lambda row: row.as_row(columns)),
     ]
     return DailyReportOut(summary_md="\n".join(summary_md), details_md="TODO")
 
@@ -571,12 +601,13 @@ async def _collect_daily_error_rows(
 
 async def _collect_monthly_test_rows_and_summaries(
     settings: AtlasInitSettings,
-    history_filter: RunHistoryFilter,
-    branch: str,
-    summary_name: str,
-    skip_rows: list[Callable[[TestRow], bool]],
+    event: MonthlyReportIn,
 ) -> tuple[list[TestRow], dict[str, str]]:
     dao = await init_mongo_dao(settings)
+    branch = event.branch
+    history_filter = event.history_filter
+    summary_name = event.name
+    skip_rows = event.skip_rows
     last_day_test_names = await dao.read_tf_tests_for_day(branch, history_filter.run_history_end)
     test_runs_by_name: dict[str, GoTestRun] = {run.full_name: run for run in last_day_test_names}
     test_rows = []
@@ -597,10 +628,11 @@ async def _collect_monthly_test_rows_and_summaries(
             test_row.details_summary = (
                 f"[{run_statuses(runs)}]({settings.github_ci_summary_details_rel_path(summary_name, name_with_group)})"
             )
-            summary = GoTestSummary(name=name_with_group, results=runs, classifications=classifications)
-            detail_files_md[name_with_group] = test_detail_md(
-                summary, history_filter.run_history_start, history_filter.run_history_end
-            )
+            if name_with_group not in event.existing_details_md:
+                summary = GoTestSummary(name=name_with_group, results=runs, classifications=classifications)
+                detail_files_md[name_with_group] = test_detail_md(
+                    summary, history_filter.run_history_start, history_filter.run_history_end
+                )
             task.update(advance=1)
     return sorted(test_rows), detail_files_md
 
