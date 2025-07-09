@@ -58,3 +58,7 @@ tf-dep *args:
 [positional-arguments]
 tf-ext *args:
   uv run tf-ext {{args}}
+
+[positional-arguments]
+sdk-ext *args:
+  uv run sdk-ext {{args}}

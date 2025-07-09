@@ -9,6 +9,7 @@ from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
 from model_lib import parse_model
 
+from atlas_init.cli_args import ENV_VAR_SDK_REPO_PATH
 from atlas_init.cli_tf.openapi import OpenapiSchema, add_api_spec_info
 from atlas_init.cli_tf.schema_v2 import SchemaV2, parse_schema
 from atlas_init.cli_tf.schema_v3 import ResourceSchemaV3
@@ -69,9 +70,11 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
 
 
 @pytest.fixture(scope="session")
-@pytest.mark.skipif(os.environ.get("SDK_REPO_PATH", "") == "", reason="needs os.environ[SDK_REPO_PATH]")
+@pytest.mark.skipif(
+    os.environ.get(ENV_VAR_SDK_REPO_PATH, "") == "", reason=f"needs os.environ[{ENV_VAR_SDK_REPO_PATH}]"
+)
 def sdk_repo_path() -> Path:
-    return Path(os.environ["SDK_REPO_PATH"])
+    return Path(os.environ[ENV_VAR_SDK_REPO_PATH])
 
 
 @pytest.fixture

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from atlas_init.cli_args import ENV_VAR_SDK_REPO_PATH
 from atlas_init.cli_helper.sdk import (
     BreakingChange,
     Change,
@@ -57,7 +58,7 @@ def test_parse_changelog_lines(line, change, class_name, func_name):
 
 @pytest.fixture
 def sdk_path() -> Path:
-    sdk_path = Path(os.environ["SDK_REPO_PATH"])
+    sdk_path = Path(os.environ[ENV_VAR_SDK_REPO_PATH])
     assert sdk_path.exists(), f"not found {sdk_path}"
     return sdk_path
 

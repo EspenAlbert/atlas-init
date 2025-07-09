@@ -48,6 +48,7 @@ dependencies = [
 atlas-init = "atlas_init.cli:typer_main"
 tf-dep = "atlas_init.tf_ext.tf_dep:typer_main"
 tf-ext = "atlas_init.tf_ext.typer_app:typer_main"
+sdk-ext = "atlas_init.sdk_ext.typer_app:typer_main"
 
 [project.urls]
 Documentation = "https://github.com/EspenAlbert/atlas-init#readme"

@@ -12,6 +12,7 @@ from model_lib import dump, field_names
 from pydantic import BaseModel, Field
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 
+from atlas_init.cli_args import ENV_VAR_SDK_REPO_PATH
 from atlas_init.cli_helper.run import LOG_CMD_PREFIX
 from atlas_init.cli_root import set_dry_run
 from atlas_init.cli_tf.mock_tf_log import resolve_admin_api_path
@@ -90,7 +91,7 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
 
 @pytest.fixture()
 def api_spec_path_transformed() -> Path:
-    return resolve_admin_api_path(os.environ.get("SDK_REPO_PATH", ""), "main", "")
+    return resolve_admin_api_path(os.environ.get(ENV_VAR_SDK_REPO_PATH, ""), "main", "")
 
 
 BaseDir: TypeAlias = Literal["cwd"]
