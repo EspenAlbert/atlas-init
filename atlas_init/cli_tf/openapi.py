@@ -89,10 +89,13 @@ class OpenapiSchema(Entity):
     def put_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("patch")
 
-    def methods(self, path: str) -> Iterable[dict]:
+    def methods_with_name(self, path: str) -> Iterable[tuple[str, dict]]:
         for method_name in ["post", "get", "delete", "patch", "put"]:
             if method := self.paths.get(path, {}).get(method_name):
-                yield method
+                yield method_name, method
+
+    def methods(self, path: str) -> Iterable[dict]:
+        yield from (method for _, method in self.methods_with_name(path))
 
     def method_refs(self, path: str) -> Iterable[str]:
         for method in self.methods(path):
