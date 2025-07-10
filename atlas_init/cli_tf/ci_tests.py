@@ -82,7 +82,9 @@ class TFCITestInput(Event):
 
 def ci_tests(
     test_group_name: str = typer.Option("", "-g"),
-    max_days_ago: int = typer.Option(1, "-d", "--days"),
+    max_days_ago: int = typer.Option(
+        1, "-d", "--days", help="number of days to look back, Github only store logs for 30 days."
+    ),
     branch: str = typer.Option("master", "-b", "--branch"),
     workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
     names: str = typer.Option(
@@ -361,6 +363,13 @@ class DownloadJobLogsInput(Event):
     @property
     def start_date(self) -> datetime:
         return self.end_date - timedelta(days=self.max_days_ago)
+
+    @model_validator(mode="after")
+    def check_max_days_ago(self) -> DownloadJobLogsInput:
+        if self.max_days_ago > 90:
+            logger.warning("max_days_ago must be less than or equal to 90, setting to 90")
+            self.max_days_ago = 90
+        return self
 
 
 def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
