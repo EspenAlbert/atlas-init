@@ -126,8 +126,6 @@ def ci_tests(
         logger.info(f"filtering tests by names: {names_set} (todo: support this)")
     if test_group_name:
         logger.warning(f"test_group_name is not supported yet: {test_group_name}")
-    if summary_name:
-        logger.warning(f"summary_name is not supported yet: {summary_name}")
     event = TFCITestInput(
         test_group_name=test_group_name,
         max_days_ago=max_days_ago,
@@ -353,7 +351,7 @@ def add_llm_classifications(needs_classification_errors: list[GoTestError]) -> l
     ]
 
 
-class DownloadJobLogsInput(Event):
+class DownloadJobLogsInput(Entity):
     branch: str = "master"
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     max_days_ago: int = 1
@@ -367,7 +365,7 @@ class DownloadJobLogsInput(Event):
     @model_validator(mode="after")
     def check_max_days_ago(self) -> DownloadJobLogsInput:
         if self.max_days_ago > 90:
-            logger.warning("max_days_ago must be less than or equal to 90, setting to 90")
+            logger.warning(f"max_days_ago for {type(self).__name__} must be less than or equal to 90, setting to 90")
             self.max_days_ago = 90
         return self
 

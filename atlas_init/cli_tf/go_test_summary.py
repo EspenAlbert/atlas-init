@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 from functools import reduce, total_ordering
 from pathlib import Path
+import re
 from typing import Callable, ClassVar, TypeVar
 
 from ask_shell.rich_progress import new_task
@@ -23,6 +24,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     GoTestErrorClass,
     GoTestErrorClassification,
     details_short_description,
+    parse_error_details,
 )
 from atlas_init.crud.mongo_dao import MongoDao, init_mongo_dao
 from atlas_init.settings.env_vars import AtlasInitSettings
@@ -116,23 +118,45 @@ def timeline_lines(summary: GoTestSummary, start_date: datetime, end_date: datet
     for active_date in datetime_utils.day_range(start_date.date(), (end_date + one_day).date(), one_day):
         active_tests = summary.select_tests(active_date)
         if not active_tests:
-            lines.append(f"{active_date:%Y-%m-%d}: MISSING")
+            lines.append(f"- {active_date:%Y-%m-%d}: MISSING")
             continue
-        lines.append(f"### {active_date:%Y-%m-%d}")
-        for test in active_tests:
-            error_classification = summary.classifications.get(test.id)
-            classification_lines = [str(error_classification)] if error_classification else []
-            details_lines = [details_short_description(error_classification.details)] if error_classification else []
-            output_lines = [f"```\n{test.output_lines_str}\n```"] if test.is_failure else []
-            lines.extend(
-                [
-                    f"#### {format_test_oneline(test)}",
-                    *classification_lines,
-                    *details_lines,
-                    *output_lines,
-                ]
-            )
+        lines.append(f"- {active_date:%Y-%m-%d}")
+        if len(active_tests) == 1:
+            test = active_tests[0]
+            if test.is_failure:
+                lines.extend(_extract_error_lines(test, summary))
+            else:
+                lines[-1] += f" {format_test_oneline(test)}"
+        if len(active_tests) > 1:
+            for test in active_tests:
+                error_lines = _extract_error_lines(test, summary)
+                lines.extend(
+                    [
+                        f"  - {format_test_oneline(test)}",
+                        *error_lines,
+                    ]
+                )
     return lines
+
+
+def _error_header(test: GoTestRun) -> str:
+    return f"Error {test.ts.isoformat('T', timespec='seconds')}"
+
+
+def _extract_error_lines(test: GoTestRun, summary: GoTestSummary) -> list[str]:
+    if not test.is_failure:
+        return []
+    error_classification = summary.classifications.get(test.id)
+    classification_lines = [str(error_classification)] if error_classification else []
+    details_lines = [details_short_description(error_classification.details)] if error_classification else []
+    return [
+        "",
+        f"### {_error_header(test)}",
+        *classification_lines,
+        *details_lines,
+        f"```\n{test.output_lines_str}\n```",
+        "",
+    ]
 
 
 def failure_details(summary: GoTestSummary) -> list[str]:
@@ -153,8 +177,9 @@ def error_table(summary: GoTestSummary) -> list[str]:
     error_rows: list[dict] = []
     for test in summary.results:
         if test.is_failure:
+            anchor = header_to_markdown_link(_error_header(test))
             row = {
-                "Date": test.ts.strftime("%Y-%m-%d %H:%M"),
+                "Date": f"[{test.ts.strftime('%Y-%m-%d %H:%M')}]({anchor})",
                 "Env": test.env,
                 "Runtime": f"{test.run_seconds:.2f}s",
             }
@@ -162,6 +187,10 @@ def error_table(summary: GoTestSummary) -> list[str]:
             if error_cls := summary.classifications.get(test.id):
                 row["Error Class"] = error_cls.error_class
                 row["Details"] = details_short_description(error_cls.details)
+            elif auto_class := GoTestErrorClass.auto_classification(test.output_lines_str):
+                row["Error Class"] = auto_class
+            if "Details" not in row:
+                row["Details"] = details_short_description(parse_error_details(test))
     if not error_rows:
         return []
     headers = sorted(reduce(lambda x, y: x.union(y.keys()), error_rows, set()))
@@ -172,6 +201,19 @@ def format_test_oneline(test: GoTestRun) -> str:
     if job_url := test.job_url:
         return f"[{test.status} {test.runtime_human}]({job_url})"
     return f"{test.status} {test.runtime_human}"  # type: ignore
+
+
+def header_to_markdown_link(header: str) -> str:
+    """
+    Converts a markdown header to a markdown link anchor.
+    Example:
+        'Error 2025-05-23T00:28:50+00:00' -> '#error-2025-05-23t0028500000'
+    """
+    anchor = header.strip().lower()
+    # Remove all characters except alphanumerics, spaces, and hyphens
+    anchor = re.sub(r"[^a-z0-9 \-]", "", anchor)
+    anchor = anchor.replace(" ", "-")
+    return f"#{anchor}"
 
 
 def create_detailed_summary(
@@ -445,7 +487,7 @@ def markdown_table_lines(
     if not rows:
         return []
     return [
-        f"{'# ' * header_level} {header}",
+        f"{'#' * header_level} {header}",
         "",
         " | ".join(columns),
         " | ".join("---" for _ in columns),
