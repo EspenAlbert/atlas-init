@@ -27,6 +27,7 @@ from atlas_init.cli_tf.go_test_tf_error import (
     parse_error_details,
 )
 from atlas_init.crud.mongo_dao import MongoDao, init_mongo_dao
+from atlas_init.html_out.md_export import MonthlyReportPaths
 from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
@@ -426,6 +427,7 @@ class MonthlyReportIn(Entity):
     skip_columns: set[ErrorRowColumns] = Field(default_factory=set)
     skip_rows: list[Callable[[TestRow], bool]] = Field(default_factory=list)
     existing_details_md: dict[str, str] = Field(default_factory=dict)
+    report_paths: MonthlyReportPaths
 
     @classmethod
     def skip_skipped(cls, test: TestRow) -> bool:
@@ -439,83 +441,6 @@ class MonthlyReportIn(Entity):
 class MonthlyReportOut(Entity):
     summary_md: str
     test_details_md: dict[str, str] = Field(default_factory=dict)
-
-
-def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
-    with new_task(f"Monthly Report for {event.name} on {event.branch}"):
-        test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
-        assert test_rows, "No error rows found for monthly report"
-    columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
-    skip_rows = (
-        []
-        if event.skip_rows == []
-        else [
-            "",
-            "## Skip Test Filters",
-            *[f"- {method.__name__}" for method in event.skip_rows],
-            "",
-        ]
-    )
-    summary_md = [
-        f"# Monthly Report for {event.name} on {event.branch} from {event.history_filter.run_history_start:%Y-%m-%d} to {event.history_filter.run_history_end:%Y-%m-%d} Found {len(test_rows)} unique Tests",
-        *skip_rows,
-        *markdown_table_lines("Test Run Table", test_rows, columns, lambda row: row.as_row(columns)),
-    ]
-    return MonthlyReportOut(
-        summary_md="\n".join(summary_md),
-        test_details_md=detail_files_md,
-    )
-
-
-class DailyReportIn(Entity):
-    report_date: datetime
-    history_filter: RunHistoryFilter
-    skip_columns: set[ErrorRowColumns] = Field(default_factory=set)
-
-
-class DailyReportOut(Entity):
-    summary_md: str
-    details_md: str
-
-
-T = TypeVar("T")
-
-
-def markdown_table_lines(
-    header: str, rows: list[T], columns: list[str], row_to_line: Callable[[T], list[str]], *, header_level: int = 2
-) -> list[str]:
-    if not rows:
-        return []
-    return [
-        f"{'#' * header_level} {header}",
-        "",
-        " | ".join(columns),
-        " | ".join("---" for _ in columns),
-        *(" | ".join(row_to_line(row)) for row in rows),
-        "",
-    ]
-
-
-def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
-    errors = output.found_errors
-    error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
-    one_line_summary = summary_line(output.found_tests)
-
-    with new_task("Daily Report"):
-        with new_task("Collecting error rows") as task:
-            failure_rows = asyncio.run(
-                _collect_daily_error_rows(errors, error_classes, settings, event.history_filter, task)
-            )
-        if not failure_rows:
-            return DailyReportOut(summary_md=f"🎉All tests passed\n{one_line_summary}", details_md="")
-    columns = ErrorRowColumns.column_names(failure_rows, event.skip_columns)
-    summary_md = [
-        f"# Daily Report on {event.report_date:%Y-%m-%d}",
-        one_line_summary,
-        "",
-        *markdown_table_lines("Errors Table", failure_rows, columns, lambda row: row.as_row(columns)),
-    ]
-    return DailyReportOut(summary_md="\n".join(summary_md), details_md="TODO")
 
 
 class ErrorRowColumns(StrEnum):
@@ -620,6 +545,94 @@ class TestRow(Entity):
                     logger.warning(f"Unknown column: {col}, skipping")
                     values.append("N/A")
         return values
+
+
+def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
+    with new_task(f"Monthly Report for {event.name} on {event.branch}"):
+        test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
+        assert test_rows, "No error rows found for monthly report"
+    columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
+    skip_rows = (
+        []
+        if event.skip_rows == []
+        else [
+            "",
+            "## Skip Test Filters",
+            *[f"- {method.__name__}" for method in event.skip_rows],
+            "",
+        ]
+    )
+    summary_md = [
+        f"# Monthly Report for {event.name} on {event.branch} from {event.history_filter.run_history_start:%Y-%m-%d} to {event.history_filter.run_history_end:%Y-%m-%d} Found {len(test_rows)} unique Tests",
+        *skip_rows,
+        *markdown_table_lines("Test Run Table", test_rows, columns, lambda row: row.as_row(columns)),
+    ]
+    return MonthlyReportOut(
+        summary_md="\n".join(summary_md),
+        test_details_md=detail_files_md,
+    )
+
+
+class DailyReportIn(Entity):
+    report_date: datetime
+    history_filter: RunHistoryFilter
+    skip_columns: set[ErrorRowColumns] = Field(default_factory=set)
+    row_modifier: Callable[[TestRow, dict[str, str]], dict[str, str]] | None = Field(
+        default=None, description=f"Use the {ErrorRowColumns} to access column-->value mapping"
+    )
+
+
+class DailyReportOut(Entity):
+    summary_md: str
+    details_md: str
+
+
+T = TypeVar("T")
+
+
+def markdown_table_lines(
+    header: str, rows: list[T], columns: list[str], row_to_line: Callable[[T], list[str]], *, header_level: int = 2
+) -> list[str]:
+    if not rows:
+        return []
+    return [
+        f"{'#' * header_level} {header}",
+        "",
+        " | ".join(columns),
+        " | ".join("---" for _ in columns),
+        *(" | ".join(row_to_line(row)) for row in rows),
+        "",
+    ]
+
+
+def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
+    errors = output.found_errors
+    error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
+    one_line_summary = summary_line(output.found_tests)
+
+    with new_task("Daily Report"):
+        with new_task("Collecting error rows") as task:
+            failure_rows = asyncio.run(
+                _collect_daily_error_rows(errors, error_classes, settings, event.history_filter, task)
+            )
+        if not failure_rows:
+            return DailyReportOut(summary_md=f"🎉All tests passed\n{one_line_summary}", details_md="")
+    columns = ErrorRowColumns.column_names(failure_rows, event.skip_columns)
+
+    def as_md_row(row: TestRow) -> list[str]:
+        if row_modifier := event.row_modifier:
+            row_dict = dict(zip(columns, row.as_row(columns)))
+            row_dict = row_modifier(row, row_dict)
+            return [row_dict[col] for col in columns]
+        return row.as_row(columns)
+
+    summary_md = [
+        f"# Daily Report on {event.report_date:%Y-%m-%d}",
+        one_line_summary,
+        "",
+        *markdown_table_lines("Errors Table", failure_rows, columns, as_md_row),
+    ]
+    return DailyReportOut(summary_md="\n".join(summary_md), details_md="TODO")
 
 
 async def _collect_daily_error_rows(

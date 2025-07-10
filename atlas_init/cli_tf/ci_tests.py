@@ -28,9 +28,12 @@ from atlas_init.cli_tf.github_logs import (
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
 from atlas_init.cli_tf.go_test_summary import (
     DailyReportIn,
+    DailyReportOut,
+    ErrorRowColumns,
     MonthlyReportIn,
     RunHistoryFilter,
     TFCITestOutput,
+    TestRow,
     create_daily_report,
     create_monthly_report,
 )
@@ -143,46 +146,67 @@ def ci_tests(
         env_filter=[summary_env_name] if summary_env_name else [],
     )
     settings = event.settings
+    report_paths = MonthlyReportPaths.from_settings(settings, summary_name)
     if skip_daily:
         logger.info("skipping daily report")
     else:
-        run_daily_report(event, settings, history_filter, copy_to_clipboard)
+        run_daily_report(event, settings, history_filter, copy_to_clipboard, report_paths)
     if summary_name.lower() != "none":
         monthly_input = MonthlyReportIn(
             name=summary_name,
             branch=event.branch,
             history_filter=history_filter,
+            report_paths=report_paths,
         )
         if skip_monthly:
             logger.info("skipping monthly report")
-            report_paths = MonthlyReportPaths.from_settings(settings, summary_name)
         else:
-            report_paths = generate_monthly_summary(settings, monthly_input, ask_to_open)
-        export_ci_tests_markdown_to_html(settings, report_paths)
+            generate_monthly_summary(settings, monthly_input, ask_to_open)
+    export_ci_tests_markdown_to_html(settings, report_paths)
 
 
-def run_daily_report(event, settings, history_filter, copy_to_clipboard):
+def run_daily_report(
+    event: TFCITestInput,
+    settings: AtlasInitSettings,
+    history_filter: RunHistoryFilter,
+    copy_to_clipboard: bool,
+    report_paths: MonthlyReportPaths,
+) -> DailyReportOut:
     out = asyncio.run(ci_tests_pipeline(event))
     manual_classification(out.classified_errors, settings)
+    summary_name = event.summary_name
+
+    def add_md_link(row: TestRow, row_dict: dict[str, str]) -> dict[str, str]:
+        if not summary_name:
+            return row_dict
+        old_details = row_dict[ErrorRowColumns.DETAILS_SUMMARY]
+        old_details = old_details or "Test History"
+        row_dict[ErrorRowColumns.DETAILS_SUMMARY] = (
+            f"[{old_details}]({settings.github_ci_summary_details_rel_path(summary_name, row.full_name)})"
+        )
+        return row_dict
+
     daily_in = DailyReportIn(
         report_date=event.report_date,
         history_filter=history_filter,
+        row_modifier=add_md_link,
     )
     daily_out = create_daily_report(out, settings, daily_in)
     print_to_live(Markdown(daily_out.summary_md))
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
+    file_utils.ensure_parents_write_text(report_paths.daily_path, daily_out.summary_md)
+    return daily_out
 
 
 def generate_monthly_summary(
     settings: AtlasInitSettings, monthly_input: MonthlyReportIn, ask_to_open: bool = False
-) -> MonthlyReportPaths:
+) -> None:
     monthly_out = create_monthly_report(
         settings,
         monthly_input,
     )
-    summary_name = monthly_input.name
-    paths = MonthlyReportPaths.from_settings(settings, summary_name)
+    paths = monthly_input.report_paths
     summary_path = paths.summary_path
     file_utils.ensure_parents_write_text(summary_path, monthly_out.summary_md)
     logger.info(f"summary written to {summary_path}")
@@ -207,7 +231,7 @@ def generate_monthly_summary(
         run_and_wait(f'code "{summary_path}"')
     if ask_to_open and confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
         run_and_wait(f'code "{error_only_path}"')
-    return paths
+    return None
 
 
 async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:

@@ -48,7 +48,7 @@ class GoTestErrorClass(StrEnum):
     }
     __CONTAINS_MAPPING__ = {
         OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
-        FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
+        FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR", "503 Service Unavailable"),
         FLAKY_CLIENT: ("dial tcp: lookup", "i/o timeout"),
         PROVIDER_DOWNLOAD: [
             "mongodbatlas: failed to retrieve authentication checksums for provider",
@@ -68,7 +68,7 @@ class GoTestErrorClass(StrEnum):
             (
                 error_class
                 for error_class, contains_list in cls.__CONTAINS_MAPPING__.items()
-                if all(contains(output, contains_part) for contains_part in contains_list)
+                if any(contains(output, contains_part) for contains_part in contains_list)
             ),
             None,
         )  # type: ignore

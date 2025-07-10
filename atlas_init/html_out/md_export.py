@@ -21,17 +21,28 @@ class MonthlyReportPaths(Event):
     error_only_path: Path
     details_dir: Path
     summary_name: str
+    daily_path: Path
 
     ERROR_ONLY_SUFFIX: ClassVar[str] = "_error-only.md"
+    DAILY_SUFFIX: ClassVar[str] = "_daily.md"
+
+    def export_to_dir(self, out_dir: Path) -> None:
+        for path in [self.summary_path, self.error_only_path, self.daily_path]:
+            if path.exists():
+                ensure_parents_write_text(out_dir / path.name, path.read_text())
+        if self.details_dir.exists():
+            copy(self.details_dir, out_dir / self.details_dir.name, clean_dest=True)
 
     @classmethod
     def from_settings(cls, settings: AtlasInitSettings, summary_name: str) -> MonthlyReportPaths:
+        summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
         return cls(
-            summary_path=settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md"),
+            summary_path=summary_path,
             error_only_path=settings.github_ci_summary_dir
             / str_utils.ensure_suffix(summary_name, MonthlyReportPaths.ERROR_ONLY_SUFFIX),
             details_dir=settings.github_ci_summary_details_path(summary_name, "dummy").parent,
             summary_name=summary_name,
+            daily_path=settings.github_ci_summary_dir / f"{summary_path.stem}{MonthlyReportPaths.DAILY_SUFFIX}",
         )
 
 
@@ -46,18 +57,7 @@ def export_ci_tests_markdown_to_html(settings: AtlasInitSettings, report_paths: 
         return
     ci_tests_dir = html_out / CI_TESTS_DIR_NAME
     docs_out_dir = ci_tests_dir / "docs"
-    summary_path = report_paths.summary_path
-    ensure_parents_write_text(
-        docs_out_dir / summary_path.name,
-        summary_path.read_text(),
-    )
-    error_only_path = report_paths.error_only_path
-    ensure_parents_write_text(
-        docs_out_dir / error_only_path.name,
-        error_only_path.read_text(),
-    )
-    details_dir = report_paths.details_dir
-    copy(details_dir, docs_out_dir / details_dir.name, clean_dest=True)
+    report_paths.export_to_dir(docs_out_dir)
     index_md_content = create_index_md(docs_out_dir)
     ensure_parents_write_text(docs_out_dir / "index.md", index_md_content)
     server_url, run_event = start_mkdocs_serve(ci_tests_dir)
@@ -96,9 +96,13 @@ def create_index_md(docs_out_dir: Path) -> str:
     def date_row(date: datetime) -> str:
         summary_filename = f"{date.strftime('%Y-%m-%d')}.md"
         error_only_filename = f"{date.strftime('%Y-%m-%d')}{MonthlyReportPaths.ERROR_ONLY_SUFFIX}"
+        daily_filename = f"{date.strftime('%Y-%m-%d')}{MonthlyReportPaths.DAILY_SUFFIX}"
+        line_links = [f"[{date.strftime('%Y-%m-%d')}](./{summary_filename})"]
         if error_only_filename in md_files:
-            return f"- [{date.strftime('%Y-%m-%d')}](./{summary_filename}) [{date.strftime('%Y-%m-%d')} Error Only](./{error_only_filename})"
-        return f"- [{date.strftime('%Y-%m-%d')}]({summary_filename})"
+            line_links.append(f"[{date.strftime('%Y-%m-%d')} Error Only](./{error_only_filename})")
+        if daily_filename in md_files:
+            line_links.append(f"[{date.strftime('%Y-%m-%d')} Daily Errors](./{daily_filename})")
+        return f"- {', '.join(line_links)}"
 
     md_content = [
         "# Welcome to CI Tests",
@@ -124,7 +128,11 @@ def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
         "uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
     )
     chain_future(run_event._complete_flag, future)
-    future.result(timeout=MKDOCS_SERVE_TIMEOUT)
+    try:
+        future.result(timeout=MKDOCS_SERVE_TIMEOUT)
+    except BaseException as e:
+        kill(run_event, reason=f"Failed to start mkdocs serve, timeout after {MKDOCS_SERVE_TIMEOUT} seconds")
+        raise e
     return MKDOCS_SERVE_URL, run_event
 
 
