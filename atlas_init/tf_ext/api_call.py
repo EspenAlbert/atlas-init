@@ -163,6 +163,7 @@ def call_api(api_call: ApiCall, path_variables: dict[str, str]) -> dict:
         params=api_call.query_args,
         headers={"Accept": api_call.accept_header, "Content-Type": "application/json"},
         auth=HTTPDigestAuth(*_public_private_key()),
+        timeout=30,
     )
     try:
         response_json = response.json()
@@ -277,6 +278,7 @@ def api(
             url,
             headers={"Accept": accept_header, "Content-Type": "application/json"},
             auth=HTTPDigestAuth(*_public_private_key()),
+            timeout=30,
         )
         print(r.text)
         r.raise_for_status()
