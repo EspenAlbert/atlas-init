@@ -23,6 +23,7 @@ class GoTestErrorClass(StrEnum):
     FLAKY_400 = "flaky_400"
     FLAKY_500 = "flaky_500"
     FLAKY_CHECK = "flaky_check"
+    FLAKY_CLIENT = "flaky_client"
     OUT_OF_CAPACITY = "out_of_capacity"
     PROJECT_LIMIT_EXCEEDED = "project_limit_exceeded"
     DANGLING_RESOURCE = "dangling_resource"
@@ -36,6 +37,7 @@ class GoTestErrorClass(StrEnum):
         FLAKY_400: "retry",
         FLAKY_500: "retry",
         FLAKY_CHECK: "retry",
+        FLAKY_CLIENT: "retry",
         PROVIDER_DOWNLOAD: "retry",
         OUT_OF_CAPACITY: "retry_later",
         PROJECT_LIMIT_EXCEEDED: "clean_project",
@@ -46,7 +48,8 @@ class GoTestErrorClass(StrEnum):
     }
     __CONTAINS_MAPPING__ = {
         OUT_OF_CAPACITY: ("OUT_OF_CAPACITY",),
-        FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR"),
+        FLAKY_500: ("HTTP 500", "UNEXPECTED_ERROR", "503 Service Unavailable"),
+        FLAKY_CLIENT: ("dial tcp: lookup", "i/o timeout"),
         PROVIDER_DOWNLOAD: [
             "mongodbatlas: failed to retrieve authentication checksums for provider",
             "Error: Failed to install provider github.com: bad response",
@@ -65,7 +68,7 @@ class GoTestErrorClass(StrEnum):
             (
                 error_class
                 for error_class, contains_list in cls.__CONTAINS_MAPPING__.items()
-                if all(contains(output, contains_part) for contains_part in contains_list)
+                if any(contains(output, contains_part) for contains_part in contains_list)
             ),
             None,
         )  # type: ignore
@@ -311,22 +314,27 @@ class GoTestError(Entity):
 
     @property
     def short_description(self) -> str:
-        match self.details:
-            case GoTestGeneralCheckError():
-                return str(self.details)
-            case GoTestResourceCheckError():
-                return f"CheckFailure for {self.details.tf_resource_type}.{self.details.tf_resource_name} at Step: {self.details.step_nr} Checks: {self.details.check_numbers_str}"
-            case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:
-                return f"API Error {self.details.api_error_code_str} {api_path_normalized}"
-            case GoTestAPIError(api_path=api_path):
-                return f"{self.details.api_error_code_str} {api_path}"
-        return ""
+        details = self.details
+        return details_short_description(details) if details else ""
 
     def header(self, use_ticks: bool = False) -> str:
         name_with_ticks = f"`{self.run.name_with_package}`" if use_ticks else self.run.name_with_package
         if details := self.short_description:
             return f"{name_with_ticks} {details}"
         return f"{name_with_ticks}"
+
+
+def details_short_description(details: ErrorDetailsT) -> str:
+    match details:
+        case GoTestGeneralCheckError():
+            return str(details)
+        case GoTestResourceCheckError():
+            return f"CheckFailure for {details.tf_resource_type}.{details.tf_resource_name} at Step: {details.step_nr} Checks: {details.check_numbers_str}"
+        case GoTestAPIError(api_path_normalized=api_path_normalized) if api_path_normalized:
+            return f"API Error {details.api_error_code_str} {api_path_normalized}"
+        case GoTestAPIError(api_path=api_path):
+            return f"{details.api_error_code_str} {api_path}"
+    return ""
 
 
 one_of_methods = "|".join(API_METHODS)

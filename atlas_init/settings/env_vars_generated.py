@@ -63,3 +63,5 @@ class RealmSettings(_EnvVarsGenerated):
 
 class AtlasSettingsWithProject(AtlasSettings):
     MONGODB_ATLAS_PROJECT_ID: str
+    MONGODB_ATLAS_PROJECT_OWNER_ID: str = ""
+    MONGODB_ATLAS_USER_EMAIL: str = ""

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import logging
 import re
 from collections.abc import Iterable
@@ -76,7 +77,7 @@ class OpenapiSchema(Entity):
     def create_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("post")
 
-    def read_method(self, path: str) -> dict | None:
+    def get_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("get")
 
     def delete_method(self, path: str) -> dict | None:
@@ -88,10 +89,13 @@ class OpenapiSchema(Entity):
     def put_method(self, path: str) -> dict | None:
         return self.paths.get(path, {}).get("patch")
 
-    def methods(self, path: str) -> Iterable[dict]:
+    def methods_with_name(self, path: str) -> Iterable[tuple[str, dict]]:
         for method_name in ["post", "get", "delete", "patch", "put"]:
             if method := self.paths.get(path, {}).get(method_name):
-                yield method
+                yield method_name, method
+
+    def methods(self, path: str) -> Iterable[dict]:
+        yield from (method for _, method in self.methods_with_name(path))
 
     def method_refs(self, path: str) -> Iterable[str]:
         for method in self.methods(path):
@@ -145,7 +149,7 @@ class OpenapiSchema(Entity):
             if ref := value.get("schema", {}).get("$ref"):
                 yield ref
 
-    def _unpack_schema_versions(self, response: dict) -> list[str]:
+    def _unpack_schema_versions(self, response: dict) -> list[datetime.date]:
         content: dict[str, dict] = {**response.get("content", {})}
         versions = []
         while content:
@@ -159,7 +163,7 @@ class OpenapiSchema(Entity):
                 versions.append(version)
         return versions
 
-    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[str]]]:
+    def path_method_api_versions(self) -> Iterable[tuple[PathMethodCode, list[datetime.date]]]:
         for path, methods in self.paths.items():
             for method_name, method_dict in methods.items():
                 if not isinstance(method_dict, dict):
@@ -302,7 +306,7 @@ def add_api_spec_info(schema: SchemaV2, api_spec_path: Path, *, minimal_refs: bo
                 for property_dict in api_spec.schema_properties(req_ref):
                     parse_api_spec_param(api_spec, property_dict, resource)
         for path in resource.paths:
-            read_method = api_spec.read_method(path)
+            read_method = api_spec.get_method(path)
             if not read_method:
                 continue
             for param in read_method.get("parameters", []):

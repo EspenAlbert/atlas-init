@@ -26,7 +26,7 @@ def test_openapi_schema_create_parameters(schema_v2: SchemaV2, openapi_schema: O
     create_path, read_path = processor.paths
     create_method = openapi_schema.create_method(create_path)
     assert create_method
-    assert openapi_schema.read_method(read_path)
+    assert openapi_schema.get_method(read_path)
     create_path_params = create_method.get("parameters", [])
     assert len(create_path_params) == 2
     group_id_param, tenant_name_param = create_path_params
@@ -69,7 +69,7 @@ def test_openapi_schema_create_parameters(schema_v2: SchemaV2, openapi_schema: O
 def test_openapi_schema_read_parameters(schema_v2, openapi_schema: OpenapiSchema):
     processor = schema_v2.resources["stream_processor"]
     read_path = processor.paths[1]
-    read_method = openapi_schema.read_method(read_path)
+    read_method = openapi_schema.get_method(read_path)
     assert read_method
     read_path_params = read_method.get("parameters", [])
     assert len(read_path_params) == 3
@@ -216,7 +216,9 @@ def generate_api_versions_report(model: OpenapiSchema) -> list[str]:
         unique_versions.update(versions)
         if len(versions) > 1:
             logger.warning(f"multiple versions for {path} {method} {code}: {versions}")
-            report_md.append(f"{path} | {method} | {code} | {', '.join(sorted(versions))}")
+            report_md.append(
+                f"{path} | {method} | {code} | {', '.join(version.strftime('%Y-%m-%d') for version in sorted(versions))}"
+            )
             multiple_versions_counter += 1
     versions_sorted = "\n".join(sorted(unique_versions))
     logger.info(

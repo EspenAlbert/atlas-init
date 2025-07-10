@@ -26,6 +26,7 @@ dependencies = [
   "orjson==3.10.13",
   "python-hcl2==7.1.0",
   "pygithub==2.6.1",
+  "pydot==4.0.1",
   "requests==2.32.2",
   "pydantic-settings==2.7.1",
   "questionary==2.1.0",
@@ -33,18 +34,21 @@ dependencies = [
   "stringcase==1.2.0",
   "tenacity==9.0.0",
   "typer>=0.15.1",
-  "ask-shell>=0.0.2",
+  "ask-shell>=0.0.4",
   "model-lib",
   "zero-3rdparty",
 ]
 
 # [tool.uv.sources]
-# ask-shell = {path = "../py-libs/ask-shell"}
+# ask-shell = { path = "../py-libs/ask-shell" }
 # model-lib = {path = "../py-libs/model-lib"}
 # zero-3rdparty = {path = "../py-libs/zero-3rdparty"}
 
 [project.scripts]
 atlas-init = "atlas_init.cli:typer_main"
+tf-dep = "atlas_init.tf_ext.tf_dep:typer_main"
+tf-ext = "atlas_init.tf_ext.typer_app:typer_main"
+sdk-ext = "atlas_init.sdk_ext.typer_app:typer_main"
 
 [project.urls]
 Documentation = "https://github.com/EspenAlbert/atlas-init#readme"

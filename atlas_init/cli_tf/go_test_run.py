@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from collections import defaultdict, deque
-from functools import total_ordering
 import logging
 import re
+from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
+from functools import total_ordering
 from pathlib import Path
 from typing import NamedTuple, TypeAlias
 
@@ -163,6 +163,10 @@ class GoTestRun(Entity):
         return self.status in {GoTestStatus.FAIL, GoTestStatus.TIMEOUT}
 
     @property
+    def is_skipped(self) -> bool:
+        return self.status == GoTestStatus.SKIP
+
+    @property
     def is_pass(self) -> bool:
         return self.status == GoTestStatus.PASS
 
@@ -181,6 +185,14 @@ class GoTestRun(Entity):
         if self.package_url:
             return f"{self.package_url.split('/')[-1]}/{self.name}"
         return self.name
+
+    @property
+    def full_name(self) -> str:
+        if self.package_url and self.group_name:
+            return f"{self.group_name}/{self.package_url.split('/')[-1]}/{self.name}"
+        if self.group_name:
+            return f"{self.group_name}/{self.name}"
+        return self.name_with_package
 
     @classmethod
     def group_by_name_package(cls, tests: list[GoTestRun]) -> dict[str, list[GoTestRun]]:

@@ -9,15 +9,16 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
-from ask_shell import confirm, select_list, print_to_live, new_task, run_and_wait
-from model_lib import Entity, Event
+from ask_shell import confirm, new_task, print_to_live, run_and_wait, select_list
+from model_lib import Entity, Event, copy_and_validate
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import Url
 from rich.markdown import Markdown
-from zero_3rdparty import file_utils, str_utils
+from zero_3rdparty import file_utils
 from zero_3rdparty.datetime_utils import utc_now
+from zero_3rdparty.str_utils import ensure_suffix
 
-from atlas_init.cli_helper.run import add_to_clipboard, run_command_receive_result
+from atlas_init.cli_helper.run import add_to_clipboard
 from atlas_init.cli_tf.github_logs import (
     GH_TOKEN_ENV_NAME,
     download_job_safely,
@@ -25,7 +26,17 @@ from atlas_init.cli_tf.github_logs import (
     tf_repo,
 )
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus, parse_tests
-from atlas_init.cli_tf.go_test_summary import DailyReportIn, TFCITestOutput, create_daily_report
+from atlas_init.cli_tf.go_test_summary import (
+    DailyReportIn,
+    DailyReportOut,
+    ErrorRowColumns,
+    MonthlyReportIn,
+    RunHistoryFilter,
+    TFCITestOutput,
+    TestRow,
+    create_daily_report,
+    create_monthly_report,
+)
 from atlas_init.cli_tf.go_test_tf_error import (
     DetailsInfo,
     ErrorClassAuthor,
@@ -40,6 +51,7 @@ from atlas_init.crud.mongo_dao import (
     init_mongo_dao,
     read_tf_resources,
 )
+from atlas_init.html_out.md_export import MonthlyReportPaths, export_ci_tests_markdown_to_html
 from atlas_init.repos.go_sdk import ApiSpecPaths, parse_api_spec_paths
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings.env_vars import AtlasInitSettings, init_settings
@@ -73,7 +85,9 @@ class TFCITestInput(Event):
 
 def ci_tests(
     test_group_name: str = typer.Option("", "-g"),
-    max_days_ago: int = typer.Option(1, "-d", "--days"),
+    max_days_ago: int = typer.Option(
+        1, "-d", "--days", help="number of days to look back, Github only store logs for 30 days."
+    ),
     branch: str = typer.Option("master", "-b", "--branch"),
     workflow_file_stems: str = typer.Option("test-suite,terraform-compatibility-matrix", "-w", "--workflow"),
     names: str = typer.Option(
@@ -83,16 +97,20 @@ def ci_tests(
         help="comma separated list of test names to filter, e.g., TestAccCloudProviderAccessAuthorizationAzure_basic,TestAccBackupSnapshotExportBucket_basicAzure",
     ),
     summary_name: str = typer.Option(
-        "",
+        ...,
         "-s",
         "--summary",
         help="the name of the summary directory to store detailed test results",
+        default_factory=lambda: utc_now().strftime("%Y-%m-%d"),
     ),
     summary_env_name: str = typer.Option("", "--env", help="filter summary based on tests/errors only in dev/qa"),
     skip_log_download: bool = typer.Option(False, "-sld", "--skip-log-download", help="skip downloading logs"),
     skip_error_parsing: bool = typer.Option(
         False, "-sep", "--skip-error-parsing", help="skip parsing errors, usually together with --skip-log-download"
     ),
+    skip_daily: bool = typer.Option(False, "-sd", "--skip-daily", help="skip daily report"),
+    skip_monthly: bool = typer.Option(False, "-sm", "--skip-monthly", help="skip monthly report"),
+    ask_to_open: bool = typer.Option(False, "--open", "--ask-to-open", help="ask to open the reports"),
     copy_to_clipboard: bool = typer.Option(
         False,
         "--copy",
@@ -111,8 +129,6 @@ def ci_tests(
         logger.info(f"filtering tests by names: {names_set} (todo: support this)")
     if test_group_name:
         logger.warning(f"test_group_name is not supported yet: {test_group_name}")
-    if summary_name:
-        logger.warning(f"summary_name is not supported yet: {summary_name}")
     event = TFCITestInput(
         test_group_name=test_group_name,
         max_days_ago=max_days_ago,
@@ -124,29 +140,98 @@ def ci_tests(
         skip_log_download=skip_log_download,
         skip_error_parsing=skip_error_parsing,
     )
-    out = asyncio.run(ci_tests_pipeline(event))
-    settings = event.settings
-    manual_classification(out.classified_errors, settings)
-    daily_in = DailyReportIn(
-        report_date=event.report_date,
+    history_filter = RunHistoryFilter(
         run_history_start=event.report_date - timedelta(days=event.max_days_ago),
         run_history_end=event.report_date,
         env_filter=[summary_env_name] if summary_env_name else [],
+    )
+    settings = event.settings
+    report_paths = MonthlyReportPaths.from_settings(settings, summary_name)
+    if skip_daily:
+        logger.info("skipping daily report")
+    else:
+        run_daily_report(event, settings, history_filter, copy_to_clipboard, report_paths)
+    if summary_name.lower() != "none":
+        monthly_input = MonthlyReportIn(
+            name=summary_name,
+            branch=event.branch,
+            history_filter=history_filter,
+            report_paths=report_paths,
+        )
+        if skip_monthly:
+            logger.info("skipping monthly report")
+        else:
+            generate_monthly_summary(settings, monthly_input, ask_to_open)
+    export_ci_tests_markdown_to_html(settings, report_paths)
+
+
+def run_daily_report(
+    event: TFCITestInput,
+    settings: AtlasInitSettings,
+    history_filter: RunHistoryFilter,
+    copy_to_clipboard: bool,
+    report_paths: MonthlyReportPaths,
+) -> DailyReportOut:
+    out = asyncio.run(ci_tests_pipeline(event))
+    manual_classification(out.classified_errors, settings)
+    summary_name = event.summary_name
+
+    def add_md_link(row: TestRow, row_dict: dict[str, str]) -> dict[str, str]:
+        if not summary_name:
+            return row_dict
+        old_details = row_dict[ErrorRowColumns.DETAILS_SUMMARY]
+        old_details = old_details or "Test History"
+        row_dict[ErrorRowColumns.DETAILS_SUMMARY] = (
+            f"[{old_details}]({settings.github_ci_summary_details_rel_path(summary_name, row.full_name)})"
+        )
+        return row_dict
+
+    daily_in = DailyReportIn(
+        report_date=event.report_date,
+        history_filter=history_filter,
+        row_modifier=add_md_link,
     )
     daily_out = create_daily_report(out, settings, daily_in)
     print_to_live(Markdown(daily_out.summary_md))
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
-    if summary_name:
-        summary_path = settings.github_ci_summary_dir / str_utils.ensure_suffix(summary_name, ".md")
-        file_utils.ensure_parents_write_text(summary_path, daily_out.summary_md)
-        logger.info(f"summary written to {summary_path}")
-        if report_details_md := daily_out.details_md:
-            details_path = summary_path.with_name(f"{summary_path.stem}_details.md")
-            file_utils.ensure_parents_write_text(details_path, report_details_md)
-            logger.info(f"summary details written to {details_path}")
-        if confirm(f"do you want to open the summary file? {summary_path}", default=False):
-            run_command_receive_result(f'code "{summary_path}"', cwd=event.repo_path, logger=logger)
+    file_utils.ensure_parents_write_text(report_paths.daily_path, daily_out.summary_md)
+    return daily_out
+
+
+def generate_monthly_summary(
+    settings: AtlasInitSettings, monthly_input: MonthlyReportIn, ask_to_open: bool = False
+) -> None:
+    monthly_out = create_monthly_report(
+        settings,
+        monthly_input,
+    )
+    paths = monthly_input.report_paths
+    summary_path = paths.summary_path
+    file_utils.ensure_parents_write_text(summary_path, monthly_out.summary_md)
+    logger.info(f"summary written to {summary_path}")
+    details_dir = paths.details_dir
+    file_utils.clean_dir(details_dir, recreate=True)
+    logger.info(f"Writing details to {details_dir}")
+    for name, details_md in monthly_out.test_details_md.items():
+        details_path = details_dir / ensure_suffix(name, ".md")
+        file_utils.ensure_parents_write_text(details_path, details_md)
+    monthly_error_only_out = create_monthly_report(
+        settings,
+        event=copy_and_validate(
+            monthly_input,
+            skip_rows=[MonthlyReportIn.skip_if_no_failures],
+            existing_details_md=monthly_out.test_details_md,
+        ),
+    )
+    error_only_path = paths.error_only_path
+    file_utils.ensure_parents_write_text(error_only_path, monthly_error_only_out.summary_md)
+    logger.info(f"error-only summary written to {error_only_path}")
+    if ask_to_open and confirm(f"do you want to open the summary file? {summary_path}", default=False):
+        run_and_wait(f'code "{summary_path}"')
+    if ask_to_open and confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
+        run_and_wait(f'code "{error_only_path}"')
+    return None
 
 
 async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
@@ -290,7 +375,7 @@ def add_llm_classifications(needs_classification_errors: list[GoTestError]) -> l
     ]
 
 
-class DownloadJobLogsInput(Event):
+class DownloadJobLogsInput(Entity):
     branch: str = "master"
     workflow_file_stems: set[str] = Field(default_factory=lambda: set(_TEST_STEMS))
     max_days_ago: int = 1
@@ -300,6 +385,13 @@ class DownloadJobLogsInput(Event):
     @property
     def start_date(self) -> datetime:
         return self.end_date - timedelta(days=self.max_days_ago)
+
+    @model_validator(mode="after")
+    def check_max_days_ago(self) -> DownloadJobLogsInput:
+        if self.max_days_ago > 90:
+            logger.warning(f"max_days_ago for {type(self).__name__} must be less than or equal to 90, setting to 90")
+            self.max_days_ago = 90
+        return self
 
 
 def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
