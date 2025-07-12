@@ -1,8 +1,9 @@
 from pathlib import Path
+
 from model_lib import StaticSettings
 
 
-class TfDepSettings(StaticSettings):
+class TfExtSettings(StaticSettings):
     @property
     def atlas_graph_path(self) -> Path:
         return self.static_root / "atlas_graph.yaml"

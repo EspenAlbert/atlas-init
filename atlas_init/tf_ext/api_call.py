@@ -1,18 +1,18 @@
-from collections import defaultdict
-from concurrent.futures import Future, as_completed
-from functools import lru_cache
 import json
 import logging
 import os
+from collections import defaultdict
+from concurrent.futures import Future, as_completed
+from functools import lru_cache
 from pathlib import Path
 
+import requests
+import typer
 from ask_shell import new_task, print_to_live, run_pool
 from model_lib import dump, parse_model
 from pydantic import BaseModel, Field, model_validator
-import requests
-from rich.markdown import Markdown
-import typer
 from requests.auth import HTTPDigestAuth
+from rich.markdown import Markdown
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import ensure_prefix, ensure_suffix, instance_repr
 
@@ -27,7 +27,7 @@ from atlas_init.settings.env_vars_modules import (
     TFModuleStream_Instance,
 )
 from atlas_init.settings.path import load_dotenv
-from atlas_init.tf_ext.settings import TfDepSettings
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +259,7 @@ def api_config(
     md_content = "\n".join(md_report)
     md = Markdown(md_content)
     print_to_live(md)
-    output_path = TfDepSettings.from_env().pagination_output_path(query_args_str)
+    output_path = TfExtSettings.from_env().pagination_output_path(query_args_str)
     ensure_parents_write_text(output_path, md_content)
     logger.info(f"Pagination report saved to {output_path}")
     return md
@@ -288,7 +288,7 @@ def api(
 
 
 def dump_config_path(query_args: dict[str, str]) -> Path:
-    settings = TfDepSettings.from_env()
+    settings = TfExtSettings.from_env()
     latest_api_spec = resolve_admin_api_path()
     model = parse_model(latest_api_spec, t=OpenapiSchema)
     paginated_paths: list[ApiCall] = []

@@ -19,7 +19,7 @@ from atlas_init.tf_ext.paths import (
     get_example_directories,
     is_variable_name_external,
 )
-from atlas_init.tf_ext.settings import TfDepSettings
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def tf_vars(
     repo_path: Path = REPO_PATH_ARG,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
 ):
-    settings = TfDepSettings.from_env()
+    settings = TfExtSettings.from_env()
     logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
     example_dirs = get_example_directories(repo_path, skip_names)
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
@@ -104,7 +104,7 @@ def vars_usage_dumping(variables: TfVarsUsage) -> str:
     return dump(vars_model, format="yaml")
 
 
-def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
+def update_resource_types(settings: TfExtSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
     resource_types = ResourceTypes(root={})
     for example_dir in example_dirs:
         example_resources = find_resource_types_with_usages(example_dir)
@@ -130,7 +130,7 @@ def resource_types_dumping(resource_types: ResourceTypes, with_external: bool = 
     return dump(dict(sorted(resource_types_model.items())), format="yaml")
 
 
-def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
+def update_variables(settings: TfExtSettings, example_dirs: list[Path], task: new_task):
     variables = parse_all_variables(example_dirs, task)
     logger.info(f"Found {len(variables.root)} variables in the examples.")
     vars_yaml = vars_usage_dumping(variables)
