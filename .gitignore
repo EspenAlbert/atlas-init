@@ -27,3 +27,5 @@ tf_log/
 downloads
 htmlcov
 tf_dep/
+static
+cache

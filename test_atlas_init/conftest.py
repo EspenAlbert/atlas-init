@@ -27,6 +27,7 @@ from atlas_init.settings.env_vars import (
 )
 from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import current_dir, dump_dotenv
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 REQUIRED_FIELDS = [
@@ -87,6 +88,20 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     yield AtlasInitSettings.from_env()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
+
+
+@pytest.fixture()
+def tf_ext_settings_repo_path(settings, monkeypatch) -> TfExtSettings:
+    repo_path = Path(__file__).parent.parent
+    static_dir = repo_path / "static"
+    monkeypatch.setenv("STATIC_DIR", str(static_dir))
+    cache_dir = repo_path / "cache"
+    monkeypatch.setenv("CACHE_DIR", str(cache_dir))
+    static_dir.mkdir(exist_ok=True)
+    cache_dir.mkdir(exist_ok=True)
+    settings.STATIC_DIR = static_dir
+    settings.CACHE_DIR = cache_dir
+    return TfExtSettings.from_env()
 
 
 @pytest.fixture()

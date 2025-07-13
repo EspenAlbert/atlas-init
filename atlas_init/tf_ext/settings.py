@@ -38,3 +38,7 @@ class TfExtSettings(StaticSettings):
 
     def pagination_output_path(self, query_string: str) -> Path:
         return self.static_root / "pagination_output" / f"query_is_{query_string or 'empty'}.md"
+
+    @property
+    def new_res_path(self) -> Path:
+        return self.static_root / "newres"

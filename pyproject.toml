@@ -34,7 +34,7 @@ dependencies = [
   "stringcase==1.2.0",
   "tenacity==9.0.0",
   "typer>=0.15.1",
-  "ask-shell>=0.0.4",
+  "ask-shell>=0.0.5",
   "model-lib",
   "zero-3rdparty",
 ]

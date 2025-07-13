@@ -15,3 +15,10 @@ SKIP_EXAMPLES_DIRS_OPTION = typer.Option(
     default_factory=default_skippped_directories,
     show_default=True,
 )
+TF_CLI_CONFIG_FILE_ENV_NAME = "TF_CLI_CONFIG_FILE"
+TF_CLI_CONFIG_FILE_ARG = typer.Option(
+    "-tf-cli",
+    "--tf-cli-config-file",
+    envvar=TF_CLI_CONFIG_FILE_ENV_NAME,
+    help="Terraform CLI config file",
+)

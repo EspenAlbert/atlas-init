@@ -5,7 +5,7 @@ from atlas_init.tf_ext import api_call
 
 
 def typer_main():
-    from atlas_init.tf_ext import tf_dep, tf_modules, tf_vars
+    from atlas_init.tf_ext import tf_dep, tf_modules, tf_vars, tf_mod_gen
 
     app = Typer(
         name="tf-ext",
@@ -14,6 +14,7 @@ def typer_main():
     app.command(name="dep-graph")(tf_dep.tf_dep_graph)
     app.command(name="vars")(tf_vars.tf_vars)
     app.command(name="modules")(tf_modules.tf_modules)
+    app.command(name="mod-gen")(tf_mod_gen.tf_mod_gen)
     app.command(name="api")(api_call.api)
     app.command(name="api-config")(api_call.api_config)
     configure_logging(app)
