@@ -1,5 +1,8 @@
 import keyword
-import black
+from tempfile import TemporaryDirectory
+from pathlib import Path
+
+from ask_shell import run_and_wait
 
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 
@@ -169,12 +172,14 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
     return module_str.strip() + "\n"
 
 
-def format_with_black(code: str) -> str:
-    # Mode can be customized (e.g., line_length, target_version, etc.)
-    mode = black.Mode()
-    return black.format_str(code, mode=mode)
+def format_with_ruff(code: str) -> str:
+    with TemporaryDirectory() as tmp_dir:
+        tmp_file = Path(tmp_dir) / "dataclass.py"
+        tmp_file.write_text(code)
+        run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
+        return tmp_file.read_text()
 
 
 def convert_and_format(schema: ResourceSchema) -> str:
     dataclass_unformatted = convert_to_dataclass(schema)
-    return format_with_black(dataclass_unformatted)
+    return format_with_ruff(dataclass_unformatted)

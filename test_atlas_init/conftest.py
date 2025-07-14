@@ -36,6 +36,7 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+REPO_PATH = Path(__file__).parent.parent
 
 
 def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:

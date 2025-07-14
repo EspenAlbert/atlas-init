@@ -37,11 +37,7 @@ class Resource_Bi_connector_config:
 class Resource_Connection_strings_Private_endpoint_Endpoints:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
-    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {
-        "endpoint_id",
-        "provider_name",
-        "region",
-    }
+    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"endpoint_id", "provider_name", "region"}
     endpoint_id: Optional[str] = None
     provider_name: Optional[str] = None
     region: Optional[str] = None
@@ -161,11 +157,7 @@ class Resource_Replication_specs_Region_configs:
         "electable_specs",
         "read_only_specs",
     }
-    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {
-        "priority",
-        "provider_name",
-        "region_name",
-    }
+    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"priority", "provider_name", "region_name"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     priority: Optional[float] = None
     provider_name: Optional[str] = None
@@ -182,12 +174,7 @@ class Resource_Replication_specs_Region_configs:
 class Resource_Replication_specs:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
-    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {
-        "container_id",
-        "external_id",
-        "id",
-        "zone_id",
-    }
+    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "id", "zone_id"}
     region_configs: Optional[Resource_Replication_specs_Region_configs] = None
     container_id: Optional[Dict[str, Any]] = None
     external_id: Optional[str] = None
@@ -217,12 +204,7 @@ class Resource:
         "replication_specs",
         "timeouts",
     }
-    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {
-        "cluster_type",
-        "name",
-        "project_id",
-        "replication_specs",
-    }
+    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"cluster_type", "name", "project_id", "replication_specs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {
         "cluster_id",
         "config_server_type",
