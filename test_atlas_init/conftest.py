@@ -44,11 +44,14 @@ def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:
     return any(marker.name.startswith("skip") for marker in markers)
 
 
+def _skip_marked_tests() -> bool:
+    return os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
+
+
 def pytest_collection_modifyitems(config, items):
     """Skip tests that are marked with @pytest.mark.skip
     To avoid the terminal session in VS Code that might have extra env-vars set accidentally run marked tests"""
-    skip_marked_tests = os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
-    if not skip_marked_tests:
+    if not _skip_marked_tests():
         return
     for item in items:
         if any(marker.name.startswith("skip") for marker in item.own_markers):
@@ -93,6 +96,8 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
 
 @pytest.fixture()
 def tf_ext_settings_repo_path(settings, monkeypatch) -> TfExtSettings:
+    if _skip_marked_tests():
+        pytest.skip("skipping marked tests")
     repo_path = Path(__file__).parent.parent
     static_dir = repo_path / "static"
     monkeypatch.setenv("STATIC_DIR", str(static_dir))
