@@ -57,10 +57,19 @@ class Resource_Connection_strings_Private_endpoint:
         "type",
     }
     connection_string: Optional[str] = None
-    endpoints: Optional[Resource_Connection_strings_Private_endpoint_Endpoints] = None
+    endpoints: Optional[List[Resource_Connection_strings_Private_endpoint_Endpoints]] = None
     srv_connection_string: Optional[str] = None
     srv_shard_optimized_connection_string: Optional[str] = None
     type: Optional[str] = None
+
+    def __post_init__(self):
+        if self.endpoints is not None:
+            self.endpoints = [
+                Resource_Connection_strings_Private_endpoint_Endpoints(**x)
+                if not isinstance(x, Resource_Connection_strings_Private_endpoint_Endpoints)
+                else x
+                for x in self.endpoints
+            ]
 
 
 @dataclass
@@ -75,10 +84,19 @@ class Resource_Connection_strings:
         "standard_srv",
     }
     private: Optional[str] = None
-    private_endpoint: Optional[Resource_Connection_strings_Private_endpoint] = None
+    private_endpoint: Optional[List[Resource_Connection_strings_Private_endpoint]] = None
     private_srv: Optional[str] = None
     standard: Optional[str] = None
     standard_srv: Optional[str] = None
+
+    def __post_init__(self):
+        if self.private_endpoint is not None:
+            self.private_endpoint = [
+                Resource_Connection_strings_Private_endpoint(**x)
+                if not isinstance(x, Resource_Connection_strings_Private_endpoint)
+                else x
+                for x in self.private_endpoint
+            ]
 
 
 @dataclass
@@ -171,19 +189,52 @@ class Resource_Replication_specs_Region_configs:
     electable_specs: Optional[Resource_Replication_specs_Region_configs_Electable_specs] = None
     read_only_specs: Optional[Resource_Replication_specs_Region_configs_Read_only_specs] = None
 
+    def __post_init__(self):
+        if self.analytics_auto_scaling is not None and not isinstance(
+            self.analytics_auto_scaling, Resource_Replication_specs_Region_configs_Analytics_auto_scaling
+        ):
+            self.analytics_auto_scaling = Resource_Replication_specs_Region_configs_Analytics_auto_scaling(
+                **self.analytics_auto_scaling
+            )
+        if self.analytics_specs is not None and not isinstance(
+            self.analytics_specs, Resource_Replication_specs_Region_configs_Analytics_specs
+        ):
+            self.analytics_specs = Resource_Replication_specs_Region_configs_Analytics_specs(**self.analytics_specs)
+        if self.auto_scaling is not None and not isinstance(
+            self.auto_scaling, Resource_Replication_specs_Region_configs_Auto_scaling
+        ):
+            self.auto_scaling = Resource_Replication_specs_Region_configs_Auto_scaling(**self.auto_scaling)
+        if self.electable_specs is not None and not isinstance(
+            self.electable_specs, Resource_Replication_specs_Region_configs_Electable_specs
+        ):
+            self.electable_specs = Resource_Replication_specs_Region_configs_Electable_specs(**self.electable_specs)
+        if self.read_only_specs is not None and not isinstance(
+            self.read_only_specs, Resource_Replication_specs_Region_configs_Read_only_specs
+        ):
+            self.read_only_specs = Resource_Replication_specs_Region_configs_Read_only_specs(**self.read_only_specs)
+
 
 @dataclass
 class Resource_Replication_specs:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "id", "zone_id"}
-    region_configs: Optional[Resource_Replication_specs_Region_configs] = None
+    region_configs: Optional[List[Resource_Replication_specs_Region_configs]] = None
     container_id: Optional[Dict[str, Any]] = None
     external_id: Optional[str] = None
     id: Optional[str] = None
     num_shards: Optional[float] = None
     zone_id: Optional[str] = None
     zone_name: Optional[str] = None
+
+    def __post_init__(self):
+        if self.region_configs is not None:
+            self.region_configs = [
+                Resource_Replication_specs_Region_configs(**x)
+                if not isinstance(x, Resource_Replication_specs_Region_configs)
+                else x
+                for x in self.region_configs
+            ]
 
 
 @dataclass
@@ -220,7 +271,7 @@ class Resource:
     cluster_type: Optional[str] = None
     name: Optional[str] = None
     project_id: Optional[str] = None
-    replication_specs: Optional[Resource_Replication_specs] = None
+    replication_specs: Optional[List[Resource_Replication_specs]] = None
     accept_data_risks_and_force_replica_set_reconfig: Optional[str] = None
     advanced_configuration: Optional[Resource_Advanced_configuration] = None
     backup_enabled: Optional[bool] = None
@@ -250,6 +301,27 @@ class Resource:
     timeouts: Optional[Resource_Timeouts] = None
     version_release_system: Optional[str] = None
 
+    def __post_init__(self):
+        if self.advanced_configuration is not None and not isinstance(
+            self.advanced_configuration, Resource_Advanced_configuration
+        ):
+            self.advanced_configuration = Resource_Advanced_configuration(**self.advanced_configuration)
+        if self.bi_connector_config is not None and not isinstance(
+            self.bi_connector_config, Resource_Bi_connector_config
+        ):
+            self.bi_connector_config = Resource_Bi_connector_config(**self.bi_connector_config)
+        if self.connection_strings is not None and not isinstance(self.connection_strings, Resource_Connection_strings):
+            self.connection_strings = Resource_Connection_strings(**self.connection_strings)
+        if self.pinned_fcv is not None and not isinstance(self.pinned_fcv, Resource_Pinned_fcv):
+            self.pinned_fcv = Resource_Pinned_fcv(**self.pinned_fcv)
+        if self.replication_specs is not None:
+            self.replication_specs = [
+                Resource_Replication_specs(**x) if not isinstance(x, Resource_Replication_specs) else x
+                for x in self.replication_specs
+            ]
+        if self.timeouts is not None and not isinstance(self.timeouts, Resource_Timeouts):
+            self.timeouts = Resource_Timeouts(**self.timeouts)
+
 
 def main():
     input_data = sys.stdin.read()
@@ -257,7 +329,11 @@ def main():
     params = json.loads(input_data)
     input_json = params["input_json"]
     resource = Resource(**json.loads(input_json))
-    output = asdict(resource)
+    primitive_types = (str, float, bool, int)
+    output = {
+        key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
+        for key, value in asdict(resource).items()
+    }
     output["error_message"] = ""  # todo: support better validation
     json_str = json.dumps(output)
     from pathlib import Path

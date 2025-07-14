@@ -17,8 +17,8 @@ variable "project_id" {
 }
 
 variable "replication_specs" {
-  type = object({
-    region_configs = optional(object({
+  type = list(object({
+    region_configs = optional(list(object({
       priority      = optional(number)
       provider_name = optional(string)
       region_name   = optional(string)
@@ -58,10 +58,10 @@ variable "replication_specs" {
         instance_size   = optional(string)
         node_count      = optional(number)
       }))
-    }))
+    })))
     num_shards = optional(number)
     zone_name  = optional(string)
-  })
+  }))
   nullable = true
   default  = null
 }

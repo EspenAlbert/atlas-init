@@ -61,6 +61,7 @@ class SchemaAttribute(BaseModel):
     deprecated_message: str | None = None
     validators: list[dict] | None = None
     element_type: str | dict | None = None
+    nesting_mode: str | None = None
 
 
 class SchemaBlockType(BaseModel):
@@ -83,6 +84,7 @@ class SchemaBlock(BaseModel):
     description_kind: str | None = None
     description: str | None = None
     deprecated: bool | None = None
+    nesting_mode: str | None = None
 
 
 class ResourceSchema(BaseModel):

@@ -3,6 +3,7 @@ import keyword
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 from ask_shell import run_and_wait
 
@@ -13,45 +14,78 @@ logger = logging.getLogger(__name__)
 
 
 def as_set(values: list[str]) -> str:
-    if not values:
-        return "set()"
-    return f"{{{', '.join(repr(v) for v in values)}}}"
+    return f"{{{', '.join(repr(v) for v in values)}}}" if values else "set()"
+
+
+def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
+    if is_map:
+        return (
+            f"        if self.{field_name} is not None:\n"
+            f"            self.{field_name} = {{k: {elem_type}(**v) if not isinstance(v, {elem_type}) else v for k, v in self.{field_name}.items()}}"
+        )
+    elif is_list:
+        return (
+            f"        if self.{field_name} is not None:\n"
+            f"            self.{field_name} = [{elem_type}(**x) if not isinstance(x, {elem_type}) else x for x in self.{field_name}]"
+        )
+    else:
+        return (
+            f"        if self.{field_name} is not None and not isinstance(self.{field_name}, {elem_type}):\n"
+            f"            self.{field_name} = {elem_type}(**self.{field_name})"
+        )
 
 
 def is_computed_only(attr: SchemaAttribute) -> bool:
     return bool(attr.computed) and not bool(attr.required) and not bool(attr.optional)
 
 
-def convert_to_dataclass(schema: ResourceSchema) -> str:
-    def safe_name(name):
-        return name + "_" if keyword.iskeyword(name) else name
+def type_from_schema_attr(attr: SchemaAttribute, parent_class_name=None, attr_name=None) -> str:
+    # Only handle attribute types (not nested_type)
+    t = attr.type
+    if isinstance(t, str):
+        return {
+            "string": "str",
+            "number": "float",
+            "bool": "bool",
+            "int": "int",
+            "any": "Any",
+        }.get(t, "Any")
+    elif isinstance(t, list):
+        # Terraform types: ["list", "string"] or ["set", "object", {...}]
+        if t[0] in ("list", "set"):
+            if len(t) == 2 and isinstance(t[1], str):
+                return f"List[{type_from_schema_attr(SchemaAttribute(type=t[1]))}]"
+            elif len(t) == 3 and isinstance(t[2], dict):
+                # object type
+                return "List[dict]"
+        elif t[0] == "map":
+            return "Dict[str, Any]"
+    elif isinstance(t, dict):
+        return "dict"
+    return "Any"
 
-    class_defs = []
 
-    def type_from_schema_attr(attr: SchemaAttribute, parent_class_name=None, attr_name=None) -> str:
-        # Only handle attribute types (not nested_type)
-        t = attr.type
-        if isinstance(t, str):
-            return {
-                "string": "str",
-                "number": "float",
-                "bool": "bool",
-                "int": "int",
-                "any": "Any",
-            }.get(t, "Any")
-        elif isinstance(t, list):
-            # Terraform types: ["list", "string"] or ["set", "object", {...}]
-            if t[0] in ("list", "set"):
-                if len(t) == 2 and isinstance(t[1], str):
-                    return f"List[{type_from_schema_attr(SchemaAttribute(type=t[1]))}]"
-                elif len(t) == 3 and isinstance(t[2], dict):
-                    # object type
-                    return "List[dict]"
-            elif t[0] == "map":
-                return "Dict[str, Any]"
-        elif isinstance(t, dict):
-            return "dict"
+def safe_name(name):
+    return f"{name}_" if keyword.iskeyword(name) else name
+
+
+def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
+    if isinstance(elem_type_val, str):
+        return {
+            "string": "str",
+            "number": "float",
+            "bool": "bool",
+            "int": "int",
+            "any": "Any",
+        }.get(elem_type_val, "Any")
+    elif isinstance(elem_type_val, dict):
+        return "dict"
+    else:
         return "Any"
+
+
+def convert_to_dataclass(schema: ResourceSchema) -> str:
+    class_defs = []
 
     def block_to_class(block: SchemaBlock, class_name: str) -> str:
         lines = ["@dataclass", f"class {class_name}:"]
@@ -61,67 +95,59 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
         nested_names = []
         required_attr_names = []
 
+        def add_block_attribute(attr_name: str, block_type, is_list: bool = False, required: bool = False):
+            nested_class_name = f"{class_name}_{attr_name.capitalize()}"
+            nested_names.append(safe_name(attr_name))
+            class_defs.append(block_to_class(block_type, nested_class_name))
+            if is_list:
+                field_line = f"    {safe_name(attr_name)}: Optional[List[{nested_class_name}]] = None"
+                post_init_lines.append(make_post_init_line(attr_name, nested_class_name, is_map=False, is_list=True))
+            else:
+                field_line = f"    {safe_name(attr_name)}: Optional[{nested_class_name}] = None"
+                post_init_lines.append(make_post_init_line(attr_name, nested_class_name, is_map=False, is_list=False))
+            (required_fields if required else optional_fields).append(field_line)
+            if required:
+                required_attr_names.append(safe_name(attr_name))
+
         for attr_name, attr in (block.attributes or {}).items():
             # If the attribute has a nested_type, generate a nested dataclass
-            if attr.nested_type:
-                nested_class_name = f"{class_name}_{attr_name.capitalize()}"
-                nested_names.append(safe_name(attr_name))
-                class_defs.append(block_to_class(attr.nested_type, nested_class_name))
-                py_type = nested_class_name
+            if nested_block := attr.nested_type:
+                is_list = nested_block.nesting_mode in ("list", "set")
+                add_block_attribute(attr_name, nested_block, is_list=is_list, required=bool(attr.required))
             else:
-                # Use element_type for lists/maps if available
-                is_collection_attribute = isinstance(attr.type, list) and attr.type[0] in ("list", "set", "map")
+                is_collection_attribute = (
+                    isinstance(attr.type, list) and len(attr.type) > 0 and attr.type[0] in ("list", "set", "map")
+                )
                 if is_collection_attribute:
                     nested_names.append(safe_name(attr_name))
                 if is_collection_attribute and attr.element_type:
                     elem_type_val = attr.element_type
-                    if isinstance(elem_type_val, str):
-                        elem_py_type = {
-                            "string": "str",
-                            "number": "float",
-                            "bool": "bool",
-                            "int": "int",
-                            "any": "Any",
-                        }.get(elem_type_val, "Any")
-                    elif isinstance(elem_type_val, dict):
-                        elem_py_type = "dict"
-                    else:
-                        elem_py_type = "Any"
+                    elem_py_type = py_type_from_element_type(elem_type_val)
                     if isinstance(attr.type, list) and attr.type[0] == "map":
                         py_type = f"Dict[str, {elem_py_type}]"
                     else:
                         py_type = f"List[{elem_py_type}]"
+                    # Add post-init for non-primitive element types (i.e., nested dataclasses)
+                    # Only add if elem_py_type is a class generated in this module (not a builtin)
+                    if elem_py_type not in ("str", "float", "bool", "int", "Any", "dict"):
+                        is_map = isinstance(attr.type, list) and attr.type[0] == "map"
+                        is_list = not is_map
+                        post_init_lines.append(
+                            make_post_init_line(attr_name, elem_py_type, is_map=is_map, is_list=is_list)
+                        )
                 else:
                     py_type = type_from_schema_attr(attr, class_name, attr_name)
-            # Compose field line
-            field_line = f"    {safe_name(attr_name)}: Optional[{py_type}] = None"
-            if attr.required:
-                required_fields.append(field_line)
-                required_attr_names.append(safe_name(attr_name))
-            else:
-                optional_fields.append(field_line)
+                field_line = f"    {safe_name(attr_name)}: Optional[{py_type}] = None"
+                if attr.required:
+                    required_fields.append(field_line)
+                    required_attr_names.append(safe_name(attr_name))
+                else:
+                    optional_fields.append(field_line)
 
         for block_type_name, block_type in (block.block_types or {}).items():
-            nested_class_name = f"{class_name}_{block_type_name.capitalize()}"
-            class_defs.append(block_to_class(block_type.block, nested_class_name))
-            nested_names.append(safe_name(block_type_name))
-            is_required = False
-            if block_type.nesting_mode in ("list", "set"):
-                is_required = (block_type.min_items or 0) > 0
-                field_line = f"    {safe_name(block_type_name)}: Optional[List[{nested_class_name}]] = None"
-                post_init_lines.append(
-                    f"        if self.{block_type_name} is not None:\n"
-                    f"            self.{block_type_name} = ["
-                    f"x if isinstance(x, {nested_class_name}) else {nested_class_name}(**x) for x in self.{block_type_name}]"
-                )
-            else:
-                is_required = bool(block_type.required)
-                field_line = f"    {safe_name(block_type_name)}: Optional[{nested_class_name}] = None"
-                post_init_lines.append(
-                    f"        if self.{block_type_name} is not None and not isinstance(self.{block_type_name}, {nested_class_name}):\n"
-                    f"            self.{block_type_name} = {nested_class_name}(**self.{block_type_name})"
-                )
-            (required_fields if is_required else optional_fields).append(field_line)
+            is_list = block_type.nesting_mode in ("list", "set")
+            is_required = (block_type.min_items or 0) > 0 if is_list else bool(block_type.required)
+            add_block_attribute(block_type_name, block_type.block, is_list=is_list, required=is_required)
 
         # Add NESTED_ATTRIBUTES, REQUIRED_ATTRIBUTES, and COMPUTED_ONLY_ATTRIBUTES
         # A computed-only attribute is one where attr.computed is True and attr.required is not True
@@ -182,7 +208,8 @@ def main():
     params = json.loads(input_data)
     input_json = params["input_json"]
     resource = Resource(**json.loads(input_json))
-    output = asdict(resource)
+    primitive_types = (str, float, bool, int)
+    output = {key: value if value is None or isinstance(value, primitive_types) else json.dumps(value) for key, value in asdict(resource).items()}
     output["error_message"] = "" # todo: support better validation
     json_str = json.dumps(output)
     from pathlib import Path
