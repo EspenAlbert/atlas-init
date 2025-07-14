@@ -23,3 +23,4 @@ def tf_mod_gen(
 
 def generate_modules():
     schema = parse_atlas_schema()
+    assert schema

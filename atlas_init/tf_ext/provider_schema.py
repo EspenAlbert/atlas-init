@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -33,23 +34,40 @@ class SchemaAttribute(BaseModel):
     computed: bool | None = None
     deprecated: bool | None = None
     sensitive: bool | None = None
-    # Add other fields as needed
+    nested_type: SchemaBlock | None = None
+    default: object | None = None
+    enum: list[object] | None = None
+    allowed_values: list[object] | None = None
+    force_new: bool | None = None
+    conflicts_with: list[str] | None = None
+    exactly_one_of: list[str] | None = None
+    at_least_one_of: list[str] | None = None
+    required_with: list[str] | None = None
+    deprecated_message: str | None = None
+    validators: list[dict] | None = None
+    element_type: str | dict | None = None
 
 
 class SchemaBlockType(BaseModel):
-    block: "SchemaBlock"
+    block: SchemaBlock
     nesting_mode: str
     min_items: int | None = None
     max_items: int | None = None
     required: bool | None = None
     optional: bool | None = None
     description_kind: str | None = None
+    deprecated: bool | None = None
+    description: str | None = None
+    default: object | None = None
+    validators: list[dict] | None = None
 
 
 class SchemaBlock(BaseModel):
     attributes: dict[str, SchemaAttribute] | None = None
-    block_types: dict[str, "SchemaBlockType"] | None = None
+    block_types: dict[str, SchemaBlockType] | None = None
     description_kind: str | None = None
+    description: str | None = None
+    deprecated: bool | None = None
 
 
 class ResourceSchema(BaseModel):
@@ -61,6 +79,7 @@ class ResourceSchema(BaseModel):
         return {name: attr for name, attr in (self.block.attributes or {}).items() if attr.required}
 
 
+SchemaAttribute.model_rebuild()
 SchemaBlockType.model_rebuild()
 SchemaBlock.model_rebuild()
 

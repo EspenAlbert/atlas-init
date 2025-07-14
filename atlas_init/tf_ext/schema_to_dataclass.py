@@ -53,12 +53,41 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
         required_attr_names = []
 
         for attr_name, attr in (block.attributes or {}).items():
-            py_type = type_from_schema_attr(attr, class_name, attr_name)
+            # If the attribute has a nested_type, generate a nested dataclass
+            if attr.nested_type:
+                nested_class_name = f"{class_name}_{attr_name.capitalize()}"
+                nested_names.append(safe_name(attr_name))
+                class_defs.append(block_to_class(attr.nested_type, nested_class_name))
+                py_type = nested_class_name
+            else:
+                # Use element_type for lists/maps if available
+                if isinstance(attr.type, list) and attr.type[0] in ("list", "set", "map") and attr.element_type:
+                    elem_type_val = attr.element_type
+                    if isinstance(elem_type_val, str):
+                        elem_py_type = {
+                            "string": "str",
+                            "number": "float",
+                            "bool": "bool",
+                            "int": "int",
+                            "any": "Any",
+                        }.get(elem_type_val, "Any")
+                    elif isinstance(elem_type_val, dict):
+                        elem_py_type = "dict"
+                    else:
+                        elem_py_type = "Any"
+                    if attr.type[0] == "map":
+                        py_type = f"Dict[str, {elem_py_type}]"
+                    else:
+                        py_type = f"List[{elem_py_type}]"
+                else:
+                    py_type = type_from_schema_attr(attr, class_name, attr_name)
+            # Compose field line
+            field_line = f"    {safe_name(attr_name)}: Optional[{py_type}] = None"
             if attr.required:
-                required_fields.append(f"    {safe_name(attr_name)}: {py_type}")
+                required_fields.append(field_line)
                 required_attr_names.append(safe_name(attr_name))
             else:
-                optional_fields.append(f"    {safe_name(attr_name)}: Optional[{py_type}] = None")
+                optional_fields.append(field_line)
 
         for block_type_name, block_type in (block.block_types or {}).items():
             nested_class_name = f"{class_name}_{block_type_name.capitalize()}"
@@ -108,6 +137,7 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
         if post_init_lines:
             lines.append("    def __post_init__(self):")
             lines.extend(post_init_lines)
+        lines.extend(["", ""])
         return "\n".join(lines)
 
     # Root class
@@ -134,7 +164,8 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
     if "Tuple" in used_types:
         import_lines.append("from typing import Tuple")
 
-    return "\n".join(import_lines + [""] + class_defs)
+    module_str = "\n".join(import_lines + [""] + class_defs)
+    return module_str.strip() + "\n"
 
 
 def main_method():
