@@ -1,3 +1,4 @@
+import logging
 import keyword
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -7,6 +8,8 @@ from ask_shell import run_and_wait
 
 from atlas_init.tf_ext.gen_resource_main import ResourceAbs
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
+
+logger = logging.getLogger(__name__)
 
 
 def as_set(values: list[str]) -> str:
@@ -67,7 +70,10 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
                 py_type = nested_class_name
             else:
                 # Use element_type for lists/maps if available
-                if isinstance(attr.type, list) and attr.type[0] in ("list", "set", "map") and attr.element_type:
+                is_collection_attribute = isinstance(attr.type, list) and attr.type[0] in ("list", "set", "map")
+                if is_collection_attribute:
+                    nested_names.append(safe_name(attr_name))
+                if is_collection_attribute and attr.element_type:
                     elem_type_val = attr.element_type
                     if isinstance(elem_type_val, str):
                         elem_py_type = {
@@ -81,7 +87,7 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
                         elem_py_type = "dict"
                     else:
                         elem_py_type = "Any"
-                    if attr.type[0] == "map":
+                    if isinstance(attr.type, list) and attr.type[0] == "map":
                         py_type = f"Dict[str, {elem_py_type}]"
                     else:
                         py_type = f"List[{elem_py_type}]"
@@ -154,7 +160,9 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
                     used_types.add(field_type)
 
     import_lines = [
-        "from dataclasses import dataclass",
+        "import json",
+        "import sys",
+        "from dataclasses import asdict, dataclass",
         "from typing import Optional, List, Dict, Any, Set, ClassVar",
     ]
     if "Union" in used_types:
@@ -162,8 +170,30 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
     if "Tuple" in used_types:
         import_lines.append("from typing import Tuple")
 
-    module_str = "\n".join(import_lines + [""] + class_defs)
+    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint()])
     return module_str.strip() + "\n"
+
+
+def main_entrypoint():
+    return """
+def main():
+    input_data = sys.stdin.read()
+    # Parse the input as JSON
+    params = json.loads(input_data)
+    input_json = params["input_json"]
+    resource = Resource(**json.loads(input_json))
+    output = asdict(resource)
+    output["error_message"] = "" # todo: support better validation
+    json_str = json.dumps(output)
+    from pathlib import Path
+    logs_out = Path(__file__).parent / "logs.json"
+    logs_out.write_text(json_str)
+    print(json_str)
+
+
+if __name__ == "__main__":
+    main()
+"""
 
 
 def format_with_ruff(code: str) -> str:

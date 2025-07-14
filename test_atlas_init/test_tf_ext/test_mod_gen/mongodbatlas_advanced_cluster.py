@@ -1,10 +1,12 @@
-from dataclasses import dataclass
+import json
+import sys
+from dataclasses import asdict, dataclass
 from typing import Optional, List, Dict, Any, Set, ClassVar
 
 
 @dataclass
 class Resource_Advanced_configuration:
-    NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
+    NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"custom_openssl_cipher_config_tls12"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     change_stream_options_pre_and_post_images_expire_after_seconds: Optional[float] = None
@@ -172,7 +174,7 @@ class Resource_Replication_specs_Region_configs:
 
 @dataclass
 class Resource_Replication_specs:
-    NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
+    NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "id", "zone_id"}
     region_configs: Optional[Resource_Replication_specs_Region_configs] = None
@@ -200,8 +202,10 @@ class Resource:
         "advanced_configuration",
         "bi_connector_config",
         "connection_strings",
+        "labels",
         "pinned_fcv",
         "replication_specs",
+        "tags",
         "timeouts",
     }
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"cluster_type", "name", "project_id", "replication_specs"}
@@ -245,3 +249,23 @@ class Resource:
     termination_protection_enabled: Optional[bool] = None
     timeouts: Optional[Resource_Timeouts] = None
     version_release_system: Optional[str] = None
+
+
+def main():
+    input_data = sys.stdin.read()
+    # Parse the input as JSON
+    params = json.loads(input_data)
+    input_json = params["input_json"]
+    resource = Resource(**json.loads(input_json))
+    output = asdict(resource)
+    output["error_message"] = ""  # todo: support better validation
+    json_str = json.dumps(output)
+    from pathlib import Path
+
+    logs_out = Path(__file__).parent / "logs.json"
+    logs_out.write_text(json_str)
+    print(json_str)
+
+
+if __name__ == "__main__":
+    main()

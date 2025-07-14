@@ -1,7 +1,6 @@
 
-data "external" "mongodbatlas_advanced_cluster" {
-  program = ["python3", "${path.module}/mongodbatlas_advanced_cluster.py"]
-  query = {
+locals {
+  mongodbatlas_advanced_cluster_fields = {
     accept_data_risks_and_force_replica_set_reconfig = var.accept_data_risks_and_force_replica_set_reconfig
     advanced_configuration                           = var.advanced_configuration
     backup_enabled                                   = var.backup_enabled
@@ -32,6 +31,14 @@ data "external" "mongodbatlas_advanced_cluster" {
 }
 
 
+data "external" "mongodbatlas_advanced_cluster" {
+  program = ["python3", "${path.module}/mongodbatlas_advanced_cluster.py"]
+  query = {
+    input_json = jsonencode(local.mongodbatlas_advanced_cluster_fields)
+  }
+}
+
+
 
 resource "mongodbatlas_advanced_cluster" "this" {
   lifecycle {
@@ -54,7 +61,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   disk_size_gb                                     = data.external.mongodbatlas_advanced_cluster.result.disk_size_gb == "" ? null : data.external.mongodbatlas_advanced_cluster.result.disk_size_gb
   encryption_at_rest_provider                      = data.external.mongodbatlas_advanced_cluster.result.encryption_at_rest_provider == "" ? null : data.external.mongodbatlas_advanced_cluster.result.encryption_at_rest_provider
   global_cluster_self_managed_sharding             = data.external.mongodbatlas_advanced_cluster.result.global_cluster_self_managed_sharding == "" ? null : data.external.mongodbatlas_advanced_cluster.result.global_cluster_self_managed_sharding
-  labels                                           = data.external.mongodbatlas_advanced_cluster.result.labels == "" ? null : data.external.mongodbatlas_advanced_cluster.result.labels
+  labels                                           = data.external.mongodbatlas_advanced_cluster.result.labels == "" ? null : jsondecode(data.external.mongodbatlas_advanced_cluster.result.labels)
   mongo_db_major_version                           = data.external.mongodbatlas_advanced_cluster.result.mongo_db_major_version == "" ? null : data.external.mongodbatlas_advanced_cluster.result.mongo_db_major_version
   paused                                           = data.external.mongodbatlas_advanced_cluster.result.paused == "" ? null : data.external.mongodbatlas_advanced_cluster.result.paused
   pinned_fcv                                       = data.external.mongodbatlas_advanced_cluster.result.pinned_fcv == "" ? null : jsondecode(data.external.mongodbatlas_advanced_cluster.result.pinned_fcv)
@@ -63,7 +70,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   replica_set_scaling_strategy                     = data.external.mongodbatlas_advanced_cluster.result.replica_set_scaling_strategy == "" ? null : data.external.mongodbatlas_advanced_cluster.result.replica_set_scaling_strategy
   retain_backups_enabled                           = data.external.mongodbatlas_advanced_cluster.result.retain_backups_enabled == "" ? null : data.external.mongodbatlas_advanced_cluster.result.retain_backups_enabled
   root_cert_type                                   = data.external.mongodbatlas_advanced_cluster.result.root_cert_type == "" ? null : data.external.mongodbatlas_advanced_cluster.result.root_cert_type
-  tags                                             = data.external.mongodbatlas_advanced_cluster.result.tags == "" ? null : data.external.mongodbatlas_advanced_cluster.result.tags
+  tags                                             = data.external.mongodbatlas_advanced_cluster.result.tags == "" ? null : jsondecode(data.external.mongodbatlas_advanced_cluster.result.tags)
   termination_protection_enabled                   = data.external.mongodbatlas_advanced_cluster.result.termination_protection_enabled == "" ? null : data.external.mongodbatlas_advanced_cluster.result.termination_protection_enabled
   timeouts                                         = data.external.mongodbatlas_advanced_cluster.result.timeouts == "" ? null : jsondecode(data.external.mongodbatlas_advanced_cluster.result.timeouts)
   version_release_system                           = data.external.mongodbatlas_advanced_cluster.result.version_release_system == "" ? null : data.external.mongodbatlas_advanced_cluster.result.version_release_system
