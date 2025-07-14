@@ -9,6 +9,7 @@ import pytest
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
+from atlas_init.tf_ext.gen_resource_variables import generate_resource_variables
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_provider_resource_schema
 from atlas_init.tf_ext.schema_to_dataclass import convert_to_dataclass
 
@@ -25,6 +26,10 @@ def generated_dataclass_path(resource_type: str) -> Path:
 
 def generated_main_path(resource_type: str) -> Path:
     return Path(__file__).parent / "testdata/main" / f"{resource_type}.tf"
+
+
+def generated_variables_path(resource_type: str) -> Path:
+    return Path(__file__).parent / "testdata/variables" / f"{resource_type}.tf"
 
 
 def test_dump_resource_schemas(atlas_schemas_dict):
@@ -69,3 +74,6 @@ def test_create_dataclass(resource_type: str):
 
     main_code = generate_resource_main(resource_type, resource)
     ensure_parents_write_text(generated_main_path(resource_type), main_code)
+
+    variables_code = generate_resource_variables(resource)
+    ensure_parents_write_text(generated_variables_path(resource_type), variables_code)
