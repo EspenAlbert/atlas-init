@@ -1,4 +1,5 @@
 import keyword
+import black
 
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 
@@ -168,5 +169,12 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
     return module_str.strip() + "\n"
 
 
-def main_method():
-    return ""
+def format_with_black(code: str) -> str:
+    # Mode can be customized (e.g., line_length, target_version, etc.)
+    mode = black.Mode()
+    return black.format_str(code, mode=mode)
+
+
+def convert_and_format(schema: ResourceSchema) -> str:
+    dataclass_unformatted = convert_to_dataclass(schema)
+    return format_with_black(dataclass_unformatted)

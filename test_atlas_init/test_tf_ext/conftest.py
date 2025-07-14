@@ -28,4 +28,7 @@ def tf_search_deployment_example_path():
 
 @pytest.fixture()
 def atlas_schemas_dict() -> dict:
-    return parse_dict(Path(__file__).parent / "testdata/atlas_schema.json")
+    schema_path = Path(__file__).parent / "testdata/atlas_schema.json"
+    if not schema_path.exists():
+        pytest.skip("schema_path does not exist")
+    return parse_dict(schema_path)

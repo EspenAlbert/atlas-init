@@ -1,7 +1,7 @@
 from dataclasses import fields, is_dataclass
 from typing import get_type_hints, get_origin, get_args, ClassVar, List, Set, Dict, Union
 
-from .gen_resource_main import ResourceAbs
+from .gen_resource_main import ResourceAbs, format_tf_content
 
 
 def python_type_to_terraform_type(py_type) -> str:
@@ -62,4 +62,4 @@ def generate_resource_variables(resource: type[ResourceAbs]) -> str:
   nullable = true
   default  = null
 }}\n''')
-    return "\n".join(out)
+    return format_tf_content("\n".join(out))

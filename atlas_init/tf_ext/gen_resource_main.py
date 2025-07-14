@@ -1,6 +1,10 @@
 from abc import ABC
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import ClassVar
 from dataclasses import fields
+
+from ask_shell import run_and_wait
 
 
 class ResourceAbs(ABC):
@@ -37,10 +41,10 @@ def resource_declare(
             return output_field(field_name)
         return f'{output_field(field_name)} == "" ? null : {output_field(field_name)}'
 
-    required = [f"    {field_name} = {as_output_field(field_name)}" for field_name in required_fields]
+    required = [f"    {field_name} = {as_output_field(field_name)}" for field_name in sorted(required_fields)]
     non_required = [
         f"    {field_name} = {as_output_field(field_name)}"
-        for field_name in field_names
+        for field_name in sorted(field_names)
         if field_name not in required_fields
     ]
     return f"""
@@ -58,20 +62,30 @@ resource "{resource_type}" "this" {{
 """
 
 
-def generate_resource_main(resource_type: str, resource: ResourceAbs) -> str:
+def format_tf_content(content: str) -> str:
+    with TemporaryDirectory() as tmp_dir:
+        tmp_file = Path(tmp_dir) / "content.tf"
+        tmp_file.write_text(content)
+        run_and_wait("terraform fmt .", cwd=tmp_dir)
+        return tmp_file.read_text()
+
+
+def generate_resource_main(resource_type: str, resource: type[ResourceAbs]) -> str:
     computed_only_fields = resource.COMPUTED_ONLY_ATTRIBUTES
-    field_names = [field.name for field in fields(resource) if field.name not in computed_only_fields]  # type: ignore
-    return "\n".join(
-        line
-        for line in [
-            data_external(resource_type=resource_type, field_names=field_names),
-            "",
-            resource_declare(
-                resource_type=resource_type,
-                required_fields=resource.REQUIRED_ATTRIBUTES,
-                nested_fields=resource.NESTED_ATTRIBUTES,
-                field_names=field_names,
-            ),
-            "",
-        ]
+    field_names = sorted(field.name for field in fields(resource) if field.name not in computed_only_fields)  # type: ignore
+    return format_tf_content(
+        "\n".join(
+            line
+            for line in [
+                data_external(resource_type=resource_type, field_names=field_names),
+                "",
+                resource_declare(
+                    resource_type=resource_type,
+                    required_fields=resource.REQUIRED_ATTRIBUTES,
+                    nested_fields=resource.NESTED_ATTRIBUTES,
+                    field_names=field_names,
+                ),
+                "",
+            ]
+        )
     )

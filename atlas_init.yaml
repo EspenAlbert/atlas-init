@@ -94,6 +94,7 @@ test_suites:
   vars:
     cluster_info_m10: true
     stream_instance: true
+    use_aws_vpc: true
 - name: trigger
   repo_go_packages:
     cfn:
