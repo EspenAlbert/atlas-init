@@ -1,0 +1,141 @@
+import keyword
+
+from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
+
+
+def as_set(values: list[str]) -> str:
+    if not values:
+        return "set()"
+    return f"{{{', '.join(repr(v) for v in values)}}}"
+
+
+def is_computed_only(attr: SchemaAttribute) -> bool:
+    return bool(attr.computed) and not bool(attr.required) and not bool(attr.optional)
+
+
+def convert_to_dataclass(schema: ResourceSchema) -> str:
+    def safe_name(name):
+        return name + "_" if keyword.iskeyword(name) else name
+
+    class_defs = []
+
+    def type_from_schema_attr(attr: SchemaAttribute, parent_class_name=None, attr_name=None) -> str:
+        # Only handle attribute types (not nested_type)
+        t = attr.type
+        if isinstance(t, str):
+            return {
+                "string": "str",
+                "number": "float",
+                "bool": "bool",
+                "int": "int",
+                "any": "Any",
+            }.get(t, "Any")
+        elif isinstance(t, list):
+            # Terraform types: ["list", "string"] or ["set", "object", {...}]
+            if t[0] in ("list", "set"):
+                if len(t) == 2 and isinstance(t[1], str):
+                    return f"List[{type_from_schema_attr(SchemaAttribute(type=t[1]))}]"
+                elif len(t) == 3 and isinstance(t[2], dict):
+                    # object type
+                    return "List[dict]"
+            elif t[0] == "map":
+                return "Dict[str, Any]"
+        elif isinstance(t, dict):
+            return "dict"
+        return "Any"
+
+    def block_to_class(block: SchemaBlock, class_name: str) -> str:
+        lines = ["@dataclass", f"class {class_name}:"]
+        post_init_lines = []
+        required_fields = []
+        optional_fields = []
+        nested_names = []
+        required_attr_names = []
+
+        for attr_name, attr in (block.attributes or {}).items():
+            py_type = type_from_schema_attr(attr, class_name, attr_name)
+            if attr.required:
+                required_fields.append(f"    {safe_name(attr_name)}: {py_type}")
+                required_attr_names.append(safe_name(attr_name))
+            else:
+                optional_fields.append(f"    {safe_name(attr_name)}: Optional[{py_type}] = None")
+
+        for block_type_name, block_type in (block.block_types or {}).items():
+            nested_class_name = f"{class_name}_{block_type_name.capitalize()}"
+            class_defs.append(block_to_class(block_type.block, nested_class_name))
+            nested_names.append(safe_name(block_type_name))
+            is_required = False
+            if block_type.nesting_mode in ("list", "set"):
+                is_required = (block_type.min_items or 0) > 0
+                field_line = (
+                    f"    {safe_name(block_type_name)}: List[{nested_class_name}]"
+                    if is_required
+                    else f"    {safe_name(block_type_name)}: Optional[List[{nested_class_name}]] = None"
+                )
+                post_init_lines.append(
+                    f"        if self.{block_type_name} is not None:\n"
+                    f"            self.{block_type_name} = ["
+                    f"x if isinstance(x, {nested_class_name}) else {nested_class_name}(**x) for x in self.{block_type_name}]"
+                )
+            else:
+                is_required = bool(block_type.required)
+                field_line = (
+                    f"    {safe_name(block_type_name)}: {nested_class_name}"
+                    if is_required
+                    else f"    {safe_name(block_type_name)}: Optional[{nested_class_name}] = None"
+                )
+                post_init_lines.append(
+                    f"        if self.{block_type_name} is not None and not isinstance(self.{block_type_name}, {nested_class_name}):\n"
+                    f"            self.{block_type_name} = {nested_class_name}(**self.{block_type_name})"
+                )
+            (required_fields if is_required else optional_fields).append(field_line)
+
+        # Add NESTED_ATTRIBUTES, REQUIRED_ATTRIBUTES, and COMPUTED_ONLY_ATTRIBUTES
+        # A computed-only attribute is one where attr.computed is True and attr.required is not True
+        computed_only_names = [
+            safe_name(attr_name) for attr_name, attr in (block.attributes or {}).items() if is_computed_only(attr)
+        ]
+        lines.append(f"    NESTED_ATTRIBUTES: ClassVar[Set[str]] = {as_set(nested_names)}")
+        lines.append(f"    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {as_set(required_attr_names)}")
+        lines.append(f"    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {as_set(computed_only_names)}")
+
+        if not (required_fields or optional_fields):
+            lines.append("    pass")
+            return "\n".join(lines)
+        lines.extend(required_fields)
+        lines.extend(optional_fields)
+
+        if post_init_lines:
+            lines.append("    def __post_init__(self):")
+            lines.extend(post_init_lines)
+        return "\n".join(lines)
+
+    # Root class
+    root_class_name = "Resource"
+    class_defs.append(block_to_class(schema.block, root_class_name))
+
+    # Generate necessary imports
+    used_types = set()
+    for class_def in class_defs:
+        for line in class_def.splitlines():
+            if ":" in line:
+                field_type = line.split(":")[1].strip()
+                if field_type.startswith("List[") or field_type.startswith("Optional["):
+                    field_type = field_type.split("[")[1].split("]")[0]
+                if field_type not in ["str", "float", "bool", "int", "Any", "dict"]:
+                    used_types.add(field_type)
+
+    import_lines = [
+        "from dataclasses import dataclass",
+        "from typing import Optional, List, Dict, Any, Set, ClassVar",
+    ]
+    if "Union" in used_types:
+        import_lines.append("from typing import Union")
+    if "Tuple" in used_types:
+        import_lines.append("from typing import Tuple")
+
+    return "\n".join(import_lines + [""] + class_defs)
+
+
+def main_method():
+    return ""

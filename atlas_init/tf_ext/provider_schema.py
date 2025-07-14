@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from ask_shell import run_and_wait
 from model_lib import Entity
+from pydantic import BaseModel
 
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ENV_NAME
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
@@ -21,6 +22,47 @@ class AtlasSchemaInfo(Entity):
     resource_types: list[str]
     deprecated_resource_types: list[str]
     raw_resource_schema: dict[str, dict]
+
+
+class SchemaAttribute(BaseModel):
+    type: str | list | dict | None = None
+    description: str | None = None
+    description_kind: str | None = None
+    optional: bool | None = None
+    required: bool | None = None
+    computed: bool | None = None
+    deprecated: bool | None = None
+    sensitive: bool | None = None
+    # Add other fields as needed
+
+
+class SchemaBlockType(BaseModel):
+    block: "SchemaBlock"
+    nesting_mode: str
+    min_items: int | None = None
+    max_items: int | None = None
+    required: bool | None = None
+    optional: bool | None = None
+    description_kind: str | None = None
+
+
+class SchemaBlock(BaseModel):
+    attributes: dict[str, SchemaAttribute] | None = None
+    block_types: dict[str, "SchemaBlockType"] | None = None
+    description_kind: str | None = None
+
+
+class ResourceSchema(BaseModel):
+    block: SchemaBlock
+    version: int | None = None
+    description_kind: str | None = None
+
+    def required_attributes(self) -> dict[str, SchemaAttribute]:
+        return {name: attr for name, attr in (self.block.attributes or {}).items() if attr.required}
+
+
+SchemaBlockType.model_rebuild()
+SchemaBlock.model_rebuild()
 
 
 _providers_tf = """
