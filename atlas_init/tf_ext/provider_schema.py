@@ -19,10 +19,25 @@ def parse_provider_resource_schema(schema: dict, provider_name: str) -> dict:
     raise ValueError(f"Provider '{provider_name}' not found in schema.")
 
 
+_providers_tf = """
+terraform {
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "~> 1.26" # irrelevant
+    }
+  }
+  required_version = ">= 1.8"
+}
+
+"""
+
+
 class AtlasSchemaInfo(Entity):
     resource_types: list[str]
     deprecated_resource_types: list[str]
     raw_resource_schema: dict[str, dict]
+    providers_tf: str = _providers_tf
 
 
 class SchemaAttribute(BaseModel):
@@ -84,20 +99,6 @@ SchemaBlockType.model_rebuild()
 SchemaBlock.model_rebuild()
 
 
-_providers_tf = """
-terraform {
-  required_providers {
-    mongodbatlas = {
-      source  = "mongodb/mongodbatlas"
-      version = "~> 1.26" # irrelevant
-    }
-  }
-  required_version = ">= 1.8"
-}
-
-"""
-
-
 def parse_atlas_schema() -> AtlasSchemaInfo:
     assert os.environ.get(TF_CLI_CONFIG_FILE_ENV_NAME), f"{TF_CLI_CONFIG_FILE_ENV_NAME} is required"
     with TemporaryDirectory() as example_dir:
@@ -109,7 +110,6 @@ def parse_atlas_schema() -> AtlasSchemaInfo:
             "terraform providers schema -json",
             cwd=example_dir,
             ansi_content=False,
-            env={"MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "false"},
         )
     parsed = schema_run.parse_output(dict, output_format="json")
     resource_schema = parse_provider_resource_schema(parsed, ATLAS_PROVIDER_NAME)

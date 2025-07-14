@@ -13,13 +13,23 @@ class ResourceAbs(ABC):
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
 
 
+def locals_def(resource_type: str, field_names: list[str]) -> str:
+    variable_defs = "\n".join(f"        {name} = var.{name}" for name in field_names)
+    return f"""
+locals {{
+    {resource_type}_fields = {{
+{variable_defs}
+    }}
+}}
+"""
+
+
 def data_external(resource_type: str, field_names: list[str]) -> str:
-    query_args = "\n".join(f"        {name} = var.{name}" for name in field_names)
     return f"""
 data "external" "{resource_type}" {{
     program = ["python3", "${{path.module}}/{resource_type}.py"]
     query = {{
-{query_args}
+        input_json = jsonencode(local.{resource_type}_fields)
     }}
 }}
 """
@@ -77,6 +87,7 @@ def generate_resource_main(resource_type: str, resource: type[ResourceAbs]) -> s
         "\n".join(
             line
             for line in [
+                locals_def(resource_type=resource_type, field_names=field_names),
                 data_external(resource_type=resource_type, field_names=field_names),
                 "",
                 resource_declare(

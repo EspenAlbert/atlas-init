@@ -1,9 +1,11 @@
 import keyword
 from tempfile import TemporaryDirectory
 from pathlib import Path
+from types import ModuleType
 
 from ask_shell import run_and_wait
 
+from atlas_init.tf_ext.gen_resource_main import ResourceAbs
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 
 
@@ -100,11 +102,7 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
             is_required = False
             if block_type.nesting_mode in ("list", "set"):
                 is_required = (block_type.min_items or 0) > 0
-                field_line = (
-                    f"    {safe_name(block_type_name)}: List[{nested_class_name}]"
-                    if is_required
-                    else f"    {safe_name(block_type_name)}: Optional[List[{nested_class_name}]] = None"
-                )
+                field_line = f"    {safe_name(block_type_name)}: Optional[List[{nested_class_name}]] = None"
                 post_init_lines.append(
                     f"        if self.{block_type_name} is not None:\n"
                     f"            self.{block_type_name} = ["
@@ -112,11 +110,7 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
                 )
             else:
                 is_required = bool(block_type.required)
-                field_line = (
-                    f"    {safe_name(block_type_name)}: {nested_class_name}"
-                    if is_required
-                    else f"    {safe_name(block_type_name)}: Optional[{nested_class_name}] = None"
-                )
+                field_line = f"    {safe_name(block_type_name)}: Optional[{nested_class_name}] = None"
                 post_init_lines.append(
                     f"        if self.{block_type_name} is not None and not isinstance(self.{block_type_name}, {nested_class_name}):\n"
                     f"            self.{block_type_name} = {nested_class_name}(**self.{block_type_name})"
@@ -178,6 +172,25 @@ def format_with_ruff(code: str) -> str:
         tmp_file.write_text(code)
         run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
         return tmp_file.read_text()
+
+
+def import_from_path(module_name: str, file_path: Path) -> ModuleType:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    assert spec
+    assert spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def import_resource_type_dataclass(resource_type: str, generated_dataclass_path: Path) -> type[ResourceAbs]:
+    module = import_from_path(resource_type, generated_dataclass_path)
+    assert module
+    resource = getattr(module, "Resource")
+    assert resource
+    return resource  # type: ignore
 
 
 def convert_and_format(schema: ResourceSchema) -> str:
