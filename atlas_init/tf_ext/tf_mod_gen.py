@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 def tf_mod_gen(
     tf_cli_config_file: str = TF_CLI_CONFIG_FILE_ARG,
     use_newres: bool = typer.Option(False, "--use-newres", help="Use newres to generate modules"),
-    resource_type: list[str] = typer.Option("", "-r", "--resource-type", help="Resource types to generate modules for"),
+    resource_type: list[str] = typer.Option(
+        ..., "-r", "--resource-type", help="Resource types to generate modules for"
+    ),
     name: str = typer.Option("", "-n", "--name", help="Name of the module"),
     output_dir: Path | None = typer.Option(None, "-o", "--output-dir", help="Output directory for generated modules"),
 ):

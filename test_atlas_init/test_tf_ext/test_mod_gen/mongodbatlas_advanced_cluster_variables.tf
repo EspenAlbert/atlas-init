@@ -2,9 +2,9 @@ variable "electable" {
   type = object({
     disk_size_gb = optional(number)
     regions = optional(list(object({
-      cloud_provider = optional(string)
-      name           = optional(string)
-      node_count     = optional(number)
+      provider_name = optional(string)
+      name          = optional(string)
+      node_count    = optional(number)
     })))
   })
   nullable = true

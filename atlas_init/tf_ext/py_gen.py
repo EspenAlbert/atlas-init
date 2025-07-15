@@ -1,8 +1,14 @@
-from dataclasses import Field
-from typing import List, Union, get_args, get_origin
+import logging
+from dataclasses import Field, fields, is_dataclass
+import inspect
+from pathlib import Path
+import re
+from types import ModuleType
+from typing import Iterable, List, NamedTuple, Union, get_args, get_origin
 
 from zero_3rdparty import humps
 
+logger = logging.getLogger(__name__)
 primitive_types = (str, float, bool, int)
 
 
@@ -72,3 +78,75 @@ def longest_common_substring_among_all(strings: list[str]) -> str:
         return a[x_longest - longest : x_longest]
 
     return humps.pascalize(reduce(lcs, strings).strip("_"))
+
+
+_main_call = """
+if __name__ == "__main__":
+    main()
+"""
+
+
+def move_main_call_to_end(file_path: Path) -> None:
+    text = file_path.read_text()
+    text = text.replace(_main_call, "")
+    file_path.write_text(text + _main_call)
+
+
+class DataclassMatch(NamedTuple):
+    cls_name: str
+    match_context: str
+    index_start: int
+    index_end: int
+
+
+def dataclass_matches(code: str, cls_name: str) -> Iterable[DataclassMatch]:
+    for match in dataclass_pattern(cls_name).finditer(code):
+        start = match.start()
+        end = code[start:].find("\n\n\n")
+        assert end > 0, f"unable to find end of dataclass: {cls_name}"
+        yield DataclassMatch(cls_name, code[start - 20 : start + 20], start, start + end + 3)
+
+
+def dataclass_pattern(cls_name: str) -> re.Pattern:
+    return re.compile(rf"@dataclass\nclass {cls_name}(?P<base>\(\w+\))?:")
+
+
+def dataclass_indexes(code: str, cls_name: str) -> tuple[int, int]:
+    matches = list(dataclass_matches(code, cls_name))
+    assert len(matches) == 1, f"expected exactly one dataclass match for {cls_name}, got {len(matches)}"
+    return matches[0].index_start, matches[0].index_end
+
+
+def make_post_init(lines: list[str]) -> str:
+    return "    def __post_init__(self):\n" + "\n".join(lines)
+
+
+def module_dataclasses(module: ModuleType) -> dict[str, type]:
+    return {
+        name: maybe_dc
+        for name, maybe_dc in vars(module).items()
+        if is_dataclass(maybe_dc) and inspect.isclass(maybe_dc)
+    }
+
+
+def ensure_dataclass_use_conversion(dataclasses: dict[str, type], file_path: Path, skip_filter: set[str]) -> None:
+    py_code = file_path.read_text()
+    for name, cls in dataclasses.items():
+        if name in skip_filter:
+            continue
+        post_init_lines = [extra_line for field in fields(cls) if (extra_line := make_post_init_line_from_field(field))]
+        if not post_init_lines:
+            continue
+        if name == "SpecRegion":
+            logger.info("spec-region")
+        index_start, cls_def_end = dataclass_indexes(py_code, name)
+        old_dc_code = py_code[index_start:cls_def_end]
+        if "def __post_init__" in old_dc_code:
+            continue  # already exists, don't touch it
+        insert_location = old_dc_code.find("\n\n")
+        assert insert_location > 0
+        new_dc_code = (
+            old_dc_code[:insert_location] + "\n\n" + make_post_init(post_init_lines) + old_dc_code[insert_location:]
+        )
+        py_code = py_code.replace(old_dc_code, new_dc_code)
+    file_path.write_text(py_code)

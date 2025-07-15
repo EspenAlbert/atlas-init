@@ -13,8 +13,9 @@ from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_provider_resource_schema
-from atlas_init.tf_ext.py_gen import longest_common_substring_among_all
+from atlas_init.tf_ext.py_gen import ensure_dataclass_use_conversion, longest_common_substring_among_all
 from atlas_init.tf_ext.schema_to_dataclass import (
+    SKIP_FILTER,
     convert_and_format,
     import_resource_type_python_module,
     simplify_classes,
@@ -266,7 +267,7 @@ def test_sequence_matching():
     assert longest_common_substring_among_all(options2) == "AutoScaling"
 
 
-def test_simplify_classes(file_regression):
+def test_simplify_classes(file_regression, tmp_path):
     adv_cluster_code = dataclass_manual_path("mongodbatlas_advanced_cluster").read_text()
     new_code, new_names = simplify_classes(adv_cluster_code)
     assert sorted(new_names) == [
@@ -282,4 +283,10 @@ def test_simplify_classes(file_regression):
         "Spec",
         "Timeout",
     ]
-    file_regression.check(new_code, basename="mongodbatlas_advanced_cluster_simplified", extension=".py")
+    path_temp = tmp_path / "dataclass.py"
+    path_temp.write_text(new_code)
+    py_module = import_resource_type_python_module("mongodbatlas_advanced_cluster", path_temp)
+    dataclasses = py_module.dataclasses
+    assert "SpecRegion" in dataclasses
+    ensure_dataclass_use_conversion(dataclasses, path_temp, SKIP_FILTER)
+    file_regression.check(path_temp.read_text(), basename="mongodbatlas_advanced_cluster_simplified", extension=".py")

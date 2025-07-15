@@ -1,7 +1,7 @@
 # codegen atlas-init-marker-start
 import json
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Iterable, Optional, List, Dict, Any, Set, ClassVar
 
 
@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
 @dataclass
 class SpecRegion:
-    cloud_provider: str
+    provider_name: str
     name: str
     node_count: int
 
@@ -297,7 +297,11 @@ class SpecRegion:
 @dataclass
 class CustomSpec:
     disk_size_gb: float = 50
-    regions: list[SpecRegion] = field(default_factory=list)
+    regions: Optional[list[SpecRegion]] = None
+
+    def __post_init__(self):
+        if self.regions is not None:
+            self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
 
 
 @dataclass
@@ -354,10 +358,10 @@ def default_region_configs(spec: CustomSpec) -> list[RegionConfig]:
     return [
         RegionConfig(
             priority=8 - i,
-            provider_name=region.cloud_provider,
+            provider_name=region.provider_name,
             region_name=region.name,
         )
-        for i, region in enumerate(spec.regions)
+        for i, region in enumerate(spec.regions or [])
     ]
 
 
@@ -368,7 +372,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
 
     for spec in specs:
         spec.region_configs = default_region_configs(electable)
-        for region_config, region_electable in zip(spec.region_configs, electable.regions):
+        for region_config, region_electable in zip(spec.region_configs, electable.regions or []):
             region_config.electable_specs = Spec(
                 disk_size_gb=electable.disk_size_gb,
                 instance_size=resource.get_default_instance_size(),

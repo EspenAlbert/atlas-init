@@ -1,7 +1,7 @@
 from ask_shell import configure_logging
 from typer import Typer
 
-from atlas_init.tf_ext import api_call
+from atlas_init.tf_ext import api_call, tf_desc_gen
 
 
 def typer_main():
@@ -15,6 +15,7 @@ def typer_main():
     app.command(name="vars")(tf_vars.tf_vars)
     app.command(name="modules")(tf_modules.tf_modules)
     app.command(name="mod-gen")(tf_mod_gen.tf_mod_gen)
+    app.command(name="desc-gen")(tf_desc_gen.tf_desc_gen)
     app.command(name="api")(api_call.api)
     app.command(name="api-config")(api_call.api_config)
     configure_logging(app)

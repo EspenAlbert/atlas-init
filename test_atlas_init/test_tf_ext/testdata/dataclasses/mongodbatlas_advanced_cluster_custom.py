@@ -1,7 +1,7 @@
 # codegen atlas-init-marker-start
 import json
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Iterable, Optional, List, Dict, Any, Set, ClassVar
 
 
@@ -351,7 +351,7 @@ if __name__ == "__main__":
 
 @dataclass
 class SpecRegion:
-    cloud_provider: str
+    provider_name: str
     name: str
     node_count: int
 
@@ -359,7 +359,7 @@ class SpecRegion:
 @dataclass
 class CustomSpec:
     disk_size_gb: float = 50
-    regions: list[SpecRegion] = field(default_factory=list)
+    regions: Optional[list[SpecRegion]] = None
 
 
 @dataclass
@@ -416,10 +416,10 @@ def default_region_configs(spec: CustomSpec) -> list[Resource_Replication_specs_
     return [
         Resource_Replication_specs_Region_configs(
             priority=8 - i,
-            provider_name=region.cloud_provider,
+            provider_name=region.provider_name,
             region_name=region.name,
         )
-        for i, region in enumerate(spec.regions)
+        for i, region in enumerate(spec.regions or [])
     ]
 
 
@@ -430,7 +430,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[Resource_Replicati
 
     for spec in specs:
         spec.region_configs = default_region_configs(electable)
-        for region_config, region_electable in zip(spec.region_configs, electable.regions):
+        for region_config, region_electable in zip(spec.region_configs, electable.regions or []):
             region_config.electable_specs = Resource_Replication_specs_Region_configs_Electable_specs(
                 disk_size_gb=electable.disk_size_gb,
                 instance_size=resource.get_default_instance_size(),

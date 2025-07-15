@@ -7,7 +7,7 @@ from model_lib import Entity
 from pydantic import Field as PydanticField, model_validator
 from zero_3rdparty.object_name import as_name
 
-from atlas_init.tf_ext.py_gen import make_post_init_line_from_field
+from atlas_init.tf_ext.py_gen import make_post_init_line_from_field, module_dataclasses
 from atlas_init.tf_ext.settings import TfExtSettings
 
 
@@ -68,6 +68,12 @@ class ResourceTypePythonModule:
     resource: type[ResourceAbs] | None = None
     resource_ext: type[ResourceAbs] | None = None
     module: ModuleType | None = None
+
+    @property
+    def dataclasses(self) -> dict[str, type]:
+        if not self.module:
+            return {}
+        return module_dataclasses(self.module)
 
     @property
     def resource_ext_cls_used(self) -> bool:

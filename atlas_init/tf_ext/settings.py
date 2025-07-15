@@ -46,3 +46,11 @@ class TfExtSettings(StaticSettings):
     @property
     def modules_out_path(self) -> Path:
         return self.static_root / "modules"
+
+    @property
+    def attribute_description_file_path(self) -> Path:
+        return self.static_root / "attribute_description.yaml"
+
+    @property
+    def attribute_resource_descriptions_file_path(self) -> Path:
+        return self.static_root / "attribute_resource_descriptions.yaml"

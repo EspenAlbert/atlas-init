@@ -266,12 +266,13 @@ def main():
     params = json.loads(input_data)
     input_json = params["input_json"]
     resource = Resource(**json.loads(input_json))
+    error_message = ""
     primitive_types = (str, float, bool, int)
     output = {
         key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
         for key, value in asdict(resource).items()
     }
-    output["error_message"] = ""
+    output["error_message"] = error_message
     json_str = json.dumps(output)
     from pathlib import Path
 
