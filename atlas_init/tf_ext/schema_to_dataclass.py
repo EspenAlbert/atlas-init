@@ -93,9 +93,11 @@ def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
 def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) -> str:
     class_defs = []
 
-    def block_to_class(block: SchemaBlock, class_name: str) -> str:
+    def block_to_class(block: SchemaBlock, class_name: str, extra_post_init: list[str] | None = None) -> str:
         lines = ["@dataclass", f"class {class_name}:"]
         post_init_lines = []
+        if extra_post_init:
+            post_init_lines.extend(extra_post_init)
         required_fields = []
         optional_fields = []
         nested_names = []
@@ -178,7 +180,7 @@ def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) 
 
     # Root class
     root_class_name = "Resource"
-    class_defs.append(block_to_class(schema.block, root_class_name))
+    class_defs.append(block_to_class(schema.block, root_class_name, extensions.extra_post_init_lines))
 
     # Generate necessary imports
     used_types = set()
@@ -211,7 +213,7 @@ def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) 
 class GlobalsExtensions:
     resource_ext_cls_used: bool = False
     errors_func_used: bool = False
-    pre_dump_modify_func_used: bool = False
+    modify_out_func_used: bool = False
     extra_imports: list[str] = field(default_factory=list)
     extra_post_init_lines: list[str] = field(default_factory=list)
 
@@ -220,9 +222,9 @@ primitive_types = (str, float, bool, int)
 
 
 def main_entrypoint(extensions: GlobalsExtensions) -> str:
-    parse_cls = "Resource" if extensions.resource_ext_cls_used else "ResourceExt"
+    parse_cls = "ResourceExt" if extensions.resource_ext_cls_used else "Resource"
     errors_func_call = r'"\n".join(errors(resource))' if extensions.errors_func_used else '""'
-    pre_dump_modify_func_call = "resource = pre_dump_modify(resource)" if extensions.pre_dump_modify_func_used else ""
+    modify_out_func_call = "\n    resource = modify_out(resource)" if extensions.modify_out_func_used else ""
     return f"""
 def main():
     input_data = sys.stdin.read()
@@ -230,8 +232,7 @@ def main():
     params = json.loads(input_data)
     input_json = params["input_json"]
     resource = {parse_cls}(**json.loads(input_json))
-    primitive_types = ({", ".join(t.__name__ for t in primitive_types)})
-    {pre_dump_modify_func_call}
+    primitive_types = ({", ".join(t.__name__ for t in primitive_types)}){modify_out_func_call}
     output = {{key: value if value is None or isinstance(value, primitive_types) else json.dumps(value) for key, value in asdict(resource).items()}}
     output["error_message"] = {errors_func_call}
     json_str = json.dumps(output)
@@ -328,7 +329,7 @@ def parse_extensions(resource_type: str, old_path: Path) -> GlobalsExtensions:
     return GlobalsExtensions(
         resource_ext_cls_used=resource_ext_cls is not None,
         errors_func_used=getattr(module, "errors", None) is not None,
-        pre_dump_modify_func_used=getattr(module, "pre_dump_modify", None) is not None,
+        modify_out_func_used=getattr(module, "modify_out", None) is not None,
         extra_post_init_lines=extra_post_init_lines,
         extra_imports=extra_imports,
     )

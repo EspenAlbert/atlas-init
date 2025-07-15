@@ -1,3 +1,4 @@
+# codegen atlas-init-marker-start
 import json
 import sys
 from dataclasses import asdict, dataclass
@@ -334,7 +335,7 @@ def main():
         key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
         for key, value in asdict(resource).items()
     }
-    output["error_message"] = ""  # todo: support better validation
+    output["error_message"] = ""
     json_str = json.dumps(output)
     from pathlib import Path
 
@@ -345,3 +346,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# codegen atlas-init-marker-end

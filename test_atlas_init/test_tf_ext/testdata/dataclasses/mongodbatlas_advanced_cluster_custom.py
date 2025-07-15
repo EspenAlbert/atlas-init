@@ -447,7 +447,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[Resource_Replicati
     return specs
 
 
-def modify_out(resource: ResourceExt) -> Resource:
+def modify_out(resource: ResourceExt) -> ResourceExt:
     if resource.can_generate_replication_spec:
         resource.replication_specs = generate_replication_specs(resource)
     return resource

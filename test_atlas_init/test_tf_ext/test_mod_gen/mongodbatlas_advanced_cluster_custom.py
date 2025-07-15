@@ -305,6 +305,11 @@ class Resource:
     version_release_system: Optional[str] = None
 
     def __post_init__(self):
+        if self.electable is not None and not isinstance(self.electable, Spec):
+            self.electable = Spec(**self.electable)
+        if self.auto_scaling_compute is not None and not isinstance(self.auto_scaling_compute, AutoScalingCompute):
+            self.auto_scaling_compute = AutoScalingCompute(**self.auto_scaling_compute)
+
         if self.advanced_configuration is not None and not isinstance(
             self.advanced_configuration, Resource_Advanced_configuration
         ):
@@ -331,9 +336,9 @@ def main():
     # Parse the input as JSON
     params = json.loads(input_data)
     input_json = params["input_json"]
-    resource = Resource(**json.loads(input_json))
+    resource = ResourceExt(**json.loads(input_json))
     primitive_types = (str, float, bool, int)
-
+    resource = modify_out(resource)
     output = {
         key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
         for key, value in asdict(resource).items()
@@ -451,7 +456,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[Resource_Replicati
     return specs
 
 
-def modify_out(resource: ResourceExt) -> Resource:
+def modify_out(resource: ResourceExt) -> ResourceExt:
     if resource.can_generate_replication_spec:
         resource.replication_specs = generate_replication_specs(resource)
     return resource
