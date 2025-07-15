@@ -13,6 +13,7 @@ from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_provider_resource_schema
 from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_python_module
+from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen import generate_module
 
 logger = logging.getLogger(__name__)
@@ -139,6 +140,8 @@ class _ModuleNames:
     CLUSTER_CUSTOM = "cluster_custom"
     CLUSTER_SKIP_PYTHON = "cluster_skip_python"
 
+    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_SKIP_PYTHON]
+
     @classmethod
     def extra_files(cls, name) -> dict[Path, str]:
         return {
@@ -148,16 +151,36 @@ class _ModuleNames:
         }.get(name, {})
 
     @classmethod
+    def auto_tfvars(cls, name) -> str:
+        return {
+            cls.CLUSTER_PLAIN: _normal_replication_spec_vars,
+            cls.CLUSTER_CUSTOM: _electable_and_auto_scaling_vars,
+            cls.CLUSTER_SKIP_PYTHON: skip_python_config,
+        }.get(name, "")
+
+    @classmethod
+    def required_variables(cls, name: str) -> set[str]:
+        return {cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"}}.get(name, set())
+
+    @classmethod
     def write_extra_files(cls, module_out: Path, name: str):
         for extra_file, name in cls.extra_files(name).items():
             copy(extra_file, module_out / name)
 
+    @classmethod
+    def create_by_name(cls, name: str, settings: TfExtSettings) -> ModuleGenConfig:
+        config = ModuleGenConfig(
+            name=name,
+            resource_types=["mongodbatlas_advanced_cluster"],
+            settings=settings,
+            auto_tfvars=cls.auto_tfvars(name),
+            skip_python=cls.CLUSTER_SKIP_PYTHON == name,
+            required_variables=cls.required_variables(name),
+        )
+        clean_dir(config.module_path)
+        cls.write_extra_files(config.module_path, name)
+        return config
 
-_cluster_plain = ModuleGenConfig(
-    name=_ModuleNames.CLUSTER_PLAIN,
-    resource_types=["mongodbatlas_advanced_cluster"],
-    auto_tfvars=_normal_replication_spec_vars,
-)
 
 _electable_and_auto_scaling_vars = """
 electable = {
@@ -181,12 +204,6 @@ auto_scaling_compute = {
 }
 """
 
-_cluster_custom = ModuleGenConfig(
-    name=_ModuleNames.CLUSTER_CUSTOM,
-    resource_types=["mongodbatlas_advanced_cluster"],
-    auto_tfvars=_electable_and_auto_scaling_vars,
-)
-
 skip_python_config = """
 backup_enabled = true
 replication_specs = [{
@@ -207,22 +224,11 @@ name         = "created-from-resource-module"
 cluster_type = "REPLICASET"
 
 """
-_cluster_skip_python = ModuleGenConfig(
-    name=_ModuleNames.CLUSTER_SKIP_PYTHON,
-    resource_types=["mongodbatlas_advanced_cluster"],
-    skip_python=True,
-    auto_tfvars=skip_python_config,
-    required_variables={"project_id", "name", "cluster_type", "replication_specs"},
-)
-
-_module_configs = [_cluster_plain, _cluster_custom, _cluster_skip_python]
 
 
-@pytest.mark.parametrize("module_config", _module_configs, ids=[c.name for c in _module_configs])
-def test_generate_module(module_config: ModuleGenConfig, tf_ext_settings_repo_path):
-    module_config.settings = tf_ext_settings_repo_path
-    clean_dir(module_config.module_path)
-    _ModuleNames.write_extra_files(module_config.module_path, module_config.name)
+@pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
+def test_generate_module(module_config_name: str, tf_ext_settings_repo_path):
+    module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path)
     module_path = generate_module(module_config)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
