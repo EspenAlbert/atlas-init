@@ -12,12 +12,12 @@ def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, i
     if is_map:
         return (
             f"        if self.{field_name} is not None:\n"
-            f"            self.{field_name} = {{k: {elem_type}(**v) if not isinstance(v, {elem_type}) else v for k, v in self.{field_name}.items()}}"
+            f"            self.{field_name} = {{k:v if isinstance(v, {elem_type}) else {elem_type}(**v) for k, v in self.{field_name}.items()}}"
         )
     elif is_list:
         return (
             f"        if self.{field_name} is not None:\n"
-            f"            self.{field_name} = [{elem_type}(**x) if not isinstance(x, {elem_type}) else x for x in self.{field_name}]"
+            f"            self.{field_name} = [x if isinstance(x, {elem_type}) else {elem_type}(**x) for x in self.{field_name}]"
         )
     else:
         return (

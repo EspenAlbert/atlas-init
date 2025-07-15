@@ -1,71 +1,3 @@
-variable "cluster_type" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "name" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "project_id" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "replication_specs" {
-  type = list(object({
-    region_configs = optional(list(object({
-      priority      = optional(number)
-      provider_name = optional(string)
-      region_name   = optional(string)
-      analytics_auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      analytics_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      backing_provider_name = optional(string)
-      electable_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      read_only_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-    })))
-    num_shards = optional(number)
-    zone_name  = optional(string)
-  }))
-  nullable = true
-  default  = null
-}
-
 variable "accept_data_risks_and_force_replica_set_reconfig" {
   type     = string
   nullable = true
@@ -105,6 +37,12 @@ variable "bi_connector_config" {
     enabled         = optional(bool)
     read_preference = optional(string)
   })
+  nullable = true
+  default  = null
+}
+
+variable "cluster_type" {
+  type     = string
   nullable = true
   default  = null
 }
@@ -151,6 +89,12 @@ variable "mongo_db_major_version" {
   default  = null
 }
 
+variable "name" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
 variable "paused" {
   type     = bool
   nullable = true
@@ -171,6 +115,12 @@ variable "pit_enabled" {
   default  = null
 }
 
+variable "project_id" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
 variable "redact_client_log_data" {
   type     = bool
   nullable = true
@@ -179,6 +129,56 @@ variable "redact_client_log_data" {
 
 variable "replica_set_scaling_strategy" {
   type     = string
+  nullable = true
+  default  = null
+}
+
+variable "replication_specs" {
+  type = list(object({
+    num_shards = optional(number)
+    region_configs = optional(list(object({
+      analytics_auto_scaling = optional(object({
+        compute_enabled            = optional(bool)
+        compute_max_instance_size  = optional(string)
+        compute_min_instance_size  = optional(string)
+        compute_scale_down_enabled = optional(bool)
+        disk_gb_enabled            = optional(bool)
+      }))
+      analytics_specs = optional(object({
+        disk_iops       = optional(number)
+        disk_size_gb    = optional(number)
+        ebs_volume_type = optional(string)
+        instance_size   = optional(string)
+        node_count      = optional(number)
+      }))
+      auto_scaling = optional(object({
+        compute_enabled            = optional(bool)
+        compute_max_instance_size  = optional(string)
+        compute_min_instance_size  = optional(string)
+        compute_scale_down_enabled = optional(bool)
+        disk_gb_enabled            = optional(bool)
+      }))
+      backing_provider_name = optional(string)
+      electable_specs = optional(object({
+        disk_iops       = optional(number)
+        disk_size_gb    = optional(number)
+        ebs_volume_type = optional(string)
+        instance_size   = optional(string)
+        node_count      = optional(number)
+      }))
+      priority      = optional(number)
+      provider_name = optional(string)
+      read_only_specs = optional(object({
+        disk_iops       = optional(number)
+        disk_size_gb    = optional(number)
+        ebs_volume_type = optional(string)
+        instance_size   = optional(string)
+        node_count      = optional(number)
+      }))
+      region_name = optional(string)
+    })))
+    zone_name = optional(string)
+  }))
   nullable = true
   default  = null
 }

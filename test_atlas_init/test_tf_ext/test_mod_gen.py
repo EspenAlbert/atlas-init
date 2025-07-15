@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field, fields
 import logging
 from pathlib import Path
 
 import pytest
 from model_lib import dump, parse_model
+from zero_3rdparty import humps
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
@@ -232,3 +234,51 @@ def test_generate_module(module_config_name: str, tf_ext_settings_repo_path):
     module_path = generate_module(module_config)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
+
+
+@dataclass
+class MetadataCheck:
+    my_field: str = field(metadata={"description": "some-description"})
+
+
+def test_metadata_check():
+    check = fields(MetadataCheck)
+    name_field = next(field for field in check if field.name == "my_field")
+    assert name_field.metadata["description"] == "some-description"
+
+
+def longest_common_substring_among_all(strings: list[str]) -> str:
+    from functools import reduce
+
+    strings = [s.lower() for s in strings]
+
+    def lcs(a, b):
+        m = [[0] * (1 + len(b)) for _ in range(1 + len(a))]
+        longest, x_longest = 0, 0
+        for x in range(1, 1 + len(a)):
+            for y in range(1, 1 + len(b)):
+                if a[x - 1] == b[y - 1]:
+                    m[x][y] = m[x - 1][y - 1] + 1
+                    if m[x][y] > longest:
+                        longest = m[x][y]
+                        x_longest = x
+                else:
+                    m[x][y] = 0
+        return a[x_longest - longest : x_longest]
+
+    return humps.pascalize(reduce(lcs, strings).strip("_"))
+
+
+def test_sequence_matching():
+    options = [
+        "Analytics_specs",
+        "Read_only_specs",
+        "Electable_specs",
+    ]
+    match = longest_common_substring_among_all(options)
+    assert match == "Specs"
+    options2 = [
+        "Analytics_auto_scaling",
+        "Auto_scaling",
+    ]
+    assert longest_common_substring_among_all(options2) == "AutoScaling"

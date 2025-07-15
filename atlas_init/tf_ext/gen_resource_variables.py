@@ -64,6 +64,12 @@ def generate_module_variables(python_module: ResourceTypePythonModule, config: M
     )
 
 
+def format_description(description: str) -> str:
+    if "\n" in description or '"' in description:
+        return "\n".join(["EOT", description, "EOT"])
+    return f'"{description}"'
+
+
 def generate_resource_variables(
     resource: type[ResourceAbs] | None, ignored_names: set[str], required_variables: set[str] | None = None
 ) -> str:
@@ -78,8 +84,11 @@ def generate_resource_variables(
             continue
         tf_type = python_type_to_terraform_type(hints[field_name])
         default_line = "\n  default  = null" if field_name not in required_variables else ""
+        description_line = ""
+        if description := f.metadata.get("description"):
+            description_line = f"\n  description = {format_description(description)}"
         out.append(f'''variable "{field_name}" {{
   type     = {tf_type}
-  nullable = true{default_line}
+  nullable = true{default_line}{description_line}
 }}\n''')
     return format_tf_content("\n".join(out))

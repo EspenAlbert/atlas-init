@@ -24,7 +24,7 @@ terraform {
   required_providers {
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = "~> 1.26" # irrelevant
+      version = "~> 1.26"
     }
   }
   required_version = ">= 1.8"
@@ -61,7 +61,6 @@ class SchemaAttribute(BaseModel):
     deprecated_message: str | None = None
     validators: list[dict] | None = None
     element_type: str | dict | None = None
-    nesting_mode: str | None = None
 
 
 class SchemaBlockType(BaseModel):
