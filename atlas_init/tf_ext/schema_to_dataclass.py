@@ -9,6 +9,7 @@ from typing import Any, List, get_origin, get_args, Union
 
 from ask_shell import ShellError, run_and_wait
 from zero_3rdparty.file_utils import copy, update_between_markers
+from zero_3rdparty.object_name import as_name
 from atlas_init.tf_ext.gen_resource_main import ResourceAbs
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 
@@ -200,6 +201,7 @@ def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) 
         import_lines.append("from typing import Union")
     if "Tuple" in used_types:
         import_lines.append("from typing import Tuple")
+    import_lines.extend(extensions.extra_imports)
 
     module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint(extensions)])
     return module_str.strip() + "\n"
@@ -210,7 +212,7 @@ class GlobalsExtensions:
     resource_ext_cls_used: bool = False
     errors_func_used: bool = False
     pre_dump_modify_func_used: bool = False
-
+    extra_imports: list[str] = field(default_factory=list)
     extra_post_init_lines: list[str] = field(default_factory=list)
 
 
@@ -243,7 +245,7 @@ if __name__ == "__main__":
 """
 
 
-def format_with_ruff(code: str) -> str:
+def py_file_validate_and_auto_fixes(code: str) -> str:
     with TemporaryDirectory() as tmp_dir:
         tmp_file = Path(tmp_dir) / "dataclass.py"
         tmp_file.write_text(code)
@@ -251,6 +253,11 @@ def format_with_ruff(code: str) -> str:
             run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
         except ShellError as e:
             logger.exception(f"Failed to format dataclass:\n{code}")
+            raise e
+        try:
+            run_and_wait("ruff check --fix .", cwd=tmp_dir)
+        except ShellError as e:
+            logger.exception(f"Failed to check dataclass:\n{code}")
             raise e
         return tmp_file.read_text()
 
@@ -300,6 +307,11 @@ def find_extra_post_init_lines(
     return [make_post_init_line_from_field(field) for field in extra_fields]
 
 
+def as_import_line(name: str) -> str:
+    from_part, name_part = name.rsplit(".", maxsplit=1)
+    return f"from {from_part} import {name_part}"
+
+
 def parse_extensions(resource_type: str, old_path: Path) -> GlobalsExtensions:
     module = import_from_path(old_path.stem, old_path)
     assert module
@@ -307,11 +319,18 @@ def parse_extensions(resource_type: str, old_path: Path) -> GlobalsExtensions:
     base_cls = import_resource_type_dataclass(resource_type, old_path)
     extra_post_init_lines = find_extra_post_init_lines(base_cls, resource_ext_cls)
 
+    extra_imports = [
+        as_import_line(as_name(value))
+        for key, value in vars(module).items()
+        if not key.startswith("_") and not as_name(value).startswith(("__", resource_type))
+    ]
+
     return GlobalsExtensions(
         resource_ext_cls_used=resource_ext_cls is not None,
         errors_func_used=getattr(module, "errors", None) is not None,
         pre_dump_modify_func_used=getattr(module, "pre_dump_modify", None) is not None,
         extra_post_init_lines=extra_post_init_lines,
+        extra_imports=extra_imports,
     )
 
 
@@ -331,5 +350,5 @@ def convert_and_format(resource_type: str, schema: ResourceSchema, existing_path
             tmp_file = Path(tmp_path) / f"{resource_type}.py"
             copy(existing_path, tmp_file)
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
-            return format_with_ruff(tmp_file.read_text())
-    return format_with_ruff(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")
+            return py_file_validate_and_auto_fixes(tmp_file.read_text())
+    return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")

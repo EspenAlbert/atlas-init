@@ -3,6 +3,8 @@ import json
 import sys
 from dataclasses import asdict, dataclass
 from typing import Optional, List, Dict, Any, Set, ClassVar
+from dataclasses import field
+from typing import Iterable
 
 
 @dataclass
@@ -348,5 +350,108 @@ def main():
 if __name__ == "__main__":
     main()
 
-
 # codegen atlas-init-marker-end
+
+
+@dataclass
+class SpecRegion:
+    cloud_provider: str
+    name: str
+    node_count: int
+
+
+@dataclass
+class Spec:
+    disk_size_gb: float = 50
+    regions: list[SpecRegion] = field(default_factory=list)
+
+
+@dataclass
+class AutoScalingCompute:
+    min_size: str
+    max_size: str
+
+
+@dataclass
+class ResourceExt(Resource):
+    electable: Optional[Spec] = None
+    auto_scaling_compute: Optional[AutoScalingCompute] = None
+    default_instance_size: Optional[str] = None
+
+    DEFAULT_INSTANCE_SIZE: ClassVar[str] = "M10"
+    MUTUALLY_EXCLUSIVE: ClassVar[dict[str, list[str]]] = {
+        "electable": ["replication_specs"],
+        "auto_scaling_compute": ["replication_specs"],
+    }
+    REQUIRES_OTHER: ClassVar[dict[str, list[str]]] = {"auto_scaling_compute": ["electable"]}
+
+    @property
+    def can_generate_replication_spec(self) -> bool:
+        return self.electable is not None
+
+    @property
+    def instance_size_unset(self) -> bool:
+        return self.default_instance_size == "UNSET"
+
+    def get_default_instance_size(self):
+        if not self.instance_size_unset:
+            return self.default_instance_size
+        if self.auto_scaling_compute:
+            return self.auto_scaling_compute.min_size
+        return "M10"
+
+
+def errors(resource: ResourceExt) -> Iterable[str]:
+    for var, mutually_exclusive_fields in resource.MUTUALLY_EXCLUSIVE.items():
+        if not getattr(resource, var):
+            continue
+        for incompatible in mutually_exclusive_fields:
+            if getattr(resource, incompatible):
+                yield f"Cannot use var.{var} and var.{incompatible} together"
+    for var, required_vars in resource.REQUIRES_OTHER.items():
+        if not getattr(resource, var):
+            continue
+        missing_required = [required for required in required_vars if not getattr(resource, required)]
+        if missing_required:
+            yield f"Cannot use {var} without {','.join(sorted(missing_required))}"
+
+
+def default_region_configs(spec: Spec) -> list[Resource_Replication_specs_Region_configs]:
+    return [
+        Resource_Replication_specs_Region_configs(
+            priority=8 - i,
+            provider_name=region.cloud_provider,
+            region_name=region.name,
+        )
+        for i, region in enumerate(spec.regions)
+    ]
+
+
+def generate_replication_specs(resource: ResourceExt) -> list[Resource_Replication_specs]:
+    specs = [Resource_Replication_specs()]
+    electable = resource.electable
+    assert electable
+
+    for spec in specs:
+        spec.region_configs = default_region_configs(electable)
+        for region_config, region_electable in zip(spec.region_configs, electable.regions):
+            region_config.electable_specs = Resource_Replication_specs_Region_configs_Electable_specs(
+                disk_size_gb=electable.disk_size_gb,
+                instance_size=resource.get_default_instance_size(),
+                node_count=region_electable.node_count,
+            )
+        auto_scaling_compute = resource.auto_scaling_compute
+        if auto_scaling_compute:
+            for region_config in spec.region_configs:
+                region_config.auto_scaling = Resource_Replication_specs_Region_configs_Auto_scaling(
+                    compute_enabled=True,
+                    compute_max_instance_size=auto_scaling_compute.max_size,
+                    compute_min_instance_size=auto_scaling_compute.min_size,
+                )
+    return specs
+
+
+def modify_out(resource: ResourceExt) -> Resource:
+    if resource.can_generate_replication_spec:
+        resource.replication_specs = generate_replication_specs(resource)
+    return resource
