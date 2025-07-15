@@ -1,20 +1,24 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import keyword
 import logging
+from dataclasses import fields, is_dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
 from typing import Any, Self
 
 from ask_shell import ShellError, run_and_wait
+from inflection import singularize
 from model_lib import Entity
 from pydantic import model_validator
+from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy, update_between_markers
 
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.models_module import ResourceTypePythonModule
-from atlas_init.tf_ext.py_gen import as_set, make_post_init_line, primitive_types
+from atlas_init.tf_ext.py_gen import as_set, longest_common_substring_among_all, make_post_init_line, primitive_types
 
 logger = logging.getLogger(__name__)
 
@@ -245,7 +249,6 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
         lines.extend(["", ""])
         return "\n".join(lines)
 
-    # Root class
     root_class_name = "Resource"
     class_defs.append(block_to_class(schema.block, root_class_name, existing.extra_post_init_lines))
 
@@ -286,7 +289,7 @@ if __name__ == "__main__":
 """
 
 
-def py_file_validate_and_auto_fixes(code: str) -> str:
+def py_file_validate_and_auto_fixes(code: str, error_hint: str = "") -> str:
     with TemporaryDirectory() as tmp_dir:
         tmp_file = Path(tmp_dir) / "dataclass.py"
         tmp_file.write_text(code)
@@ -298,7 +301,7 @@ def py_file_validate_and_auto_fixes(code: str) -> str:
         try:
             run_and_wait("ruff check --fix .", cwd=tmp_dir)
         except ShellError as e:
-            logger.exception(f"Failed to check dataclass:\n{code}")
+            logger.exception(f"Failed to check dataclass:\n{code}\n{error_hint}")
             raise e
         return tmp_file.read_text()
 
@@ -323,7 +326,78 @@ def import_resource_type_python_module(resource_type: str, generated_dataclass_p
     return ResourceTypePythonModule(resource_type, resource, resource_ext, module)
 
 
-def convert_and_format(resource_type: str, schema: ResourceSchema, existing_path: Path | None = None) -> str:
+def simplify_classes(py_code: str) -> tuple[str, set[str]]:
+    with TemporaryDirectory() as tmp_dir:
+        tmp_file = Path(tmp_dir) / "dataclass.py"
+        tmp_file.write_text(py_code)
+        module = import_from_path("dataclass", tmp_file)
+        dataclasses: dict = {name: maybe_dc for name, maybe_dc in vars(module).items() if is_dataclass(maybe_dc)}
+        fields_to_dataclass = defaultdict(list)
+        for name, dc in dataclasses.items():
+            fields_to_dataclass[",".join(sorted(f.name for f in fields(dc)))].append(name)
+        new_names: set[str] = set()
+
+        def add_new_name(new_name: str) -> None:
+            if new_name in new_names or new_name in dataclasses:
+                raise ValueError(f"Duplicate new name: {new_name}")
+            new_names.add(new_name)
+
+        if duplicate_classes := {k: v for k, v in fields_to_dataclass.items() if len(v) > 1}:
+            for duplicates in duplicate_classes.values():
+                py_code, new_name = rename_and_remove_duplicates(duplicates, py_code)
+                add_new_name(new_name)
+        for old_classes in fields_to_dataclass.values():
+            if len(old_classes) != 1:
+                continue
+            cls_name = old_classes[0]
+            if "_" not in cls_name:
+                continue
+            new_name = extract_last_name_part(cls_name)
+            py_code = py_code.replace(cls_name, new_name)
+            add_new_name(new_name)
+        return py_file_validate_and_auto_fixes(
+            py_code, error_hint="Duplicate class names? Can consider skipping the simplify_classes step"
+        ), new_names
+
+
+def extract_last_name_part(full_name: str) -> str:
+    included_words = []
+    for word in reversed(full_name.split("_")):
+        included_words.insert(0, word)
+        if word[0].isupper():
+            break
+    return singularize(humps.pascalize("_".join(included_words)))
+
+
+def rename_and_remove_duplicates(duplicates: list[str], py_code: str) -> tuple[str, str]:
+    duplicates_short = [extract_last_name_part(d) for d in duplicates]
+    new_name = longest_common_substring_among_all(duplicates_short)
+    for replace in duplicates:
+        py_code = py_code.replace(replace, new_name)
+    py_code = remove_duplicates(py_code, new_name)
+    return py_code, new_name
+
+
+def _cls_def(cls_name: str) -> str:
+    return f"""@dataclass
+class {cls_name}:
+"""
+
+
+def remove_duplicates(py_code: str, new_name) -> str:
+    cls_def = _cls_def(new_name)
+    matches = py_code.count(cls_def)
+    while matches > 1:
+        index_start = py_code.find(cls_def)
+        cls_def_end = py_code[index_start:].find("\n\n\n")
+        py_code = py_code[:index_start] + py_code[index_start + cls_def_end :]
+        matches -= 1
+    return py_code
+
+
+def convert_and_format(
+    resource_type: str, schema: ResourceSchema, existing_path: Path | None = None, skip_simplify: bool = False
+) -> str:
     if existing_path is not None and existing_path.exists():
         resource = import_resource_type_python_module(resource_type, existing_path)
         with TemporaryDirectory() as tmp_path:
@@ -331,7 +405,9 @@ def convert_and_format(resource_type: str, schema: ResourceSchema, existing_path
             copy(existing_path, tmp_file)
             dataclass_unformatted = convert_to_dataclass(schema, resource)
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
-            return py_file_validate_and_auto_fixes(tmp_file.read_text())
-    existing = ResourceTypePythonModule(resource_type)
-    dataclass_unformatted = convert_to_dataclass(schema, existing)
-    return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")
+            result = py_file_validate_and_auto_fixes(tmp_file.read_text())
+    else:
+        existing = ResourceTypePythonModule(resource_type)
+        dataclass_unformatted = convert_to_dataclass(schema, existing)
+        result = py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")
+    return result if skip_simplify else simplify_classes(result)[0]

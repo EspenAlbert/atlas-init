@@ -1,6 +1,8 @@
 from dataclasses import Field
 from typing import List, Union, get_args, get_origin
 
+from zero_3rdparty import humps
+
 primitive_types = (str, float, bool, int)
 
 
@@ -48,3 +50,25 @@ def make_post_init_line_from_field(field: Field) -> str:
             return make_post_init_line(field.name, item_type.__name__, is_list=True)
         return make_post_init_line(field.name, getattr(inner_type, "__name__", str(inner_type)))
     return ""
+
+
+def longest_common_substring_among_all(strings: list[str]) -> str:
+    from functools import reduce
+
+    strings = [s.lower() for s in strings]
+
+    def lcs(a, b):
+        m = [[0] * (1 + len(b)) for _ in range(1 + len(a))]
+        longest, x_longest = 0, 0
+        for x in range(1, 1 + len(a)):
+            for y in range(1, 1 + len(b)):
+                if a[x - 1] == b[y - 1]:
+                    m[x][y] = m[x - 1][y - 1] + 1
+                    if m[x][y] > longest:
+                        longest = m[x][y]
+                        x_longest = x
+                else:
+                    m[x][y] = 0
+        return a[x_longest - longest : x_longest]
+
+    return humps.pascalize(reduce(lcs, strings).strip("_"))

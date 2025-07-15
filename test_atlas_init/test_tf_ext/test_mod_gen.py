@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from model_lib import dump, parse_model
-from zero_3rdparty import humps
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
@@ -14,7 +13,12 @@ from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_provider_resource_schema
-from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_python_module
+from atlas_init.tf_ext.py_gen import longest_common_substring_among_all
+from atlas_init.tf_ext.schema_to_dataclass import (
+    convert_and_format,
+    import_resource_type_python_module,
+    simplify_classes,
+)
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen import generate_module
 
@@ -247,28 +251,6 @@ def test_metadata_check():
     assert name_field.metadata["description"] == "some-description"
 
 
-def longest_common_substring_among_all(strings: list[str]) -> str:
-    from functools import reduce
-
-    strings = [s.lower() for s in strings]
-
-    def lcs(a, b):
-        m = [[0] * (1 + len(b)) for _ in range(1 + len(a))]
-        longest, x_longest = 0, 0
-        for x in range(1, 1 + len(a)):
-            for y in range(1, 1 + len(b)):
-                if a[x - 1] == b[y - 1]:
-                    m[x][y] = m[x - 1][y - 1] + 1
-                    if m[x][y] > longest:
-                        longest = m[x][y]
-                        x_longest = x
-                else:
-                    m[x][y] = 0
-        return a[x_longest - longest : x_longest]
-
-    return humps.pascalize(reduce(lcs, strings).strip("_"))
-
-
 def test_sequence_matching():
     options = [
         "Analytics_specs",
@@ -282,3 +264,22 @@ def test_sequence_matching():
         "Auto_scaling",
     ]
     assert longest_common_substring_among_all(options2) == "AutoScaling"
+
+
+def test_simplify_classes(file_regression):
+    adv_cluster_code = dataclass_manual_path("mongodbatlas_advanced_cluster").read_text()
+    new_code, new_names = simplify_classes(adv_cluster_code)
+    assert sorted(new_names) == [
+        "AdvancedConfiguration",
+        "Autoscaling",
+        "BiConnectorConfig",
+        "ConnectionString",
+        "Endpoint",
+        "PinnedFcv",
+        "PrivateEndpoint",
+        "RegionConfig",
+        "ReplicationSpec",
+        "Spec",
+        "Timeout",
+    ]
+    file_regression.check(new_code, basename="mongodbatlas_advanced_cluster_simplified", extension=".py")
