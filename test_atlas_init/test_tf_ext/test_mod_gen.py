@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field, fields
 import logging
 from pathlib import Path
 
@@ -33,6 +34,10 @@ def generated_variables_path(resource_type: str) -> Path:
     return Path(__file__).parent / "testdata/variables" / f"{resource_type}.tf"
 
 
+def dataclass_manual_path(resource_type: str) -> Path:
+    return Path(__file__).parent / "testdata/dataclasses" / f"{resource_type}_custom.py"
+
+
 def test_dump_resource_schemas(atlas_schemas_dict):
     resource_schema = parse_provider_resource_schema(atlas_schemas_dict, ATLAS_PROVIDER_NAME)
     assert resource_schema
@@ -60,10 +65,18 @@ def read_resource_schema(resource_type: str) -> ResourceSchema:
 @pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
 def test_create_dataclass(resource_type: str, file_regression):
     resource_schema = read_resource_schema(resource_type)
-    dataclass_code = convert_and_format(resource_schema)
+    dataclass_code = convert_and_format(resource_type, resource_schema)
     dataclass_path = generated_dataclass_path(resource_type)
     ensure_parents_write_text(dataclass_path, dataclass_code)
     file_regression.check(dataclass_code, extension=".py", basename=resource_type)
+
+
+@pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
+def test_create_dataclass_with_custom(resource_type: str, file_regression):
+    resource_schema = read_resource_schema(resource_type)
+    existing_path = dataclass_manual_path(resource_type)
+    dataclass_code = convert_and_format(resource_type, resource_schema, existing_path)
+    file_regression.check(dataclass_code, extension=".py", basename=f"{resource_type}_custom")
 
 
 def _import_resource_type_dataclass(resource_type: str) -> type[ResourceAbs]:
@@ -92,3 +105,22 @@ def test_generate_module(resource_type: str, tf_ext_settings_repo_path):
     module_path = generate_module(resource_type, tf_ext_settings_repo_path)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
+
+
+@dataclass
+class Base:
+    my_list: list[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        self.my_list.append("a")
+        if "b" in {f.name for f in fields(self)}:
+            self.my_list.append("b")
+
+
+@dataclass
+class Derived(Base):
+    b: str = "b"
+
+
+def test_post_init_called_on_base():
+    assert Derived().my_list == ["a", "b"]

@@ -2,11 +2,12 @@ from abc import ABC
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import ClassVar
-from dataclasses import fields
+from dataclasses import dataclass, fields
 
 from ask_shell import run_and_wait
 
 
+@dataclass
 class ResourceAbs(ABC):
     REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[set[str]] = set()

@@ -1,16 +1,21 @@
+from __future__ import annotations
+from dataclasses import dataclass, field, fields, Field
 import logging
 import keyword
 from tempfile import TemporaryDirectory
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, List, get_origin, get_args, Union
 
-from ask_shell import run_and_wait
-
+from ask_shell import ShellError, run_and_wait
+from zero_3rdparty.file_utils import copy, update_between_markers
 from atlas_init.tf_ext.gen_resource_main import ResourceAbs
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 
 logger = logging.getLogger(__name__)
+
+MARKER_START = "# codegen atlas-init-marker-start"
+MARKER_END = "# codegen atlas-init-marker-end"
 
 
 def as_set(values: list[str]) -> str:
@@ -84,7 +89,7 @@ def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
         return "Any"
 
 
-def convert_to_dataclass(schema: ResourceSchema) -> str:
+def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) -> str:
     class_defs = []
 
     def block_to_class(block: SchemaBlock, class_name: str) -> str:
@@ -196,30 +201,45 @@ def convert_to_dataclass(schema: ResourceSchema) -> str:
     if "Tuple" in used_types:
         import_lines.append("from typing import Tuple")
 
-    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint()])
+    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint(extensions)])
     return module_str.strip() + "\n"
 
 
-def main_entrypoint():
-    return """
+@dataclass
+class GlobalsExtensions:
+    resource_ext_cls_used: bool = False
+    errors_func_used: bool = False
+    pre_dump_modify_func_used: bool = False
+
+    extra_post_init_lines: list[str] = field(default_factory=list)
+
+
+primitive_types = (str, float, bool, int)
+
+
+def main_entrypoint(extensions: GlobalsExtensions) -> str:
+    parse_cls = "Resource" if extensions.resource_ext_cls_used else "ResourceExt"
+    errors_func_call = r'"\n".join(errors(resource))' if extensions.errors_func_used else '""'
+    pre_dump_modify_func_call = "resource = pre_dump_modify(resource)" if extensions.pre_dump_modify_func_used else ""
+    return f"""
 def main():
     input_data = sys.stdin.read()
     # Parse the input as JSON
     params = json.loads(input_data)
     input_json = params["input_json"]
-    resource = Resource(**json.loads(input_json))
-    primitive_types = (str, float, bool, int)
-    output = {key: value if value is None or isinstance(value, primitive_types) else json.dumps(value) for key, value in asdict(resource).items()}
-    output["error_message"] = "" # todo: support better validation
+    resource = {parse_cls}(**json.loads(input_json))
+    primitive_types = ({", ".join(t.__name__ for t in primitive_types)})
+    {pre_dump_modify_func_call}
+    output = {{key: value if value is None or isinstance(value, primitive_types) else json.dumps(value) for key, value in asdict(resource).items()}}
+    output["error_message"] = {errors_func_call}
     json_str = json.dumps(output)
     from pathlib import Path
     logs_out = Path(__file__).parent / "logs.json"
     logs_out.write_text(json_str)
     print(json_str)
-
-
 if __name__ == "__main__":
     main()
+
 """
 
 
@@ -227,7 +247,11 @@ def format_with_ruff(code: str) -> str:
     with TemporaryDirectory() as tmp_dir:
         tmp_file = Path(tmp_dir) / "dataclass.py"
         tmp_file.write_text(code)
-        run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
+        try:
+            run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
+        except ShellError as e:
+            logger.exception(f"Failed to format dataclass:\n{code}")
+            raise e
         return tmp_file.read_text()
 
 
@@ -242,6 +266,55 @@ def import_from_path(module_name: str, file_path: Path) -> ModuleType:
     return module
 
 
+def make_post_init_line_from_field(field: Field) -> str:
+    field_type = field.type
+    origin = get_origin(field_type)
+    args = get_args(field_type)
+
+    if origin is Union and type(None) in args:
+        non_none_args = [arg for arg in args if arg is not type(None)]
+        assert len(non_none_args) == 1, f"Expected one non-None type in Union, got {non_none_args}"
+        inner_type = non_none_args[0]
+        if inner_type in primitive_types:
+            return ""
+
+        # Handle Optional[List[X]]
+        inner_origin = get_origin(inner_type)
+        inner_args = get_args(inner_type)
+        if inner_origin in (list, List) and inner_args:
+            item_type = inner_args[0]
+            if item_type in primitive_types:
+                return ""
+            return make_post_init_line(field.name, item_type.__name__, is_list=True)
+        return make_post_init_line(field.name, getattr(inner_type, "__name__", str(inner_type)))
+    return ""
+
+
+def find_extra_post_init_lines(
+    base_type: type[ResourceAbs], extension_type: type[ResourceAbs] | None = None
+) -> list[str]:
+    if extension_type is None:
+        return []
+    base_fields = set(f.name for f in fields(base_type))
+    extra_fields = [f for f in fields(extension_type) if f.name not in base_fields]
+    return [make_post_init_line_from_field(field) for field in extra_fields]
+
+
+def parse_extensions(resource_type: str, old_path: Path) -> GlobalsExtensions:
+    module = import_from_path(old_path.stem, old_path)
+    assert module
+    resource_ext_cls = getattr(module, "ResourceExt", None)
+    base_cls = import_resource_type_dataclass(resource_type, old_path)
+    extra_post_init_lines = find_extra_post_init_lines(base_cls, resource_ext_cls)
+
+    return GlobalsExtensions(
+        resource_ext_cls_used=resource_ext_cls is not None,
+        errors_func_used=getattr(module, "errors", None) is not None,
+        pre_dump_modify_func_used=getattr(module, "pre_dump_modify", None) is not None,
+        extra_post_init_lines=extra_post_init_lines,
+    )
+
+
 def import_resource_type_dataclass(resource_type: str, generated_dataclass_path: Path) -> type[ResourceAbs]:
     module = import_from_path(resource_type, generated_dataclass_path)
     assert module
@@ -250,6 +323,13 @@ def import_resource_type_dataclass(resource_type: str, generated_dataclass_path:
     return resource  # type: ignore
 
 
-def convert_and_format(schema: ResourceSchema) -> str:
-    dataclass_unformatted = convert_to_dataclass(schema)
-    return format_with_ruff(dataclass_unformatted)
+def convert_and_format(resource_type: str, schema: ResourceSchema, existing_path: Path | None = None) -> str:
+    extensions = parse_extensions(resource_type, existing_path) if existing_path else GlobalsExtensions()
+    dataclass_unformatted = convert_to_dataclass(schema, extensions)
+    if existing_path:
+        with TemporaryDirectory() as tmp_path:
+            tmp_file = Path(tmp_path) / f"{resource_type}.py"
+            copy(existing_path, tmp_file)
+            update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
+            return format_with_ruff(tmp_file.read_text())
+    return format_with_ruff(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")

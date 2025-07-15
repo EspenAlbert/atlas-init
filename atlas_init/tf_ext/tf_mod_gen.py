@@ -37,7 +37,7 @@ def generate_module(resource_type: str, settings: TfExtSettings) -> Path:
     resource_type_schema = schema.raw_resource_schema.get(resource_type)
     assert resource_type_schema, f"resource type {resource_type} not found in schema"
     schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
-    dataclass_code = convert_and_format(schema_parsed)
+    dataclass_code = convert_and_format(resource_type, schema_parsed)
     module_path = settings.module_resource_type(resource_type)
     dataclass_path = module_path / f"{resource_type}.py"
     ensure_parents_write_text(dataclass_path, dataclass_code)
