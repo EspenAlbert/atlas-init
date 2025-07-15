@@ -2,7 +2,7 @@ from dataclasses import fields, is_dataclass
 from typing import get_type_hints, get_origin, get_args, ClassVar, List, Set, Dict, Union
 
 from atlas_init.tf_ext.gen_resource_main import format_tf_content
-from atlas_init.tf_ext.models_module import ResourceAbs, ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
 
 
 def python_type_to_terraform_type(py_type) -> str:
@@ -54,26 +54,32 @@ def dataclass_to_object_type(cls) -> str:
     return "\n".join(lines)
 
 
-def generate_module_variables(python_module: ResourceTypePythonModule) -> tuple[str, str]:
+def generate_module_variables(python_module: ResourceTypePythonModule, config: ModuleGenConfig) -> tuple[str, str]:
     base_resource = python_module.resource
     assert base_resource is not None, f"{python_module} does not have a resource"
     return generate_resource_variables(
-        base_resource, base_resource.COMPUTED_ONLY_ATTRIBUTES
-    ), generate_resource_variables(python_module.resource_ext, set(python_module.base_field_names))
+        base_resource, base_resource.COMPUTED_ONLY_ATTRIBUTES, config.required_variables
+    ), generate_resource_variables(
+        python_module.resource_ext, set(python_module.base_field_names), config.required_variables
+    )
 
 
-def generate_resource_variables(resource: type[ResourceAbs] | None, ignored_names: set[str]) -> str:
+def generate_resource_variables(
+    resource: type[ResourceAbs] | None, ignored_names: set[str], required_variables: set[str] | None = None
+) -> str:
+    required_variables = required_variables or set()
     if resource is None:
         return ""
     out = []
     hints = get_type_hints(resource)
     for f in fields(resource):  # type: ignore
-        if f.name.isupper() or f.name in ignored_names:
+        field_name = f.name
+        if field_name.isupper() or field_name in ignored_names:
             continue
-        tf_type = python_type_to_terraform_type(hints[f.name])
-        out.append(f'''variable "{f.name}" {{
+        tf_type = python_type_to_terraform_type(hints[field_name])
+        default_line = "\n  default  = null" if field_name not in required_variables else ""
+        out.append(f'''variable "{field_name}" {{
   type     = {tf_type}
-  nullable = true
-  default  = null
+  nullable = true{default_line}
 }}\n''')
     return format_tf_content("\n".join(out))

@@ -1,10 +1,14 @@
 from dataclasses import dataclass, Field, fields
 from types import ModuleType
 from abc import ABC
-from typing import ClassVar
+from typing import ClassVar, Self
+from pathlib import Path
+from model_lib import Entity
+from pydantic import Field as PydanticField, model_validator
 from zero_3rdparty.object_name import as_name
 
 from atlas_init.tf_ext.py_gen import make_post_init_line_from_field
+from atlas_init.tf_ext.settings import TfExtSettings
 
 
 @dataclass
@@ -18,6 +22,44 @@ class ResourceAbs(ABC):
 def as_import_line(name: str) -> str:
     from_part, name_part = name.rsplit(".", maxsplit=1)
     return f"from {from_part} import {name_part}"
+
+
+class ModuleGenConfig(Entity):
+    name: str = ""
+    resource_types: list[str]
+    settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
+    output_dir: Path | None = None
+    required_variables: set[str] = PydanticField(default_factory=set)  # todo: project_id
+    auto_tfvars: str = ""
+    skip_python: bool = False
+
+    @model_validator(mode="after")
+    def set_defaults(self) -> Self:
+        if not self.name:
+            self.name = self.resource_types[0]
+        return self
+
+    @property
+    def module_path(self) -> Path:
+        if out_dir := self.output_dir:
+            return out_dir
+        parent_path = self.settings.modules_out_path
+        return parent_path / self.name
+
+    def main_tf_path(self, resource_type: str) -> Path:
+        if len(self.resource_types) > 1:
+            return self.module_path / f"{resource_type}.tf"
+        return self.module_path / "main.tf"
+
+    def variables_path(self, resource_type: str) -> Path:
+        if len(self.resource_types) > 1:
+            return self.module_path / f"{resource_type}_variables.tf"
+        return self.module_path / "variables.tf"
+
+    def variablesx_path(self, resource_type: str) -> Path:
+        if len(self.resource_types) > 1:
+            return self.module_path / f"{resource_type}_variablesx.tf"
+        return self.module_path / "variablesx.tf"
 
 
 @dataclass

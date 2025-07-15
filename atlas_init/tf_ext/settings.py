@@ -46,6 +46,3 @@ class TfExtSettings(StaticSettings):
     @property
     def modules_out_path(self) -> Path:
         return self.static_root / "modules"
-
-    def module_resource_type(self, resource_type: str) -> Path:
-        return self.modules_out_path / resource_type

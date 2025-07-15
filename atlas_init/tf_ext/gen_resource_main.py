@@ -3,6 +3,7 @@ from tempfile import TemporaryDirectory
 
 from ask_shell import run_and_wait
 
+from atlas_init.tf_ext.models_module import ModuleGenConfig
 from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule
 
 
@@ -42,6 +43,16 @@ data "external" "{module.resource_type}" {{
     query = {{
         input_json = jsonencode({inputs_json_value})
     }}
+}}
+"""
+
+
+def resource_declare_direct(resource_type: str, non_computed_field_names: list[str]) -> str:
+    field_values = "\n".join(f"    {name} = var.{name}" for name in non_computed_field_names)
+
+    return f"""
+resource "{resource_type}" "this" {{
+{field_values}
 }}
 """
 
@@ -90,21 +101,29 @@ def format_tf_content(content: str) -> str:
         return tmp_file.read_text()
 
 
-def generate_resource_main(python_module: ResourceTypePythonModule) -> str:
+def generate_resource_main(python_module: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
     resource = python_module.resource
     assert resource, f"{python_module} does not have a resource"
+    resource_hcl = (
+        resource_declare_direct(
+            resource_type=python_module.resource_type,
+            non_computed_field_names=python_module.base_field_names_not_computed,
+        )
+        if config.skip_python
+        else resource_declare(
+            resource_type=python_module.resource_type,
+            required_fields=resource.REQUIRED_ATTRIBUTES,
+            nested_fields=resource.NESTED_ATTRIBUTES,
+            field_names=python_module.base_field_names_not_computed,
+        )
+    )
     return format_tf_content(
         "\n".join(
             [
-                locals_def(python_module),
-                data_external(python_module),
+                *([] if config.skip_python else [locals_def(python_module)]),
+                *([] if config.skip_python else [data_external(python_module)]),
                 "",
-                resource_declare(
-                    resource_type=python_module.resource_type,
-                    required_fields=resource.REQUIRED_ATTRIBUTES,
-                    nested_fields=resource.NESTED_ATTRIBUTES,
-                    field_names=python_module.base_field_names_not_computed,
-                ),
+                resource_hcl,
                 "",
             ]
         )
