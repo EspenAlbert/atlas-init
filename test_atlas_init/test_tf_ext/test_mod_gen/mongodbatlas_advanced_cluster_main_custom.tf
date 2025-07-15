@@ -1,6 +1,6 @@
 
 locals {
-  mongodbatlas_advanced_cluster_vars = {
+  mongodbatlas_advanced_cluster_varsx = {
     accept_data_risks_and_force_replica_set_reconfig = var.accept_data_risks_and_force_replica_set_reconfig
     advanced_configuration                           = var.advanced_configuration
     backup_enabled                                   = var.backup_enabled
@@ -28,13 +28,18 @@ locals {
     timeouts                                         = var.timeouts
     version_release_system                           = var.version_release_system
   }
+  mongodbatlas_advanced_cluster_vars = {
+    auto_scaling_compute  = var.auto_scaling_compute
+    default_instance_size = var.default_instance_size
+    electable             = var.electable
+  }
 }
 
 
 data "external" "mongodbatlas_advanced_cluster" {
   program = ["python3", "${path.module}/mongodbatlas_advanced_cluster.py"]
   query = {
-    input_json = jsonencode(local.mongodbatlas_advanced_cluster_vars)
+    input_json = jsonencode(merge(local.mongodbatlas_advanced_cluster_varsx, local.mongodbatlas_advanced_cluster_vars))
   }
 }
 

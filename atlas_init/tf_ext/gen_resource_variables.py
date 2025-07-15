@@ -1,7 +1,8 @@
 from dataclasses import fields, is_dataclass
 from typing import get_type_hints, get_origin, get_args, ClassVar, List, Set, Dict, Union
 
-from .gen_resource_main import ResourceAbs, format_tf_content
+from atlas_init.tf_ext.gen_resource_main import format_tf_content
+from atlas_init.tf_ext.models_module import ResourceAbs, ResourceTypePythonModule
 
 
 def python_type_to_terraform_type(py_type) -> str:
@@ -41,7 +42,11 @@ def dataclass_to_object_type(cls) -> str:
     hints = get_type_hints(cls)
     for f in fields(cls):
         # Skip ClassVars and internal fields
-        if f.name.isupper() or (get_origin(f.type) is ClassVar) or f.name in cls.COMPUTED_ONLY_ATTRIBUTES:
+        if (
+            f.name.isupper()
+            or (get_origin(f.type) is ClassVar)
+            or f.name in getattr(cls, ResourceAbs.COMPUTED_ONLY_ATTRIBUTES_NAME, set())
+        ):
             continue
         tf_type = python_type_to_terraform_type(hints[f.name])
         lines.append(f"  {f.name} = optional({tf_type})")
@@ -49,12 +54,21 @@ def dataclass_to_object_type(cls) -> str:
     return "\n".join(lines)
 
 
-def generate_resource_variables(resource: type[ResourceAbs]) -> str:
+def generate_module_variables(python_module: ResourceTypePythonModule) -> tuple[str, str]:
+    base_resource = python_module.resource
+    assert base_resource is not None, f"{python_module} does not have a resource"
+    return generate_resource_variables(
+        base_resource, base_resource.COMPUTED_ONLY_ATTRIBUTES
+    ), generate_resource_variables(python_module.resource_ext, set(python_module.base_field_names))
+
+
+def generate_resource_variables(resource: type[ResourceAbs] | None, ignored_names: set[str]) -> str:
+    if resource is None:
+        return ""
     out = []
     hints = get_type_hints(resource)
-    computed_only = resource.COMPUTED_ONLY_ATTRIBUTES
     for f in fields(resource):  # type: ignore
-        if f.name.isupper() or f.name in computed_only:
+        if f.name.isupper() or f.name in ignored_names:
             continue
         tf_type = python_type_to_terraform_type(hints[f.name])
         out.append(f'''variable "{f.name}" {{

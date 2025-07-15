@@ -1,17 +1,18 @@
 import logging
 from pathlib import Path
 
+import typer
 from ask_shell import run_and_wait
 from model_lib import parse_model
 from zero_3rdparty.file_utils import ensure_parents_write_text
+
+from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
-from atlas_init.tf_ext.gen_resource_variables import generate_resource_variables
-from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_dataclass
-from atlas_init.tf_ext.settings import TfExtSettings
+from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.newres import prepare_newres
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
-from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
-import typer
+from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_python_module
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 
@@ -37,16 +38,19 @@ def generate_module(resource_type: str, settings: TfExtSettings) -> Path:
     resource_type_schema = schema.raw_resource_schema.get(resource_type)
     assert resource_type_schema, f"resource type {resource_type} not found in schema"
     schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
-    dataclass_code = convert_and_format(resource_type, schema_parsed)
+
     module_path = settings.module_resource_type(resource_type)
     dataclass_path = module_path / f"{resource_type}.py"
+    dataclass_code = convert_and_format(resource_type, schema_parsed, dataclass_path)
     ensure_parents_write_text(dataclass_path, dataclass_code)
-    resource = import_resource_type_dataclass(resource_type, dataclass_path)
-    main_tf = generate_resource_main(resource_type, resource)
+
+    python_module = import_resource_type_python_module(resource_type, dataclass_path)
+    main_tf = generate_resource_main(python_module)
     main_path = module_path / f"{resource_type}.tf"
     ensure_parents_write_text(main_path, main_tf)
 
-    variables_tf = generate_resource_variables(resource)
+    variablesx_tf, variables_tf = generate_module_variables(python_module)  # this can return two files
+    # todo: update
     variables_path = module_path / f"{resource_type}_variables.tf"
     ensure_parents_write_text(variables_path, variables_tf)
     provider_path = module_path / "providers.tf"

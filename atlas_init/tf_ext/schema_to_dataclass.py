@@ -1,44 +1,23 @@
 from __future__ import annotations
-from dataclasses import dataclass, field, fields, Field
-import logging
+
 import keyword
-from tempfile import TemporaryDirectory
+import logging
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, List, get_origin, get_args, Union
+from typing import Any
 
 from ask_shell import ShellError, run_and_wait
 from zero_3rdparty.file_utils import copy, update_between_markers
-from zero_3rdparty.object_name import as_name
-from atlas_init.tf_ext.gen_resource_main import ResourceAbs
+
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
+from atlas_init.tf_ext.models_module import ResourceTypePythonModule
+from atlas_init.tf_ext.py_gen import as_set, make_post_init_line, primitive_types
 
 logger = logging.getLogger(__name__)
 
 MARKER_START = "# codegen atlas-init-marker-start"
 MARKER_END = "# codegen atlas-init-marker-end"
-
-
-def as_set(values: list[str]) -> str:
-    return f"{{{', '.join(repr(v) for v in values)}}}" if values else "set()"
-
-
-def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
-    if is_map:
-        return (
-            f"        if self.{field_name} is not None:\n"
-            f"            self.{field_name} = {{k: {elem_type}(**v) if not isinstance(v, {elem_type}) else v for k, v in self.{field_name}.items()}}"
-        )
-    elif is_list:
-        return (
-            f"        if self.{field_name} is not None:\n"
-            f"            self.{field_name} = [{elem_type}(**x) if not isinstance(x, {elem_type}) else x for x in self.{field_name}]"
-        )
-    else:
-        return (
-            f"        if self.{field_name} is not None and not isinstance(self.{field_name}, {elem_type}):\n"
-            f"            self.{field_name} = {elem_type}(**self.{field_name})"
-        )
 
 
 def is_computed_only(attr: SchemaAttribute) -> bool:
@@ -90,7 +69,7 @@ def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
         return "Any"
 
 
-def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) -> str:
+def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonModule) -> str:
     class_defs = []
 
     def block_to_class(block: SchemaBlock, class_name: str, extra_post_init: list[str] | None = None) -> str:
@@ -180,7 +159,7 @@ def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) 
 
     # Root class
     root_class_name = "Resource"
-    class_defs.append(block_to_class(schema.block, root_class_name, extensions.extra_post_init_lines))
+    class_defs.append(block_to_class(schema.block, root_class_name, existing.extra_post_init_lines))
 
     # Generate necessary imports
     used_types = set()
@@ -203,28 +182,16 @@ def convert_to_dataclass(schema: ResourceSchema, extensions: GlobalsExtensions) 
         import_lines.append("from typing import Union")
     if "Tuple" in used_types:
         import_lines.append("from typing import Tuple")
-    import_lines.extend(extensions.extra_imports)
+    import_lines.extend(existing.extra_import_lines)
 
-    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint(extensions)])
+    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint(existing)])
     return module_str.strip() + "\n"
 
 
-@dataclass
-class GlobalsExtensions:
-    resource_ext_cls_used: bool = False
-    errors_func_used: bool = False
-    modify_out_func_used: bool = False
-    extra_imports: list[str] = field(default_factory=list)
-    extra_post_init_lines: list[str] = field(default_factory=list)
-
-
-primitive_types = (str, float, bool, int)
-
-
-def main_entrypoint(extensions: GlobalsExtensions) -> str:
-    parse_cls = "ResourceExt" if extensions.resource_ext_cls_used else "Resource"
-    errors_func_call = r'"\n".join(errors(resource))' if extensions.errors_func_used else '""'
-    modify_out_func_call = "\n    resource = modify_out(resource)" if extensions.modify_out_func_used else ""
+def main_entrypoint(existing: ResourceTypePythonModule) -> str:
+    parse_cls = "ResourceExt" if existing.resource_ext_cls_used else "Resource"
+    errors_func_call = r'"\n".join(errors(resource))' if existing.errors_func_used else '""'
+    modify_out_func_call = "\n    resource = modify_out(resource)" if existing.modify_out_func_used else ""
     return f"""
 def main():
     input_data = sys.stdin.read()
@@ -274,82 +241,24 @@ def import_from_path(module_name: str, file_path: Path) -> ModuleType:
     return module
 
 
-def make_post_init_line_from_field(field: Field) -> str:
-    field_type = field.type
-    origin = get_origin(field_type)
-    args = get_args(field_type)
-
-    if origin is Union and type(None) in args:
-        non_none_args = [arg for arg in args if arg is not type(None)]
-        assert len(non_none_args) == 1, f"Expected one non-None type in Union, got {non_none_args}"
-        inner_type = non_none_args[0]
-        if inner_type in primitive_types:
-            return ""
-
-        # Handle Optional[List[X]]
-        inner_origin = get_origin(inner_type)
-        inner_args = get_args(inner_type)
-        if inner_origin in (list, List) and inner_args:
-            item_type = inner_args[0]
-            if item_type in primitive_types:
-                return ""
-            return make_post_init_line(field.name, item_type.__name__, is_list=True)
-        return make_post_init_line(field.name, getattr(inner_type, "__name__", str(inner_type)))
-    return ""
-
-
-def find_extra_post_init_lines(
-    base_type: type[ResourceAbs], extension_type: type[ResourceAbs] | None = None
-) -> list[str]:
-    if extension_type is None:
-        return []
-    base_fields = set(f.name for f in fields(base_type))
-    extra_fields = [f for f in fields(extension_type) if f.name not in base_fields]
-    return [make_post_init_line_from_field(field) for field in extra_fields]
-
-
-def as_import_line(name: str) -> str:
-    from_part, name_part = name.rsplit(".", maxsplit=1)
-    return f"from {from_part} import {name_part}"
-
-
-def parse_extensions(resource_type: str, old_path: Path) -> GlobalsExtensions:
-    module = import_from_path(old_path.stem, old_path)
-    assert module
-    resource_ext_cls = getattr(module, "ResourceExt", None)
-    base_cls = import_resource_type_dataclass(resource_type, old_path)
-    extra_post_init_lines = find_extra_post_init_lines(base_cls, resource_ext_cls)
-
-    extra_imports = [
-        as_import_line(as_name(value))
-        for key, value in vars(module).items()
-        if not key.startswith("_") and not as_name(value).startswith(("__", resource_type))
-    ]
-
-    return GlobalsExtensions(
-        resource_ext_cls_used=resource_ext_cls is not None,
-        errors_func_used=getattr(module, "errors", None) is not None,
-        modify_out_func_used=getattr(module, "modify_out", None) is not None,
-        extra_post_init_lines=extra_post_init_lines,
-        extra_imports=extra_imports,
-    )
-
-
-def import_resource_type_dataclass(resource_type: str, generated_dataclass_path: Path) -> type[ResourceAbs]:
+def import_resource_type_python_module(resource_type: str, generated_dataclass_path: Path) -> ResourceTypePythonModule:
     module = import_from_path(resource_type, generated_dataclass_path)
     assert module
     resource = getattr(module, "Resource")
     assert resource
-    return resource  # type: ignore
+    resource_ext = getattr(module, "ResourceExt", None)
+    return ResourceTypePythonModule(resource_type, resource, resource_ext, module)
 
 
 def convert_and_format(resource_type: str, schema: ResourceSchema, existing_path: Path | None = None) -> str:
-    extensions = parse_extensions(resource_type, existing_path) if existing_path else GlobalsExtensions()
-    dataclass_unformatted = convert_to_dataclass(schema, extensions)
-    if existing_path:
+    if existing_path is not None and existing_path.exists():
+        resource = import_resource_type_python_module(resource_type, existing_path)
         with TemporaryDirectory() as tmp_path:
             tmp_file = Path(tmp_path) / f"{resource_type}.py"
             copy(existing_path, tmp_file)
+            dataclass_unformatted = convert_to_dataclass(schema, resource)
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
             return py_file_validate_and_auto_fixes(tmp_file.read_text())
+    existing = ResourceTypePythonModule(resource_type)
+    dataclass_unformatted = convert_to_dataclass(schema, existing)
     return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")

@@ -1,36 +1,46 @@
-from abc import ABC
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import ClassVar
-from dataclasses import dataclass, fields
 
 from ask_shell import run_and_wait
 
-
-@dataclass
-class ResourceAbs(ABC):
-    REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
-    NESTED_ATTRIBUTES: ClassVar[set[str]] = set()
-    COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
+from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule
 
 
-def locals_def(resource_type: str, field_names: list[str]) -> str:
-    variable_defs = "\n".join(f"        {name} = var.{name}" for name in field_names)
+def local_name_varsx(resource_type: str) -> str:
+    return f"{resource_type}_varsx"
+
+
+def local_name_vars(resource_type: str) -> str:
+    return f"{resource_type}_vars"
+
+
+def locals_def(module: ResourceTypePythonModule) -> str:
+    base_defs = "\n".join(f"        {name} = var.{name}" for name in module.base_field_names_not_computed)
+    if extras := module.extra_fields_names:
+        extra_defs = "\n".join(f"        {name} = var.{name}" for name in extras)
+        base_def = f"    {local_name_varsx(module.resource_type)} = {{\n{base_defs}\n    }}"
+        extra_def = f"\n    {local_name_vars(module.resource_type)} = {{\n{extra_defs}\n    }}"
+    else:
+        base_def = f"    {local_name_vars(module.resource_type)} = {{\n{base_defs}\n    }}"
+        extra_def = ""
     return f"""
 locals {{
-    {resource_type}_fields = {{
-{variable_defs}
-    }}
+    {base_def}{extra_def}
 }}
 """
 
 
-def data_external(resource_type: str, field_names: list[str]) -> str:
+def data_external(module: ResourceTypePythonModule) -> str:
+    inputs_json_value = (
+        f"merge(local.{local_name_varsx(module.resource_type)}, local.{local_name_vars(module.resource_type)})"
+        if module.extra_fields_names
+        else f"local.{local_name_vars(module.resource_type)}"
+    )
     return f"""
-data "external" "{resource_type}" {{
-    program = ["python3", "${{path.module}}/{resource_type}.py"]
+data "external" "{module.resource_type}" {{
+    program = ["python3", "${{path.module}}/{module.resource_type}.py"]
     query = {{
-        input_json = jsonencode(local.{resource_type}_fields)
+        input_json = jsonencode({inputs_json_value})
     }}
 }}
 """
@@ -39,7 +49,6 @@ data "external" "{resource_type}" {{
 def resource_declare(
     resource_type: str, required_fields: set[str], nested_fields: set[str], field_names: list[str]
 ) -> str:
-    # TODO: continue, use the ref of the data.external
     def output_field(field_name: str) -> str:
         return f"data.external.{resource_type}.result.{field_name}"
 
@@ -81,21 +90,20 @@ def format_tf_content(content: str) -> str:
         return tmp_file.read_text()
 
 
-def generate_resource_main(resource_type: str, resource: type[ResourceAbs]) -> str:
-    computed_only_fields = resource.COMPUTED_ONLY_ATTRIBUTES
-    field_names = sorted(field.name for field in fields(resource) if field.name not in computed_only_fields)  # type: ignore
+def generate_resource_main(python_module: ResourceTypePythonModule) -> str:
+    resource = python_module.resource
+    assert resource, f"{python_module} does not have a resource"
     return format_tf_content(
         "\n".join(
-            line
-            for line in [
-                locals_def(resource_type=resource_type, field_names=field_names),
-                data_external(resource_type=resource_type, field_names=field_names),
+            [
+                locals_def(python_module),
+                data_external(python_module),
                 "",
                 resource_declare(
-                    resource_type=resource_type,
+                    resource_type=python_module.resource_type,
                     required_fields=resource.REQUIRED_ATTRIBUTES,
                     nested_fields=resource.NESTED_ATTRIBUTES,
-                    field_names=field_names,
+                    field_names=python_module.base_field_names_not_computed,
                 ),
                 "",
             ]

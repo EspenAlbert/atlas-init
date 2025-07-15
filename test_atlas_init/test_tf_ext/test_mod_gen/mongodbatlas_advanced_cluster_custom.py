@@ -305,11 +305,11 @@ class Resource:
     version_release_system: Optional[str] = None
 
     def __post_init__(self):
-        if self.electable is not None and not isinstance(self.electable, Spec):
-            self.electable = Spec(**self.electable)
         if self.auto_scaling_compute is not None and not isinstance(self.auto_scaling_compute, AutoScalingCompute):
             self.auto_scaling_compute = AutoScalingCompute(**self.auto_scaling_compute)
 
+        if self.electable is not None and not isinstance(self.electable, Spec):
+            self.electable = Spec(**self.electable)
         if self.advanced_configuration is not None and not isinstance(
             self.advanced_configuration, Resource_Advanced_configuration
         ):
