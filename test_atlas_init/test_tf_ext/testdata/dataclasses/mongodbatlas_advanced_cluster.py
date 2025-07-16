@@ -1,7 +1,5 @@
 # codegen atlas-init-marker-start
-import json
-import sys
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Optional, List, Dict, Any, Set, ClassVar
 
 
@@ -289,29 +287,5 @@ class Resource:
             )
             self.timeouts = Timeout(**self.timeouts)
 
-
-def main():
-    input_data = sys.stdin.read()
-    # Parse the input as JSON
-    params = json.loads(input_data)
-    input_json = params["input_json"]
-    resource = Resource(**json.loads(input_json))
-    error_message = ""
-    primitive_types = (str, float, bool, int)
-    output = {
-        key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
-        for key, value in asdict(resource).items()
-    }
-    output["error_message"] = error_message
-    json_str = json.dumps(output)
-    from pathlib import Path
-
-    logs_out = Path(__file__).parent / "logs.json"
-    logs_out.write_text(json_str)
-    print(json_str)
-
-
-if __name__ == "__main__":
-    main()
 
 # codegen atlas-init-marker-end

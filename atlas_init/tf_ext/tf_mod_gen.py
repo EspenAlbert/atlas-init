@@ -63,7 +63,7 @@ def generate_module(config: ModuleGenConfig) -> Path:
             schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
 
             dataclass_path = module_path / f"{resource_type}.py"
-            dataclass_code = convert_and_format(resource_type, schema_parsed, dataclass_path)
+            dataclass_code = convert_and_format(resource_type, schema_parsed, config, existing_path=dataclass_path)
             ensure_parents_write_text(dataclass_path, dataclass_code)
 
             python_module = import_resource_type_python_module(resource_type, dataclass_path)

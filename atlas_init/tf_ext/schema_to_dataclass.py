@@ -17,7 +17,7 @@ from pydantic import model_validator
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy, update_between_markers
 
-from atlas_init.tf_ext.models_module import ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.py_gen import (
     as_set,
@@ -266,19 +266,36 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
         "import json",
         "import sys",
         "from dataclasses import asdict, dataclass, field",
-        "from typing import Optional, List, Dict, Any, Set, ClassVar",
+        "from typing import Optional, List, Dict, Any, Set, ClassVar, Union, Iterable",
     ]
     import_lines.extend(existing.extra_import_lines)
 
-    module_str = "\n".join(import_lines + [""] + class_defs + [main_entrypoint(existing)])
+    module_str = "\n".join(import_lines + [""] + class_defs)
     return module_str.strip() + "\n"
 
 
-def main_entrypoint(existing: ResourceTypePythonModule) -> str:
+_primitive_conversion = """
+    
+def format_primitive(value: Union[str, float, bool, int, None]):
+    if value is None:
+        return None
+    return str(value)
+"""
+_debug_logs = """
+    from pathlib import Path
+    logs_out = Path(__file__).parent / "logs.json"
+    logs_out.write_text(json_str)
+"""
+
+
+def main_entrypoint(existing: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
     parse_cls = "ResourceExt" if existing.resource_ext_cls_used else "Resource"
     errors_func_call = r'"\n".join(errors(resource))' if existing.errors_func_used else '""'
     modify_out_func_call = "\n    resource = modify_out(resource)" if existing.modify_out_func_used else ""
-    return f"""
+    logs_debug = _debug_logs if config.debug_json_logs else ""
+    return (
+        _primitive_conversion
+        + f"""
 def main():
     input_data = sys.stdin.read()
     # Parse the input as JSON
@@ -287,17 +304,18 @@ def main():
     resource = {parse_cls}(**json.loads(input_json))
     error_message = {errors_func_call}
     primitive_types = ({", ".join(t.__name__ for t in primitive_types)}){modify_out_func_call}
-    output = {{key: value if value is None or isinstance(value, primitive_types) else json.dumps(value) for key, value in asdict(resource).items()}}
+    output = {{
+        key: format_primitive(value) if value is None or isinstance(value, primitive_types) else json.dumps(value)
+        for key, value in asdict(resource).items()
+    }}
     output["error_message"] = error_message
-    json_str = json.dumps(output)
-    from pathlib import Path
-    logs_out = Path(__file__).parent / "logs.json"
-    logs_out.write_text(json_str)
+    json_str = json.dumps(output){logs_debug}
     print(json_str)
 if __name__ == "__main__":
     main()
 
 """
+    )
 
 
 def py_file_validate_and_auto_fixes(code: str, error_hint: str = "") -> str:
@@ -372,9 +390,7 @@ def simplify_classes(py_code: str) -> tuple[str, set[str]]:
             new_name = extract_last_name_part(cls_name)
             py_code = _safe_replace(py_code, cls_name, new_name)
             add_new_name(new_name)
-        return py_file_validate_and_auto_fixes(
-            py_code, error_hint="Duplicate class names? Can consider skipping the simplify_classes step"
-        ), new_names
+        return py_code, new_names
 
 
 def _safe_replace(text: str, old: str, new: str) -> str:
@@ -415,7 +431,10 @@ SKIP_FILTER = {"Resource", "ResourceExt"}
 
 
 def convert_and_format(
-    resource_type: str, schema: ResourceSchema, existing_path: Path | None = None, skip_simplify: bool = False
+    resource_type: str,
+    schema: ResourceSchema,
+    config: ModuleGenConfig,
+    existing_path: Path | None = None,
 ) -> str:
     if existing_path is not None and existing_path.exists():
         py_module = import_resource_type_python_module(resource_type, existing_path)
@@ -423,13 +442,13 @@ def convert_and_format(
             tmp_file = Path(tmp_path) / f"{resource_type}.py"
             copy(existing_path, tmp_file)
             dataclass_unformatted = convert_to_dataclass(schema, py_module)
+            dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
+            dataclass_unformatted = f"{dataclass_unformatted}\n{main_entrypoint(py_module, config)}"
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
             move_main_call_to_end(tmp_file)
-            result = run_fmt_and_fixes(tmp_file)
             ensure_dataclass_use_conversion(py_module.dataclasses, tmp_file, SKIP_FILTER)
-            result = run_fmt_and_fixes(tmp_file)
-    else:
-        existing = ResourceTypePythonModule(resource_type)
-        dataclass_unformatted = convert_to_dataclass(schema, existing)
-        result = py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")
-    return result if skip_simplify else simplify_classes(result)[0]
+            return run_fmt_and_fixes(tmp_file)
+    existing = ResourceTypePythonModule(resource_type)
+    dataclass_unformatted = convert_to_dataclass(schema, existing)
+    dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
+    return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")

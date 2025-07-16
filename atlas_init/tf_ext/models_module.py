@@ -37,6 +37,7 @@ class ModuleGenConfig(Entity):
     required_variables: set[str] = PydanticField(default_factory=set)  # todo: project_id
     auto_tfvars: str = ""
     skip_python: bool = False
+    debug_json_logs: bool = False
 
     @model_validator(mode="after")
     def set_defaults(self) -> Self:

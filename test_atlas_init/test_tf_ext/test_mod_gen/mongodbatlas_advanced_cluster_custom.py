@@ -2,8 +2,7 @@
 import json
 import sys
 from dataclasses import asdict, dataclass
-from typing import Optional, List, Dict, Any, Set, ClassVar
-from typing import Iterable
+from typing import Optional, List, Dict, Any, Set, ClassVar, Union, Iterable
 
 
 @dataclass
@@ -302,6 +301,12 @@ class Resource:
             self.electable = CustomSpec(**self.electable)
 
 
+def format_primitive(value: Union[str, float, bool, int, None]):
+    if value is None:
+        return None
+    return str(value)
+
+
 def main():
     input_data = sys.stdin.read()
     # Parse the input as JSON
@@ -312,15 +317,11 @@ def main():
     primitive_types = (str, float, bool, int)
     resource = modify_out(resource)
     output = {
-        key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
+        key: format_primitive(value) if value is None or isinstance(value, primitive_types) else json.dumps(value)
         for key, value in asdict(resource).items()
     }
     output["error_message"] = error_message
     json_str = json.dumps(output)
-    from pathlib import Path
-
-    logs_out = Path(__file__).parent / "logs.json"
-    logs_out.write_text(json_str)
     print(json_str)
 
 

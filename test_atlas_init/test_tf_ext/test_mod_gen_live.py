@@ -28,19 +28,39 @@ replication_specs = [{
 }]
 """
 
+_custom_flat_vars = """
+aws_regions = {
+    EU_WEST_1 = 3
+    US_EAST_1 = 2
+}
+azure_regions = {
+    US_WEST_2 = 2
+}
+cloud_order = ["aws", "azure"]
+instance_size = "M10"
+num_shards = 2
+
+project_id   = "664619d870c247237f4b86a6"
+name         = "created-from-custom-flat"
+"""
+
 
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
     CLUSTER_CUSTOM = "cluster_custom"
+    CLUSTER_CUSTOM_FLAT = "cluster_custom_flat"
     CLUSTER_SKIP_PYTHON = "cluster_skip_python"
 
-    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_SKIP_PYTHON]
+    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_CUSTOM_FLAT, CLUSTER_SKIP_PYTHON]
 
     @classmethod
     def extra_files(cls, name, dataclass_manual_path: Callable[[str], Path]) -> dict[Path, str]:
         return {
             cls.CLUSTER_CUSTOM: {
                 dataclass_manual_path("mongodbatlas_advanced_cluster"): "mongodbatlas_advanced_cluster.py"
+            },
+            cls.CLUSTER_CUSTOM_FLAT: {
+                dataclass_manual_path("mongodbatlas_advanced_cluster_flat"): "mongodbatlas_advanced_cluster.py"
             },
         }.get(name, {})
 
@@ -49,6 +69,7 @@ class _ModuleNames:
         return {
             cls.CLUSTER_PLAIN: _normal_replication_spec_vars,
             cls.CLUSTER_CUSTOM: _electable_and_auto_scaling_vars,
+            cls.CLUSTER_CUSTOM_FLAT: _custom_flat_vars,
             cls.CLUSTER_SKIP_PYTHON: skip_python_config,
         }.get(name, "")
 
