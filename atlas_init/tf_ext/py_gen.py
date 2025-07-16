@@ -30,7 +30,7 @@ def make_post_init_line_optional(field_name: str, elem_type: str, is_map: bool =
     else:
         return (
             f"        if self.{field_name} is not None and not isinstance(self.{field_name}, {elem_type}):\n"
-            f"            assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}'\n"
+            f'            assert isinstance(self.{field_name}, dict), f"Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}"\n'
             f"            self.{field_name} = {elem_type}(**self.{field_name})"
         )
 
@@ -38,18 +38,18 @@ def make_post_init_line_optional(field_name: str, elem_type: str, is_map: bool =
 def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
     if is_map:
         return (
-            f"        assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a dict, got {{type(self.{field_name})}}'\n"
+            f'        assert isinstance(self.{field_name}, dict), f"Expected {field_name} to be a dict, got {{type(self.{field_name})}}"\n'
             f"        self.{field_name} = {{k:v if isinstance(v, {elem_type}) else {elem_type}(**v) for k, v in self.{field_name}.items()}}"
         )
     elif is_list:
         return (
-            f"        assert isinstance(self.{field_name}, list), f'Expected {field_name} to be a list, got {{type(self.{field_name})}}'\n"
+            f'        assert isinstance(self.{field_name}, list), f"Expected {field_name} to be a list, got {{type(self.{field_name})}}"\n'
             f"        self.{field_name} = [x if isinstance(x, {elem_type}) else {elem_type}(**x) for x in self.{field_name}]"
         )
     else:
         return (
             f"        if not isinstance(self.{field_name}, {elem_type}):\n"
-            f"            assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}'\n"
+            f'            assert isinstance(self.{field_name}, dict), f"Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}"\n'
             f"            self.{field_name} = {elem_type}(**self.{field_name})"
         )
 

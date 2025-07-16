@@ -2,6 +2,7 @@ from dataclasses import dataclass  # noqa: F401
 from typing import Optional  # noqa: F401
 
 from atlas_init.tf_ext.py_gen import ensure_dataclass_use_conversion
+from atlas_init.tf_ext.schema_to_dataclass import run_fmt_and_fixes
 
 _dataclasses_py = """
 @dataclass
@@ -45,4 +46,5 @@ def test_make_post_init_line_from_field(tmp_path, file_regression):
     py_path.write_text(_extra_imports + _dataclasses_py + _dataclasses_py2)
     dataclasses = {key: globals()[key] for key in ("_MyCls", "_Nested")}
     ensure_dataclass_use_conversion(dataclasses, py_path, set())
+    run_fmt_and_fixes(py_path)
     file_regression.check(py_path.read_text(), basename="post_init_generation", extension=".py")

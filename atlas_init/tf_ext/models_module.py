@@ -1,14 +1,19 @@
+from collections import defaultdict
 from dataclasses import dataclass, Field, fields
 from types import ModuleType
 from abc import ABC
-from typing import ClassVar, Self
+from typing import ClassVar, Self, TypeAlias
 from pathlib import Path
-from model_lib import Entity
+from model_lib import Entity, dump, parse_dict
 from pydantic import Field as PydanticField, model_validator
+from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.object_name import as_name
 
 from atlas_init.tf_ext.py_gen import make_post_init_line_from_field, module_dataclasses
 from atlas_init.tf_ext.settings import TfExtSettings
+
+
+ResourceTypeT: TypeAlias = str
 
 
 @dataclass
@@ -70,6 +75,14 @@ class ModuleGenConfig(Entity):
         if len(self.resource_types) > 1:
             return f"{resource_type}_{attr_name}"
         return attr_name
+
+    def resolve_resource_type(self, path: Path) -> ResourceTypeT:
+        if len(self.resource_types) == 1:
+            return self.resource_types[0]
+        for resource_type in self.resource_types:
+            if path.name.startswith(resource_type):
+                return resource_type
+        raise ValueError(f"Could not resolve resource type for path {path}")
 
 
 @dataclass
@@ -146,3 +159,64 @@ class ResourceTypePythonModule:
             for key, value in vars(module).items()
             if not key.startswith("_") and not as_name(value).startswith(("__", self.resource_type))
         ]
+
+
+class MissingDescriptionError(Exception):
+    def __init__(self, attribute_name: str, resource_type: ResourceTypeT):
+        super().__init__(f"Missing description for attribute {attribute_name} in resource type {resource_type}")
+        self.attribute_name = attribute_name
+        self.resource_type = resource_type
+
+
+class AttributeDescriptions(Entity):
+    manual_nested: dict[ResourceTypeT, dict[str, str]] = PydanticField(default_factory=lambda: defaultdict(dict))
+    generated_nested: dict[ResourceTypeT, dict[str, str]] = PydanticField(default_factory=lambda: defaultdict(dict))
+    manual_flat: dict[str, str] = PydanticField(default_factory=dict)
+    generated_flat: dict[str, str] = PydanticField(default_factory=dict)
+
+    def resolve_description(self, attribute_name: str, resource_type: ResourceTypeT) -> str:
+        lookup_order = [
+            self.manual_nested.get(resource_type, {}),
+            self.generated_nested.get(resource_type, {}),
+            self.manual_flat,
+            self.generated_flat,
+        ]
+        try:
+            return next(desc for desc_dict in lookup_order if (desc := desc_dict.get(attribute_name)))
+        except StopIteration as e:
+            raise MissingDescriptionError(attribute_name, resource_type) from e
+
+
+def parse_attribute_descriptions(settings: TfExtSettings) -> AttributeDescriptions:
+    return AttributeDescriptions(
+        manual_nested=parse_dict(settings.attribute_resource_descriptions_manual_file_path)
+        if settings.attribute_resource_descriptions_manual_file_path.exists()
+        else {},
+        generated_nested=parse_dict(settings.attribute_resource_descriptions_file_path)
+        if settings.attribute_resource_descriptions_file_path.exists()
+        else {},
+        manual_flat=parse_dict(settings.attribute_description_manual_file_path)
+        if settings.attribute_description_manual_file_path.exists()
+        else {},
+        generated_flat=parse_dict(settings.attribute_description_file_path)
+        if settings.attribute_description_file_path.exists()
+        else {},
+    )
+
+
+def store_updated_attribute_description(
+    existing: AttributeDescriptions,
+    settings: TfExtSettings,
+    attribute_name: str,
+    description: str,
+    resource_type: ResourceTypeT = "",
+):
+    if resource_type:
+        out_path = settings.attribute_resource_descriptions_manual_file_path
+        existing.manual_nested[resource_type][attribute_name] = description
+        out_yaml = dump(existing.manual_nested, "yaml")
+    else:
+        out_path = settings.attribute_description_manual_file_path
+        existing.manual_flat[attribute_name] = description
+        out_yaml = dump(existing.manual_flat, "yaml")
+    ensure_parents_write_text(out_path, out_yaml)

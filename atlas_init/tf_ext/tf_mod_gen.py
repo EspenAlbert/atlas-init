@@ -2,15 +2,21 @@ import logging
 from pathlib import Path
 
 import typer
-from ask_shell import new_task, run_and_wait
+from ask_shell import new_task, run_and_wait, text
 from model_lib import parse_model
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
+from atlas_init.cli_tf.example_update import UpdateExamples, update_examples
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
-from atlas_init.tf_ext.models_module import ModuleGenConfig
+from atlas_init.tf_ext.models_module import (
+    MissingDescriptionError,
+    ModuleGenConfig,
+    parse_attribute_descriptions,
+    store_updated_attribute_description,
+)
 from atlas_init.tf_ext.newres import prepare_newres
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
 from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_python_module
@@ -77,6 +83,8 @@ def generate_module(config: ModuleGenConfig) -> Path:
             if output_tf := generate_resource_output(python_module, config):
                 output_path = config.output_path(resource_type)
                 ensure_parents_write_text(output_path, output_tf)
+            if config.skip_python:
+                dataclass_path.unlink(missing_ok=True)
 
     provider_path = module_path / "providers.tf"
     if not provider_path.exists():
@@ -101,5 +109,30 @@ def generate_module(config: ModuleGenConfig) -> Path:
 
 def module_pipeline(config: ModuleGenConfig) -> Path:
     path = config.module_path
+    attribute_descriptions = parse_attribute_descriptions(config.settings)
+    settings = config.settings
+
+    def new_description(name: str, old_description: str, path: Path) -> str:
+        resource_type = config.resolve_resource_type(path)
+        try:
+            return attribute_descriptions.resolve_description(name, resource_type)
+        except MissingDescriptionError:
+            if new_text := text(
+                f"Enter description for variable/output {name} in {resource_type} for {path} (empty to skip)",
+                default="",
+            ):
+                store_updated_attribute_description(attribute_descriptions, settings, name, new_text, resource_type)
+            return new_text
+
+    out_event = update_examples(
+        UpdateExamples(
+            examples_base_dir=path,
+            skip_tf_fmt=True,
+            new_description_call=new_description,
+        )
+    )
+    if out_event.changes:
+        logger.info(f"Updated attribute descriptions: {len(out_event.changes)}")
+        run_and_wait("terraform fmt -recursive .", cwd=path, ansi_content=False, allow_non_zero_exit=True)
 
     return path

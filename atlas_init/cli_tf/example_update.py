@@ -2,26 +2,30 @@ import logging
 from collections import defaultdict
 from functools import total_ordering
 from pathlib import Path
+from typing import Callable
 
 import typer
 from model_lib import Entity, Event, dump, parse_payload
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from atlas_init.cli_helper.run import run_binary_command_is_ok
 from atlas_init.cli_tf.hcl.modifier import (
     BLOCK_TYPE_OUTPUT,
     BLOCK_TYPE_VARIABLE,
+    NewDescription,
     update_descriptions,
 )
 
 logger = logging.getLogger(__name__)
 
 
-class UpdateExamples(Entity):
+class UpdateExamples(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     examples_base_dir: Path
-    var_descriptions: dict[str, str]
+    var_descriptions: dict[str, str] = Field(default_factory=dict)
     output_descriptions: dict[str, str] = Field(default_factory=dict)
     skip_tf_fmt: bool = False
+    new_description_call: Callable[[str, str, Path], str] | None = None  # Protocol not supported for Pydantic
 
 
 @total_ordering
@@ -50,16 +54,24 @@ class UpdateExamplesOutput(Entity):
 
 def update_examples(event_in: UpdateExamples) -> UpdateExamplesOutput:
     changes = []
+
+    def get_description(name: str, old_description: str, path: Path) -> str:
+        return event_in.var_descriptions.get(name, "")
+
     existing_var_descriptions = update_block_descriptions(
         event_in.examples_base_dir,
         changes,
-        event_in.var_descriptions,
+        event_in.new_description_call or get_description,  # type: ignore
         BLOCK_TYPE_VARIABLE,
     )
+
+    def get_output_description(name: str, old_description: str, path: Path) -> str:
+        return event_in.output_descriptions.get(name, "")
+
     existing_output_descriptions = update_block_descriptions(
         event_in.examples_base_dir,
         changes,
-        event_in.output_descriptions,
+        event_in.new_description_call or get_output_description,  # type: ignore
         BLOCK_TYPE_OUTPUT,
     )
     if event_in.skip_tf_fmt:
@@ -85,14 +97,14 @@ def flatten_descriptions(descriptions: dict[str, list[str]]) -> dict[str, str]:
 def update_block_descriptions(
     base_dir: Path,
     changes: list[TFConfigDescriptionChange],
-    new_names: dict[str, str],
+    get_description: NewDescription,
     block_type: str,
 ):
     all_existing_descriptions = defaultdict(list)
     in_files = sorted(base_dir.rglob("*.tf"))
     for tf_file in in_files:
         logger.info(f"looking for {block_type} in {tf_file}")
-        new_tf, existing_descriptions = update_descriptions(tf_file, new_names, block_type=block_type)
+        new_tf, existing_descriptions = update_descriptions(tf_file, get_description, block_type=block_type)
         if not existing_descriptions:  # probably no variables in the file
             continue
         for name, descriptions in existing_descriptions.items():
@@ -101,7 +113,7 @@ def update_block_descriptions(
                     path=tf_file,
                     name=name,
                     before=description,
-                    after=new_names.get(name, ""),
+                    after=get_description(name, description, tf_file),
                     block_type=block_type,
                 )
                 for description in descriptions

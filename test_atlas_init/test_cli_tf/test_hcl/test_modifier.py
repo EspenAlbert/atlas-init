@@ -1,4 +1,5 @@
 from contextlib import suppress
+from pathlib import Path
 from typing import Dict, List
 from hcl2.transformer import Attribute, DictTransformer
 import hcl2
@@ -101,7 +102,11 @@ _existing_descriptions_outputs = {
 def test_process_variables(tmp_path, file_regression, block_type, new_names, existing_descriptions, tf_config):
     example_tf_path = tmp_path / "example.tf"
     example_tf_path.write_text(tf_config)
-    new_tf, existing_descriptions = update_descriptions(example_tf_path, new_names, block_type=block_type)
+
+    def update_description(name: str, old_description: str, path: Path) -> str:
+        return new_names.get(name, old_description)
+
+    new_tf, existing_descriptions = update_descriptions(example_tf_path, update_description, block_type=block_type)
     file_regression.check(new_tf, extension=".tf")
     assert dict(existing_descriptions.items()) == existing_descriptions
 
