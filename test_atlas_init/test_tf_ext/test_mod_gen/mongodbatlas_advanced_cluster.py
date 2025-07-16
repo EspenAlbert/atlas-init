@@ -1,6 +1,8 @@
 # codegen atlas-init-marker-start
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Any, Set, ClassVar
+import json
+import sys
+from dataclasses import asdict, dataclass
+from typing import Optional, List, Dict, Any, Set, ClassVar, Union
 
 
 @dataclass
@@ -286,6 +288,33 @@ class Resource:
                 f"Expected timeouts to be a Timeout or a dict, got {type(self.timeouts)}"
             )
             self.timeouts = Timeout(**self.timeouts)
+
+
+def format_primitive(value: Union[str, float, bool, int, None]):
+    if value is None:
+        return None
+    return str(value)
+
+
+def main():
+    input_data = sys.stdin.read()
+    # Parse the input as JSON
+    params = json.loads(input_data)
+    input_json = params["input_json"]
+    resource = Resource(**json.loads(input_json))
+    error_message = ""
+    primitive_types = (str, float, bool, int)
+    output = {
+        key: format_primitive(value) if value is None or isinstance(value, primitive_types) else json.dumps(value)
+        for key, value in asdict(resource).items()
+    }
+    output["error_message"] = error_message
+    json_str = json.dumps(output)
+    print(json_str)
+
+
+if __name__ == "__main__":
+    main()
 
 
 # codegen atlas-init-marker-end

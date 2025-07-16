@@ -430,6 +430,14 @@ def remove_duplicates(py_code: str, new_name) -> str:
 SKIP_FILTER = {"Resource", "ResourceExt"}
 
 
+def generate_python_from_schema(
+    py_module: ResourceTypePythonModule, schema: ResourceSchema, config: ModuleGenConfig
+) -> str:
+    dataclass_unformatted = convert_to_dataclass(schema, py_module)
+    dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
+    return f"{dataclass_unformatted}\n{main_entrypoint(py_module, config)}"
+
+
 def convert_and_format(
     resource_type: str,
     schema: ResourceSchema,
@@ -441,14 +449,11 @@ def convert_and_format(
         with TemporaryDirectory() as tmp_path:
             tmp_file = Path(tmp_path) / f"{resource_type}.py"
             copy(existing_path, tmp_file)
-            dataclass_unformatted = convert_to_dataclass(schema, py_module)
-            dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
-            dataclass_unformatted = f"{dataclass_unformatted}\n{main_entrypoint(py_module, config)}"
+            dataclass_unformatted = generate_python_from_schema(py_module, schema, config)
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
             move_main_call_to_end(tmp_file)
             ensure_dataclass_use_conversion(py_module.dataclasses, tmp_file, SKIP_FILTER)
             return run_fmt_and_fixes(tmp_file)
     existing = ResourceTypePythonModule(resource_type)
-    dataclass_unformatted = convert_to_dataclass(schema, existing)
-    dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
+    dataclass_unformatted = generate_python_from_schema(existing, schema, config)
     return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")
