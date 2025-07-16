@@ -299,10 +299,6 @@ class CustomSpec:
     regions: list[SpecRegion]
     disk_size_gb: float = 50
 
-    def __post_init__(self):
-        assert isinstance(self.regions, list), f"Expected regions to be a list, got {type(self.regions)}"
-        self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
-
 
 @dataclass
 class AutoScalingCompute:

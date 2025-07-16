@@ -8,6 +8,7 @@ from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
+from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.models_module import ModuleGenConfig
 from atlas_init.tf_ext.newres import prepare_newres
@@ -73,6 +74,10 @@ def generate_module(config: ModuleGenConfig) -> Path:
             else:
                 ensure_parents_write_text(variables_path, variablesx_tf)
             task.update(advance=1)
+            if output_tf := generate_resource_output(python_module, config):
+                output_path = config.output_path(resource_type)
+                ensure_parents_write_text(output_path, output_tf)
+
     provider_path = module_path / "providers.tf"
     if not provider_path.exists():
         with new_task("Generating providers.tf"):
@@ -92,3 +97,9 @@ def generate_module(config: ModuleGenConfig) -> Path:
             run_and_wait(command, cwd=module_path)
             task.update(advance=1)
     return module_path
+
+
+def module_pipeline(config: ModuleGenConfig) -> Path:
+    path = config.module_path
+
+    return path

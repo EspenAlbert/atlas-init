@@ -32,3 +32,43 @@ def atlas_schemas_dict() -> dict:
     if not schema_path.exists():
         pytest.skip("schema_path does not exist")
     return parse_dict(schema_path)
+
+
+@pytest.fixture()
+def resource_type_schema_path():
+    def inner(resource_type: str) -> Path:
+        return Path(__file__).parent / "testdata/resources" / f"{resource_type}.json"
+
+    return inner
+
+
+@pytest.fixture()
+def generated_dataclass_path():
+    def inner(resource_type: str) -> Path:
+        return Path(__file__).parent / "testdata/dataclasses" / f"{resource_type}.py"
+
+    return inner
+
+
+@pytest.fixture()
+def generated_main_path():
+    def inner(resource_type: str) -> Path:
+        return Path(__file__).parent / "testdata/main" / f"{resource_type}.tf"
+
+    return inner
+
+
+@pytest.fixture()
+def generated_variables_path():
+    def inner(resource_type: str) -> Path:
+        return Path(__file__).parent / "testdata/variables" / f"{resource_type}.tf"
+
+    return inner
+
+
+@pytest.fixture()
+def dataclass_manual_path():
+    def inner(resource_type: str) -> Path:
+        return Path(__file__).parent / "testdata/dataclasses" / f"{resource_type}_custom.py"
+
+    return inner

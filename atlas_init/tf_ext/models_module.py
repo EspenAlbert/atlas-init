@@ -61,6 +61,16 @@ class ModuleGenConfig(Entity):
             return self.module_path / f"{resource_type}_variablesx.tf"
         return self.module_path / "variablesx.tf"
 
+    def output_path(self, resource_type: str) -> Path:
+        if len(self.resource_types) > 1:
+            return self.module_path / f"{resource_type}_output.tf"
+        return self.module_path / "output.tf"
+
+    def output_name(self, resource_type: str, attr_name: str) -> str:
+        if len(self.resource_types) > 1:
+            return f"{resource_type}_{attr_name}"
+        return attr_name
+
 
 @dataclass
 class ResourceTypePythonModule:
@@ -102,6 +112,13 @@ class ResourceTypePythonModule:
     @property
     def base_field_names(self) -> list[str]:
         return sorted(f.name for f in self.base_fields)
+
+    @property
+    def base_field_names_computed(self) -> list[str]:
+        if self.resource is None:
+            return []
+        computed = getattr(self.resource, ResourceAbs.COMPUTED_ONLY_ATTRIBUTES_NAME, set())
+        return sorted(name for name in self.base_field_names if name in computed)
 
     @property
     def base_field_names_not_computed(self) -> list[str]:
