@@ -358,8 +358,8 @@ class SpecRegion:
 
 @dataclass
 class CustomSpec:
+    regions: list[SpecRegion]
     disk_size_gb: float = 50
-    regions: Optional[list[SpecRegion]] = None
 
 
 @dataclass

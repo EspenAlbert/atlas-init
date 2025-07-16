@@ -1,11 +1,11 @@
 variable "electable" {
   type = object({
-    disk_size_gb = optional(number)
     regions = optional(list(object({
       provider_name = optional(string)
       name          = optional(string)
       node_count    = optional(number)
     })))
+    disk_size_gb = optional(number)
   })
   nullable = true
   default  = null

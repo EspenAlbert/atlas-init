@@ -296,12 +296,12 @@ class SpecRegion:
 
 @dataclass
 class CustomSpec:
+    regions: list[SpecRegion]
     disk_size_gb: float = 50
-    regions: Optional[list[SpecRegion]] = None
 
     def __post_init__(self):
-        if self.regions is not None:
-            self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
+        assert isinstance(self.regions, list), f"Expected regions to be a list, got {type(self.regions)}"
+        self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
 
 
 @dataclass

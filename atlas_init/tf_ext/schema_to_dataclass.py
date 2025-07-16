@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections import defaultdict
 import keyword
 import logging
+import re
+from collections import defaultdict
 from dataclasses import fields
 from pathlib import Path
-import re
 from tempfile import TemporaryDirectory
 from types import ModuleType
 from typing import Any, Self
@@ -17,14 +17,14 @@ from pydantic import model_validator
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy, update_between_markers
 
-from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.models_module import ResourceTypePythonModule
+from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.py_gen import (
     as_set,
     dataclass_matches,
     ensure_dataclass_use_conversion,
     longest_common_substring_among_all,
-    make_post_init_line,
+    make_post_init_line_optional,
     module_dataclasses,
     move_main_call_to_end,
     primitive_types,
@@ -135,7 +135,7 @@ class DcField(Entity):
     @property
     def post_init(self) -> str:
         if cls_name := self.nested_class_name:
-            return make_post_init_line(self.name, cls_name, is_list=self.is_list, is_map=self.is_dict)
+            return make_post_init_line_optional(self.name, cls_name, is_list=self.is_list, is_map=self.is_dict)
         return ""
 
     @property

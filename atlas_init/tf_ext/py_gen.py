@@ -1,10 +1,10 @@
-import logging
-from dataclasses import Field, fields, is_dataclass
 import inspect
-from pathlib import Path
+import logging
 import re
+from dataclasses import Field, fields, is_dataclass
+from pathlib import Path
 from types import ModuleType
-from typing import Iterable, List, NamedTuple, Union, get_args, get_origin
+from typing import Dict, Iterable, List, NamedTuple, Union, get_args, get_origin
 
 from zero_3rdparty import humps
 
@@ -16,7 +16,7 @@ def as_set(values: list[str]) -> str:
     return f"{{{', '.join(repr(v) for v in values)}}}" if values else "set()"
 
 
-def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
+def make_post_init_line_optional(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
     if is_map:
         return (
             f"        if self.{field_name} is not None:\n"
@@ -30,8 +30,33 @@ def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, i
     else:
         return (
             f"        if self.{field_name} is not None and not isinstance(self.{field_name}, {elem_type}):\n"
+            f"            assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}'\n"
             f"            self.{field_name} = {elem_type}(**self.{field_name})"
         )
+
+
+def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, is_list: bool = False) -> str:
+    if is_map:
+        return (
+            f"        assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a dict, got {{type(self.{field_name})}}'\n"
+            f"        self.{field_name} = {{k:v if isinstance(v, {elem_type}) else {elem_type}(**v) for k, v in self.{field_name}.items()}}"
+        )
+    elif is_list:
+        return (
+            f"        assert isinstance(self.{field_name}, list), f'Expected {field_name} to be a list, got {{type(self.{field_name})}}'\n"
+            f"        self.{field_name} = [x if isinstance(x, {elem_type}) else {elem_type}(**x) for x in self.{field_name}]"
+        )
+    else:
+        return (
+            f"        if not isinstance(self.{field_name}, {elem_type}):\n"
+            f"            assert isinstance(self.{field_name}, dict), f'Expected {field_name} to be a {elem_type} or a dict, got {{type(self.{field_name})}}'\n"
+            f"            self.{field_name} = {elem_type}(**self.{field_name})"
+        )
+
+
+class _PrimitiveType(Exception):
+    def __init__(self, type_: type):
+        self.type_ = type_
 
 
 def make_post_init_line_from_field(field: Field) -> str:
@@ -45,17 +70,46 @@ def make_post_init_line_from_field(field: Field) -> str:
         inner_type = non_none_args[0]
         if inner_type in primitive_types:
             return ""
-
-        # Handle Optional[List[X]]
-        inner_origin = get_origin(inner_type)
-        inner_args = get_args(inner_type)
-        if inner_origin in (list, List) and inner_args:
-            item_type = inner_args[0]
-            if item_type in primitive_types:
-                return ""
-            return make_post_init_line(field.name, item_type.__name__, is_list=True)
-        return make_post_init_line(field.name, getattr(inner_type, "__name__", str(inner_type)))
+        try:
+            if elem_type := _handle_list_type(inner_type):
+                return make_post_init_line_optional(field.name, elem_type, is_list=True)
+            if elem_type := _handle_dict_type(inner_type):
+                return make_post_init_line_optional(field.name, elem_type, is_map=True)
+            return make_post_init_line_optional(field.name, inner_type.__name__)
+        except _PrimitiveType:
+            return ""
+    try:
+        if elem_type := _handle_list_type(field_type):
+            return make_post_init_line(field.name, elem_type, is_list=True)
+        if elem_type := _handle_dict_type(field_type):
+            return make_post_init_line(field.name, elem_type, is_map=True)
+    except _PrimitiveType:
+        return ""
+    if field_type not in primitive_types:
+        return make_post_init_line(field.name, getattr(field_type, "__name__", str(field_type)))
     return ""
+
+
+def _handle_list_type(inner_type):
+    inner_origin = get_origin(inner_type)
+    inner_args = get_args(inner_type)
+    if inner_origin in (list, List) and inner_args:
+        item_type = inner_args[0]
+        if item_type in primitive_types:
+            raise _PrimitiveType(item_type)
+        return item_type.__name__
+    return None
+
+
+def _handle_dict_type(inner_type):
+    inner_origin = get_origin(inner_type)
+    inner_args = get_args(inner_type)
+    if inner_origin in (dict, Dict) and inner_args:
+        _, value_type = inner_args
+        if value_type in primitive_types:
+            raise _PrimitiveType(value_type)
+        return value_type.__name__
+    return None
 
 
 def longest_common_substring_among_all(strings: list[str]) -> str:
@@ -137,8 +191,6 @@ def ensure_dataclass_use_conversion(dataclasses: dict[str, type], file_path: Pat
         post_init_lines = [extra_line for field in fields(cls) if (extra_line := make_post_init_line_from_field(field))]
         if not post_init_lines:
             continue
-        if name == "SpecRegion":
-            logger.info("spec-region")
         index_start, cls_def_end = dataclass_indexes(py_code, name)
         old_dc_code = py_code[index_start:cls_def_end]
         if "def __post_init__" in old_dc_code:

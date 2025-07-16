@@ -149,14 +149,29 @@ class RegionConfig:
 
     def __post_init__(self):
         if self.analytics_auto_scaling is not None and not isinstance(self.analytics_auto_scaling, Autoscaling):
+            assert isinstance(self.analytics_auto_scaling, dict), (
+                f"Expected analytics_auto_scaling to be a Autoscaling or a dict, got {type(self.analytics_auto_scaling)}"
+            )
             self.analytics_auto_scaling = Autoscaling(**self.analytics_auto_scaling)
         if self.analytics_specs is not None and not isinstance(self.analytics_specs, Spec):
+            assert isinstance(self.analytics_specs, dict), (
+                f"Expected analytics_specs to be a Spec or a dict, got {type(self.analytics_specs)}"
+            )
             self.analytics_specs = Spec(**self.analytics_specs)
         if self.auto_scaling is not None and not isinstance(self.auto_scaling, Autoscaling):
+            assert isinstance(self.auto_scaling, dict), (
+                f"Expected auto_scaling to be a Autoscaling or a dict, got {type(self.auto_scaling)}"
+            )
             self.auto_scaling = Autoscaling(**self.auto_scaling)
         if self.electable_specs is not None and not isinstance(self.electable_specs, Spec):
+            assert isinstance(self.electable_specs, dict), (
+                f"Expected electable_specs to be a Spec or a dict, got {type(self.electable_specs)}"
+            )
             self.electable_specs = Spec(**self.electable_specs)
         if self.read_only_specs is not None and not isinstance(self.read_only_specs, Spec):
+            assert isinstance(self.read_only_specs, dict), (
+                f"Expected read_only_specs to be a Spec or a dict, got {type(self.read_only_specs)}"
+            )
             self.read_only_specs = Spec(**self.read_only_specs)
 
 
@@ -246,23 +261,44 @@ class Resource:
         if self.advanced_configuration is not None and not isinstance(
             self.advanced_configuration, AdvancedConfiguration
         ):
+            assert isinstance(self.advanced_configuration, dict), (
+                f"Expected advanced_configuration to be a AdvancedConfiguration or a dict, got {type(self.advanced_configuration)}"
+            )
             self.advanced_configuration = AdvancedConfiguration(**self.advanced_configuration)
         if self.bi_connector_config is not None and not isinstance(self.bi_connector_config, BiConnectorConfig):
+            assert isinstance(self.bi_connector_config, dict), (
+                f"Expected bi_connector_config to be a BiConnectorConfig or a dict, got {type(self.bi_connector_config)}"
+            )
             self.bi_connector_config = BiConnectorConfig(**self.bi_connector_config)
         if self.connection_strings is not None and not isinstance(self.connection_strings, ConnectionString):
+            assert isinstance(self.connection_strings, dict), (
+                f"Expected connection_strings to be a ConnectionString or a dict, got {type(self.connection_strings)}"
+            )
             self.connection_strings = ConnectionString(**self.connection_strings)
         if self.pinned_fcv is not None and not isinstance(self.pinned_fcv, PinnedFcv):
+            assert isinstance(self.pinned_fcv, dict), (
+                f"Expected pinned_fcv to be a PinnedFcv or a dict, got {type(self.pinned_fcv)}"
+            )
             self.pinned_fcv = PinnedFcv(**self.pinned_fcv)
         if self.replication_specs is not None:
             self.replication_specs = [
                 x if isinstance(x, ReplicationSpec) else ReplicationSpec(**x) for x in self.replication_specs
             ]
         if self.timeouts is not None and not isinstance(self.timeouts, Timeout):
+            assert isinstance(self.timeouts, dict), (
+                f"Expected timeouts to be a Timeout or a dict, got {type(self.timeouts)}"
+            )
             self.timeouts = Timeout(**self.timeouts)
         if self.auto_scaling_compute is not None and not isinstance(self.auto_scaling_compute, AutoScalingCompute):
+            assert isinstance(self.auto_scaling_compute, dict), (
+                f"Expected auto_scaling_compute to be a AutoScalingCompute or a dict, got {type(self.auto_scaling_compute)}"
+            )
             self.auto_scaling_compute = AutoScalingCompute(**self.auto_scaling_compute)
 
         if self.electable is not None and not isinstance(self.electable, CustomSpec):
+            assert isinstance(self.electable, dict), (
+                f"Expected electable to be a CustomSpec or a dict, got {type(self.electable)}"
+            )
             self.electable = CustomSpec(**self.electable)
 
 
@@ -300,12 +336,12 @@ class SpecRegion:
 
 @dataclass
 class CustomSpec:
+    regions: list[SpecRegion]
     disk_size_gb: float = 50
-    regions: Optional[list[SpecRegion]] = None
 
     def __post_init__(self):
-        if self.regions is not None:
-            self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
+        assert isinstance(self.regions, list), f"Expected regions to be a list, got {type(self.regions)}"
+        self.regions = [x if isinstance(x, SpecRegion) else SpecRegion(**x) for x in self.regions]
 
 
 @dataclass
