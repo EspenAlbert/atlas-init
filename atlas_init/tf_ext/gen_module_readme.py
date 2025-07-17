@@ -58,7 +58,7 @@ def read_examples(module: ModuleGenConfig) -> str:
     content = ["# Examples"]
     for example_dir in example_dirs:
         example_name = example_dir.name
-        header_name = example_name.replace("_", " ").title()
+        header_name = example_name.replace("_", " ").replace("-", " ").title()
         main_path = example_dir / "main.tf"
         assert main_path.exists(), f"{main_path} does not exist, every example must have a main.tf"
         content.extend(

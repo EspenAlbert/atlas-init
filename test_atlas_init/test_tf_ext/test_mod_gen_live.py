@@ -1,12 +1,20 @@
 import logging
+import os
 from pathlib import Path
 
+from model_lib import dump
 import pytest
-from zero_3rdparty.file_utils import clean_dir, copy
+from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen import generate_module, module_pipeline
+from atlas_init.tf_ext.plan_diffs import (
+    parse_resources_from_plan_json,
+    dump_plan_output_resources,
+    dump_plan_output_variables,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -153,3 +161,18 @@ def test_generated_module_pipeline(module_config_name: str, tf_ext_settings_repo
     module_path = module_pipeline(module_config)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
+
+
+def test_export_planned_resources(tf_ext_settings_repo_path):
+    plan_output_path = Path(os.environ["TF_PLAN_OUTPUT"])
+    assert plan_output_path.exists(), f"Plan output file {plan_output_path} does not exist"
+    plan_output = parse_resources_from_plan_json(plan_output_path)
+    output_dir = tf_ext_settings_repo_path.output_plan_dumps / plan_output_path.parent.name
+    plan_output_yaml = dump(plan_output, "yaml")
+    output_file = output_dir / f"{plan_output_path.stem}.yaml"
+    ensure_parents_write_text(output_file, plan_output_yaml)
+    logger.info(f"wrote parsed plan to {output_file}")
+    dumped_resources = dump_plan_output_resources(output_dir, plan_output)
+    logger.info(f"wrote plan resources to {len(dumped_resources)} files")
+    dumped_variables = dump_plan_output_variables(output_dir, plan_output)
+    logger.info(f"wrote plan variables to {dumped_variables}")

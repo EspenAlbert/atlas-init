@@ -62,3 +62,7 @@ class TfExtSettings(StaticSettings):
     @property
     def attribute_resource_descriptions_manual_file_path(self) -> Path:
         return self.static_root / "attribute_resource_descriptions_manual.yaml"
+
+    @property
+    def output_plan_dumps(self) -> Path:
+        return self.static_root / "output_plan_dumps"
