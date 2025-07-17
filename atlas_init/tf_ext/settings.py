@@ -66,3 +66,7 @@ class TfExtSettings(StaticSettings):
     @property
     def output_plan_dumps(self) -> Path:
         return self.static_root / "output_plan_dumps"
+
+    @property
+    def plan_diff_output_path(self) -> Path:
+        return self.static_root / "plan_diff_output"

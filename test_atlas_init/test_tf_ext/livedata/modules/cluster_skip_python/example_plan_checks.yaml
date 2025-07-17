@@ -1,0 +1,9 @@
+- resource_checks:
+  - expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: multi_cloud
+    actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+  expected_output_dir_name: direct-resource
+  example_name: 02_multi-cloud

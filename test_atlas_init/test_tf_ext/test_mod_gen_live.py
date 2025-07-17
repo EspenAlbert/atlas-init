@@ -1,18 +1,20 @@
 import logging
-import os
 from pathlib import Path
+from typing import ClassVar
 
-from model_lib import dump
+from model_lib import dump, parse_payload
+from pydantic import TypeAdapter
 import pytest
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig
 from atlas_init.tf_ext.settings import TfExtSettings
-from atlas_init.tf_ext.tf_mod_gen import generate_module, module_pipeline
+from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_pipeline
 from atlas_init.tf_ext.plan_diffs import (
-    parse_resources_from_plan_json,
+    ExamplePlanCheck,
     dump_plan_output_resources,
     dump_plan_output_variables,
+    parse_plan_output,
 )
 
 
@@ -59,6 +61,7 @@ class _ModuleNames:
     CLUSTER_SKIP_PYTHON = "cluster_skip_python"
 
     ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_CUSTOM_FLAT, CLUSTER_SKIP_PYTHON]
+    FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
 
     @classmethod
     def auto_tfvars(cls, name) -> str:
@@ -77,7 +80,7 @@ class _ModuleNames:
     def write_extra_files(cls, module_out: Path, name: str):
         live_path = livedata_module_path(name)
         for src_file in live_path.glob("*"):
-            copy(src_file, module_out / src_file.name)  # should also copy directories
+            copy(src_file, module_out / src_file.name, clean_dest=True)  # should also copy directories
 
     @classmethod
     def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
@@ -92,6 +95,10 @@ class _ModuleNames:
         if clean_and_write:
             clean_dir(config.module_path)
         cls.write_extra_files(config.module_path, name)
+        example_checks = config.module_path / cls.FILENAME_EXAMPLE_CHECKS
+        if example_checks.exists():
+            example_plan_checks_raw = parse_payload(example_checks)
+            config.example_plan_checks = TypeAdapter(list[ExamplePlanCheck]).validate_python(example_plan_checks_raw)
         return config
 
 
@@ -163,10 +170,11 @@ def test_generated_module_pipeline(module_config_name: str, tf_ext_settings_repo
     logger.info(f"Created module at {module_path}")
 
 
-def test_export_planned_resources(tf_ext_settings_repo_path):
-    plan_output_path = Path(os.environ["TF_PLAN_OUTPUT"])
+@pytest.mark.parametrize("plan_name", ["direct-resource"])
+def test_export_planned_resources(tf_ext_settings_repo_path: TfExtSettings, plan_name):
+    plan_output_path = tf_ext_settings_repo_path.output_plan_dumps / plan_name
     assert plan_output_path.exists(), f"Plan output file {plan_output_path} does not exist"
-    plan_output = parse_resources_from_plan_json(plan_output_path)
+    plan_output = parse_plan_output(plan_output_path)
     output_dir = tf_ext_settings_repo_path.output_plan_dumps / plan_output_path.parent.name
     plan_output_yaml = dump(plan_output, "yaml")
     output_file = output_dir / f"{plan_output_path.stem}.yaml"
@@ -176,3 +184,16 @@ def test_export_planned_resources(tf_ext_settings_repo_path):
     logger.info(f"wrote plan resources to {len(dumped_resources)} files")
     dumped_variables = dump_plan_output_variables(output_dir, plan_output)
     logger.info(f"wrote plan variables to {dumped_variables}")
+
+
+@pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
+def test_run_example_plan_checks(tf_ext_settings_repo_path, module_config_name: str):
+    module_config = _ModuleNames.create_by_name(
+        module_config_name,
+        tf_ext_settings_repo_path,
+        clean_and_write=False,
+    )
+    diff_paths = example_plan_checks(module_config)
+    failing_paths = [f"'{path}'" for path in diff_paths]
+    assert not diff_paths, f"Example checks failed for {module_config_name}, see paths: {'\n'.join(failing_paths)}"
+    logger.info(f"Example checks passed for {module_config_name}")
