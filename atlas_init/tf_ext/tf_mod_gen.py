@@ -8,6 +8,7 @@ from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.cli_tf.example_update import UpdateExamples, update_examples
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
+from atlas_init.tf_ext.gen_module_readme import generate_readme
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
@@ -90,9 +91,9 @@ def generate_module(config: ModuleGenConfig) -> Path:
     if not provider_path.exists():
         with new_task("Generating providers.tf"):
             ensure_parents_write_text(provider_path, schema.providers_tf)
-    if auto_tfvars := config.auto_tfvars:
+    if minimal_tfvars := config.minimal_tfvars:
         with new_task("Generating auto.tfvars"):
-            ensure_parents_write_text(module_path / "vars.auto.tfvars", auto_tfvars)
+            ensure_parents_write_text(module_path / "vars.auto.tfvars", minimal_tfvars)
     terraform_commands = [
         "terraform init",
         "terraform fmt .",
@@ -134,5 +135,9 @@ def module_pipeline(config: ModuleGenConfig) -> Path:
     if out_event.changes:
         logger.info(f"Updated attribute descriptions: {len(out_event.changes)}")
         run_and_wait("terraform fmt -recursive .", cwd=path, ansi_content=False, allow_non_zero_exit=True)
+    if readme_path := config.readme_path():
+        with new_task("Generating README.md"):
+            readme_content = generate_readme(config)
+            ensure_parents_write_text(readme_path, readme_content)
 
     return path

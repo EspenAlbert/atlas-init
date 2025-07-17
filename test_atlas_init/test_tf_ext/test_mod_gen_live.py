@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Callable
 
 import pytest
 from zero_3rdparty.file_utils import clean_dir, copy
@@ -54,17 +53,6 @@ class _ModuleNames:
     ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_CUSTOM_FLAT, CLUSTER_SKIP_PYTHON]
 
     @classmethod
-    def extra_files(cls, name, dataclass_manual_path: Callable[[str], Path]) -> dict[Path, str]:
-        return {
-            cls.CLUSTER_CUSTOM: {
-                dataclass_manual_path("mongodbatlas_advanced_cluster"): "mongodbatlas_advanced_cluster.py"
-            },
-            cls.CLUSTER_CUSTOM_FLAT: {
-                dataclass_manual_path("mongodbatlas_advanced_cluster_flat"): "mongodbatlas_advanced_cluster.py"
-            },
-        }.get(name, {})
-
-    @classmethod
     def auto_tfvars(cls, name) -> str:
         return {
             cls.CLUSTER_PLAIN: _normal_replication_spec_vars,
@@ -78,25 +66,24 @@ class _ModuleNames:
         return {cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"}}.get(name, set())
 
     @classmethod
-    def write_extra_files(cls, module_out: Path, name: str, dataclass_manual_path: Callable[[str], Path]):
-        for extra_file, name in cls.extra_files(name, dataclass_manual_path).items():
-            copy(extra_file, module_out / name)
+    def write_extra_files(cls, module_out: Path, name: str):
+        live_path = livedata_module_path(name)
+        for src_file in live_path.glob("*"):
+            copy(src_file, module_out / src_file.name)  # should also copy directories
 
     @classmethod
-    def create_by_name(
-        cls, name: str, settings: TfExtSettings, *, clean_and_write: bool, dataclass_manual_path: Callable[[str], Path]
-    ) -> ModuleGenConfig:
+    def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
         config = ModuleGenConfig(
             name=name,
             resource_types=["mongodbatlas_advanced_cluster"],
             settings=settings,
-            auto_tfvars=cls.auto_tfvars(name),
+            minimal_tfvars=cls.auto_tfvars(name),
             skip_python=cls.CLUSTER_SKIP_PYTHON == name,
             required_variables=cls.required_variables(name),
         )
         if clean_and_write:
             clean_dir(config.module_path)
-            cls.write_extra_files(config.module_path, name, dataclass_manual_path)
+        cls.write_extra_files(config.module_path, name)
         return config
 
 
@@ -145,22 +132,23 @@ cluster_type = "REPLICASET"
 
 
 @pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
-def test_generate_module(module_config_name: str, tf_ext_settings_repo_path, dataclass_manual_path):
-    module_config = _ModuleNames.create_by_name(
-        module_config_name, tf_ext_settings_repo_path, clean_and_write=True, dataclass_manual_path=dataclass_manual_path
-    )
+def test_generate_module(module_config_name: str, tf_ext_settings_repo_path):
+    module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path, clean_and_write=True)
     module_path = generate_module(module_config)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
 
 
+def livedata_module_path(module_config_name: str) -> Path:
+    return Path(__file__).parent / f"livedata/modules/{module_config_name}"
+
+
 @pytest.mark.parametrize("module_config_name", [_ModuleNames.CLUSTER_SKIP_PYTHON])
-def test_generated_module_pipeline(module_config_name: str, tf_ext_settings_repo_path, dataclass_manual_path):
+def test_generated_module_pipeline(module_config_name: str, tf_ext_settings_repo_path):
     module_config = _ModuleNames.create_by_name(
         module_config_name,
         tf_ext_settings_repo_path,
         clean_and_write=False,
-        dataclass_manual_path=dataclass_manual_path,
     )
     module_path = module_pipeline(module_config)
     assert module_path.exists()

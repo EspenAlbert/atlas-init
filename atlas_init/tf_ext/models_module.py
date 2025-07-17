@@ -1,17 +1,18 @@
-from collections import defaultdict
-from dataclasses import dataclass, Field, fields
-from types import ModuleType
 from abc import ABC
-from typing import ClassVar, Self, TypeAlias
+from collections import defaultdict
+from dataclasses import Field, dataclass, fields
 from pathlib import Path
+from types import ModuleType
+from typing import ClassVar, Self, TypeAlias
+
 from model_lib import Entity, dump, parse_dict
-from pydantic import Field as PydanticField, model_validator
+from pydantic import Field as PydanticField
+from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.object_name import as_name
 
 from atlas_init.tf_ext.py_gen import make_post_init_line_from_field, module_dataclasses
 from atlas_init.tf_ext.settings import TfExtSettings
-
 
 ResourceTypeT: TypeAlias = str
 
@@ -35,7 +36,7 @@ class ModuleGenConfig(Entity):
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
     output_dir: Path | None = None
     required_variables: set[str] = PydanticField(default_factory=set)  # todo: project_id
-    auto_tfvars: str = ""
+    minimal_tfvars: str = ""
     skip_python: bool = False
     debug_json_logs: bool = False
 
@@ -84,6 +85,19 @@ class ModuleGenConfig(Entity):
             if path.name.startswith(resource_type):
                 return resource_type
         raise ValueError(f"Could not resolve resource type for path {path}")
+
+    def readme_path(self) -> Path:
+        return self.module_path / "README.md"
+
+    @property
+    def examples_path(self) -> Path:
+        return self.module_path / "examples"
+
+    def example_name(self, name: str, example_nr: int) -> str:
+        return f"{example_nr:02d}_{name}"
+
+    def terraform_docs_config_path(self) -> Path:
+        return self.module_path / ".terraform-docs.yml"
 
 
 @dataclass
