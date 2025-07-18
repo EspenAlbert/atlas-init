@@ -134,4 +134,7 @@ def generate_readme(module: ModuleGenConfig) -> str:
         ensure_parents_write_text(docs_config_path, config_content)
         logger.info(f"generated {docs_config_path}")
     run_and_wait(f"terraform-docs -c {docs_config_path} .", cwd=module.module_path)
+    if module.post_readme_processor:
+        readme_content = module.post_readme_processor(readme_path.read_text())
+        ensure_parents_write_text(readme_path, readme_content)
     return readme_path.read_text()

@@ -3,7 +3,7 @@ from collections import defaultdict
 from dataclasses import Field, dataclass, fields
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Self, TypeAlias
+from typing import Callable, ClassVar, Self, TypeAlias
 
 from model_lib import Entity, dump, parse_dict
 from pydantic import Field as PydanticField
@@ -41,6 +41,7 @@ class ModuleGenConfig(Entity):
     skip_python: bool = False
     debug_json_logs: bool = False
     example_plan_checks: list[ExamplePlanCheck] = PydanticField(default_factory=list)
+    post_readme_processor: Callable[[str], str] | None = None
 
     @model_validator(mode="after")
     def set_defaults(self) -> Self:
