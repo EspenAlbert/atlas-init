@@ -54,6 +54,14 @@ name         = "created-from-custom-flat"
 """
 
 
+def _default_link_updater(readme_content: str) -> str:
+    for replace_in, replace_out in {
+        "docs/resources/advanced_cluster": r"docs/resources/advanced_cluster%2520%2528preview%2520provider%25202.0.0%2529"
+    }.items():
+        readme_content = readme_content.replace(replace_in, replace_out)
+    return readme_content
+
+
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
     CLUSTER_CUSTOM = "cluster_custom"
@@ -91,6 +99,7 @@ class _ModuleNames:
             minimal_tfvars=cls.auto_tfvars(name),
             skip_python=cls.CLUSTER_SKIP_PYTHON == name,
             required_variables=cls.required_variables(name),
+            post_readme_processor=_default_link_updater,
         )
         if clean_and_write:
             clean_dir(config.module_path)
