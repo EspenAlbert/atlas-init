@@ -21,6 +21,7 @@ ResourceTypeT: TypeAlias = str
 @dataclass
 class ResourceAbs(ABC):
     REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
+    REQUIRED_ATTRIBUTES_NAME: ClassVar[str] = "REQUIRED_ATTRIBUTES"
     NESTED_ATTRIBUTES: ClassVar[set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES_NAME: ClassVar[str] = "COMPUTED_ONLY_ATTRIBUTES"
@@ -42,6 +43,8 @@ class ModuleGenConfig(Entity):
     debug_json_logs: bool = False
     example_plan_checks: list[ExamplePlanCheck] = PydanticField(default_factory=list)
     post_readme_processor: Callable[[str], str] | None = None
+    use_descriptions: bool = False
+    attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
 
     @model_validator(mode="after")
     def set_defaults(self) -> Self:

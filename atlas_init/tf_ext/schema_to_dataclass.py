@@ -4,11 +4,11 @@ import keyword
 import logging
 import re
 from collections import defaultdict
-from dataclasses import fields
+from dataclasses import fields, Field
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Any, Self
+from typing import Any, ClassVar, Self
 
 from ask_shell import ShellError, run_and_wait
 from inflection import singularize
@@ -70,11 +70,6 @@ def safe_name(name):
     return f"{name}_" if keyword.iskeyword(name) else name
 
 
-def add_description_to_field(field_line: str, description: str) -> str:
-    assert field_line.endswith("= None"), f"{field_line} does not end with '= None', not supported yet"
-    return field_line.replace("= None", f"= field(default=None, metadata={'description': {description}})")
-
-
 def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
     if isinstance(elem_type_val, str):
         return {
@@ -91,10 +86,13 @@ def py_type_from_element_type(elem_type_val: str | dict[str, str] | Any) -> str:
 
 
 class DcField(Entity):
+    NO_DEFAULT: ClassVar[str] = "None"
+    METADATA_DEFAULT_NAME: ClassVar[str] = "default_hcl"
     name: str
     type_annotation: str
     description: str | None = None
-    default_value: str = "None"
+    default_value: str = NO_DEFAULT
+    default_hcl_string: str | None = None
     nested_class_name: str = ""
     required: bool = False
     optional: bool = False
@@ -119,18 +117,21 @@ class DcField(Entity):
 
     @property
     def metadata(self) -> dict:
-        return {key: value for key, value in [("description", self.description)] if value}
-
-    @property
-    def declare_simple(self) -> str:
-        return f"    {self.name}: Optional[{self.type_annotation}] = None"
+        return {
+            key: value
+            for key, value in [
+                ("description", self.description),
+                (self.METADATA_DEFAULT_NAME, self.default_hcl_string),
+            ]
+            if value
+        }
 
     @property
     def declare(self) -> str:
-        field_args = ["default=None"]
         if metadata := self.metadata:
-            field_args.append(f"metadata={metadata}")
-        return f"    {self.name}: Optional[{self.type_annotation}] = field({', '.join(field_args)})"
+            field_args = ["default=None", f"metadata={metadata}"]
+            return f"    {self.name}: Optional[{self.type_annotation}] = field({', '.join(field_args)})"
+        return f"    {self.name}: Optional[{self.type_annotation}] = None"
 
     @property
     def post_init(self) -> str:
@@ -143,7 +144,11 @@ class DcField(Entity):
         return self.computed and not self.required and not self.optional
 
 
-def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonModule) -> str:
+def read_default_from_metadata(f: Field) -> str | None:
+    return f.metadata.get(DcField.METADATA_DEFAULT_NAME)
+
+
+def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
     class_defs = []
 
     def block_to_class(block: SchemaBlock, class_name: str, extra_post_init: list[str] | None = None) -> str:
@@ -249,7 +254,10 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
         if not dc_fields:
             lines.append("    pass")
             return "\n".join(lines)
-        lines.extend(dc_field.declare_simple for dc_field in dc_fields)
+        if not config.use_descriptions:
+            for dc_field in dc_fields:
+                dc_field.description = None
+        lines.extend(dc_field.declare for dc_field in dc_fields)
         post_init_lines = [post_init for dc_field in dc_fields if (post_init := dc_field.post_init)]
         if extra_post_init:
             post_init_lines.extend(extra_post_init)
@@ -395,7 +403,7 @@ def simplify_classes(py_code: str) -> tuple[str, set[str]]:
 
 def _safe_replace(text: str, old: str, new: str) -> str:
     def replacer(match: re.Match) -> str:
-        return match.group(0).replace(old, new)
+        return match[0].replace(old, new)
 
     return re.sub(rf"\W({old})\W", replacer, text)
 
@@ -433,7 +441,7 @@ SKIP_FILTER = {"Resource", "ResourceExt"}
 def generate_python_from_schema(
     py_module: ResourceTypePythonModule, schema: ResourceSchema, config: ModuleGenConfig
 ) -> str:
-    dataclass_unformatted = convert_to_dataclass(schema, py_module)
+    dataclass_unformatted = convert_to_dataclass(schema, py_module, config)
     dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
     return f"{dataclass_unformatted}\n{main_entrypoint(py_module, config)}"
 

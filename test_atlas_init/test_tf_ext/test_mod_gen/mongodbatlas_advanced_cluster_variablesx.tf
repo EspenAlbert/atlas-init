@@ -103,7 +103,7 @@ variable "paused" {
 
 variable "pinned_fcv" {
   type = object({
-    expiration_date = optional(string)
+    expiration_date = string
   })
   nullable = true
   default  = null
@@ -136,7 +136,7 @@ variable "replica_set_scaling_strategy" {
 variable "replication_specs" {
   type = list(object({
     num_shards = optional(number)
-    region_configs = optional(list(object({
+    region_configs = list(object({
       analytics_auto_scaling = optional(object({
         compute_enabled            = optional(bool)
         compute_max_instance_size  = optional(string)
@@ -166,8 +166,8 @@ variable "replication_specs" {
         instance_size   = optional(string)
         node_count      = optional(number)
       }))
-      priority      = optional(number)
-      provider_name = optional(string)
+      priority      = number
+      provider_name = string
       read_only_specs = optional(object({
         disk_iops       = optional(number)
         disk_size_gb    = optional(number)
@@ -175,8 +175,8 @@ variable "replication_specs" {
         instance_size   = optional(string)
         node_count      = optional(number)
       }))
-      region_name = optional(string)
-    })))
+      region_name = string
+    }))
     zone_name = optional(string)
   }))
   nullable = true
