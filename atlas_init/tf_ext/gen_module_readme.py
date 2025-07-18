@@ -45,6 +45,8 @@ def example_main_tf(module: ModuleGenConfig, variables: str) -> str:
     variables_indented = "\n".join(f"    {var}" for var in variables.split("\n"))
     return f"""\
 module "{module.name}" {{
+    source = "../.."
+
     {variables_indented}
 }}"""
 

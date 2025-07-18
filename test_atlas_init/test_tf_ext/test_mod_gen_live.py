@@ -85,6 +85,20 @@ class _ModuleNames:
         return {cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"}}.get(name, set())
 
     @classmethod
+    def defaults_hcl_strings(cls, name: str) -> dict[str, str]:
+        return {
+            cls.CLUSTER_SKIP_PYTHON: {
+                "minimum_enabled_tls_protocol": '"TLS1_2"',
+                "javascript_enabled": "false",
+                "tls_cipher_config_mode": '"DEFAULT"',
+                "backup_enabled": "true",
+                "retain_backups_enabled": "true",
+                "termination_protection_enabled": "true",
+                "default_write_concern": '"majority"',
+            }
+        }.get(name, {})
+
+    @classmethod
     def write_extra_files(cls, module_out: Path, name: str):
         live_path = livedata_module_path(name)
         for src_file in live_path.glob("*"):
@@ -100,6 +114,7 @@ class _ModuleNames:
             skip_python=cls.CLUSTER_SKIP_PYTHON == name,
             required_variables=cls.required_variables(name),
             post_readme_processor=_default_link_updater,
+            attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
         )
         if clean_and_write:
             clean_dir(config.module_path)
@@ -134,7 +149,6 @@ auto_scaling_compute = {
 """
 
 skip_python_config = """
-backup_enabled = true
 replication_specs = [{
   region_configs = [{
     provider_name = "AWS",
@@ -148,7 +162,7 @@ replication_specs = [{
   }]
 }]
 
-project_id   = "664619d870c247237f4b86a6"
+project_id   = "your-project-id"
 name         = "created-from-resource-module"
 cluster_type = "REPLICASET"
 
