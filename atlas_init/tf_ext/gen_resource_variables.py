@@ -8,7 +8,6 @@ from pydantic import Field as PydanticField
 
 from atlas_init.tf_ext.gen_resource_main import format_tf_content
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
-from atlas_init.tf_ext.schema_to_dataclass import read_default_from_metadata
 
 
 logger = logging.getLogger(__name__)
@@ -97,20 +96,19 @@ def dataclass_to_object_type(field: Field, cls: type, context: DefaultValueConte
     with context.add_nested_field(field.name):
         for f in fields(cls):
             # Skip ClassVars and internal fields
-            is_computed_only = f.name in getattr(cls, ResourceAbs.COMPUTED_ONLY_ATTRIBUTES_NAME, set())
-            if f.name.isupper() or (get_origin(f.type) is ClassVar) or is_computed_only:
+            nested_field_name = f.name
+            is_computed_only = ResourceAbs.is_computed_only(nested_field_name, cls)
+            if nested_field_name.isupper() or (get_origin(f.type) is ClassVar) or is_computed_only:
                 continue
-            tf_type = python_type_to_terraform_type(f, hints[f.name], context)
-            is_required = f.name in getattr(cls, ResourceAbs.REQUIRED_ATTRIBUTES_NAME, set())
-            if f.name == "custom_openssl_cipher_config_tls12":
-                logger.info("found it")
-            if default_value := read_default_from_metadata(f):
-                context.add_default(f.name, default_value)
-                lines.append(f"  {f.name} = optional({tf_type}, {default_value})")
+            tf_type = python_type_to_terraform_type(f, hints[nested_field_name], context)
+            is_required = ResourceAbs.is_required(nested_field_name, cls)
+            if default_value := ResourceAbs.default_hcl_string(nested_field_name, cls):
+                context.add_default(nested_field_name, default_value)
+                lines.append(f"  {nested_field_name} = optional({tf_type}, {default_value})")
             elif is_required:
-                lines.append(f"  {f.name} = {tf_type}")
+                lines.append(f"  {nested_field_name} = {tf_type}")
             else:
-                lines.append(f"  {f.name} = optional({tf_type})")
+                lines.append(f"  {nested_field_name} = optional({tf_type})")
         lines.append("})")
     return "\n".join(lines)
 

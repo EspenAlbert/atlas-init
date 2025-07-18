@@ -23,8 +23,27 @@ class ResourceAbs(ABC):
     REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
     REQUIRED_ATTRIBUTES_NAME: ClassVar[str] = "REQUIRED_ATTRIBUTES"
     NESTED_ATTRIBUTES: ClassVar[set[str]] = set()
+    NESTED_ATTRIBUTES_NAME: ClassVar[str] = "NESTED_ATTRIBUTES"
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES_NAME: ClassVar[str] = "COMPUTED_ONLY_ATTRIBUTES"
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
+    DEFAULTS_HCL_STRINGS_NAME: ClassVar[str] = "DEFAULTS_HCL_STRINGS"
+
+    @staticmethod
+    def is_required(field_name: str, some_cls: type) -> bool:
+        return field_name in getattr(some_cls, ResourceAbs.REQUIRED_ATTRIBUTES_NAME, set())
+
+    @staticmethod
+    def is_computed_only(field_name: str, some_cls: type) -> bool:
+        return field_name in getattr(some_cls, ResourceAbs.COMPUTED_ONLY_ATTRIBUTES_NAME, set())
+
+    @staticmethod
+    def is_nested(field_name: str, some_cls: type) -> bool:
+        return field_name in getattr(some_cls, ResourceAbs.NESTED_ATTRIBUTES_NAME, set())
+
+    @staticmethod
+    def default_hcl_string(field_name: str, some_cls: type) -> str | None:
+        return getattr(some_cls, ResourceAbs.DEFAULTS_HCL_STRINGS_NAME, {}).get(field_name)
 
 
 def as_import_line(name: str) -> str:

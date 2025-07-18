@@ -10,6 +10,7 @@ class AdvancedConfiguration:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"custom_openssl_cipher_config_tls12"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     change_stream_options_pre_and_post_images_expire_after_seconds: Optional[float] = None
     custom_openssl_cipher_config_tls12: Optional[List[str]] = None
     default_max_time_ms: Optional[float] = None
@@ -32,6 +33,7 @@ class BiConnectorConfig:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     enabled: Optional[bool] = None
     read_preference: Optional[str] = None
 
@@ -41,6 +43,7 @@ class Endpoint:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"endpoint_id", "provider_name", "region"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     endpoint_id: Optional[str] = None
     provider_name: Optional[str] = None
     region: Optional[str] = None
@@ -57,6 +60,7 @@ class PrivateEndpoint:
         "srv_shard_optimized_connection_string",
         "type",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     connection_string: Optional[str] = None
     endpoints: Optional[List[Endpoint]] = None
     srv_connection_string: Optional[str] = None
@@ -79,6 +83,7 @@ class ConnectionString:
         "standard",
         "standard_srv",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     private: Optional[str] = None
     private_endpoint: Optional[List[PrivateEndpoint]] = None
     private_srv: Optional[str] = None
@@ -97,6 +102,7 @@ class PinnedFcv:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"expiration_date"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"version"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     expiration_date: Optional[str] = None
     version: Optional[str] = None
 
@@ -106,6 +112,7 @@ class Autoscaling:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     compute_enabled: Optional[bool] = None
     compute_max_instance_size: Optional[str] = None
     compute_min_instance_size: Optional[str] = None
@@ -118,6 +125,7 @@ class Spec:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     disk_iops: Optional[float] = None
     disk_size_gb: Optional[float] = None
     ebs_volume_type: Optional[str] = None
@@ -136,6 +144,7 @@ class RegionConfig:
     }
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"priority", "provider_name", "region_name"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     analytics_auto_scaling: Optional[Autoscaling] = None
     analytics_specs: Optional[Spec] = None
     auto_scaling: Optional[Autoscaling] = None
@@ -179,6 +188,7 @@ class ReplicationSpec:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "id", "zone_id"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     container_id: Optional[Dict[str, Any]] = None
     external_id: Optional[str] = None
     id: Optional[str] = None
@@ -197,6 +207,7 @@ class Timeout:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     create: Optional[str] = None
     delete: Optional[str] = None
     update: Optional[str] = None
@@ -223,6 +234,7 @@ class Resource:
         "mongo_db_version",
         "state_name",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     accept_data_risks_and_force_replica_set_reconfig: Optional[str] = None
     advanced_configuration: Optional[AdvancedConfiguration] = None
     backup_enabled: Optional[bool] = None

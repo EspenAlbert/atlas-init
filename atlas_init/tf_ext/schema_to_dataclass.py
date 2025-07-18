@@ -4,7 +4,7 @@ import keyword
 import logging
 import re
 from collections import defaultdict
-from dataclasses import fields, Field
+from dataclasses import fields
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from types import ModuleType
@@ -17,7 +17,7 @@ from pydantic import model_validator
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy, update_between_markers
 
-from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.py_gen import (
     as_set,
@@ -144,10 +144,6 @@ class DcField(Entity):
         return self.computed and not self.required and not self.optional
 
 
-def read_default_from_metadata(f: Field) -> str | None:
-    return f.metadata.get(DcField.METADATA_DEFAULT_NAME)
-
-
 def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
     class_defs = []
 
@@ -242,14 +238,20 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
             )
 
         lines.append(
-            f"    NESTED_ATTRIBUTES: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.is_nested])}"
+            f"    {ResourceAbs.NESTED_ATTRIBUTES_NAME}: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.is_nested])}"
         )
         lines.append(
-            f"    REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.required])}"
+            f"    {ResourceAbs.REQUIRED_ATTRIBUTES_NAME}: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.required])}"
         )
         lines.append(
-            f"    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.computed_only])}"
+            f"    {ResourceAbs.COMPUTED_ONLY_ATTRIBUTES_NAME}: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.computed_only])}"
         )
+        default_strings = {
+            dc_field.name: default_hcl_string
+            for dc_field in dc_fields
+            if (default_hcl_string := config.attribute_default_hcl_strings.get(dc_field.name))
+        }
+        lines.append(f"    {ResourceAbs.DEFAULTS_HCL_STRINGS_NAME}: ClassVar[dict[str, str]] = {default_strings!r}")
 
         if not dc_fields:
             lines.append("    pass")
