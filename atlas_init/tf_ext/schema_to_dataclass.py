@@ -300,7 +300,7 @@ _debug_logs = """
 
 def main_entrypoint(existing: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
     parse_cls = "ResourceExt" if existing.resource_ext_cls_used else "Resource"
-    errors_func_call = r'"\n".join(errors(resource))' if existing.errors_func_used else '""'
+    errors_func_call = r'"\\n".join(errors(resource))' if existing.errors_func_used else '""'
     modify_out_func_call = "\n    resource = modify_out(resource)" if existing.modify_out_func_used else ""
     logs_debug = _debug_logs if config.debug_json_logs else ""
     return (

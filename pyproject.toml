@@ -37,7 +37,7 @@ dependencies = [
   "typer>=0.15.1",
   "ask-shell>=0.0.5",
   "model-lib",
-  "zero-3rdparty",
+  "zero-3rdparty==1.0.0b5",
 ]
 
 # [tool.uv.sources]

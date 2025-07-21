@@ -98,7 +98,7 @@ requires-dist = [
     { name = "stringcase", specifier = "==1.2.0" },
     { name = "tenacity", specifier = "==9.0.0" },
     { name = "typer", specifier = ">=0.15.1" },
-    { name = "zero-3rdparty" },
+    { name = "zero-3rdparty", specifier = "==1.0.0b5" },
 ]
 
 [package.metadata.requires-dev]
@@ -1105,9 +1105,9 @@ wheels = [
 
 [[package]]
 name = "zero-3rdparty"
-version = "1.0.0b3"
+version = "1.0.0b5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/95/44/fdf274fd0ed583ba37934b3f06bb48fd1915f1b4448f627a08f768b97c49/zero_3rdparty-1.0.0b3.tar.gz", hash = "sha256:0f47d8a3ec11ea4ee547ada1fa6bd0c2913f573a8712e913877df49f4f9d5880", size = 29384, upload-time = "2025-06-18T07:55:57.161Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/0c/2519f17bc6515b8f53ce33d324e9d327cdf7b702184dd649f842c9e8299b/zero_3rdparty-1.0.0b5.tar.gz", hash = "sha256:90c83d2a61b7c693e49108f10e0d3f1862dd437f2dea07916198e6f693e7b7b2", size = 29737, upload-time = "2025-07-19T08:14:36.513Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/78/be/cff6baf44e44209ba8955e0f73509c6d5463ca7115e4d464c5e9f6c7d667/zero_3rdparty-1.0.0b3-py3-none-any.whl", hash = "sha256:471852d8a0fddf5c23f69b1598e8f7212bd05ae37f48b82302cb8a4e50727ab1", size = 37841, upload-time = "2025-06-18T07:55:55.815Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/67/69c92778b3cc68588037b992c342a5d11d9d66859a83aeb26c5981d6c790/zero_3rdparty-1.0.0b5-py3-none-any.whl", hash = "sha256:51472822c88072f964ad6161e1114a2c138bc0af8e70d6ea9b737a347e651671", size = 38199, upload-time = "2025-07-19T08:14:34.923Z" },
 ]

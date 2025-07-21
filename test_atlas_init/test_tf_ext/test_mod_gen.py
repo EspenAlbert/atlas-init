@@ -97,7 +97,7 @@ def test_create_variables(resource_type: str, file_regression, generated_datacla
 
 
 @pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
-def test_create_variables_custom(resource_type: str, file_regression, dataclass_manual_path, generated_variables_path):
+def test_create_variables_custom(resource_type: str, file_regression, dataclass_manual_path):
     existing_path = dataclass_manual_path(resource_type)
     python_module = import_resource_type_python_module(resource_type, existing_path)
     _, variables_code = generate_module_variables(python_module, ModuleGenConfig(resource_types=[resource_type]))
