@@ -1,8 +1,8 @@
 # codegen atlas-init-marker-start
 import json
 import sys
-from dataclasses import asdict, dataclass, field
-from typing import Optional, List, Dict, Any, Set, ClassVar, Union, Iterable
+from dataclasses import asdict, dataclass
+from typing import Optional, List, Dict, Any, Set, ClassVar, Tuple, Union, Iterable
 
 
 @dataclass
@@ -334,25 +334,38 @@ def main():
 
 
 @dataclass
-class ResourceExt(Resource):
-    aws_regions: Optional[Dict[str, int]] = None
-    azure_regions: Optional[Dict[str, int]] = None
+class Region:
+    name: str
+    node_count: int
+    shard_index: Optional[int] = None
+    provider_name: Optional[str] = None
+    node_count_read_only: Optional[int] = None
+    node_count_analytics: Optional[int] = None
     instance_size: Optional[str] = None
-    cloud_order: List[str] = field(default_factory=lambda: ["aws", "azure"])
-    num_shards: Optional[int] = None
-    old_cluster: Optional[Resource] = None
+    instance_size_analytics: Optional[str] = None
+    zone_name: Optional[str] = None
+
+
+@dataclass
+class ResourceExt(Resource):
+    regions: Optional[List[Region]] = None
+    instance_size: Optional[str] = None
+    instance_size_analytics: Optional[str] = None
     auto_scaling: Optional[Autoscaling] = None
+    auto_scaling_anlytics: Optional[Autoscaling] = None
+    old_cluster: Optional[Resource] = None
 
     DEFAULT_INSTANCE_SIZE: ClassVar[str] = "M10"
     MUTUALLY_EXCLUSIVE: ClassVar[dict[str, list[str]]] = {
-        "aws_regions": ["replication_specs"],
-        "azure_regions": ["replication_specs"],
+        "regions": ["replication_specs"],
         "auto_scaling": ["instance_size"],
+        "auto_scaling_anlytics": ["instance_size_analytics"],
     }
     REQUIRES_OTHER: ClassVar[dict[str, list[str]]] = {
-        "instance_size": ["can_generate_replication_spec"],
-        "num_shards": ["can_generate_replication_spec"],
-        "auto_scaling": ["can_generate_replication_spec"],
+        "instance_size": ["regions"],
+        "num_shards": ["regions"],
+        "auto_scaling": ["regions"],
+        "auto_scaling_anlytics": ["regions"],
     }
     SKIP_VARIABLES: ClassVar[set[str]] = {"old_cluster"}
 
@@ -372,37 +385,58 @@ class ResourceExt(Resource):
             self.auto_scaling = Autoscaling(**self.auto_scaling)
 
     @property
-    def can_generate_replication_spec(self) -> bool:
-        return bool(self.aws_regions or self.azure_regions)
+    def num_shards(self) -> int:
+        if self.infer_cluster_type() == "GEOSHARDED":
+            return len({region.zone_name for region in self.regions or [] if region.zone_name is not None})
+        return (
+            max((region.shard_index or 0 for region in self.regions or [] if region.shard_index is not None), default=0)
+            + 1
+        )
 
     def infer_cluster_type(self) -> str:
         if self.cluster_type:
             return self.cluster_type
-        return "SHARDED" if self.num_shards and self.num_shards > 1 else "REPLICASET"
+        if all(region.zone_name is not None for region in self.regions or []):
+            return "GEOSHARDED"
+        if all(region.shard_index is not None for region in self.regions or []):
+            return "SHARDED"
+        return "REPLICASET"
 
-    def regions(self, cloud_name: str) -> dict[str, int]:
-        if cloud_name == "aws":
-            return self.aws_regions or {}
-        elif cloud_name == "azure":
-            return self.azure_regions or {}
+    def iterate_rep_spec_region_configs(self) -> Iterable[Tuple[int, list[Region]]]:
+        regions = self.regions or []
+        if self.infer_cluster_type() == "REPLICASET":
+            yield 0, regions
+        elif self.infer_cluster_type() == "SHARDED":
+            num_shards = self.num_shards or 1
+            shard_regions = {index: [] for index in range(num_shards)}
+            for region in regions:
+                shard_regions[region.shard_index or 0].append(region)
+            yield from shard_regions.items()
         else:
-            raise ValueError(f"Unknown cloud name: {cloud_name}")
+            zone_shard_indexes = {}
+            zone_regions = {index: [] for index in range(self.num_shards or 1)}
+            current_shard_index = 0
+            for region in regions:
+                assert region.zone_name
+                if region.zone_name not in zone_shard_indexes:
+                    zone_shard_indexes[region.zone_name] = current_shard_index
+                    current_shard_index += 1
+                zone_regions[zone_shard_indexes[region.zone_name]].append(region)
+            yield from zone_regions.items()
 
-    def get_instance_size(self, shard_index: int, region_config_index: int, spec_type: str = "electable") -> str:
-        if self.instance_size is not None:
-            return self.instance_size
-        if self.auto_scaling is not None:
-            default_min_size = self.auto_scaling.compute_min_instance_size
-            assert default_min_size is not None, (
-                f"{self.auto_scaling.compute_min_instance_size} is not a valid instance size"
-            )
-            if self.old_cluster is not None:
-                return self.current_instance_size(shard_index, region_config_index, spec_type) or default_min_size
-            else:
-                return default_min_size
-        return self.DEFAULT_INSTANCE_SIZE
+    def get_instance_size_electable(self, region: Region, shard_index: int, region_config_index: int) -> str:
+        if self.auto_scaling is None:
+            return region.instance_size or self.instance_size or self.DEFAULT_INSTANCE_SIZE
+        default_min_size = self.auto_scaling.compute_min_instance_size
+        assert default_min_size is not None, (
+            f"{self.auto_scaling.compute_min_instance_size} is not a valid instance size"
+        )
+        if self.old_cluster is not None:
+            return self.current_instance_size_electable(shard_index, region_config_index) or default_min_size
+        else:
+            return default_min_size
 
-    def current_instance_size(self, shard_index: int, region_config_index: int, spec_type: str = "electable") -> str:
+    def current_instance_size_electable(self, shard_index: int, region_config_index: int) -> Optional[str]:
         old_cluster = self.old_cluster
         assert old_cluster is not None
         specs = old_cluster.replication_specs
@@ -413,13 +447,36 @@ class ResourceExt(Resource):
         if not region_configs or len(region_configs) <= region_config_index:
             return ""
         region_config = region_configs[region_config_index]
-        if spec_type == "electable":
-            return region_config.electable_specs.instance_size
-        if spec_type == "analytics":
-            return region_config.analytics_specs.instance_size
-        if spec_type == "read_only":
-            return region_config.read_only_specs.instance_size
-        return ""
+        if region_config.electable_specs is None:
+            return ""
+        return region_config.electable_specs.instance_size
+
+    def get_instance_size_analytics(self, region: Region, shard_index: int, region_config_index: int) -> str:
+        if self.auto_scaling_anlytics is None:
+            return region.instance_size_analytics or self.instance_size_analytics or self.DEFAULT_INSTANCE_SIZE
+        default_min_size = self.auto_scaling_anlytics.compute_min_instance_size
+        assert default_min_size is not None, (
+            f"{self.auto_scaling_anlytics.compute_min_instance_size} is not a valid instance size"
+        )
+        if self.old_cluster is not None:
+            return self.current_instance_size_analytics(shard_index, region_config_index) or default_min_size
+        else:
+            return default_min_size
+
+    def current_instance_size_analytics(self, shard_index: int, region_config_index: int) -> Optional[str]:
+        old_cluster = self.old_cluster
+        assert old_cluster is not None
+        specs = old_cluster.replication_specs
+        if not specs or len(specs) <= shard_index:
+            return ""
+        shard = specs[shard_index]
+        region_configs = shard.region_configs
+        if not region_configs or len(region_configs) <= region_config_index:
+            return ""
+        region_config = region_configs[region_config_index]
+        if region_config.analytics_specs is None:
+            return ""
+        return region_config.analytics_specs.instance_size
 
 
 def errors(resource: ResourceExt) -> Iterable[str]:
@@ -435,37 +492,113 @@ def errors(resource: ResourceExt) -> Iterable[str]:
         missing_required = [required for required in required_vars if not getattr(resource, required)]
         if missing_required:
             yield f"Cannot use {var} without {','.join(sorted(missing_required))}"
+    if resource.auto_scaling is not None:
+        invalid_instance_sizes = [
+            f"instance_size @ index {index} = {region.instance_size}"
+            for index, region in enumerate(resource.regions or [])
+            if region.instance_size is not None
+        ]
+        if invalid_instance_sizes:
+            yield f"Cannot use `regions.*.instance_size` when auto_scaling is used: {','.join(invalid_instance_sizes)}"
+    if resource.auto_scaling_anlytics is not None:
+        invalid_instance_sizes = [
+            f"instance_size @ index {index} = {region.instance_size_analytics}"
+            for index, region in enumerate(resource.regions or [])
+            if region.instance_size_analytics is not None
+        ]
+        if invalid_instance_sizes:
+            yield f"Cannot use `regions.*.instance_size_analytics` when auto_scaling_anlytics is used: {','.join(invalid_instance_sizes)}"
+    found_cluster_type = resource.infer_cluster_type()
+    if found_cluster_type == "GEOSHARDED":
+        missing_zone_names = [
+            f"zone_name missing @ index {index}"
+            for index, region in enumerate(resource.regions or [])
+            if region.zone_name is None
+        ]
+        if missing_zone_names:
+            yield f"Must use `regions.*.zone_name` when cluster_type is GEOSHARDED: {','.join(missing_zone_names)}"
+    if found_cluster_type == "SHARDED":
+        missing_shard_indexes = [
+            f"shard_index missing @ index {index}"
+            for index, region in enumerate(resource.regions or [])
+            if region.shard_index is None
+        ]
+        if missing_shard_indexes:
+            yield f"Must use `regions.*.shard_index` when cluster_type is SHARDED: {','.join(missing_shard_indexes)}"
+    if found_cluster_type == "REPLICASET":
+        invalid_shard_index_or_zone_name = []
+        for index, region in enumerate(resource.regions or []):
+            if region.shard_index is not None:
+                invalid_shard_index_or_zone_name.append(f"shard_index @ index {index} specified")
+            if region.zone_name is not None:
+                invalid_shard_index_or_zone_name.append(f"zone_name @ index {index} specified")
+        if invalid_shard_index_or_zone_name:
+            yield f"Cannot use `regions.*.shard_index` or `regions.*.zone_name` when cluster_type is REPLICASET: {','.join(invalid_shard_index_or_zone_name)}"
 
 
 def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
     specs = []
     auto_scaling = resource.auto_scaling
-    for shard_index in range(resource.num_shards or 1):
-        region_configs: list[RegionConfig] = []
-        spec = ReplicationSpec()
+    auto_scaling_analytics = resource.auto_scaling_anlytics
+    for rep_spec_index, regions in resource.iterate_rep_spec_region_configs():
+        spec = ReplicationSpec(
+            region_configs=[],
+            zone_name=regions[0].zone_name,
+        )
         specs.append(spec)
         current_priority = 7
-        for cloud_name in resource.cloud_order:
-            for region_index, (region_name, node_count) in enumerate(resource.regions(cloud_name).items()):
-                region = RegionConfig(
-                    provider_name=cloud_name.upper(),
-                    region_name=region_name,
-                    priority=current_priority,
-                    electable_specs=Spec(
-                        disk_size_gb=resource.disk_size_gb,
-                        instance_size=resource.get_instance_size(shard_index, region_index, spec_type="electable"),
-                        node_count=node_count,
+        for region_config_index, region in enumerate(regions):
+            electable = (
+                Spec(
+                    disk_size_gb=resource.disk_size_gb,
+                    instance_size=resource.get_instance_size_electable(
+                        region, rep_spec_index, region_config_index=region_config_index
                     ),
-                    auto_scaling=auto_scaling,
+                    node_count=region.node_count,
                 )
-                current_priority -= 1
-                region_configs.append(region)
-        spec.region_configs = region_configs
+                if region.node_count
+                else None
+            )
+            analytics = (
+                Spec(
+                    disk_size_gb=resource.disk_size_gb,
+                    instance_size=resource.get_instance_size_analytics(
+                        region, rep_spec_index, region_config_index=region_config_index
+                    ),
+                    node_count=region.node_count_analytics,
+                )
+                if region.node_count_analytics
+                else None
+            )
+            read_only = (
+                Spec(
+                    disk_size_gb=resource.disk_size_gb,
+                    instance_size=resource.get_instance_size_electable(
+                        region, rep_spec_index, region_config_index=region_config_index
+                    ),
+                    node_count=region.node_count_read_only,
+                )
+                if region.node_count_read_only
+                else None
+            )
+            region_config = RegionConfig(
+                provider_name=region.provider_name,
+                region_name=region.name,
+                priority=current_priority,
+                electable_specs=electable,
+                read_only_specs=read_only,
+                analytics_specs=analytics,
+                auto_scaling=auto_scaling,
+                analytics_auto_scaling=auto_scaling_analytics,
+            )
+            current_priority -= 1
+            assert spec.region_configs
+            spec.region_configs.append(region_config)
     return specs
 
 
 def modify_out(resource: ResourceExt) -> ResourceExt:
-    if resource.can_generate_replication_spec:
+    if resource.regions:
         resource.replication_specs = generate_replication_specs(resource)
         resource.cluster_type = resource.infer_cluster_type()
     return resource

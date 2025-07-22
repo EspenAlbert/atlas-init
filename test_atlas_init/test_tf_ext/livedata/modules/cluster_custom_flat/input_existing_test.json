@@ -8,19 +8,8 @@
     },
     "accept_data_risks_and_force_replica_set_reconfig": null,
     "advanced_configuration": null,
-    "aws_regions": {
-        "EU_WEST_1": 1,
-        "US_EAST_1": 1
-    },
-    "azure_regions": {
-        "US_WEST_2": 1
-    },
     "backup_enabled": true,
     "bi_connector_config": null,
-    "cloud_order": [
-        "aws",
-        "azure"
-    ],
     "cluster_type": null,
     "config_server_management_mode": null,
     "delete_on_create_timeout": null,
@@ -31,7 +20,6 @@
     "labels": null,
     "mongo_db_major_version": null,
     "name": "created-from-custom-flat",
-    "num_shards": 1,
     "old_cluster": {
         "advanced_configuration": {
             "change_stream_options_pre_and_post_images_expire_after_seconds": -1,
