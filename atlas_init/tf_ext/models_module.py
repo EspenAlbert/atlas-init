@@ -28,6 +28,8 @@ class ResourceAbs(ABC):
     COMPUTED_ONLY_ATTRIBUTES_NAME: ClassVar[str] = "COMPUTED_ONLY_ATTRIBUTES"
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     DEFAULTS_HCL_STRINGS_NAME: ClassVar[str] = "DEFAULTS_HCL_STRINGS"
+    SKIP_VARIABLES: ClassVar[set[str]] = set()
+    SKIP_VARIABLES_NAME: ClassVar[str] = "SKIP_VARIABLES"
 
     @staticmethod
     def is_required(field_name: str, some_cls: type) -> bool:
@@ -44,6 +46,10 @@ class ResourceAbs(ABC):
     @staticmethod
     def default_hcl_string(field_name: str, some_cls: type) -> str | None:
         return getattr(some_cls, ResourceAbs.DEFAULTS_HCL_STRINGS_NAME, {}).get(field_name)
+
+    @staticmethod
+    def skip_variable(field_name: str, some_cls: type) -> bool:
+        return field_name in getattr(some_cls, ResourceAbs.SKIP_VARIABLES_NAME, set())
 
 
 def as_import_line(name: str) -> str:
@@ -64,6 +70,7 @@ class ModuleGenConfig(Entity):
     post_readme_processor: Callable[[str], str] | None = None
     use_descriptions: bool = False
     attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
+    inputs_json_hcl_extras: list[str] = PydanticField(default_factory=list)
 
     @model_validator(mode="after")
     def set_defaults(self) -> Self:
@@ -186,7 +193,14 @@ class ResourceTypePythonModule:
         if self.resource is None or self.resource_ext is None:
             return []
         base_fields = {f.name for f in self.base_fields}
-        return sorted((f for f in fields(self.resource_ext) if f.name not in base_fields), key=lambda f: f.name)
+        return sorted(
+            (
+                f
+                for f in fields(self.resource_ext)
+                if f.name not in base_fields and not ResourceAbs.skip_variable(f.name, self.resource_ext)
+            ),
+            key=lambda f: f.name,
+        )
 
     @property
     def extra_fields_names(self) -> list[str]:

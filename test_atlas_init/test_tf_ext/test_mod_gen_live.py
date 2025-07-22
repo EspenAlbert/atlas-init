@@ -102,7 +102,13 @@ class _ModuleNames:
     def write_extra_files(cls, module_out: Path, name: str):
         live_path = livedata_module_path(name)
         for src_file in live_path.glob("*"):
+            if src_file.stem.endswith("_test"):
+                continue
             copy(src_file, module_out / src_file.name, clean_dest=True)  # should also copy directories
+
+    @classmethod
+    def inputs_json_hcl_extras(cls, name: str) -> list[str]:
+        return {cls.CLUSTER_CUSTOM_FLAT: ["local.existing_cluster"]}.get(name, [])
 
     @classmethod
     def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
@@ -115,6 +121,7 @@ class _ModuleNames:
             required_variables=cls.required_variables(name),
             post_readme_processor=_default_link_updater,
             attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
+            inputs_json_hcl_extras=cls.inputs_json_hcl_extras(name),
         )
         if clean_and_write:
             clean_dir(config.module_path)

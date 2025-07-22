@@ -305,6 +305,10 @@ class Resource:
 def format_primitive(value: Union[str, float, bool, int, None]):
     if value is None:
         return None
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
     return str(value)
 
 

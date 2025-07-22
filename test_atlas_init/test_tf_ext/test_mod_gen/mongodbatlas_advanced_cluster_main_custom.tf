@@ -39,7 +39,7 @@ locals {
 data "external" "mongodbatlas_advanced_cluster" {
   program = ["python3", "${path.module}/mongodbatlas_advanced_cluster.py"]
   query = {
-    input_json = jsonencode(merge(local.mongodbatlas_advanced_cluster_varsx, local.mongodbatlas_advanced_cluster_vars))
+    input_json = jsonencode(merge(local.mongodbatlas_advanced_cluster_vars, local.mongodbatlas_advanced_cluster_varsx))
   }
 }
 

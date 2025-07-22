@@ -116,11 +116,12 @@ def dataclass_to_object_type(field: Field, cls: type, context: DefaultValueConte
 def generate_module_variables(python_module: ResourceTypePythonModule, config: ModuleGenConfig) -> tuple[str, str]:
     base_resource = python_module.resource
     assert base_resource is not None, f"{python_module} does not have a resource"
+    skipped_names_in_resource_ext = set(python_module.base_field_names) | getattr(
+        python_module.resource_ext, ResourceAbs.SKIP_VARIABLES_NAME, set()
+    )
     return generate_resource_variables(
         base_resource, base_resource.COMPUTED_ONLY_ATTRIBUTES, config.required_variables
-    ), generate_resource_variables(
-        python_module.resource_ext, set(python_module.base_field_names), config.required_variables
-    )
+    ), generate_resource_variables(python_module.resource_ext, skipped_names_in_resource_ext, config.required_variables)
 
 
 def generate_resource_variables(

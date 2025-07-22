@@ -31,17 +31,20 @@ locals {{
 """
 
 
-def data_external(module: ResourceTypePythonModule) -> str:
-    inputs_json_value = (
-        f"merge(local.{local_name_varsx(module.resource_type)}, local.{local_name_vars(module.resource_type)})"
-        if module.extra_fields_names
-        else f"local.{local_name_vars(module.resource_type)}"
-    )
+def data_external(module: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
+    input_json_parts = [
+        f"local.{local_name_vars(module.resource_type)}",
+    ]
+    if module.extra_fields_names:
+        input_json_parts.append(f"local.{local_name_varsx(module.resource_type)}")
+    if extras := config.inputs_json_hcl_extras:
+        input_json_parts.extend(extras)
+    inputs_json_merge = input_json_parts[0] if len(input_json_parts) == 1 else f"merge({', '.join(input_json_parts)})"
     return f"""
 data "external" "{module.resource_type}" {{
     program = ["python3", "${{path.module}}/{module.resource_type}.py"]
     query = {{
-        input_json = jsonencode({inputs_json_value})
+        input_json = jsonencode({inputs_json_merge})
     }}
 }}
 """
@@ -102,7 +105,7 @@ def format_tf_content(content: str) -> str:
 
 
 def generate_resource_main(python_module: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
-    resource = python_module.resource
+    resource = python_module.resource_ext or python_module.resource
     assert resource, f"{python_module} does not have a resource"
     resource_hcl = (
         resource_declare_direct(
@@ -121,7 +124,7 @@ def generate_resource_main(python_module: ResourceTypePythonModule, config: Modu
         "\n".join(
             [
                 *([] if config.skip_python else [locals_def(python_module)]),
-                *([] if config.skip_python else [data_external(python_module)]),
+                *([] if config.skip_python else [data_external(python_module, config)]),
                 "",
                 resource_hcl,
                 "",

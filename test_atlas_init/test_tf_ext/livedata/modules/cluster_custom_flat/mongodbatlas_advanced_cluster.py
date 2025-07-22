@@ -2,7 +2,7 @@
 import json
 import sys
 from dataclasses import asdict, dataclass, field
-from typing import Any, ClassVar, Dict, Iterable, List, Optional, Set
+from typing import Optional, List, Dict, Any, Set, ClassVar, Union, Iterable
 
 
 @dataclass
@@ -10,6 +10,7 @@ class AdvancedConfiguration:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"custom_openssl_cipher_config_tls12"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     change_stream_options_pre_and_post_images_expire_after_seconds: Optional[float] = None
     custom_openssl_cipher_config_tls12: Optional[List[str]] = None
     default_max_time_ms: Optional[float] = None
@@ -32,6 +33,7 @@ class BiConnectorConfig:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     enabled: Optional[bool] = None
     read_preference: Optional[str] = None
 
@@ -41,6 +43,7 @@ class Endpoint:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"endpoint_id", "provider_name", "region"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     endpoint_id: Optional[str] = None
     provider_name: Optional[str] = None
     region: Optional[str] = None
@@ -57,6 +60,7 @@ class PrivateEndpoint:
         "srv_shard_optimized_connection_string",
         "type",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     connection_string: Optional[str] = None
     endpoints: Optional[List[Endpoint]] = None
     srv_connection_string: Optional[str] = None
@@ -79,6 +83,7 @@ class ConnectionString:
         "standard",
         "standard_srv",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     private: Optional[str] = None
     private_endpoint: Optional[List[PrivateEndpoint]] = None
     private_srv: Optional[str] = None
@@ -97,6 +102,7 @@ class PinnedFcv:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"expiration_date"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"version"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     expiration_date: Optional[str] = None
     version: Optional[str] = None
 
@@ -106,6 +112,7 @@ class Autoscaling:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     compute_enabled: Optional[bool] = None
     compute_max_instance_size: Optional[str] = None
     compute_min_instance_size: Optional[str] = None
@@ -118,6 +125,7 @@ class Spec:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     disk_iops: Optional[float] = None
     disk_size_gb: Optional[float] = None
     ebs_volume_type: Optional[str] = None
@@ -136,6 +144,7 @@ class RegionConfig:
     }
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"priority", "provider_name", "region_name"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     analytics_auto_scaling: Optional[Autoscaling] = None
     analytics_specs: Optional[Spec] = None
     auto_scaling: Optional[Autoscaling] = None
@@ -179,6 +188,7 @@ class ReplicationSpec:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "id", "zone_id"}
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     container_id: Optional[Dict[str, Any]] = None
     external_id: Optional[str] = None
     id: Optional[str] = None
@@ -197,6 +207,7 @@ class Timeout:
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     create: Optional[str] = None
     delete: Optional[str] = None
     update: Optional[str] = None
@@ -223,6 +234,7 @@ class Resource:
         "mongo_db_version",
         "state_name",
     }
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     accept_data_risks_and_force_replica_set_reconfig: Optional[str] = None
     advanced_configuration: Optional[AdvancedConfiguration] = None
     backup_enabled: Optional[bool] = None
@@ -290,6 +302,16 @@ class Resource:
             self.timeouts = Timeout(**self.timeouts)
 
 
+def format_primitive(value: Union[str, float, bool, int, None]):
+    if value is None:
+        return None
+    if value is True:
+        return "true"
+    if value is False:
+        return "false"
+    return str(value)
+
+
 def main():
     input_data = sys.stdin.read()
     # Parse the input as JSON
@@ -300,15 +322,11 @@ def main():
     primitive_types = (str, float, bool, int)
     resource = modify_out(resource)
     output = {
-        key: value if value is None or isinstance(value, primitive_types) else json.dumps(value)
+        key: format_primitive(value) if value is None or isinstance(value, primitive_types) else json.dumps(value)
         for key, value in asdict(resource).items()
     }
     output["error_message"] = error_message
     json_str = json.dumps(output)
-    from pathlib import Path
-
-    logs_out = Path(__file__).parent / "logs.json"
-    logs_out.write_text(json_str)
     print(json_str)
 
 
@@ -322,16 +340,36 @@ class ResourceExt(Resource):
     instance_size: Optional[str] = None
     cloud_order: List[str] = field(default_factory=lambda: ["aws", "azure"])
     num_shards: Optional[int] = None
+    old_cluster: Optional[Resource] = None
+    auto_scaling: Optional[Autoscaling] = None
 
     DEFAULT_INSTANCE_SIZE: ClassVar[str] = "M10"
     MUTUALLY_EXCLUSIVE: ClassVar[dict[str, list[str]]] = {
         "aws_regions": ["replication_specs"],
         "azure_regions": ["replication_specs"],
+        "auto_scaling": ["instance_size"],
     }
     REQUIRES_OTHER: ClassVar[dict[str, list[str]]] = {
         "instance_size": ["can_generate_replication_spec"],
         "num_shards": ["can_generate_replication_spec"],
+        "auto_scaling": ["can_generate_replication_spec"],
     }
+    SKIP_VARIABLES: ClassVar[set[str]] = {"old_cluster"}
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.old_cluster is not None and not isinstance(self.old_cluster, Resource):
+            assert isinstance(self.old_cluster, dict), (
+                f"Expected old_cluster to be a Resource or a dict, got {type(self.old_cluster)}"
+            )
+            self.old_cluster = Resource(
+                **{k: v for k, v in self.old_cluster.items() if k not in {"use_replication_spec_per_shard"}}
+            )
+        if self.auto_scaling is not None and not isinstance(self.auto_scaling, Autoscaling):
+            assert isinstance(self.auto_scaling, dict), (
+                f"Expected auto_scaling to be an Autoscaling or a dict, got {type(self.auto_scaling)}"
+            )
+            self.auto_scaling = Autoscaling(**self.auto_scaling)
 
     @property
     def can_generate_replication_spec(self) -> bool:
@@ -350,14 +388,38 @@ class ResourceExt(Resource):
         else:
             raise ValueError(f"Unknown cloud name: {cloud_name}")
 
-    @property
-    def instance_size_unset(self) -> bool:
-        return self.instance_size is None
-
-    def get_default_instance_size(self):
-        if not self.instance_size_unset:
+    def get_instance_size(self, shard_index: int, region_config_index: int, spec_type: str = "electable") -> str:
+        if self.instance_size is not None:
             return self.instance_size
+        if self.auto_scaling is not None:
+            default_min_size = self.auto_scaling.compute_min_instance_size
+            assert default_min_size is not None, (
+                f"{self.auto_scaling.compute_min_instance_size} is not a valid instance size"
+            )
+            if self.old_cluster is not None:
+                return self.current_instance_size(shard_index, region_config_index, spec_type) or default_min_size
+            else:
+                return default_min_size
         return self.DEFAULT_INSTANCE_SIZE
+
+    def current_instance_size(self, shard_index: int, region_config_index: int, spec_type: str = "electable") -> str:
+        old_cluster = self.old_cluster
+        assert old_cluster is not None
+        specs = old_cluster.replication_specs
+        if not specs or len(specs) <= shard_index:
+            return ""
+        shard = specs[shard_index]
+        region_configs = shard.region_configs
+        if not region_configs or len(region_configs) <= region_config_index:
+            return ""
+        region_config = region_configs[region_config_index]
+        if spec_type == "electable":
+            return region_config.electable_specs.instance_size
+        if spec_type == "analytics":
+            return region_config.analytics_specs.instance_size
+        if spec_type == "read_only":
+            return region_config.read_only_specs.instance_size
+        return ""
 
 
 def errors(resource: ResourceExt) -> Iterable[str]:
@@ -377,23 +439,24 @@ def errors(resource: ResourceExt) -> Iterable[str]:
 
 def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
     specs = []
-
-    for _ in range(resource.num_shards or 1):
+    auto_scaling = resource.auto_scaling
+    for shard_index in range(resource.num_shards or 1):
         region_configs: list[RegionConfig] = []
         spec = ReplicationSpec()
         specs.append(spec)
         current_priority = 7
         for cloud_name in resource.cloud_order:
-            for region_name, node_count in resource.regions(cloud_name).items():
+            for region_index, (region_name, node_count) in enumerate(resource.regions(cloud_name).items()):
                 region = RegionConfig(
                     provider_name=cloud_name.upper(),
                     region_name=region_name,
                     priority=current_priority,
                     electable_specs=Spec(
                         disk_size_gb=resource.disk_size_gb,
-                        instance_size=resource.get_default_instance_size(),
+                        instance_size=resource.get_instance_size(shard_index, region_index, spec_type="electable"),
                         node_count=node_count,
                     ),
+                    auto_scaling=auto_scaling,
                 )
                 current_priority -= 1
                 region_configs.append(region)
