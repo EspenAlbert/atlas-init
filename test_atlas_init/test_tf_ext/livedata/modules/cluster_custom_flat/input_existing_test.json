@@ -1,11 +1,4 @@
 {
-    "auto_scaling": {
-        "compute_enabled": true,
-        "compute_max_instance_size": "M60",
-        "compute_min_instance_size": "M30",
-        "compute_scale_down_enabled": true,
-        "disk_gb_enabled": true
-    },
     "accept_data_risks_and_force_replica_set_reconfig": null,
     "advanced_configuration": null,
     "backup_enabled": true,

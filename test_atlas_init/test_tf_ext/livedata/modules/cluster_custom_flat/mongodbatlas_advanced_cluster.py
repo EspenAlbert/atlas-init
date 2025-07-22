@@ -349,23 +349,24 @@ class Region:
 @dataclass
 class ResourceExt(Resource):
     regions: Optional[List[Region]] = None
+    provider_name: Optional[str] = None
     instance_size: Optional[str] = None
     instance_size_analytics: Optional[str] = None
     auto_scaling: Optional[Autoscaling] = None
-    auto_scaling_anlytics: Optional[Autoscaling] = None
+    auto_scaling_analytics: Optional[Autoscaling] = None
     old_cluster: Optional[Resource] = None
 
     DEFAULT_INSTANCE_SIZE: ClassVar[str] = "M10"
     MUTUALLY_EXCLUSIVE: ClassVar[dict[str, list[str]]] = {
         "regions": ["replication_specs"],
         "auto_scaling": ["instance_size"],
-        "auto_scaling_anlytics": ["instance_size_analytics"],
+        "auto_scaling_analytics": ["instance_size_analytics"],
     }
     REQUIRES_OTHER: ClassVar[dict[str, list[str]]] = {
         "instance_size": ["regions"],
         "num_shards": ["regions"],
         "auto_scaling": ["regions"],
-        "auto_scaling_anlytics": ["regions"],
+        "auto_scaling_analytics": ["regions"],
     }
     SKIP_VARIABLES: ClassVar[set[str]] = {"old_cluster"}
 
@@ -383,6 +384,13 @@ class ResourceExt(Resource):
                 f"Expected auto_scaling to be an Autoscaling or a dict, got {type(self.auto_scaling)}"
             )
             self.auto_scaling = Autoscaling(**self.auto_scaling)
+        if self.auto_scaling_analytics is not None and not isinstance(self.auto_scaling_analytics, Autoscaling):
+            assert isinstance(self.auto_scaling_analytics, dict), (
+                f"Expected auto_scaling_anlytics to be an Autoscaling or a dict, got {type(self.auto_scaling_analytics)}"
+            )
+            self.auto_scaling_analytics = Autoscaling(**self.auto_scaling_analytics)
+        if self.regions is not None:
+            self.regions = [Region(**region) if isinstance(region, dict) else region for region in self.regions]
 
     @property
     def num_shards(self) -> int:
@@ -452,11 +460,11 @@ class ResourceExt(Resource):
         return region_config.electable_specs.instance_size
 
     def get_instance_size_analytics(self, region: Region, shard_index: int, region_config_index: int) -> str:
-        if self.auto_scaling_anlytics is None:
+        if self.auto_scaling_analytics is None:
             return region.instance_size_analytics or self.instance_size_analytics or self.DEFAULT_INSTANCE_SIZE
-        default_min_size = self.auto_scaling_anlytics.compute_min_instance_size
+        default_min_size = self.auto_scaling_analytics.compute_min_instance_size
         assert default_min_size is not None, (
-            f"{self.auto_scaling_anlytics.compute_min_instance_size} is not a valid instance size"
+            f"{self.auto_scaling_analytics.compute_min_instance_size} is not a valid instance size"
         )
         if self.old_cluster is not None:
             return self.current_instance_size_analytics(shard_index, region_config_index) or default_min_size
@@ -500,7 +508,7 @@ def errors(resource: ResourceExt) -> Iterable[str]:
         ]
         if invalid_instance_sizes:
             yield f"Cannot use `regions.*.instance_size` when auto_scaling is used: {','.join(invalid_instance_sizes)}"
-    if resource.auto_scaling_anlytics is not None:
+    if resource.auto_scaling_analytics is not None:
         invalid_instance_sizes = [
             f"instance_size @ index {index} = {region.instance_size_analytics}"
             for index, region in enumerate(resource.regions or [])
@@ -509,6 +517,16 @@ def errors(resource: ResourceExt) -> Iterable[str]:
         if invalid_instance_sizes:
             yield f"Cannot use `regions.*.instance_size_analytics` when auto_scaling_anlytics is used: {','.join(invalid_instance_sizes)}"
     found_cluster_type = resource.infer_cluster_type()
+    zone_names_found = [
+        f"regions[{i}].zone_name={region.zone_name}"
+        for i, region in enumerate(resource.regions or [])
+        if region.zone_name is not None
+    ]
+    shard_indexes_found = [
+        f"regions[{i}].shard_index={region.shard_index}"
+        for i, region in enumerate(resource.regions or [])
+        if region.shard_index is not None
+    ]
     if found_cluster_type == "GEOSHARDED":
         missing_zone_names = [
             f"zone_name missing @ index {index}"
@@ -517,6 +535,8 @@ def errors(resource: ResourceExt) -> Iterable[str]:
         ]
         if missing_zone_names:
             yield f"Must use `regions.*.zone_name` when cluster_type is GEOSHARDED: {','.join(missing_zone_names)}"
+        if shard_indexes_found:
+            yield f"Geosharded cluster should not define shard_index: {','.join(shard_indexes_found)}"
     if found_cluster_type == "SHARDED":
         missing_shard_indexes = [
             f"shard_index missing @ index {index}"
@@ -525,21 +545,26 @@ def errors(resource: ResourceExt) -> Iterable[str]:
         ]
         if missing_shard_indexes:
             yield f"Must use `regions.*.shard_index` when cluster_type is SHARDED: {','.join(missing_shard_indexes)}"
+        if zone_names_found:
+            yield f"Sharded cluster should not define zone_name: {','.join(zone_names_found)}"
     if found_cluster_type == "REPLICASET":
-        invalid_shard_index_or_zone_name = []
-        for index, region in enumerate(resource.regions or []):
-            if region.shard_index is not None:
-                invalid_shard_index_or_zone_name.append(f"shard_index @ index {index} specified")
-            if region.zone_name is not None:
-                invalid_shard_index_or_zone_name.append(f"zone_name @ index {index} specified")
-        if invalid_shard_index_or_zone_name:
-            yield f"Cannot use `regions.*.shard_index` or `regions.*.zone_name` when cluster_type is REPLICASET: {','.join(invalid_shard_index_or_zone_name)}"
+        if shard_indexes_found:
+            yield f"Replicaset cluster should not define shard_index: {','.join(shard_indexes_found)}"
+        if zone_names_found:
+            yield f"Replicaset cluster should not define zone_name: {','.join(zone_names_found)}"
+    if missing_cloud_provider := [
+        f"regions[{i}].provider_name is missing"
+        for i, region in enumerate(resource.regions or [])
+        if region.provider_name is None
+    ]:
+        if resource.provider_name is None:
+            yield f"Must use `regions.*.provider_name` when root `provider_name` is not specified: {','.join(missing_cloud_provider)}"
 
 
 def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
     specs = []
     auto_scaling = resource.auto_scaling
-    auto_scaling_analytics = resource.auto_scaling_anlytics
+    auto_scaling_analytics = resource.auto_scaling_analytics
     for rep_spec_index, regions in resource.iterate_rep_spec_region_configs():
         spec = ReplicationSpec(
             region_configs=[],
@@ -582,7 +607,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
                 else None
             )
             region_config = RegionConfig(
-                provider_name=region.provider_name,
+                provider_name=region.provider_name or resource.provider_name,
                 region_name=region.name,
                 priority=current_priority,
                 electable_specs=electable,
@@ -592,7 +617,7 @@ def generate_replication_specs(resource: ResourceExt) -> list[ReplicationSpec]:
                 analytics_auto_scaling=auto_scaling_analytics,
             )
             current_priority -= 1
-            assert spec.region_configs
+            assert spec.region_configs is not None
             spec.region_configs.append(region_config)
     return specs
 
