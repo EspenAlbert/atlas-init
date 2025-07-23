@@ -2,14 +2,14 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from model_lib import dump, parse_payload
+from model_lib import dump, dump_as_dict, parse_payload
 from pydantic import TypeAdapter
 import pytest
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig
 from atlas_init.tf_ext.settings import TfExtSettings
-from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_pipeline
+from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_examples_and_readme
 from atlas_init.tf_ext.plan_diffs import (
     ExamplePlanCheck,
     dump_plan_output_resources,
@@ -54,14 +54,6 @@ name         = "created-from-custom-flat"
 """
 
 
-def _default_link_updater(readme_content: str) -> str:
-    for replace_in, replace_out in {
-        "docs/resources/advanced_cluster": r"docs/resources/advanced_cluster%2520%2528preview%2520provider%25202.0.0%2529"
-    }.items():
-        readme_content = readme_content.replace(replace_in, replace_out)
-    return readme_content
-
-
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
     CLUSTER_CUSTOM = "cluster_custom"
@@ -82,7 +74,10 @@ class _ModuleNames:
 
     @classmethod
     def required_variables(cls, name: str) -> set[str]:
-        return {cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"}}.get(name, set())
+        return {
+            cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"},
+            cls.CLUSTER_CUSTOM_FLAT: {"project_id", "name"},
+        }.get(name, set())
 
     @classmethod
     def defaults_hcl_strings(cls, name: str) -> dict[str, str]:
@@ -90,7 +85,6 @@ class _ModuleNames:
             cls.CLUSTER_SKIP_PYTHON: {
                 "minimum_enabled_tls_protocol": '"TLS1_2"',
                 "javascript_enabled": "false",
-                "tls_cipher_config_mode": '"DEFAULT"',
                 "backup_enabled": "true",
                 "retain_backups_enabled": "true",
                 "termination_protection_enabled": "true",
@@ -116,17 +110,15 @@ class _ModuleNames:
             name=name,
             resource_types=["mongodbatlas_advanced_cluster"],
             settings=settings,
-            minimal_tfvars=cls.auto_tfvars(name),
             skip_python=cls.CLUSTER_SKIP_PYTHON == name,
             required_variables=cls.required_variables(name),
-            post_readme_processor=_default_link_updater,
             attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
             inputs_json_hcl_extras=cls.inputs_json_hcl_extras(name),
         )
         if clean_and_write:
-            clean_dir(config.module_path)
-        cls.write_extra_files(config.module_path, name)
-        example_checks = config.module_path / cls.FILENAME_EXAMPLE_CHECKS
+            clean_dir(config.module_out_path)
+        cls.write_extra_files(config.module_out_path, name)
+        example_checks = config.module_out_path / cls.FILENAME_EXAMPLE_CHECKS
         if example_checks.exists():
             example_plan_checks_raw = parse_payload(example_checks)
             config.example_plan_checks = TypeAdapter(list[ExamplePlanCheck]).validate_python(example_plan_checks_raw)
@@ -177,6 +169,15 @@ cluster_type = "REPLICASET"
 
 
 @pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
+def test_dump_example_configs(module_config_name: str, tf_ext_settings_repo_path):
+    module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path, clean_and_write=False)
+    module_path = module_config.module_out_path
+    config_path = module_path / "config.yaml"
+    as_dict = dump_as_dict(module_config.model_dump(exclude_defaults=True, exclude_unset=True, exclude_none=True))
+    ensure_parents_write_text(config_path, dump(as_dict, "yaml"))
+
+
+@pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
 def test_generate_module(module_config_name: str, tf_ext_settings_repo_path):
     module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path, clean_and_write=True)
     module_path = generate_module(module_config)
@@ -195,7 +196,7 @@ def test_generated_module_pipeline(module_config_name: str, tf_ext_settings_repo
         tf_ext_settings_repo_path,
         clean_and_write=False,
     )
-    module_path = module_pipeline(module_config)
+    module_path = module_examples_and_readme(module_config)
     assert module_path.exists()
     logger.info(f"Created module at {module_path}")
 

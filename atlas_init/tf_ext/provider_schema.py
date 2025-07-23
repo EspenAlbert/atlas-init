@@ -1,4 +1,5 @@
 from __future__ import annotations
+from functools import lru_cache
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -31,6 +32,10 @@ terraform {
 }
 
 """
+
+
+def get_providers_tf() -> str:
+    return _providers_tf
 
 
 class AtlasSchemaInfo(Entity):
@@ -100,6 +105,7 @@ SchemaBlockType.model_rebuild()
 SchemaBlock.model_rebuild()
 
 
+@lru_cache
 def parse_atlas_schema() -> AtlasSchemaInfo:
     assert os.environ.get(TF_CLI_CONFIG_FILE_ENV_NAME), f"{TF_CLI_CONFIG_FILE_ENV_NAME} is required"
     with TemporaryDirectory() as example_dir:

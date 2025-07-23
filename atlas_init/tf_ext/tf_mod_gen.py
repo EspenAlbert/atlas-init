@@ -3,22 +3,26 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from pydantic import DirectoryPath, TypeAdapter
 import typer
 from ask_shell import new_task, run_and_wait, run_pool, text
-from model_lib import parse_model
-from zero_3rdparty.file_utils import ensure_parents_write_text
+from model_lib import parse_model, parse_payload
+from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.cli_tf.example_update import UpdateExamples, update_examples
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
+from atlas_init.tf_ext.gen_examples import generate_examples, read_example_dirs
 from atlas_init.tf_ext.gen_module_readme import generate_readme
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
+from atlas_init.tf_ext.gen_versions import dump_versions_tf
 from atlas_init.tf_ext.models_module import (
     MissingDescriptionError,
     ModuleGenConfig,
     parse_attribute_descriptions,
     store_updated_attribute_description,
+    import_resource_type_python_module,
 )
 from atlas_init.tf_ext.newres import prepare_newres
 from atlas_init.tf_ext.plan_diffs import (
@@ -28,7 +32,7 @@ from atlas_init.tf_ext.plan_diffs import (
     read_variables_path,
 )
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
-from atlas_init.tf_ext.schema_to_dataclass import convert_and_format, import_resource_type_python_module
+from atlas_init.tf_ext.schema_to_dataclass import convert_and_format
 from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
@@ -41,22 +45,45 @@ def tf_mod_gen(
         ..., "-r", "--resource-type", help="Resource types to generate modules for"
     ),
     name: str = typer.Option("", "-n", "--name", help="Name of the module"),
-    output_dir: Path | None = typer.Option(None, "-o", "--output-dir", help="Output directory for generated modules"),
+    in_dir: DirectoryPath = typer.Option(
+        ..., "-i", "--in-dir", help="Parent directory where the module generation files are stored"
+    ),
+    out_dir: DirectoryPath = typer.Option(
+        ...,
+        "-o",
+        "--out-dir",
+        help="Output directory for generated modules, the module will end up in {output_dir}/{name}",
+    ),
+    example_var_file: Path = typer.Option(
+        ..., "-e", "--example-var-file", help="Path to example variable file", envvar="TF_EXT_EXAMPLE_VAR_FILE"
+    ),
 ):
     settings = TfExtSettings.from_env()
     assert tf_cli_config_file, "tf_cli_config_file is required"
     if use_newres:
         prepare_newres(settings.new_res_path)
     else:
+        settings = TfExtSettings.from_env()
         logger.info("will use Python generation")
-        assert resource_type, "resource_type is required"
-        config = ModuleGenConfig(
-            resource_types=resource_type,
-            settings=settings,
-            output_dir=output_dir,
-            name=name,
-        )
+        config = ModuleGenConfig.from_paths(name, in_dir, out_dir, settings)
+        prepare_out_dir(config)
         generate_module(config)
+        module_examples_and_readme(config, example_var_file=example_var_file)
+
+
+def prepare_out_dir(config: ModuleGenConfig, *, skip_clean_dir: bool = False):
+    if not skip_clean_dir:
+        clean_dir(config.module_out_path)
+    in_dir = config.in_dir
+    assert in_dir, "in_dir is required"
+    for src_file in in_dir.glob("*"):
+        if src_file.stem.endswith("_test"):
+            continue
+        copy(src_file, config.module_out_path / src_file.name, clean_dest=True)  # also copies directories
+    example_checks = config.example_plan_checks_path
+    if example_checks.exists():
+        example_plan_checks_raw = parse_payload(example_checks)
+        config.example_plan_checks = TypeAdapter(list[ExamplePlanCheck]).validate_python(example_plan_checks_raw)
 
 
 def generate_module(config: ModuleGenConfig) -> Path:
@@ -64,14 +91,14 @@ def generate_module(config: ModuleGenConfig) -> Path:
         schema = parse_atlas_schema()
         assert schema
     resource_types = config.resource_types
-    module_path = config.module_path
+    module_path = config.module_out_path
     with new_task("Generating module files for resource types", total=len(resource_types)) as task:
         for resource_type in resource_types:
             resource_type_schema = schema.raw_resource_schema.get(resource_type)
             assert resource_type_schema, f"resource type {resource_type} not found in schema"
             schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
 
-            dataclass_path = module_path / f"{resource_type}.py"
+            dataclass_path = config.dataclass_path(resource_type)
             dataclass_code = convert_and_format(resource_type, schema_parsed, config, existing_path=dataclass_path)
             ensure_parents_write_text(dataclass_path, dataclass_code)
 
@@ -95,49 +122,40 @@ def generate_module(config: ModuleGenConfig) -> Path:
             if config.skip_python:
                 dataclass_path.unlink(missing_ok=True)
 
-    provider_path = module_path / "providers.tf"
-    if not provider_path.exists():
-        with new_task("Generating providers.tf"):
-            ensure_parents_write_text(provider_path, schema.providers_tf)
-    minimal_tfvars_path: Path | None = None
-    if minimal_tfvars := config.minimal_tfvars:
-        with new_task("Generating auto.tfvars"):
-            minimal_tfvars_path = module_path / "minimal.tfvars"
-            ensure_parents_write_text(minimal_tfvars_path, minimal_tfvars)
-    logger.info(f"Module dumped to {config.module_path}, running checks")
-    run_terraform_commands(config.module_path, variables_path=minimal_tfvars_path)
+    dump_versions_tf(config.module_out_path)
+    logger.info(f"Module dumped to {config.module_out_path}, running checks")
+    validate_module(config.module_out_path)
     return module_path
 
 
 OUT_BINARY_PATH = "tfplan.binary"
 
 
-def run_terraform_commands(
-    tf_workdir: Path, *, variables_path: Path | None = None, store_plan_to_path: Path | None = None
-):
+def validate_module(tf_workdir: Path):
     terraform_commands = [
         "terraform init",
         "terraform fmt .",
         "terraform validate .",
     ]
-    var_arg = f" -var-file={variables_path}" if variables_path else ""
-    if store_plan_to_path:
-        terraform_commands.extend(
-            [
-                f"terraform plan -out={OUT_BINARY_PATH}{var_arg}",
-                f"terraform show -json {OUT_BINARY_PATH} > {store_plan_to_path}",
-            ]
-        )
-    else:
-        terraform_commands.append(f"terraform plan{var_arg}")
-    with new_task("Terraform Sanity Checks", total=len(terraform_commands)) as task:
+    with new_task("Terraform Module Validate Checks", total=len(terraform_commands)) as task:
         for command in terraform_commands:
             run_and_wait(command, cwd=tf_workdir)
             task.update(advance=1)
 
 
-def module_pipeline(config: ModuleGenConfig) -> Path:
-    path = config.module_path
+def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Path | None = None) -> Path:
+    path = config.module_out_path
+    if (examples_test := config.examples_test_path) and examples_test.exists():
+        with new_task(f"Generating examples from {config.FILENAME_EXAMPLES_TEST}"):
+            assert len(config.resource_types) == 1
+            resource_type = config.resource_types[0]
+            py_module = import_resource_type_python_module(resource_type, config.dataclass_path(resource_type))
+            examples_generated = generate_examples(config, py_module)
+        if examples_generated:
+            with run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
+                for example_path in examples_generated:
+                    pool.submit(validate_module, example_path)
+
     attribute_descriptions = parse_attribute_descriptions(config.settings)
     settings = config.settings
 
@@ -167,7 +185,16 @@ def module_pipeline(config: ModuleGenConfig) -> Path:
         with new_task("Generating README.md"):
             readme_content = generate_readme(config)
             ensure_parents_write_text(readme_path, readme_content)
+    if example_var_file:
+        examples = read_example_dirs(config.module_out_path)
+        if examples:
+            with run_pool("Running terraform plan on examples", total=len(examples), exit_wait_timeout=60) as pool:
 
+                def run_example(example: Path):
+                    run_and_wait(f"terraform plan -var-file={example_var_file}", cwd=example)
+
+                for example in examples:
+                    pool.submit(run_example, example)
     return path
 
 
@@ -181,9 +208,12 @@ def example_plan_checks(config: ModuleGenConfig, timeout_all_seconds: int = 60) 
         with TemporaryDirectory() as temp_dir:
             stored_plan = Path(temp_dir) / "plan.json"
             tf_dir = config.example_path(check.example_name)
-            run_terraform_commands(tf_dir, variables_path=variables_path, store_plan_to_path=stored_plan)
+            validate_module(tf_dir)
+            var_arg = f" -var-file={variables_path}" if variables_path else ""
+            run_and_wait(f"terraform plan -out={OUT_BINARY_PATH}{var_arg}", cwd=tf_dir)
+            run_and_wait(f"terraform show -json {OUT_BINARY_PATH} > {stored_plan}", cwd=tf_dir)
             plan_output = parse_plan_output(stored_plan)
-            return generate_expected_actual(settings.output_plan_dumps, check, plan_output)
+        return generate_expected_actual(settings.output_plan_dumps, check, plan_output)
 
     with run_pool("Run Examples", total=len(example_checks), exit_wait_timeout=timeout_all_seconds) as pool:
         futures = {pool.submit(run_check, check): check for check in example_checks}

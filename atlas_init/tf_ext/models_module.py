@@ -3,16 +3,16 @@ from collections import defaultdict
 from dataclasses import Field, dataclass, fields
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, ClassVar, Self, TypeAlias
+from typing import ClassVar, Self, TypeAlias
 
-from model_lib import Entity, dump, parse_dict
+from model_lib import Entity, dump, parse_dict, parse_model
+from pydantic import DirectoryPath, model_validator
 from pydantic import Field as PydanticField
-from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.object_name import as_name
 
 from atlas_init.tf_ext.plan_diffs import ExamplePlanCheck
-from atlas_init.tf_ext.py_gen import make_post_init_line_from_field, module_dataclasses
+from atlas_init.tf_ext.py_gen import import_from_path, make_post_init_line_from_field, module_dataclasses
 from atlas_init.tf_ext.settings import TfExtSettings
 
 ResourceTypeT: TypeAlias = str
@@ -58,16 +58,19 @@ def as_import_line(name: str) -> str:
 
 
 class ModuleGenConfig(Entity):
+    CONFIG_FILENAME: ClassVar[str] = "config.yaml"
+    FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
+    FILENAME_EXAMPLES_TEST: ClassVar[str] = "examples_test.py"
+
     name: str = ""
     resource_types: list[str]
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
-    output_dir: Path | None = None
+    in_dir: Path | None = None
+    out_dir: Path | None = None
     required_variables: set[str] = PydanticField(default_factory=set)  # todo: project_id
-    minimal_tfvars: str = ""
     skip_python: bool = False
     debug_json_logs: bool = False
     example_plan_checks: list[ExamplePlanCheck] = PydanticField(default_factory=list)
-    post_readme_processor: Callable[[str], str] | None = None
     use_descriptions: bool = False
     attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
     inputs_json_hcl_extras: list[str] = PydanticField(default_factory=list)
@@ -78,32 +81,56 @@ class ModuleGenConfig(Entity):
             self.name = self.resource_types[0]
         return self
 
+    @classmethod
+    def from_paths(cls, name: str, in_dir: DirectoryPath, out_dir: DirectoryPath, settings: TfExtSettings) -> Self:
+        config_path = in_dir / name / f"{cls.CONFIG_FILENAME}"
+        assert config_path.exists(), f"{config_path} does not exist"
+        out_dir = out_dir or settings.modules_out_path
+        assert out_dir.exists(), f"{out_dir} does not exist"
+        config = parse_model(config_path, t=cls)
+        config.out_dir = out_dir / name
+        config.in_dir = in_dir / name
+        config.settings = settings
+        return config
+
     @property
-    def module_path(self) -> Path:
-        if out_dir := self.output_dir:
+    def module_out_path(self) -> Path:
+        if out_dir := self.out_dir:
             return out_dir
         parent_path = self.settings.modules_out_path
         return parent_path / self.name
 
+    @property
+    def example_plan_checks_path(self) -> Path:
+        assert self.in_dir, "in_dir is required to find example checks"
+        return self.in_dir / ModuleGenConfig.FILENAME_EXAMPLE_CHECKS
+
+    @property
+    def examples_test_path(self) -> Path:
+        return self.module_out_path / ModuleGenConfig.FILENAME_EXAMPLES_TEST
+
+    def dataclass_path(self, resource_type: str) -> Path:
+        return self.module_out_path / f"{resource_type}.py"
+
     def main_tf_path(self, resource_type: str) -> Path:
         if len(self.resource_types) > 1:
-            return self.module_path / f"{resource_type}.tf"
-        return self.module_path / "main.tf"
+            return self.module_out_path / f"{resource_type}.tf"
+        return self.module_out_path / "main.tf"
 
     def variables_path(self, resource_type: str) -> Path:
         if len(self.resource_types) > 1:
-            return self.module_path / f"{resource_type}_variables.tf"
-        return self.module_path / "variables.tf"
+            return self.module_out_path / f"{resource_type}_variables.tf"
+        return self.module_out_path / "variables.tf"
 
     def variablesx_path(self, resource_type: str) -> Path:
         if len(self.resource_types) > 1:
-            return self.module_path / f"{resource_type}_variablesx.tf"
-        return self.module_path / "variablesx.tf"
+            return self.module_out_path / f"{resource_type}_variablesx.tf"
+        return self.module_out_path / "variablesx.tf"
 
     def output_path(self, resource_type: str) -> Path:
         if len(self.resource_types) > 1:
-            return self.module_path / f"{resource_type}_output.tf"
-        return self.module_path / "output.tf"
+            return self.module_out_path / f"{resource_type}_output.tf"
+        return self.module_out_path / "output.tf"
 
     def output_name(self, resource_type: str, attr_name: str) -> str:
         if len(self.resource_types) > 1:
@@ -119,11 +146,11 @@ class ModuleGenConfig(Entity):
         raise ValueError(f"Could not resolve resource type for path {path}")
 
     def readme_path(self) -> Path:
-        return self.module_path / "README.md"
+        return self.module_out_path / "README.md"
 
     @property
     def examples_path(self) -> Path:
-        return self.module_path / "examples"
+        return self.module_out_path / "examples"
 
     def example_name(self, name: str, example_nr: int) -> str:
         return f"{example_nr:02d}_{name}"
@@ -132,7 +159,7 @@ class ModuleGenConfig(Entity):
         return self.examples_path / name
 
     def terraform_docs_config_path(self) -> Path:
-        return self.module_path / ".terraform-docs.yml"
+        return self.module_out_path / ".terraform-docs.yml"
 
 
 @dataclass
@@ -175,6 +202,14 @@ class ResourceTypePythonModule:
     @property
     def base_field_names(self) -> list[str]:
         return sorted(f.name for f in self.base_fields)
+
+    @property
+    def all_fields(self) -> list[Field]:
+        return self.base_fields + self.extra_fields
+
+    @property
+    def all_field_names(self) -> list[str]:
+        return sorted(f.name for f in self.all_fields)
 
     @property
     def base_field_names_computed(self) -> list[str]:
@@ -277,3 +312,12 @@ def store_updated_attribute_description(
         existing.manual_flat[attribute_name] = description
         out_yaml = dump(existing.manual_flat, "yaml")
     ensure_parents_write_text(out_path, out_yaml)
+
+
+def import_resource_type_python_module(resource_type: str, generated_dataclass_path: Path) -> ResourceTypePythonModule:
+    module = import_from_path(resource_type, generated_dataclass_path)
+    assert module
+    resource = getattr(module, "Resource")
+    assert resource
+    resource_ext = getattr(module, "ResourceExt", None)
+    return ResourceTypePythonModule(resource_type, resource, resource_ext, module)

@@ -129,14 +129,78 @@ def test_validation_error_for_geosharded(input_dict):
     ]
 
 
-def test_example01_single_region(input_dict):
-    auto_scale = auto_scaling()
-    resource = resource_with_modifications(
-        input_dict,
-        [region(node_count=3, provider_name="AWS", name="US_EAST_1")],
+ResourceExt = mongodbatlas_advanced_cluster.ResourceExt
+VARIABLE_PLACEHOLDER = "var."
+VARIABLES: dict[str, str] = {
+    "project_id": VARIABLE_PLACEHOLDER,
+    "name": VARIABLE_PLACEHOLDER,
+}
+
+auto_scale = auto_scaling(min_instance_size="M30", max_instance_size="M60")
+auto_scale_analytics = auto_scaling(min_instance_size="M10", max_instance_size="M30")
+EXAMPLES: dict[str, ResourceExt] = {
+    "01_single_region": ResourceExt(
+        regions=[region(node_count=3, provider_name="AWS", name="US_EAST_1")],
+        auto_scaling=auto_scaling(),
+        **VARIABLES,
+    ),
+    "02_single_region_with_analytics": ResourceExt(
+        regions=[region(node_count=3, node_count_analytics=1)],
         auto_scaling=auto_scale,
-        skip_old=True,
-    )
+        auto_scaling_analytics=auto_scale_analytics,
+        **VARIABLES,
+    ),
+    "03_single_region_sharded": ResourceExt(
+        regions=[
+            region(name="US_EAST_1", shard_index=0, instance_size="M40", node_count=3),
+            region(name="US_EAST_1", shard_index=1, instance_size="M30", node_count=3),
+        ],
+        **VARIABLES,
+    ),
+    "04_multi_region_single_geo": ResourceExt(
+        regions=[
+            region(name="US_EAST_1", node_count=2),
+            region(name="US_EAST_2", node_count=1, node_count_read_only=2),
+        ],
+        provider_name="AWS",
+        auto_scaling=auto_scale,
+        **VARIABLES,
+    ),
+    "05_multi_region_multi_geo": ResourceExt(
+        regions=[
+            region(shard_index=0, name="US_EAST_1", node_count=3),
+            region(shard_index=1, name="EU_WEST_1", node_count=2),
+        ],
+        provider_name="AWS",
+        auto_scaling=auto_scale,
+        **VARIABLES,
+    ),
+    "06_multi_geo_zone_sharded": ResourceExt(
+        regions=[
+            region(zone_name="US", name="US_EAST_1", node_count=3),
+            region(zone_name="EU", name="EU_WEST_1", node_count=3),
+        ],
+        provider_name="AWS",
+        auto_scaling=auto_scale,
+        **VARIABLES,
+    ),
+    "07_multi_cloud": ResourceExt(
+        regions=[
+            region(provider_name="AZURE", name="US_WEST_2", node_count=2, shard_index=0),
+            region(provider_name="AWS", name="US_EAST_2", node_count=1, shard_index=1),
+        ],
+        provider_name="AWS",
+        auto_scaling=auto_scale,
+        **VARIABLES,
+    ),
+}
+
+for name, resource in EXAMPLES.items():
+    resource.name = "-".join(name.split("_")[1:])
+
+
+def test_example01_single_region_checks():
+    resource = EXAMPLES["01_single_region"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     specs = final_resource.replication_specs
     assert specs
@@ -153,16 +217,8 @@ def test_example01_single_region(input_dict):
     assert not region_configs[0].analytics_auto_scaling
 
 
-def test_02_single_region_with_analytics(input_dict):
-    auto_scale = auto_scaling(min_instance_size="M30", max_instance_size="M60")
-    auto_scale_analytics = auto_scaling(min_instance_size="M10", max_instance_size="M30")
-    resource = resource_with_modifications(
-        input_dict,
-        [region(node_count=3, node_count_analytics=1)],
-        auto_scaling=auto_scale,
-        auto_scaling_analytics=auto_scale_analytics,
-        skip_old=True,
-    )
+def test_02_single_region_with_analytics():
+    resource = EXAMPLES["02_single_region_with_analytics"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
 
     specs = final_resource.replication_specs
@@ -180,15 +236,8 @@ def test_02_single_region_with_analytics(input_dict):
     assert region_configs[0].analytics_auto_scaling
 
 
-def test_03_single_region_sharded(input_dict):
-    resource = resource_with_modifications(
-        input_dict,
-        [
-            region(name="US_EAST_1", shard_index=0, instance_size="M40", node_count=3),
-            region(name="US_EAST_1", shard_index=1, instance_size="M30", node_count=3),
-        ],
-        skip_old=True,
-    )
+def test_03_single_region_sharded():
+    resource = EXAMPLES["03_single_region_sharded"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "SHARDED"
     assert final_resource.replication_specs
@@ -210,15 +259,8 @@ def test_03_single_region_sharded(input_dict):
     assert spec2.region_configs[0].electable_specs.instance_size == "M30"
 
 
-def test_04_multi_region_single_geo(input_dict):
-    auto_scale = auto_scaling()
-    resource = resource_with_modifications(
-        input_dict,
-        [region(name="US_EAST_1", node_count=2), region(name="US_EAST_2", node_count=1, node_count_read_only=2)],
-        auto_scaling=auto_scale,
-        skip_old=True,
-        provider_name="AWS",
-    )
+def test_04_multi_region_single_geo():
+    resource = EXAMPLES["04_multi_region_single_geo"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "REPLICASET"
     assert final_resource.replication_specs
@@ -243,17 +285,8 @@ def test_04_multi_region_single_geo(input_dict):
     assert config2.read_only_specs.instance_size == auto_scale.compute_min_instance_size
 
 
-def test_05_multi_region_geo_sharded(input_dict):
-    auto_scale = auto_scaling()
-    resource = resource_with_modifications(
-        input_dict,
-        [
-            region(shard_index=0, name="US_EAST_1", node_count=3),
-            region(shard_index=1, name="EU_WEST_1", node_count=2),
-        ],
-        auto_scaling=auto_scale,
-        provider_name="AWS",
-    )
+def test_05_multi_region_geo_sharded():
+    resource = EXAMPLES["05_multi_region_multi_geo"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "SHARDED"
     assert final_resource.replication_specs
@@ -263,17 +296,8 @@ def test_05_multi_region_geo_sharded(input_dict):
     assert [spec1.region_configs[0].region_name, spec2.region_configs[0].region_name] == ["US_EAST_1", "EU_WEST_1"]
 
 
-def test_06_multi_geo_zone_sharded(input_dict):
-    auto_scale = auto_scaling()
-    resource = resource_with_modifications(
-        input_dict,
-        [
-            region(zone_name="US", name="US_EAST_1", node_count=3),
-            region(zone_name="EU", name="EU_WEST_1", node_count=3),
-        ],
-        auto_scaling=auto_scale,
-        provider_name="AWS",
-    )
+def test_06_multi_geo_zone_sharded():
+    resource = EXAMPLES["06_multi_geo_zone_sharded"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "GEOSHARDED"
     assert final_resource.replication_specs
@@ -287,17 +311,8 @@ def test_06_multi_geo_zone_sharded(input_dict):
     ]
 
 
-def test_07_multi_cloud(input_dict):
-    auto_scale = auto_scaling()
-    resource = resource_with_modifications(
-        input_dict,
-        [
-            region(provider_name="AZURE", name="US_WEST_2", node_count=2, shard_index=0),
-            region(provider_name="AWS", name="US_EAST_2", node_count=1, shard_index=1),
-        ],
-        auto_scaling=auto_scale,
-        skip_old=False,
-    )
+def test_07_multi_cloud():
+    resource = EXAMPLES["07_multi_cloud"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "SHARDED"
     specs = final_resource.replication_specs

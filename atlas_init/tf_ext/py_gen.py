@@ -5,10 +5,22 @@ from dataclasses import Field, fields, is_dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Dict, Iterable, List, NamedTuple, Union, get_args, get_origin
+import importlib.util
 
 from zero_3rdparty import humps
 
 logger = logging.getLogger(__name__)
+
+
+def import_from_path(module_name: str, file_path: Path) -> ModuleType:
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    assert spec
+    assert spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 primitive_types = (str, float, bool, int)
 
 

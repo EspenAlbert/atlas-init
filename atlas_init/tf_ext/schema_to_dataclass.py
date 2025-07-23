@@ -7,7 +7,6 @@ from collections import defaultdict
 from dataclasses import fields
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from types import ModuleType
 from typing import Any, ClassVar, Self
 
 from ask_shell import ShellError, run_and_wait
@@ -17,12 +16,18 @@ from pydantic import model_validator
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy, update_between_markers
 
-from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import (
+    ModuleGenConfig,
+    ResourceAbs,
+    ResourceTypePythonModule,
+    import_resource_type_python_module,
+)
 from atlas_init.tf_ext.provider_schema import ResourceSchema, SchemaAttribute, SchemaBlock
 from atlas_init.tf_ext.py_gen import (
     as_set,
     dataclass_matches,
     ensure_dataclass_use_conversion,
+    import_from_path,
     longest_common_substring_among_all,
     make_post_init_line_optional,
     module_dataclasses,
@@ -353,26 +358,6 @@ def run_fmt_and_fixes(file_path: Path, error_hint: str = ""):
         logger.exception(f"Failed to check dataclass:\n{file_path.read_text()}\n{error_hint}")
         raise e
     return file_path.read_text()
-
-
-def import_from_path(module_name: str, file_path: Path) -> ModuleType:
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    assert spec
-    assert spec.loader
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def import_resource_type_python_module(resource_type: str, generated_dataclass_path: Path) -> ResourceTypePythonModule:
-    module = import_from_path(resource_type, generated_dataclass_path)
-    assert module
-    resource = getattr(module, "Resource")
-    assert resource
-    resource_ext = getattr(module, "ResourceExt", None)
-    return ResourceTypePythonModule(resource_type, resource, resource_ext, module)
 
 
 def simplify_classes(py_code: str) -> tuple[str, set[str]]:
