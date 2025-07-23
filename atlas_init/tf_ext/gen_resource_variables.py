@@ -139,8 +139,8 @@ def generate_resource_variables(
         context = DefaultValueContext(field_path=[field_name])
         tf_type = python_type_to_terraform_type(f, hints[field_name], context)
         default_line = f"\n  default  = {context.final_str}" if field_name not in required_variables else ""
+        nullable_line = "\n  nullable = true" if field_name not in required_variables else ""
         out.append(f'''variable "{field_name}" {{
-  type     = {tf_type}
-  nullable = true{default_line}
+  type     = {tf_type}{nullable_line}{default_line}
 }}\n''')
     return format_tf_content("\n".join(out))

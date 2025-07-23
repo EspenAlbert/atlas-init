@@ -1,15 +1,58 @@
+import importlib.util
 import inspect
 import logging
 import re
 from dataclasses import Field, fields, is_dataclass
 from pathlib import Path
+import sys
+from tempfile import TemporaryDirectory
 from types import ModuleType
 from typing import Dict, Iterable, List, NamedTuple, Union, get_args, get_origin
-import importlib.util
 
 from zero_3rdparty import humps
+from zero_3rdparty.file_utils import copy
 
 logger = logging.getLogger(__name__)
+
+
+def import_module_by_using_parents(file_path: Path) -> ModuleType:
+    with TemporaryDirectory() as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        module_path = tmp_dir_path / "tmp_module"
+        copy(file_path.parent, module_path)
+        init_py = module_path / "__init__.py"
+        if not init_py.exists():
+            init_py.write_text("")
+        # old_path = sys.path todo: reset after
+        sys.path.insert(0, tmp_dir)
+        logger.info("files in tmp_module: " + ", ".join((py.name for py in module_path.glob("*.py"))))
+        module = importlib.import_module(f"tmp_module.{file_path.stem}")
+        assert module
+        if inspect.ismodule(module):
+            return module
+        raise ImportError(f"Could not import module {file_path.stem} from {file_path}")
+
+        # sys.path.insert(0, str(module_path))
+        # try:
+        #     module_spec = importlib.util.spec_from_file_location(module_path.name, init_py)
+        #     assert module_spec
+        #     assert module_spec.loader
+        #     parent_module = importlib.util.module_from_spec(module_spec)
+        #     module_spec.loader.exec_module(parent_module)
+
+        #     spec_file = importlib.util.spec_from_file_location(dest_path.stem, dest_path)
+        #     assert spec_file
+        #     assert spec_file.loader
+        #     module = importlib.util.module_from_spec(spec_file)
+        #     module.__package__ = "tmp_module"
+        #     spec_file.loader.exec_module(module)
+        #     if inspect.ismodule(module):
+        #         return module
+        #     raise ImportError(f"Could not import module {file_path.stem} from {file_path}")
+        # except Exception as e:
+        #     raise e
+        # finally:
+        #     sys.path = old_path
 
 
 def import_from_path(module_name: str, file_path: Path) -> ModuleType:

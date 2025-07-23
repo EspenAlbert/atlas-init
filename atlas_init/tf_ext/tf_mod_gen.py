@@ -3,15 +3,15 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from pydantic import DirectoryPath, TypeAdapter
 import typer
 from ask_shell import new_task, run_and_wait, run_pool, text
 from model_lib import parse_model, parse_payload
+from pydantic import DirectoryPath, TypeAdapter
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.cli_tf.example_update import UpdateExamples, update_examples
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
-from atlas_init.tf_ext.gen_examples import generate_examples, read_example_dirs
+from atlas_init.tf_ext.gen_examples import generate_module_examples, read_example_dirs
 from atlas_init.tf_ext.gen_module_readme import generate_readme
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_output import generate_resource_output
@@ -20,9 +20,9 @@ from atlas_init.tf_ext.gen_versions import dump_versions_tf
 from atlas_init.tf_ext.models_module import (
     MissingDescriptionError,
     ModuleGenConfig,
+    import_resource_type_python_module,
     parse_attribute_descriptions,
     store_updated_attribute_description,
-    import_resource_type_python_module,
 )
 from atlas_init.tf_ext.newres import prepare_newres
 from atlas_init.tf_ext.plan_diffs import (
@@ -150,7 +150,7 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
             assert len(config.resource_types) == 1
             resource_type = config.resource_types[0]
             py_module = import_resource_type_python_module(resource_type, config.dataclass_path(resource_type))
-            examples_generated = generate_examples(config, py_module)
+            examples_generated = generate_module_examples(config, py_module)
         if examples_generated:
             with run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
                 for example_path in examples_generated:

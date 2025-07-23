@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from model_lib import parse_dict
 import pytest
+from zero_3rdparty.str_utils import ensure_suffix
 
 
 @pytest.fixture()
@@ -68,7 +69,8 @@ def generated_variables_path():
 
 @pytest.fixture()
 def dataclass_manual_path():
-    def inner(resource_type: str) -> Path:
-        return Path(__file__).parent / "testdata/dataclasses" / f"{resource_type}_custom.py"
+    def inner(filename: str) -> Path:
+        filename = ensure_suffix(filename, ".py")
+        return Path(__file__).parent / "testdata/dataclasses" / filename
 
     return inner

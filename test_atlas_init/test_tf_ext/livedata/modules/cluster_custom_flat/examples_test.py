@@ -133,7 +133,6 @@ ResourceExt = mongodbatlas_advanced_cluster.ResourceExt
 VARIABLE_PLACEHOLDER = "var."
 VARIABLES: dict[str, str] = {
     "project_id": VARIABLE_PLACEHOLDER,
-    "name": VARIABLE_PLACEHOLDER,
 }
 
 auto_scale = auto_scaling(min_instance_size="M30", max_instance_size="M60")
