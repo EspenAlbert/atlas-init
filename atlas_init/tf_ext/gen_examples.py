@@ -1,3 +1,4 @@
+from contextlib import suppress
 from dataclasses import asdict
 from functools import singledispatch
 from pathlib import Path
@@ -20,7 +21,7 @@ def _examples_casted(examples: dict) -> dict[str, ResourceAbs]:
 def read_example_dirs(module_path: Path) -> list[Path]:
     return sorted(
         example_dir
-        for example_dir in module_path.glob("*")
+        for example_dir in (module_path / "examples").glob("*")
         if example_dir.is_dir()
         and len(example_dir.name) > 2
         and example_dir.name[:2].isdigit()
@@ -47,6 +48,7 @@ def generate_module_examples(
         dumped_resource |= variables
         variable_names = set(variables.keys())
         ignored_names = set(module.all_field_names) - variable_names
+        ignored_names |= module.all_skip_variables
         resource_cls = module.resource_ext or module.resource
         assert resource_cls, f"{module} does not have a resource class"
         example_path = config.example_path(example_name)
@@ -55,17 +57,29 @@ def generate_module_examples(
 
         variables_tf = generate_resource_variables(resource_cls, ignored_names, required_variables=variable_names)
         ensure_parents_write_text(example_path / "variables.tf", variables_tf)
-        variables_str = "\n".join(f"{k} = {dump_variable(v)}" for k, v in dumped_resource.items())
+        variables_str = "\n".join(f"{k} = {dump_variable(v)}" for k, v in dumped_resource.items() if can_dump(v))
         example_main = example_main_tf(config, variables_str)
         ensure_parents_write_text(example_path / "main.tf", example_main)
-        dump_versions_tf(example_path)
+        dump_versions_tf(example_path, skip_python=config.skip_python)
         examples_generated.append(example_path)
     return examples_generated
 
 
+class NotDumpableError(Exception):
+    def __init__(self, value: object) -> None:
+        super().__init__(f"Cannot dump variable {value!r}")
+
+
+def can_dump(variable: object) -> bool:
+    with suppress(NotDumpableError):
+        dump_variable(variable)
+        return True
+    return False
+
+
 @singledispatch
 def dump_variable(variable: object) -> str:
-    raise NotImplementedError(f"Cannot dump variable {variable!r}")
+    raise NotDumpableError(variable)
 
 
 @dump_variable.register
@@ -92,17 +106,17 @@ def dump_variable_bool(variable: bool) -> str:
 
 @dump_variable.register
 def dump_variable_list(variable: list) -> str:
-    return f"[\n{', '.join(f'{INDENT}{dump_variable(nested)}' for nested in variable)}\n]"
+    return f"[\n{', '.join(f'{INDENT}{dump_variable(nested)}' for nested in variable if can_dump(nested))}\n]"
 
 
 @dump_variable.register
 def dump_variable_set(variable: set) -> str:
-    return f"[\n{', '.join(f'{INDENT}{dump_variable(nested)}' for nested in variable)}\n]"
+    return f"[\n{', '.join(f'{INDENT}{dump_variable(nested)}' for nested in variable if can_dump(nested))}\n]"
 
 
 @dump_variable.register
 def dump_variable_dict(variable: dict) -> str:
-    return "{\n" + "\n".join(f"{INDENT}{k} = {dump_variable(v)}" for k, v in variable.items()) + "\n}"
+    return "{\n" + "\n".join(f"{INDENT}{k} = {dump_variable(v)}" for k, v in variable.items() if can_dump(v)) + "\n}"
 
 
 def example_main_tf(module: ModuleGenConfig, variables: str) -> str:

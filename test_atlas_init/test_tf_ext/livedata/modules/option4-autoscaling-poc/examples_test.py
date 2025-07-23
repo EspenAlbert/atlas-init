@@ -16,8 +16,8 @@ def input_dict() -> dict:
 def region(
     name: str = "US_EAST_1",
     node_count: int = 0,
-    node_count_analytics: int = 0,
-    node_count_read_only: int = 0,
+    node_count_analytics: int | None = None,
+    node_count_read_only: int | None = None,
     shard_index: int | None = None,
     zone_name: str | None = None,
     provider_name: str | None = None,
@@ -140,16 +140,17 @@ auto_scale_analytics = auto_scaling(min_instance_size="M10", max_instance_size="
 EXAMPLES: dict[str, ResourceExt] = {
     "01_single_region": ResourceExt(
         regions=[region(node_count=3, provider_name="AWS", name="US_EAST_1")],
-        auto_scaling=auto_scaling(),
+        auto_scaling=auto_scale,
         **VARIABLES,
     ),
     "02_single_region_with_analytics": ResourceExt(
-        regions=[region(node_count=3, node_count_analytics=1)],
+        regions=[region(node_count=3, node_count_analytics=1, provider_name="AWS", name="US_EAST_1")],
         auto_scaling=auto_scale,
         auto_scaling_analytics=auto_scale_analytics,
         **VARIABLES,
     ),
     "03_single_region_sharded": ResourceExt(
+        provider_name="AWS",
         regions=[
             region(name="US_EAST_1", shard_index=0, instance_size="M40", node_count=3),
             region(name="US_EAST_1", shard_index=1, instance_size="M30", node_count=3),
@@ -186,7 +187,7 @@ EXAMPLES: dict[str, ResourceExt] = {
     "07_multi_cloud": ResourceExt(
         regions=[
             region(provider_name="AZURE", name="US_WEST_2", node_count=2, shard_index=0),
-            region(provider_name="AWS", name="US_EAST_2", node_count=1, shard_index=1),
+            region(provider_name="AWS", name="US_EAST_2", node_count=1, node_count_read_only=2, shard_index=1),
         ],
         provider_name="AWS",
         auto_scaling=auto_scale,

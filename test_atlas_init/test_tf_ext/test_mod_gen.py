@@ -117,6 +117,7 @@ def test_generate_examples_advanced_cluster(file_regression, dataclass_manual_pa
         resource_types=[resource_type],
         out_dir=tmp_path,
         in_dir=test_file.parent,
+        skip_python=True,
     )
     copy(
         dataclass_manual_path(ADV_CLUSTER_CUSTOM),

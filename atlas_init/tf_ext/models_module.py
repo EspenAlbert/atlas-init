@@ -62,6 +62,14 @@ class ModuleGenConfig(Entity):
     FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
     FILENAME_EXAMPLES_TEST: ClassVar[str] = "examples_test.py"
 
+    @classmethod
+    def skip_copy(cls, src_file: Path) -> bool:
+        return (
+            src_file.stem.endswith("_test")
+            or src_file.name == "__init__.py"
+            or src_file.name in {cls.CONFIG_FILENAME, cls.FILENAME_EXAMPLE_CHECKS, cls.FILENAME_EXAMPLES_TEST}
+        )
+
     name: str = ""
     resource_types: list[str]
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
@@ -107,7 +115,8 @@ class ModuleGenConfig(Entity):
 
     @property
     def examples_test_path(self) -> Path:
-        return self.module_out_path / ModuleGenConfig.FILENAME_EXAMPLES_TEST
+        assert self.in_dir, "in_dir is required to find examples test"
+        return self.in_dir / ModuleGenConfig.FILENAME_EXAMPLES_TEST
 
     def dataclass_path(self, resource_type: str) -> Path:
         return self.module_out_path / f"{resource_type}.py"
@@ -252,6 +261,15 @@ class ResourceTypePythonModule:
             if not key.startswith("_") and not as_name(value).startswith(("__", self.resource_type))
         ]
 
+    @property
+    def all_skip_variables(self) -> set[str]:
+        skip_vars = set()
+        if self.resource:
+            skip_vars.update(getattr(self.resource, ResourceAbs.SKIP_VARIABLES_NAME, set()))
+        if self.resource_ext:
+            skip_vars.update(getattr(self.resource_ext, ResourceAbs.SKIP_VARIABLES_NAME, set()))
+        return skip_vars
+
 
 class MissingDescriptionError(Exception):
     def __init__(self, attribute_name: str, resource_type: ResourceTypeT):
@@ -305,7 +323,7 @@ def store_updated_attribute_description(
 ):
     if resource_type:
         out_path = settings.attribute_resource_descriptions_manual_file_path
-        existing.manual_nested[resource_type][attribute_name] = description
+        existing.manual_nested.setdefault(resource_type, {})[attribute_name] = description
         out_yaml = dump(existing.manual_nested, "yaml")
     else:
         out_path = settings.attribute_description_manual_file_path

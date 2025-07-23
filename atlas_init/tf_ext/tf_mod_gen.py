@@ -42,7 +42,7 @@ def tf_mod_gen(
     tf_cli_config_file: str = TF_CLI_CONFIG_FILE_ARG,
     use_newres: bool = typer.Option(False, "--use-newres", help="Use newres to generate modules"),
     resource_type: list[str] = typer.Option(
-        ..., "-r", "--resource-type", help="Resource types to generate modules for"
+        ..., "-r", "--resource-type", help="Resource types to generate modules for", default_factory=list
     ),
     name: str = typer.Option("", "-n", "--name", help="Name of the module"),
     in_dir: DirectoryPath = typer.Option(
@@ -77,7 +77,7 @@ def prepare_out_dir(config: ModuleGenConfig, *, skip_clean_dir: bool = False):
     in_dir = config.in_dir
     assert in_dir, "in_dir is required"
     for src_file in in_dir.glob("*"):
-        if src_file.stem.endswith("_test"):
+        if config.skip_copy(src_file):
             continue
         copy(src_file, config.module_out_path / src_file.name, clean_dest=True)  # also copies directories
     example_checks = config.example_plan_checks_path
@@ -122,7 +122,7 @@ def generate_module(config: ModuleGenConfig) -> Path:
             if config.skip_python:
                 dataclass_path.unlink(missing_ok=True)
 
-    dump_versions_tf(config.module_out_path)
+    dump_versions_tf(config.module_out_path, skip_python=config.skip_python)
     logger.info(f"Module dumped to {config.module_out_path}, running checks")
     validate_module(config.module_out_path)
     return module_path
@@ -188,13 +188,21 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
     if example_var_file:
         examples = read_example_dirs(config.module_out_path)
         if examples:
+            failed_examples: list[Path] = []
             with run_pool("Running terraform plan on examples", total=len(examples), exit_wait_timeout=60) as pool:
 
                 def run_example(example: Path):
-                    run_and_wait(f"terraform plan -var-file={example_var_file}", cwd=example)
+                    try:
+                        run_and_wait(f"terraform plan -var-file={example_var_file}", cwd=example)
+                    except Exception as e:
+                        logger.error(f"Failed to run terraform plan on {example.name}: {e}")
+                        failed_examples.append(example)
 
                 for example in examples:
                     pool.submit(run_example, example)
+            if failed_examples:
+                failed_str = ", ".join(sorted(example.name for example in failed_examples))
+                logger.error(f"Failed to run terraform plan on {failed_str} examples")
     return path
 
 

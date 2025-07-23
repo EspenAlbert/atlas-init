@@ -53,6 +53,15 @@ project_id   = "664619d870c247237f4b86a6"
 name         = "created-from-custom-flat"
 """
 
+HCL_STRINGS_DEFAULTS = {
+    "minimum_enabled_tls_protocol": '"TLS1_2"',
+    "javascript_enabled": "false",
+    "backup_enabled": "true",
+    "retain_backups_enabled": "true",
+    "termination_protection_enabled": "true",
+    "default_write_concern": '"majority"',
+}
+
 
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
@@ -82,14 +91,8 @@ class _ModuleNames:
     @classmethod
     def defaults_hcl_strings(cls, name: str) -> dict[str, str]:
         return {
-            cls.CLUSTER_SKIP_PYTHON: {
-                "minimum_enabled_tls_protocol": '"TLS1_2"',
-                "javascript_enabled": "false",
-                "backup_enabled": "true",
-                "retain_backups_enabled": "true",
-                "termination_protection_enabled": "true",
-                "default_write_concern": '"majority"',
-            }
+            cls.CLUSTER_SKIP_PYTHON: HCL_STRINGS_DEFAULTS,
+            cls.OPTION4_AUTOSCALING_POC: HCL_STRINGS_DEFAULTS,
         }.get(name, {})
 
     @classmethod

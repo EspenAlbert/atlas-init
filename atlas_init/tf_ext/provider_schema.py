@@ -20,6 +20,22 @@ def parse_provider_resource_schema(schema: dict, provider_name: str) -> dict:
     raise ValueError(f"Provider '{provider_name}' not found in schema.")
 
 
+_providers_tf_with_external = """
+terraform {
+  required_providers {
+    mongodbatlas = {
+      source  = "mongodb/mongodbatlas"
+      version = "~> 1.26"
+    }
+    external = {
+      source  = "hashicorp/external"
+      version = "~>2.0"
+    }
+  }
+  required_version = ">= 1.8"
+}
+"""
+
 _providers_tf = """
 terraform {
   required_providers {
@@ -30,12 +46,11 @@ terraform {
   }
   required_version = ">= 1.8"
 }
-
 """
 
 
-def get_providers_tf() -> str:
-    return _providers_tf
+def get_providers_tf(skip_python: bool = True) -> str:
+    return _providers_tf if skip_python else _providers_tf_with_external
 
 
 class AtlasSchemaInfo(Entity):
