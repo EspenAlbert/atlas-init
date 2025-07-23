@@ -57,10 +57,10 @@ name         = "created-from-custom-flat"
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
     CLUSTER_CUSTOM = "cluster_custom"
-    CLUSTER_CUSTOM_FLAT = "cluster_custom_flat"
+    OPTION4_AUTOSCALING_POC = "option4-autoscaling-poc"
     CLUSTER_SKIP_PYTHON = "cluster_skip_python"
 
-    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, CLUSTER_CUSTOM_FLAT, CLUSTER_SKIP_PYTHON]
+    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, OPTION4_AUTOSCALING_POC, CLUSTER_SKIP_PYTHON]
     FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
 
     @classmethod
@@ -68,7 +68,7 @@ class _ModuleNames:
         return {
             cls.CLUSTER_PLAIN: _normal_replication_spec_vars,
             cls.CLUSTER_CUSTOM: _electable_and_auto_scaling_vars,
-            cls.CLUSTER_CUSTOM_FLAT: _custom_flat_vars,
+            cls.OPTION4_AUTOSCALING_POC: _custom_flat_vars,
             cls.CLUSTER_SKIP_PYTHON: skip_python_config,
         }.get(name, "")
 
@@ -76,7 +76,7 @@ class _ModuleNames:
     def required_variables(cls, name: str) -> set[str]:
         return {
             cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"},
-            cls.CLUSTER_CUSTOM_FLAT: {"project_id", "name"},
+            cls.OPTION4_AUTOSCALING_POC: {"project_id", "name"},
         }.get(name, set())
 
     @classmethod
@@ -102,7 +102,7 @@ class _ModuleNames:
 
     @classmethod
     def inputs_json_hcl_extras(cls, name: str) -> list[str]:
-        return {cls.CLUSTER_CUSTOM_FLAT: ["local.existing_cluster"]}.get(name, [])
+        return {cls.OPTION4_AUTOSCALING_POC: ["local.existing_cluster"]}.get(name, [])
 
     @classmethod
     def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
