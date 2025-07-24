@@ -60,7 +60,7 @@ def generate_module_examples(
         variables_str = "\n".join(f"{k} = {dump_variable(v)}" for k, v in dumped_resource.items() if can_dump(v))
         example_main = example_main_tf(config, variables_str)
         ensure_parents_write_text(example_path / "main.tf", example_main)
-        dump_versions_tf(example_path, skip_python=config.skip_python)
+        dump_versions_tf(example_path, skip_python=config.skip_python, minimal=True)
         examples_generated.append(example_path)
     return examples_generated
 

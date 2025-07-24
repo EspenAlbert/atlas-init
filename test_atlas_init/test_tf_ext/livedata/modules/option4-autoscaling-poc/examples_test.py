@@ -143,18 +143,18 @@ EXAMPLES: dict[str, ResourceExt] = {
         auto_scaling=auto_scale,
         **VARIABLES,
     ),
-    "02_single_region_with_analytics": ResourceExt(
-        regions=[region(node_count=3, node_count_analytics=1, provider_name="AWS", name="US_EAST_1")],
-        auto_scaling=auto_scale,
-        auto_scaling_analytics=auto_scale_analytics,
-        **VARIABLES,
-    ),
-    "03_single_region_sharded": ResourceExt(
+    "02_single_region_sharded": ResourceExt(
         provider_name="AWS",
         regions=[
             region(name="US_EAST_1", shard_index=0, instance_size="M40", node_count=3),
             region(name="US_EAST_1", shard_index=1, instance_size="M30", node_count=3),
         ],
+        **VARIABLES,
+    ),
+    "03_single_region_with_analytics": ResourceExt(
+        regions=[region(node_count=3, node_count_analytics=1, provider_name="AWS", name="US_EAST_1")],
+        auto_scaling=auto_scale,
+        auto_scaling_analytics=auto_scale_analytics,
         **VARIABLES,
     ),
     "04_multi_region_single_geo": ResourceExt(
@@ -189,7 +189,6 @@ EXAMPLES: dict[str, ResourceExt] = {
             region(provider_name="AZURE", name="US_WEST_2", node_count=2, shard_index=0),
             region(provider_name="AWS", name="US_EAST_2", node_count=1, node_count_read_only=2, shard_index=1),
         ],
-        provider_name="AWS",
         auto_scaling=auto_scale,
         **VARIABLES,
     ),
@@ -217,27 +216,8 @@ def test_example01_single_region_checks():
     assert not region_configs[0].analytics_auto_scaling
 
 
-def test_02_single_region_with_analytics():
-    resource = EXAMPLES["02_single_region_with_analytics"]
-    final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
-
-    specs = final_resource.replication_specs
-    assert specs
-    assert len(specs) == 1
-    assert final_resource.cluster_type == "REPLICASET"
-    region_configs = specs[0].region_configs
-    assert region_configs
-    assert len(region_configs) == 1
-    assert region_configs[0].electable_specs
-    assert region_configs[0].electable_specs.instance_size == auto_scale.compute_min_instance_size
-    assert region_configs[0].auto_scaling
-    assert region_configs[0].analytics_specs
-    assert region_configs[0].analytics_specs.instance_size == auto_scale_analytics.compute_min_instance_size
-    assert region_configs[0].analytics_auto_scaling
-
-
-def test_03_single_region_sharded():
-    resource = EXAMPLES["03_single_region_sharded"]
+def test_02_single_region_sharded():
+    resource = EXAMPLES["02_single_region_sharded"]
     final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
     assert final_resource.cluster_type == "SHARDED"
     assert final_resource.replication_specs
@@ -257,6 +237,25 @@ def test_03_single_region_sharded():
     assert spec2.region_configs[0].auto_scaling is None
     assert spec2.region_configs[0].electable_specs
     assert spec2.region_configs[0].electable_specs.instance_size == "M30"
+
+
+def test_03_single_region_with_analytics():
+    resource = EXAMPLES["03_single_region_with_analytics"]
+    final_resource = mongodbatlas_advanced_cluster.modify_out(resource)
+
+    specs = final_resource.replication_specs
+    assert specs
+    assert len(specs) == 1
+    assert final_resource.cluster_type == "REPLICASET"
+    region_configs = specs[0].region_configs
+    assert region_configs
+    assert len(region_configs) == 1
+    assert region_configs[0].electable_specs
+    assert region_configs[0].electable_specs.instance_size == auto_scale.compute_min_instance_size
+    assert region_configs[0].auto_scaling
+    assert region_configs[0].analytics_specs
+    assert region_configs[0].analytics_specs.instance_size == auto_scale_analytics.compute_min_instance_size
+    assert region_configs[0].analytics_auto_scaling
 
 
 def test_04_multi_region_single_geo():

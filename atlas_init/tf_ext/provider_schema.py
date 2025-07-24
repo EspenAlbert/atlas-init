@@ -47,9 +47,16 @@ terraform {
   required_version = ">= 1.8"
 }
 """
+_providers_tf_minimal = """
+terraform {
+  required_version = ">= 1.8"
+}
+"""
 
 
-def get_providers_tf(skip_python: bool = True) -> str:
+def get_providers_tf(skip_python: bool = True, minimal: bool = False) -> str:
+    if minimal:
+        return _providers_tf_minimal
     return _providers_tf if skip_python else _providers_tf_with_external
 
 

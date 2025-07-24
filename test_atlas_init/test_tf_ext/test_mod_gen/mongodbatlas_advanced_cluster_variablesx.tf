@@ -9,9 +9,7 @@ variable "advanced_configuration" {
     change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
     custom_openssl_cipher_config_tls12                             = optional(list(string))
     default_max_time_ms                                            = optional(number)
-    default_read_concern                                           = optional(string)
     default_write_concern                                          = optional(string)
-    fail_index_key_too_long                                        = optional(bool)
     javascript_enabled                                             = optional(bool)
     minimum_enabled_tls_protocol                                   = optional(string)
     no_table_scan                                                  = optional(bool)
@@ -55,12 +53,6 @@ variable "config_server_management_mode" {
 
 variable "delete_on_create_timeout" {
   type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "disk_size_gb" {
-  type     = number
   nullable = true
   default  = null
 }
@@ -135,7 +127,6 @@ variable "replica_set_scaling_strategy" {
 
 variable "replication_specs" {
   type = list(object({
-    num_shards = optional(number)
     region_configs = list(object({
       analytics_auto_scaling = optional(object({
         compute_enabled            = optional(bool)

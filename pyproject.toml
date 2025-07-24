@@ -61,7 +61,7 @@ path = "atlas_init/__init__.py"
 
 [tool.pytest.ini_options]
 addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no --ignore=./test_atlas_init/test_tf_ext/testdata/dataclasses/examples_test.py --ignore=./test_atlas_init/test_tf_ext/livedata/modules/option4-autoscaling-poc/examples_test.py"
-# addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no --force-regen"
+# addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no --ignore=./test_atlas_init/test_tf_ext/testdata/dataclasses/examples_test.py --ignore=./test_atlas_init/test_tf_ext/livedata/modules/option4-autoscaling-poc/examples_test.py --force-regen"
 testpaths = ["test_atlas_init"]
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
