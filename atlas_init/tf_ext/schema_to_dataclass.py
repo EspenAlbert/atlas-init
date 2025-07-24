@@ -202,7 +202,7 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
             dc_fields.append(dc_field)
 
         for attr_name, attr in (block.attributes or {}).items():
-            if attr.deprecated or attr.deprecated_message:
+            if attr.deprecated or attr.deprecated_message or attr_name in config.skip_variables_extra:
                 logger.info(f"skipping deprecated attribute {attr_name}")
                 continue
             required = bool(attr.required)
@@ -236,7 +236,7 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
                 add_attribute(attr_name, attr, py_type)
 
         for block_type_name, block_type in (block.block_types or {}).items():
-            if block_type.deprecated:
+            if block_type.deprecated or block_type_name in config.skip_variables_extra:
                 logger.info(f"skipping deprecated block type {block_type_name}")
                 continue
             is_required = (block_type.min_items or 0) > 0 or bool(block_type.required)

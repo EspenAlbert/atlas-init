@@ -49,7 +49,9 @@ def read_resource_schema(resource_type: str, resource_type_schema_path) -> Resou
 def test_create_dataclass(resource_type: str, file_regression, resource_type_schema_path, generated_dataclass_path):
     resource_schema = read_resource_schema(resource_type, resource_type_schema_path)
     dataclass_code = convert_and_format(
-        resource_type, resource_schema, config=ModuleGenConfig(resource_types=[resource_type])
+        resource_type,
+        resource_schema,
+        config=ModuleGenConfig(resource_types=[resource_type], skip_variables_extra={"labels"}),
     )
     dataclass_path = generated_dataclass_path(resource_type)
     ensure_parents_write_text(dataclass_path, dataclass_code)

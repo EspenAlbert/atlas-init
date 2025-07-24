@@ -117,6 +117,7 @@ class _ModuleNames:
             required_variables=cls.required_variables(name),
             attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
             inputs_json_hcl_extras=cls.inputs_json_hcl_extras(name),
+            skip_variables_extra={"labels"},
         )
         if clean_and_write:
             clean_dir(config.module_out_path)
@@ -174,8 +175,8 @@ cluster_type = "REPLICASET"
 @pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
 def test_dump_example_configs(module_config_name: str, tf_ext_settings_repo_path):
     module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path, clean_and_write=False)
-    module_path = module_config.module_out_path
-    config_path = module_path / "config.yaml"
+    module_out = livedata_module_path(module_config_name)
+    config_path = module_out / "config.yaml"
     as_dict = dump_as_dict(module_config.model_dump(exclude_defaults=True, exclude_unset=True, exclude_none=True))
     ensure_parents_write_text(config_path, dump(as_dict, "yaml"))
 

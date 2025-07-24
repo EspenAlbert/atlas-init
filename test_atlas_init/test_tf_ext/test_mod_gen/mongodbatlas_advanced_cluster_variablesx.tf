@@ -69,12 +69,6 @@ variable "global_cluster_self_managed_sharding" {
   default  = null
 }
 
-variable "labels" {
-  type     = map(any)
-  nullable = true
-  default  = null
-}
-
 variable "mongo_db_major_version" {
   type     = string
   nullable = true

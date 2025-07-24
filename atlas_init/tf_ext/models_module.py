@@ -72,6 +72,7 @@ class ModuleGenConfig(Entity):
 
     name: str = ""
     resource_types: list[str]
+    skip_variables_extra: set[str] = PydanticField(default_factory=set)
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
     in_dir: Path | None = None
     out_dir: Path | None = None

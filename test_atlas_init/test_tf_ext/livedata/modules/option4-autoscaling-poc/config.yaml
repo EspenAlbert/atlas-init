@@ -1,9 +1,11 @@
 name: option4-autoscaling-poc
 resource_types:
 - mongodbatlas_advanced_cluster
+skip_variables_extra:
+- labels
 required_variables:
-- name
 - project_id
+- name
 attribute_default_hcl_strings:
   minimum_enabled_tls_protocol: '"TLS1_2"'
   javascript_enabled: 'false'
