@@ -4,9 +4,9 @@ resource_types:
 skip_variables_extra:
 - labels
 required_variables:
-- project_id
-- name
 - replication_specs
+- name
+- project_id
 - cluster_type
 skip_python: true
 example_plan_checks:

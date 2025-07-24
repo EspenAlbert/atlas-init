@@ -66,10 +66,10 @@ HCL_STRINGS_DEFAULTS = {
 class _ModuleNames:
     CLUSTER_PLAIN = "cluster_plain"
     CLUSTER_CUSTOM = "cluster_custom"
-    OPTION4_AUTOSCALING_POC = "option4-autoscaling-poc"
+    OPTION2_ALTERNATIVE = "option-2-alternative"
     CLUSTER_SKIP_PYTHON = "cluster_skip_python"
 
-    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, OPTION4_AUTOSCALING_POC, CLUSTER_SKIP_PYTHON]
+    ALL = [CLUSTER_PLAIN, CLUSTER_CUSTOM, OPTION2_ALTERNATIVE, CLUSTER_SKIP_PYTHON]
     FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
 
     @classmethod
@@ -77,7 +77,7 @@ class _ModuleNames:
         return {
             cls.CLUSTER_PLAIN: _normal_replication_spec_vars,
             cls.CLUSTER_CUSTOM: _electable_and_auto_scaling_vars,
-            cls.OPTION4_AUTOSCALING_POC: _custom_flat_vars,
+            cls.OPTION2_ALTERNATIVE: _custom_flat_vars,
             cls.CLUSTER_SKIP_PYTHON: skip_python_config,
         }.get(name, "")
 
@@ -85,14 +85,14 @@ class _ModuleNames:
     def required_variables(cls, name: str) -> set[str]:
         return {
             cls.CLUSTER_SKIP_PYTHON: {"project_id", "name", "cluster_type", "replication_specs"},
-            cls.OPTION4_AUTOSCALING_POC: {"project_id", "name"},
+            cls.OPTION2_ALTERNATIVE: {"project_id", "name"},
         }.get(name, set())
 
     @classmethod
     def defaults_hcl_strings(cls, name: str) -> dict[str, str]:
         return {
             cls.CLUSTER_SKIP_PYTHON: HCL_STRINGS_DEFAULTS,
-            cls.OPTION4_AUTOSCALING_POC: HCL_STRINGS_DEFAULTS,
+            cls.OPTION2_ALTERNATIVE: HCL_STRINGS_DEFAULTS,
         }.get(name, {})
 
     @classmethod
@@ -105,7 +105,7 @@ class _ModuleNames:
 
     @classmethod
     def inputs_json_hcl_extras(cls, name: str) -> list[str]:
-        return {cls.OPTION4_AUTOSCALING_POC: ["local.existing_cluster"]}.get(name, [])
+        return {cls.OPTION2_ALTERNATIVE: ["local.existing_cluster"]}.get(name, [])
 
     @classmethod
     def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
