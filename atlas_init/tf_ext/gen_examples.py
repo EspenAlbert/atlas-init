@@ -3,6 +3,7 @@ from dataclasses import asdict
 from functools import singledispatch
 from pathlib import Path
 
+from zero_3rdparty import humps
 from zero_3rdparty.file_utils import clean_dir, ensure_parents_write_text
 
 from atlas_init.tf_ext.gen_resource_variables import generate_resource_variables
@@ -121,8 +122,9 @@ def dump_variable_dict(variable: dict) -> str:
 
 def example_main_tf(module: ModuleGenConfig, variables: str) -> str:
     variables_indented = "\n".join(f"{INDENT}{var}" for var in variables.split("\n"))
+    module_name_snake = humps.dekebabize(module.name)
     return f"""\
-module "{module.name}" {{
+module "{module_name_snake}" {{
     source = "../.."
 
 {variables_indented}
