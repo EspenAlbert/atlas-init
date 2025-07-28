@@ -42,13 +42,13 @@ output "pinned_fcv_version" {
 }
 
 output "replication_specs_container_id" {
-    value = mongodbatlas_advanced_cluster.this.replication_specs == null ? null : mongodbatlas_advanced_cluster.this.replication_specs.*.container_id
+    value = mongodbatlas_advanced_cluster.this.replication_specs.*.container_id
 }
 
 output "replication_specs_external_id" {
-    value = mongodbatlas_advanced_cluster.this.replication_specs == null ? null : mongodbatlas_advanced_cluster.this.replication_specs.*.external_id
+    value = mongodbatlas_advanced_cluster.this.replication_specs.*.external_id
 }
 
 output "replication_specs_zone_id" {
-    value = mongodbatlas_advanced_cluster.this.replication_specs == null ? null : mongodbatlas_advanced_cluster.this.replication_specs.*.zone_id
+    value = mongodbatlas_advanced_cluster.this.replication_specs.*.zone_id
 }
