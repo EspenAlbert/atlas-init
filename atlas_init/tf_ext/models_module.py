@@ -63,6 +63,13 @@ def as_import_line(name: str) -> str:
     return f"from {from_part} import {name_part}"
 
 
+class ResourceGenConfig(Entity):
+    name: str
+    flat_variables: bool = False
+    required_variables: set[str] = PydanticField(default_factory=set)
+    skip_variables_extra: set[str] = PydanticField(default_factory=set)
+
+
 class ModuleGenConfig(Entity):
     CONFIG_FILENAME: ClassVar[str] = "config.yaml"
     FILENAME_EXAMPLE_CHECKS: ClassVar[str] = "example_plan_checks.yaml"
@@ -77,12 +84,10 @@ class ModuleGenConfig(Entity):
         )
 
     name: str = ""
-    resource_types: list[str]
-    skip_variables_extra: set[str] = PydanticField(default_factory=set)
+    resources: list[ResourceGenConfig] = PydanticField(default_factory=list)
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
     in_dir: Path | None = None
     out_dir: Path | None = None
-    required_variables: set[str] = PydanticField(default_factory=set)  # todo: project_id
     skip_python: bool = False
     debug_json_logs: bool = False
     example_plan_checks: list[ExamplePlanCheck] = PydanticField(default_factory=list)
@@ -96,6 +101,16 @@ class ModuleGenConfig(Entity):
             self.name = self.resource_types[0]
         return self
 
+    @property
+    def resource_types(self) -> list[str]:
+        return [r.name for r in self.resources]
+
+    def resource_config(self, resource_type: str) -> ResourceGenConfig:
+        config = next((r for r in self.resources if r.name == resource_type), None)
+        if config is None:
+            raise ValueError(f"module config {self.name} doesn't have: {resource_type}")
+        return config
+
     @classmethod
     def from_paths(cls, name: str, in_dir: DirectoryPath, out_dir: DirectoryPath, settings: TfExtSettings) -> Self:
         config_path = in_dir / name / f"{cls.CONFIG_FILENAME}"
@@ -107,6 +122,12 @@ class ModuleGenConfig(Entity):
         config.in_dir = in_dir / name
         config.settings = settings
         return config
+
+    def skip_variables_extra(self, resource_type: str) -> set[str]:
+        return next((r.skip_variables_extra for r in self.resources if r.name == resource_type), set())
+
+    def required_variables(self, resource_type: str) -> set[str]:
+        return next((r.required_variables for r in self.resources if r.name == resource_type), set())
 
     @property
     def module_out_path(self) -> Path:

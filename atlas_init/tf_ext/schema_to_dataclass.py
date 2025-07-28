@@ -149,7 +149,9 @@ class DcField(Entity):
         return self.computed and not self.required and not self.optional
 
 
-def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonModule, config: ModuleGenConfig) -> str:
+def convert_to_dataclass(
+    schema: ResourceSchema, existing: ResourceTypePythonModule, config: ModuleGenConfig, resource_type: str
+) -> str:
     class_defs = []
 
     def block_to_class(block: SchemaBlock, class_name: str, extra_post_init: list[str] | None = None) -> str:
@@ -202,7 +204,7 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
             dc_fields.append(dc_field)
 
         for attr_name, attr in (block.attributes or {}).items():
-            if attr.deprecated or attr.deprecated_message or attr_name in config.skip_variables_extra:
+            if attr.deprecated or attr.deprecated_message or attr_name in config.skip_variables_extra(resource_type):
                 logger.info(f"skipping deprecated attribute {attr_name}")
                 continue
             required = bool(attr.required)
@@ -236,7 +238,7 @@ def convert_to_dataclass(schema: ResourceSchema, existing: ResourceTypePythonMod
                 add_attribute(attr_name, attr, py_type)
 
         for block_type_name, block_type in (block.block_types or {}).items():
-            if block_type.deprecated or block_type_name in config.skip_variables_extra:
+            if block_type.deprecated or block_type_name in config.skip_variables_extra(resource_type):
                 logger.info(f"skipping deprecated block type {block_type_name}")
                 continue
             is_required = (block_type.min_items or 0) > 0 or bool(block_type.required)
@@ -436,9 +438,9 @@ SKIP_FILTER = {"Resource", "ResourceExt"}
 
 
 def generate_python_from_schema(
-    py_module: ResourceTypePythonModule, schema: ResourceSchema, config: ModuleGenConfig
+    py_module: ResourceTypePythonModule, schema: ResourceSchema, config: ModuleGenConfig, resource_type: str
 ) -> str:
-    dataclass_unformatted = convert_to_dataclass(schema, py_module, config)
+    dataclass_unformatted = convert_to_dataclass(schema, py_module, config, resource_type)
     dataclass_unformatted = simplify_classes(dataclass_unformatted)[0]
     return f"{dataclass_unformatted}\n{main_entrypoint(py_module, config)}"
 
@@ -454,11 +456,11 @@ def convert_and_format(
         with TemporaryDirectory() as tmp_path:
             tmp_file = Path(tmp_path) / f"{resource_type}.py"
             copy(existing_path, tmp_file)
-            dataclass_unformatted = generate_python_from_schema(py_module, schema, config)
+            dataclass_unformatted = generate_python_from_schema(py_module, schema, config, resource_type)
             update_between_markers(tmp_file, dataclass_unformatted, MARKER_START, MARKER_END)
             move_main_call_to_end(tmp_file)
             ensure_dataclass_use_conversion(py_module.dataclasses, tmp_file, SKIP_FILTER)
             return run_fmt_and_fixes(tmp_file)
     existing = ResourceTypePythonModule(resource_type)
-    dataclass_unformatted = generate_python_from_schema(existing, schema, config)
+    dataclass_unformatted = generate_python_from_schema(existing, schema, config, resource_type)
     return py_file_validate_and_auto_fixes(f"{MARKER_START}\n{dataclass_unformatted}\n{MARKER_END}\n")

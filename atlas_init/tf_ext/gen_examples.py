@@ -8,7 +8,7 @@ from zero_3rdparty.file_utils import clean_dir, ensure_parents_write_text
 
 from atlas_init.tf_ext.gen_resource_variables import generate_resource_variables
 from atlas_init.tf_ext.gen_versions import dump_versions_tf
-from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.py_gen import import_module_by_using_parents
 
 VARIABLE_PLACEHOLDER = "var."
@@ -31,7 +31,11 @@ def read_example_dirs(module_path: Path) -> list[Path]:
 
 
 def generate_module_examples(
-    config: ModuleGenConfig, module: ResourceTypePythonModule, *, skip_clean_dir: bool = False
+    config: ModuleGenConfig,
+    module: ResourceTypePythonModule,
+    resource_type: str,
+    *,
+    skip_clean_dir: bool = False,
 ) -> list[Path]:
     test_path = config.examples_test_path
     imported_module = import_module_by_using_parents(test_path)
@@ -56,7 +60,12 @@ def generate_module_examples(
         if not skip_clean_dir and example_path.exists():
             clean_dir(example_path)
 
-        variables_tf = generate_resource_variables(resource_cls, ignored_names, required_variables=variable_names)
+        variables_tf = generate_resource_variables(
+            resource_cls,
+            ResourceGenConfig(
+                name=resource_type, skip_variables_extra=ignored_names, required_variables=variable_names
+            ),
+        )
         ensure_parents_write_text(example_path / "variables.tf", variables_tf)
         variables_str = "\n".join(f"{k} = {dump_variable(v)}" for k, v in dumped_resource.items() if can_dump(v))
         example_main = example_main_tf(config, variables_str)

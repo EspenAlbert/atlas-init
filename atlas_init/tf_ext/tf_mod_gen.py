@@ -107,7 +107,9 @@ def generate_module(config: ModuleGenConfig) -> Path:
             main_path = config.main_tf_path(resource_type)
             ensure_parents_write_text(main_path, main_tf)
 
-            variablesx_tf, variables_tf = generate_module_variables(python_module, config)
+            variablesx_tf, variables_tf = generate_module_variables(
+                python_module, config.resource_config(resource_type)
+            )
             variables_path = config.variables_path(resource_type)
             if variablesx_tf and variables_tf:
                 variablesx_path = config.variablesx_path(resource_type)
@@ -150,7 +152,7 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
             assert len(config.resource_types) == 1
             resource_type = config.resource_types[0]
             py_module = import_resource_type_python_module(resource_type, config.dataclass_path(resource_type))
-            examples_generated = generate_module_examples(config, py_module)
+            examples_generated = generate_module_examples(config, py_module, resource_type=resource_type)
         if examples_generated:
             with run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
                 for example_path in examples_generated:

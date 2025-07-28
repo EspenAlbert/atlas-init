@@ -3,7 +3,7 @@ from typing import ClassVar, List, Optional, Set
 
 from atlas_init.tf_ext.gen_resource_main import format_tf_content
 from atlas_init.tf_ext.gen_resource_variables import generate_resource_variables
-from atlas_init.tf_ext.models_module import ResourceAbs
+from atlas_init.tf_ext.models_module import ResourceAbs, ResourceGenConfig
 
 
 @dataclass
@@ -53,7 +53,7 @@ class Resource(ResourceAbs):
 def test_generate_resource_variables(file_regression):
     variables_tf = generate_resource_variables(
         Resource,
-        set(),
+        ResourceGenConfig(name="mongodbatlas_advanced_cluster", skip_variables_extra={"labels"}),
     )
     variables_tf = format_tf_content(variables_tf)
     assert "default_write_concern" in variables_tf

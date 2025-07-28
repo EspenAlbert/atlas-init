@@ -7,7 +7,7 @@ from model_lib import Entity
 from pydantic import Field as PydanticField
 
 from atlas_init.tf_ext.gen_resource_main import format_tf_content
-from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceTypePythonModule
+from atlas_init.tf_ext.models_module import ResourceAbs, ResourceGenConfig, ResourceTypePythonModule
 
 
 logger = logging.getLogger(__name__)
@@ -113,28 +113,32 @@ def dataclass_to_object_type(field: Field, cls: type, context: DefaultValueConte
     return "\n".join(lines)
 
 
-def generate_module_variables(python_module: ResourceTypePythonModule, config: ModuleGenConfig) -> tuple[str, str]:
+def generate_module_variables(
+    python_module: ResourceTypePythonModule, resource_config: ResourceGenConfig
+) -> tuple[str, str]:
     base_resource = python_module.resource
     assert base_resource is not None, f"{python_module} does not have a resource"
-    extra_skipped = config.skip_variables_extra
-    skipped_names_in_resource_ext = (
-        set(python_module.base_field_names)
-        | getattr(python_module.resource_ext, ResourceAbs.SKIP_VARIABLES_NAME, set())
-        | extra_skipped
+    skipped_names_in_resource_ext = set(python_module.base_field_names)
+    return generate_resource_variables(base_resource, resource_config), generate_resource_variables(
+        python_module.resource_ext, resource_config, skipped_names_in_resource_ext
     )
-    return generate_resource_variables(
-        base_resource, base_resource.COMPUTED_ONLY_ATTRIBUTES | extra_skipped, config.required_variables
-    ), generate_resource_variables(python_module.resource_ext, skipped_names_in_resource_ext, config.required_variables)
 
 
 def generate_resource_variables(
-    resource: type[ResourceAbs] | None, ignored_names: set[str], required_variables: set[str] | None = None
+    resource: type[ResourceAbs] | None, resource_config: ResourceGenConfig, extra_skipped: set[str] | None = None
 ) -> str:
-    required_variables = required_variables or set()
+    extra_skipped = extra_skipped or set()
+    required_variables = resource_config.required_variables
     if resource is None:
         return ""
     out = []
     hints = get_type_hints(resource)
+    ignored_names = (
+        resource_config.skip_variables_extra
+        | resource.COMPUTED_ONLY_ATTRIBUTES
+        | getattr(resource, ResourceAbs.SKIP_VARIABLES_NAME, set())
+        | extra_skipped
+    )
     for f in fields(resource):  # type: ignore
         field_name = f.name
         if field_name.isupper() or field_name in ignored_names:
