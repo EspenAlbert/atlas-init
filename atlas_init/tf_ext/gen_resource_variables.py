@@ -1,7 +1,7 @@
 import logging
 from contextlib import contextmanager
 from dataclasses import fields, is_dataclass, Field
-from typing import get_type_hints, get_origin, get_args, ClassVar, List, Set, Dict, Union
+from typing import get_type_hints, get_origin, get_args, List, Set, Dict, Union
 
 from model_lib import Entity
 from pydantic import Field as PydanticField
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 class DefaultValueContext(Entity):
     default_lines: list[str] = PydanticField(default_factory=list)
     field_path: list[str] = PydanticField(default_factory=list)
+    ignored_names: set[str] = PydanticField(default_factory=set)
 
     @property
     def final_str(self) -> str:
@@ -79,7 +80,7 @@ def python_type_to_terraform_type(field: Field, py_type: type, context: DefaultV
         elem_type = python_type_to_terraform_type(field, args[1], context)
         return f"map({elem_type})"
     elif is_dataclass(py_type):
-        return dataclass_to_object_type(field, py_type, context)
+        return dataclass_to_object_type(field.name, py_type, context)
     elif py_type is str:
         return "string"
     elif py_type is int or py_type is float:
@@ -90,15 +91,15 @@ def python_type_to_terraform_type(field: Field, py_type: type, context: DefaultV
         return "any"
 
 
-def dataclass_to_object_type(field: Field, cls: type, context: DefaultValueContext) -> str:
+def dataclass_to_object_type(name: str, cls: type, context: DefaultValueContext) -> str:
     lines = ["object({"]
     hints = get_type_hints(cls)
-    with context.add_nested_field(field.name):
+    with context.add_nested_field(name):
         for f in fields(cls):
             # Skip ClassVars and internal fields
             nested_field_name = f.name
             is_computed_only = ResourceAbs.is_computed_only(nested_field_name, cls)
-            if nested_field_name.isupper() or (get_origin(f.type) is ClassVar) or is_computed_only:
+            if is_computed_only or nested_field_name in context.ignored_names:
                 continue
             tf_type = python_type_to_terraform_type(f, hints[nested_field_name], context)
             is_required = ResourceAbs.is_required(nested_field_name, cls)
@@ -139,6 +140,14 @@ def generate_resource_variables(
         | getattr(resource, ResourceAbs.SKIP_VARIABLES_NAME, set())
         | extra_skipped
     )
+    if resource_config.flat_variables:
+        context = DefaultValueContext(field_path=[], ignored_names=ignored_names)
+        tf_type = dataclass_to_object_type(resource_config.name, resource, context)
+        default_line = f"\n  default  = {context.final_str}" if resource_config.name not in required_variables else ""
+        nullable_line = "\n  nullable = true" if resource_config.name not in required_variables else ""
+        return format_tf_content(f'''variable "{resource_config.name}" {{
+  type     = {tf_type}{nullable_line}{default_line}
+}}\n''')
     for f in fields(resource):  # type: ignore
         field_name = f.name
         if field_name.isupper() or field_name in ignored_names:
