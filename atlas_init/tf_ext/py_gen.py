@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 from types import ModuleType
-from typing import Dict, Iterable, List, NamedTuple, Union, get_args, get_origin
+from typing import Any, Dict, Generic, Iterable, List, Literal, NamedTuple, Set, TypeVar, Union, get_args, get_origin
 
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import copy
@@ -115,56 +115,91 @@ class _PrimitiveType(Exception):
 
 
 def make_post_init_line_from_field(field: Field) -> str:
+    try:
+        container_type = unwrap_type(field)
+    except _PrimitiveType:
+        return ""
+    make_func = make_post_init_line_optional if container_type.is_optional else make_post_init_line
+    return make_func(
+        field.name, container_type.type.__name__, is_map=container_type.is_dict, is_list=container_type.is_list
+    )
+
+
+T = TypeVar("T")
+
+
+class ContainerType(NamedTuple, Generic[T]):
+    type: type[T]
+    container_type: Literal[
+        "list", "set", "dict", "optional", "optional_list", "optional_set", "optional_dict", "cls_direct"
+    ]
+
+    @property
+    def is_cls_direct(self) -> bool:
+        return self.container_type == "cls_direct"
+
+    @property
+    def is_list(self) -> bool:
+        return self.container_type in {"list", "optional_list"}
+
+    @property
+    def is_set(self) -> bool:
+        return self.container_type in {"set", "optional_set"}
+
+    @property
+    def is_dict(self) -> bool:
+        return self.container_type in {"dict", "optional_dict"}
+
+    @property
+    def is_optional(self) -> bool:
+        return self.container_type in {"optional", "optional_list", "optional_set", "optional_dict"}
+
+    @property
+    def is_any(self) -> bool:
+        return self.type is Any
+
+
+def unwrap_type(field: Field) -> ContainerType:
     field_type = field.type
     origin = get_origin(field_type)
     args = get_args(field_type)
+    return _unwrap_type(field_type, origin, args)  # type: ignore
 
+
+def _unwrap_type(field_type: type, origin: type, args: list[type]) -> ContainerType:
     if origin is Union and type(None) in args:
         non_none_args = [arg for arg in args if arg is not type(None)]
         assert len(non_none_args) == 1, f"Expected one non-None type in Union, got {non_none_args}"
         inner_type = non_none_args[0]
-        if inner_type in primitive_types:
-            return ""
-        try:
-            if elem_type := _handle_list_type(inner_type):
-                return make_post_init_line_optional(field.name, elem_type, is_list=True)
-            if elem_type := _handle_dict_type(inner_type):
-                return make_post_init_line_optional(field.name, elem_type, is_map=True)
-            return make_post_init_line_optional(field.name, inner_type.__name__)
-        except _PrimitiveType:
-            return ""
-    try:
-        if elem_type := _handle_list_type(field_type):
-            return make_post_init_line(field.name, elem_type, is_list=True)
-        if elem_type := _handle_dict_type(field_type):
-            return make_post_init_line(field.name, elem_type, is_map=True)
-    except _PrimitiveType:
-        return ""
-    if field_type not in primitive_types:
-        return make_post_init_line(field.name, getattr(field_type, "__name__", str(field_type)))
-    return ""
-
-
-def _handle_list_type(inner_type):
-    inner_origin = get_origin(inner_type)
-    inner_args = get_args(inner_type)
-    if inner_origin in (list, List) and inner_args:
-        item_type = inner_args[0]
+        response = _unwrap_type(inner_type, get_origin(inner_type), get_args(inner_type))  # type: ignore
+        if response.is_cls_direct:
+            return ContainerType(response.type, "optional")
+        if response.is_list:
+            return ContainerType(response.type, "optional_list")
+        if response.is_set:
+            return ContainerType(response.type, "optional_set")
+        if response.is_dict:
+            return ContainerType(response.type, "optional_dict")
+        raise ValueError(f"Unsupported optional type: {inner_type}")
+    if origin in (list, List) and args:
+        item_type = args[0]
         if item_type in primitive_types:
             raise _PrimitiveType(item_type)
-        return item_type.__name__
-    return None
-
-
-def _handle_dict_type(inner_type):
-    inner_origin = get_origin(inner_type)
-    inner_args = get_args(inner_type)
-    if inner_origin in (dict, Dict) and inner_args:
-        _, value_type = inner_args
+        return ContainerType(item_type, "list")
+    if origin in (set, Set) and args:
+        item_type = args[0]
+        if item_type in primitive_types:
+            raise _PrimitiveType(item_type)
+        return ContainerType(item_type, "set")
+    if origin in (dict, Dict) and args:
+        _, value_type = args
         if value_type in primitive_types:
             raise _PrimitiveType(value_type)
-        return value_type.__name__
-    return None
+        return ContainerType(value_type, "dict")
+    if field_type in primitive_types:
+        raise _PrimitiveType(field_type)
+    assert not isinstance(field_type, str), f"Expected type, got {field_type!r}"
+    return ContainerType(field_type, "cls_direct")
 
 
 def longest_common_substring_among_all(strings: list[str]) -> str:

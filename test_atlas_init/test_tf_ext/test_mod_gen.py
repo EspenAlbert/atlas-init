@@ -9,6 +9,7 @@ from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.gen_examples import generate_module_examples
 from atlas_init.tf_ext.gen_resource_main import format_tf_content, generate_resource_main
+from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceTypePythonModule
 from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_provider_resource_schema
@@ -132,3 +133,10 @@ def test_generate_examples_advanced_cluster(file_regression, dataclass_manual_pa
         for example_file in sorted(example.glob("*.tf"))
     )
     file_regression.check(examples_contents, extension=".tf", basename=f"{resource_type}_examples")
+
+
+def test_create_output_tf(file_regression, generated_dataclass_path):
+    resource_type = "mongodbatlas_advanced_cluster"
+    python_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
+    output_code = generate_resource_output(python_module, ModuleGenConfig(resource_types=[resource_type]))
+    file_regression.check(output_code, extension=".tf", basename=f"{resource_type}_output")

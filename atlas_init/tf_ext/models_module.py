@@ -3,7 +3,7 @@ from collections import defaultdict
 from dataclasses import Field, dataclass, fields
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Self, TypeAlias
+from typing import ClassVar, Iterable, Self, TypeAlias
 
 from model_lib import Entity, dump, parse_dict, parse_model
 from pydantic import DirectoryPath, model_validator
@@ -12,7 +12,13 @@ from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.object_name import as_name
 
 from atlas_init.tf_ext.plan_diffs import ExamplePlanCheck
-from atlas_init.tf_ext.py_gen import import_from_path, make_post_init_line_from_field, module_dataclasses
+from atlas_init.tf_ext.py_gen import (
+    ContainerType,
+    import_from_path,
+    make_post_init_line_from_field,
+    module_dataclasses,
+    unwrap_type,
+)
 from atlas_init.tf_ext.settings import TfExtSettings
 
 ResourceTypeT: TypeAlias = str
@@ -142,10 +148,11 @@ class ModuleGenConfig(Entity):
             return self.module_out_path / f"{resource_type}_output.tf"
         return self.module_out_path / "output.tf"
 
-    def output_name(self, resource_type: str, attr_name: str) -> str:
+    def output_name(self, resource_type: str, *attr_name: str) -> str:
+        attr_single = "_".join(attr_name)
         if len(self.resource_types) > 1:
-            return f"{resource_type}_{attr_name}"
-        return attr_name
+            return f"{resource_type}_{attr_single}"
+        return attr_single
 
     def resolve_resource_type(self, path: Path) -> ResourceTypeT:
         if len(self.resource_types) == 1:
@@ -270,6 +277,16 @@ class ResourceTypePythonModule:
         if self.resource_ext:
             skip_vars.update(getattr(self.resource_ext, ResourceAbs.SKIP_VARIABLES_NAME, set()))
         return skip_vars
+
+    @property
+    def nested_field_types(self) -> Iterable[tuple[str, ContainerType[ResourceAbs]]]:
+        cls = self.resource_ext or self.resource
+        if not cls:
+            return []
+        for field in fields(cls):
+            if ResourceAbs.is_nested(field.name, cls):
+                container_type = unwrap_type(field)
+                yield field.name, container_type
 
 
 class MissingDescriptionError(Exception):
