@@ -60,6 +60,25 @@ def test_create_dataclass(resource_type: str, file_regression, resource_type_sch
 
 
 @pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
+def test_create_dataclass_with_required(resource_type: str, file_regression, resource_type_schema_path):
+    resource_schema = read_resource_schema(resource_type, resource_type_schema_path)
+    dataclass_code = convert_and_format(
+        resource_type,
+        resource_schema,
+        config=ModuleGenConfig(
+            resources=[
+                ResourceGenConfig(
+                    name=resource_type,
+                    skip_variables_extra={"labels"},
+                    required_variables={"name", "replication_specs"},
+                )
+            ]
+        ),
+    )
+    file_regression.check(dataclass_code, extension=".py", basename=f"{resource_type}_required")
+
+
+@pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
 def test_create_dataclass_with_custom(
     resource_type: str, file_regression, resource_type_schema_path, dataclass_manual_path
 ):

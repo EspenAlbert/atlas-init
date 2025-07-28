@@ -139,6 +139,14 @@ class DcField(Entity):
         return f"    {self.name}: Optional[{self.type_annotation}] = None"
 
     @property
+    def declare_required(self) -> str:
+        """Why not use self.required? Even though an attribute is required in the schema, we might be able to infer the value, for example cluster_type"""
+        if metadata := self.metadata:
+            field_args = [f"metadata={metadata}"]
+            return f"    {self.name}: {self.type_annotation} = field({', '.join(field_args)})"
+        return f"    {self.name}: {self.type_annotation}"
+
+    @property
     def post_init(self) -> str:
         if cls_name := self.nested_class_name:
             return make_post_init_line_optional(self.name, cls_name, is_list=self.is_list, is_map=self.is_dict)
@@ -272,7 +280,9 @@ def convert_to_dataclass(
         if not config.use_descriptions:
             for dc_field in dc_fields:
                 dc_field.description = None
-        lines.extend(dc_field.declare for dc_field in dc_fields)
+        required_vars = config.required_variables(resource_type)
+        lines.extend(dc_field.declare_required for dc_field in dc_fields if dc_field.name in required_vars)
+        lines.extend(dc_field.declare for dc_field in dc_fields if dc_field.name not in required_vars)
         post_init_lines = [post_init for dc_field in dc_fields if (post_init := dc_field.post_init)]
         if extra_post_init:
             post_init_lines.extend(extra_post_init)
