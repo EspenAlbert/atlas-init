@@ -275,7 +275,7 @@ def convert_to_dataclass(
         default_strings = {
             dc_field.name: default_hcl_string
             for dc_field in dc_fields
-            if (default_hcl_string := config.attribute_default_hcl_strings.get(dc_field.name))
+            if (default_hcl_string := config.attribute_default_hcl_strings(resource_type).get(dc_field.name))
         }
         lines.append(f"    {ResourceAbs.DEFAULTS_HCL_STRINGS_NAME}: ClassVar[dict[str, str]] = {default_strings!r}")
 

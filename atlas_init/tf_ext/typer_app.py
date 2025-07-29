@@ -1,11 +1,11 @@
 from ask_shell import configure_logging
 from typer import Typer
 
-from atlas_init.tf_ext import api_call, tf_desc_gen
+from atlas_init.tf_ext import api_call, settings, tf_desc_gen, tf_mod_gen_provider
 
 
 def typer_main():
-    from atlas_init.tf_ext import tf_dep, tf_modules, tf_vars, tf_mod_gen
+    from atlas_init.tf_ext import tf_dep, tf_mod_gen, tf_modules, tf_vars
 
     app = Typer(
         name="tf-ext",
@@ -18,6 +18,8 @@ def typer_main():
     app.command(name="desc-gen")(tf_desc_gen.tf_desc_gen)
     app.command(name="api")(api_call.api)
     app.command(name="api-config")(api_call.api_config)
+    app.command(name="mod-gen-provider")(tf_mod_gen_provider.tf_mod_gen_provider_resource_modules)
+    app.command(name="check-env-vars")(settings.init_tf_ext_settings)
     configure_logging(app)
     app()
 

@@ -10,7 +10,7 @@ from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
 
-from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.args import REPO_PATH_ATLAS_ARG, SKIP_EXAMPLES_DIRS_OPTION
 from atlas_init.tf_ext.paths import (
     ResourceTypes,
     find_resource_types_with_usages,
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def tf_vars(
-    repo_path: Path = REPO_PATH_ARG,
+    repo_path: Path = REPO_PATH_ATLAS_ARG,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
 ):
     settings = TfExtSettings.from_env()

@@ -31,7 +31,7 @@ from atlas_init.tf_ext.plan_diffs import (
     parse_plan_output,
     read_variables_path,
 )
-from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
+from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, ResourceSchema, parse_atlas_schema
 from atlas_init.tf_ext.schema_to_dataclass import convert_and_format
 from atlas_init.tf_ext.settings import TfExtSettings
 
@@ -91,43 +91,47 @@ def generate_module(config: ModuleGenConfig) -> Path:
         schema = parse_atlas_schema()
         assert schema
     resource_types = config.resource_types
-    module_path = config.module_out_path
     with new_task("Generating module files for resource types", total=len(resource_types)) as task:
         for resource_type in resource_types:
-            resource_type_schema = schema.raw_resource_schema.get(resource_type)
-            assert resource_type_schema, f"resource type {resource_type} not found in schema"
-            schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
-
-            dataclass_path = config.dataclass_path(resource_type)
-            dataclass_code = convert_and_format(resource_type, schema_parsed, config, existing_path=dataclass_path)
-            ensure_parents_write_text(dataclass_path, dataclass_code)
-
-            python_module = import_resource_type_python_module(resource_type, dataclass_path)
-            main_tf = generate_resource_main(python_module, config)
-            main_path = config.main_tf_path(resource_type)
-            ensure_parents_write_text(main_path, main_tf)
-
-            variablesx_tf, variables_tf = generate_module_variables(
-                python_module, config.resource_config(resource_type)
-            )
-            variables_path = config.variables_path(resource_type)
-            if variablesx_tf and variables_tf:
-                variablesx_path = config.variablesx_path(resource_type)
-                ensure_parents_write_text(variablesx_path, variablesx_tf)
-                ensure_parents_write_text(variables_path, variables_tf)
-            else:
-                ensure_parents_write_text(variables_path, variablesx_tf)
+            generate_resource_module(config, resource_type, schema)
             task.update(advance=1)
-            if output_tf := generate_resource_output(python_module, config):
-                output_path = config.output_path(resource_type)
-                ensure_parents_write_text(output_path, output_tf)
-            if config.skip_python:
-                dataclass_path.unlink(missing_ok=True)
 
+    return finalize_and_validate_module(config)
+
+
+def generate_resource_module(config: ModuleGenConfig, resource_type: str, atlas_schema: AtlasSchemaInfo) -> None:
+    resource_type_schema = atlas_schema.raw_resource_schema.get(resource_type)
+    assert resource_type_schema, f"resource type {resource_type} not found in schema"
+    schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
+    dataclass_path = config.dataclass_path(resource_type)
+    dataclass_code = convert_and_format(resource_type, schema_parsed, config, existing_path=dataclass_path)
+    ensure_parents_write_text(dataclass_path, dataclass_code)
+
+    python_module = import_resource_type_python_module(resource_type, dataclass_path)
+    main_tf = generate_resource_main(python_module, config)
+    main_path = config.main_tf_path(resource_type)
+    ensure_parents_write_text(main_path, main_tf)
+
+    variablesx_tf, variables_tf = generate_module_variables(python_module, config.resource_config(resource_type))
+    variables_path = config.variables_path(resource_type)
+    if variablesx_tf and variables_tf:
+        variablesx_path = config.variablesx_path(resource_type)
+        ensure_parents_write_text(variablesx_path, variablesx_tf)
+        ensure_parents_write_text(variables_path, variables_tf)
+    else:
+        ensure_parents_write_text(variables_path, variablesx_tf)
+    if output_tf := generate_resource_output(python_module, config):
+        output_path = config.output_path(resource_type)
+        ensure_parents_write_text(output_path, output_tf)
+    if config.skip_python and dataclass_path.is_relative_to(config.module_out_path):
+        dataclass_path.unlink(missing_ok=True)
+
+
+def finalize_and_validate_module(config: ModuleGenConfig) -> Path:
     dump_versions_tf(config.module_out_path, skip_python=config.skip_python)
     logger.info(f"Module dumped to {config.module_out_path}, running checks")
     validate_module(config.module_out_path)
-    return module_path
+    return config.module_out_path
 
 
 OUT_BINARY_PATH = "tfplan.binary"

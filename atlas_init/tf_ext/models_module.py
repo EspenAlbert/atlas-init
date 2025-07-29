@@ -6,7 +6,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import ClassVar, Iterable, Self, TypeAlias
 
-from model_lib import Entity, dump, parse_dict, parse_model
+from model_lib import Entity, copy_and_validate, dump, parse_dict, parse_model
 from pydantic import DirectoryPath, model_validator
 from pydantic import Field as PydanticField
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -21,7 +21,7 @@ from atlas_init.tf_ext.py_gen import (
     module_dataclasses,
     unwrap_type,
 )
-from atlas_init.tf_ext.settings import TfExtSettings
+from atlas_init.tf_ext.settings import RepoOut, TfExtSettings
 
 ResourceTypeT: TypeAlias = str
 
@@ -76,6 +76,31 @@ class ResourceGenConfig(Entity):
     flat_variables: bool = False
     required_variables: set[str] = PydanticField(default_factory=set)
     skip_variables_extra: set[str] = PydanticField(default_factory=set)
+    attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
+
+    def single_variable_version(self) -> Self:
+        assert not self.flat_variables, "flat_variables must be False to create a single variable version"
+        return copy_and_validate(self, flat_variables=True)
+
+
+def as_provider_name(provider_path: str) -> str:
+    return provider_path.rsplit("/", maxsplit=1)[-1]
+
+
+class ProviderGenConfig(Entity):
+    provider_path: str
+    resources: list[ResourceGenConfig] = PydanticField(default_factory=list)
+    settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
+
+    @property
+    def provider_name(self) -> str:
+        return self.provider_path.rsplit("/", maxsplit=1)[-1]
+
+    def resource_types(self) -> list[str]:
+        return [r.name for r in self.resources]
+
+    def resource_config_or_none(self, resource_type: str) -> ResourceGenConfig | None:
+        return next((r for r in self.resources if r.name == resource_type), None)
 
 
 class ModuleGenConfig(Entity):
@@ -96,16 +121,17 @@ class ModuleGenConfig(Entity):
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
     in_dir: Path | None = None
     out_dir: Path | None = None
+    dataclass_out_dir: Path | None = None
     skip_python: bool = False
     debug_json_logs: bool = False
     example_plan_checks: list[ExamplePlanCheck] = PydanticField(default_factory=list)
     use_descriptions: bool = False
-    attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
     inputs_json_hcl_extras: list[str] = PydanticField(default_factory=list)
 
     @model_validator(mode="after")
     def set_defaults(self) -> Self:
         if not self.name:
+            assert self.resource_types, "must set either name or resource_types"
             self.name = self.resource_types[0]
         return self
 
@@ -118,6 +144,20 @@ class ModuleGenConfig(Entity):
         if config is None:
             raise ValueError(f"module config {self.name} doesn't have: {resource_type}")
         return config
+
+    @classmethod
+    def from_repo_out(cls, resource_type: str, provider_config: ProviderGenConfig, repo_out: RepoOut) -> Self:
+        resource_config = provider_config.resource_config_or_none(resource_type) or ResourceGenConfig(
+            name=resource_type
+        )
+        return cls(
+            name=resource_type,
+            resources=[resource_config],
+            settings=provider_config.settings,
+            in_dir=None,
+            out_dir=repo_out.resource_module_path(provider_config.provider_name, resource_type),
+            dataclass_out_dir=repo_out.resource_module_path(provider_config.provider_name, resource_type),
+        )
 
     @classmethod
     def from_paths(cls, name: str, in_dir: DirectoryPath, out_dir: DirectoryPath, settings: TfExtSettings) -> Self:
@@ -137,6 +177,9 @@ class ModuleGenConfig(Entity):
     def required_variables(self, resource_type: str) -> set[str]:
         return next((r.required_variables for r in self.resources if r.name == resource_type), set())
 
+    def attribute_default_hcl_strings(self, resource_type: str) -> dict[str, str]:
+        return next((r.attribute_default_hcl_strings for r in self.resources if r.name == resource_type), {})
+
     @property
     def module_out_path(self) -> Path:
         if out_dir := self.out_dir:
@@ -155,6 +198,8 @@ class ModuleGenConfig(Entity):
         return self.in_dir / ModuleGenConfig.FILENAME_EXAMPLES_TEST
 
     def dataclass_path(self, resource_type: str) -> Path:
+        if dataclass_out_dir := self.dataclass_out_dir:
+            return dataclass_out_dir / f"{resource_type}.py"
         return self.module_out_path / f"{resource_type}.py"
 
     def main_tf_path(self, resource_type: str) -> Path:

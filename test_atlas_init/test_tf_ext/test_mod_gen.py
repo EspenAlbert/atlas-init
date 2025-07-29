@@ -162,6 +162,18 @@ def test_create_variables_flat(resource_type: str, file_regression, generated_da
     file_regression.check(variables_code, extension=".tf", basename=f"{resource_type}_variablesx")
 
 
+@pytest.mark.parametrize(
+    "resource_type", ["mongodbatlas_cloud_backup_schedule", "mongodbatlas_federated_database_instance"]
+)
+def test_create_main_flat(resource_type: str, file_regression, generated_dataclass_path):
+    py_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
+    main_code = generate_resource_main(
+        py_module,
+        ModuleGenConfig(resources=[ResourceGenConfig(name=resource_type, flat_variables=True)], skip_python=True),
+    )
+    file_regression.check(main_code, extension=".tf", basename=f"{resource_type}_main_flat")
+
+
 def test_generate_examples_advanced_cluster(file_regression, dataclass_manual_path, tmp_path):
     resource_type = "mongodbatlas_advanced_cluster"
     python_module = _import_resource_type_dataclass(ADV_CLUSTER_CUSTOM, dataclass_manual_path)

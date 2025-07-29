@@ -2,7 +2,7 @@
 
 resource "mongodbatlas_federated_database_instance" "this" {
   dynamic "cloud_provider_config" {
-    for_each = var.cloud_provider_config == null ? [] : [var.cloud_provider_config]
+    for_each = var.mongodbatlas_federated_database_instance.cloud_provider_config == null ? [] : [var.mongodbatlas_federated_database_instance.cloud_provider_config]
     content {
       dynamic "aws" {
         for_each = cloud_provider_config.value.aws == null ? [] : [cloud_provider_config.value.aws]
@@ -20,17 +20,17 @@ resource "mongodbatlas_federated_database_instance" "this" {
     }
   }
   dynamic "data_process_region" {
-    for_each = var.data_process_region == null ? [] : [var.data_process_region]
+    for_each = var.mongodbatlas_federated_database_instance.data_process_region == null ? [] : [var.mongodbatlas_federated_database_instance.data_process_region]
     content {
       cloud_provider = data_process_region.value.cloud_provider
       region         = data_process_region.value.region
     }
   }
-  id         = var.id
-  name       = var.name
-  project_id = var.project_id
+  id         = var.mongodbatlas_federated_database_instance.id
+  name       = var.mongodbatlas_federated_database_instance.name
+  project_id = var.mongodbatlas_federated_database_instance.project_id
   dynamic "storage_databases" {
-    for_each = var.storage_databases == null ? [] : [var.storage_databases]
+    for_each = var.mongodbatlas_federated_database_instance.storage_databases == null ? [] : [var.mongodbatlas_federated_database_instance.storage_databases]
     content {
       name = storage_databases.value.name
       dynamic "collections" {
@@ -63,7 +63,7 @@ resource "mongodbatlas_federated_database_instance" "this" {
     }
   }
   dynamic "storage_stores" {
-    for_each = var.storage_stores == null ? [] : [var.storage_stores]
+    for_each = var.mongodbatlas_federated_database_instance.storage_stores == null ? [] : [var.mongodbatlas_federated_database_instance.storage_stores]
     content {
       additional_storage_classes = storage_stores.value.additional_storage_classes
       allow_insecure             = storage_stores.value.allow_insecure

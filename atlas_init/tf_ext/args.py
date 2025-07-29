@@ -7,7 +7,7 @@ def default_skippped_directories() -> list[str]:
     ]
 
 
-REPO_PATH_ARG = typer.Argument(help, help="Path to the mongodbatlas-terraform-provider repository")
+REPO_PATH_ATLAS_ARG = typer.Argument(..., help="Path to the mongodbatlas-terraform-provider repository")
 SKIP_EXAMPLES_DIRS_OPTION = typer.Option(
     ...,
     "--skip-examples",
@@ -17,8 +17,16 @@ SKIP_EXAMPLES_DIRS_OPTION = typer.Option(
 )
 TF_CLI_CONFIG_FILE_ENV_NAME = "TF_CLI_CONFIG_FILE"
 TF_CLI_CONFIG_FILE_ARG = typer.Option(
+    "",
     "-tf-cli",
     "--tf-cli-config-file",
     envvar=TF_CLI_CONFIG_FILE_ENV_NAME,
     help="Terraform CLI config file",
+)
+ENV_NAME_REPO_PATH_ATLAS_PROVIDER = "REPO_PATH_ATLAS_PROVIDER"
+TF_REPO_PATH_ATLAS = typer.Option(
+    "",
+    "--tf-repo-path-atlas",
+    help="Path to the mongodbatlas-terraform-provider repository",
+    envvar=ENV_NAME_REPO_PATH_ATLAS_PROVIDER,
 )

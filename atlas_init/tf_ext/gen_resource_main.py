@@ -6,7 +6,7 @@ from typing import Iterable
 
 from ask_shell import run_and_wait
 
-from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceGenConfig
 from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule
 
 logger = logging.getLogger(__name__)
@@ -55,10 +55,14 @@ data "external" "{module.resource_type}" {{
 """
 
 
-def resource_declare_direct(py_module: ResourceTypePythonModule) -> str:
+def resource_declare_direct(py_module: ResourceTypePythonModule, config: ResourceGenConfig) -> str:
     parent_cls = py_module.resource
-    assert parent_cls, f"{py_module.resource_type} does not have a resource"
-    field_values = "\n".join(_field_value(parent_cls, name) for name in py_module.base_field_names_not_computed)
+    resource_type = py_module.resource_type
+    assert parent_cls, f"{resource_type} does not have a resource"
+    field_base = f"var.{resource_type}." if config.flat_variables else "var."
+    field_values = "\n".join(
+        _field_value(parent_cls, name, field_base) for name in py_module.base_field_names_not_computed
+    )
 
     return f"""
 resource "{py_module.resource_type}" "this" {{
@@ -72,11 +76,13 @@ def _field_value(parent_cls: type[ResourceAbs], field_name: str, field_base: str
         return ""
     this_indent = "  "
     if ResourceAbs.is_block(field_name, parent_cls):
-        return "\n".join(f"{this_indent}{line}" for line in _handle_dynamic(parent_cls, field_name))
+        return "\n".join(f"{this_indent}{line}" for line in _handle_dynamic(parent_cls, field_name, field_base))
     return this_indent + f"{field_name} = {field_base}{field_name}"
 
 
-def _handle_dynamic(parent_cls: type[ResourceAbs], dynamic_field_name: str) -> Iterable[str]:
+def _handle_dynamic(
+    parent_cls: type[ResourceAbs], dynamic_field_name: str, existing_ref: str = "var."
+) -> Iterable[str]:
     try:
         container_type = next(
             t for name, t in ResourceTypePythonModule.container_types(parent_cls) if name == dynamic_field_name
@@ -85,18 +91,19 @@ def _handle_dynamic(parent_cls: type[ResourceAbs], dynamic_field_name: str) -> I
         raise ValueError(f"Could not find container type for field {dynamic_field_name} in {parent_cls}")
     hcl_ref = f"{dynamic_field_name}.value."
     yield f'dynamic "{dynamic_field_name}" {{'
+    ref = existing_ref + dynamic_field_name
     if container_type.is_list or container_type.is_set:
         if container_type.is_optional:
-            yield f"  for_each = var.{dynamic_field_name} == null ? [] : var.{dynamic_field_name}"
+            yield f"  for_each = {ref} == null ? [] : {ref}"
         else:
-            yield f"  for_each = var.{dynamic_field_name}"
+            yield f"  for_each = {ref}"
     elif container_type.is_dict:
         raise NotImplementedError(f"Dict not supported for {dynamic_field_name} in {parent_cls}")
     else:  # singular
         if container_type.is_optional:
-            yield f"  for_each = var.{dynamic_field_name} == null ? [] : [var.{dynamic_field_name}]"
+            yield f"  for_each = {ref} == null ? [] : [{ref}]"
         else:
-            yield f"  for_each = [var.{dynamic_field_name}]"
+            yield f"  for_each = [{ref}]"
     yield "  content {"
     yield from [f"    {line}" for line in _nested_fields(container_type.type, hcl_ref)]
     yield "  }"
@@ -109,7 +116,7 @@ def _nested_fields(cls: type[ResourceAbs], hcl_ref: str) -> Iterable[str]:
         if ResourceAbs.is_computed_only(field_name, cls):
             continue
         if ResourceAbs.is_block(field_name, cls):
-            yield from _handle_dynamic(cls, field_name)
+            yield from _handle_dynamic(cls, field_name, hcl_ref)
         else:
             yield _field_value(cls, field_name, hcl_ref)
 
@@ -166,7 +173,7 @@ def generate_resource_main(python_module: ResourceTypePythonModule, config: Modu
     resource = python_module.resource_ext or python_module.resource
     assert resource, f"{python_module} does not have a resource"
     resource_hcl = (
-        resource_declare_direct(python_module)
+        resource_declare_direct(python_module, config.resource_config(python_module.resource_type))
         if config.skip_python
         else resource_declare(
             resource_type=python_module.resource_type,
