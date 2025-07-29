@@ -245,11 +245,13 @@ def convert_to_dataclass(
                 py_type = type_from_schema_attr(attr, class_name, attr_name)
                 add_attribute(attr_name, attr, py_type)
 
+        block_attributes = set()
         for block_type_name, block_type in (block.block_types or {}).items():
             if block_type.deprecated or block_type_name in config.skip_variables_extra(resource_type):
                 logger.info(f"skipping deprecated block type {block_type_name}")
                 continue
             is_required = (block_type.min_items or 0) > 0 or bool(block_type.required)
+            block_attributes.add(block_type_name)
             add_block_attribute(
                 block_type_name,
                 block_type.block,
@@ -258,6 +260,9 @@ def convert_to_dataclass(
                 description=block_type.description,
             )
 
+        lines.append(
+            f"    {ResourceAbs.BLOCK_ATTRIBUTES_NAME}: ClassVar[Set[str]] = {as_set(sorted(block_attributes))}"
+        )
         lines.append(
             f"    {ResourceAbs.NESTED_ATTRIBUTES_NAME}: ClassVar[Set[str]] = {as_set([dc_field.name for dc_field in dc_fields if dc_field.is_nested])}"
         )

@@ -26,16 +26,22 @@ ResourceTypeT: TypeAlias = str
 
 @dataclass
 class ResourceAbs(ABC):
-    REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
-    REQUIRED_ATTRIBUTES_NAME: ClassVar[str] = "REQUIRED_ATTRIBUTES"
-    NESTED_ATTRIBUTES: ClassVar[set[str]] = set()
-    NESTED_ATTRIBUTES_NAME: ClassVar[str] = "NESTED_ATTRIBUTES"
-    COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
+    BLOCK_ATTRIBUTES_NAME: ClassVar[str] = "BLOCK_ATTRIBUTES"
+    BLOCK_ATTRIBUTES: ClassVar[set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES_NAME: ClassVar[str] = "COMPUTED_ONLY_ATTRIBUTES"
-    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
+    COMPUTED_ONLY_ATTRIBUTES: ClassVar[set[str]] = set()
     DEFAULTS_HCL_STRINGS_NAME: ClassVar[str] = "DEFAULTS_HCL_STRINGS"
-    SKIP_VARIABLES: ClassVar[set[str]] = set()
+    DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
+    NESTED_ATTRIBUTES_NAME: ClassVar[str] = "NESTED_ATTRIBUTES"
+    NESTED_ATTRIBUTES: ClassVar[set[str]] = set()
+    REQUIRED_ATTRIBUTES_NAME: ClassVar[str] = "REQUIRED_ATTRIBUTES"
+    REQUIRED_ATTRIBUTES: ClassVar[set[str]] = set()
     SKIP_VARIABLES_NAME: ClassVar[str] = "SKIP_VARIABLES"
+    SKIP_VARIABLES: ClassVar[set[str]] = set()
+
+    @staticmethod
+    def is_block(field_name: str, some_cls: type) -> bool:
+        return field_name in getattr(some_cls, ResourceAbs.BLOCK_ATTRIBUTES_NAME, set())
 
     @staticmethod
     def is_required(field_name: str, some_cls: type) -> bool:
@@ -304,8 +310,12 @@ class ResourceTypePythonModule:
         cls = self.resource_ext or self.resource
         if not cls:
             return []
-        for field in fields(cls):
-            if ResourceAbs.is_nested(field.name, cls):
+        yield from self.container_types(cls)
+
+    @staticmethod
+    def container_types(data_class: type[ResourceAbs]) -> Iterable[tuple[str, ContainerType[ResourceAbs]]]:
+        for field in fields(data_class):
+            if ResourceAbs.is_nested(field.name, data_class):
                 container_type = unwrap_type(field)
                 yield field.name, container_type
 

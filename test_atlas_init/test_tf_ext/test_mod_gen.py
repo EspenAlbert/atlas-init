@@ -98,6 +98,16 @@ def _import_resource_type_dataclass(resource_type: str, generated_dataclass_path
     return import_resource_type_python_module(resource_type, dataclass_path)
 
 
+@pytest.mark.parametrize("resource_type", ["mongodbatlas_cloud_backup_schedule"])
+def test_create_main_skip_python(resource_type: str, file_regression, generated_dataclass_path, generated_main_path):
+    python_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
+    main_code = generate_resource_main(
+        python_module, ModuleGenConfig(resources=[ResourceGenConfig(name=resource_type)], skip_python=True)
+    )
+    ensure_parents_write_text(generated_main_path(resource_type), main_code)
+    file_regression.check(main_code, extension=".tf", basename=f"{resource_type}_main")
+
+
 @pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster"])
 def test_create_main(resource_type: str, file_regression, generated_dataclass_path, generated_main_path):
     python_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)

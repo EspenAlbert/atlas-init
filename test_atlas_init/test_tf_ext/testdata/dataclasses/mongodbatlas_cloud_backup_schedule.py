@@ -7,6 +7,7 @@ from typing import Optional, List, Set, ClassVar, Union
 
 @dataclass
 class CopySetting:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"frequencies"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -20,6 +21,7 @@ class CopySetting:
 
 @dataclass
 class Export:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -30,6 +32,7 @@ class Export:
 
 @dataclass
 class Policyitem:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"frequency_interval", "retention_unit", "retention_value"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"frequency_type", "id"}
@@ -43,6 +46,15 @@ class Policyitem:
 
 @dataclass
 class Resource:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = {
+        "copy_settings",
+        "export",
+        "policy_item_daily",
+        "policy_item_hourly",
+        "policy_item_monthly",
+        "policy_item_weekly",
+        "policy_item_yearly",
+    }
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {
         "copy_settings",
         "export",

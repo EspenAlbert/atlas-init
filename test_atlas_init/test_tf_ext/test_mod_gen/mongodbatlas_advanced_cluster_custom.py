@@ -7,6 +7,7 @@ from typing import Optional, List, Dict, Any, Set, ClassVar, Union, Iterable
 
 @dataclass
 class AdvancedConfiguration:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"custom_openssl_cipher_config_tls12"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -28,6 +29,7 @@ class AdvancedConfiguration:
 
 @dataclass
 class BiConnectorConfig:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -38,6 +40,7 @@ class BiConnectorConfig:
 
 @dataclass
 class Endpoint:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"endpoint_id", "provider_name", "region"}
@@ -49,6 +52,7 @@ class Endpoint:
 
 @dataclass
 class PrivateEndpoint:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"endpoints"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {
@@ -72,6 +76,7 @@ class PrivateEndpoint:
 
 @dataclass
 class ConnectionString:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"private_endpoint"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {
@@ -97,6 +102,7 @@ class ConnectionString:
 
 @dataclass
 class PinnedFcv:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"expiration_date"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"version"}
@@ -107,6 +113,7 @@ class PinnedFcv:
 
 @dataclass
 class Autoscaling:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -120,6 +127,7 @@ class Autoscaling:
 
 @dataclass
 class Spec:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -133,6 +141,7 @@ class Spec:
 
 @dataclass
 class RegionConfig:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {
         "analytics_auto_scaling",
         "analytics_specs",
@@ -183,6 +192,7 @@ class RegionConfig:
 
 @dataclass
 class ReplicationSpec:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "region_configs"}
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"region_configs"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"container_id", "external_id", "zone_id"}
@@ -200,6 +210,7 @@ class ReplicationSpec:
 
 @dataclass
 class Timeout:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
@@ -211,6 +222,7 @@ class Timeout:
 
 @dataclass
 class Resource:
+    BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = {
         "advanced_configuration",
         "bi_connector_config",
