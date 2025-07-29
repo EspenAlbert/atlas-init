@@ -2,9 +2,9 @@ import importlib.util
 import inspect
 import logging
 import re
+import sys
 from dataclasses import Field, fields, is_dataclass
 from pathlib import Path
-import sys
 from tempfile import TemporaryDirectory
 from types import ModuleType
 from typing import Any, Dict, Generic, Iterable, List, Literal, NamedTuple, Set, TypeVar, Union, get_args, get_origin
@@ -109,7 +109,7 @@ def make_post_init_line(field_name: str, elem_type: str, is_map: bool = False, i
         )
 
 
-class _PrimitiveType(Exception):
+class PrimitiveTypeError(Exception):
     def __init__(self, type_: type):
         self.type_ = type_
 
@@ -117,7 +117,7 @@ class _PrimitiveType(Exception):
 def make_post_init_line_from_field(field: Field) -> str:
     try:
         container_type = unwrap_type(field)
-    except _PrimitiveType:
+    except PrimitiveTypeError:
         return ""
     make_func = make_post_init_line_optional if container_type.is_optional else make_post_init_line
     return make_func(
@@ -184,20 +184,20 @@ def _unwrap_type(field_type: type, origin: type, args: list[type]) -> ContainerT
     if origin in (list, List) and args:
         item_type = args[0]
         if item_type in primitive_types:
-            raise _PrimitiveType(item_type)
+            raise PrimitiveTypeError(item_type)
         return ContainerType(item_type, "list")
     if origin in (set, Set) and args:
         item_type = args[0]
         if item_type in primitive_types:
-            raise _PrimitiveType(item_type)
+            raise PrimitiveTypeError(item_type)
         return ContainerType(item_type, "set")
     if origin in (dict, Dict) and args:
         _, value_type = args
         if value_type in primitive_types:
-            raise _PrimitiveType(value_type)
+            raise PrimitiveTypeError(value_type)
         return ContainerType(value_type, "dict")
     if field_type in primitive_types:
-        raise _PrimitiveType(field_type)
+        raise PrimitiveTypeError(field_type)
     assert not isinstance(field_type, str), f"Expected type, got {field_type!r}"
     return ContainerType(field_type, "cls_direct")
 

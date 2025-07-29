@@ -46,7 +46,10 @@ def read_resource_schema(resource_type: str, resource_type_schema_path) -> Resou
     return resource_schema
 
 
-@pytest.mark.parametrize("resource_type", ["mongodbatlas_advanced_cluster", "mongodbatlas_cloud_backup_schedule"])
+@pytest.mark.parametrize(
+    "resource_type",
+    ["mongodbatlas_advanced_cluster", "mongodbatlas_cloud_backup_schedule", "mongodbatlas_federated_database_instance"],
+)
 def test_create_dataclass(resource_type: str, file_regression, resource_type_schema_path, generated_dataclass_path):
     resource_schema = read_resource_schema(resource_type, resource_type_schema_path)
     dataclass_code = convert_and_format(
@@ -98,7 +101,9 @@ def _import_resource_type_dataclass(resource_type: str, generated_dataclass_path
     return import_resource_type_python_module(resource_type, dataclass_path)
 
 
-@pytest.mark.parametrize("resource_type", ["mongodbatlas_cloud_backup_schedule"])
+@pytest.mark.parametrize(
+    "resource_type", ["mongodbatlas_cloud_backup_schedule", "mongodbatlas_federated_database_instance"]
+)
 def test_create_main_skip_python(resource_type: str, file_regression, generated_dataclass_path, generated_main_path):
     python_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
     main_code = generate_resource_main(

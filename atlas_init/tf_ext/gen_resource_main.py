@@ -1,3 +1,4 @@
+import logging
 from dataclasses import fields
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -7,6 +8,8 @@ from ask_shell import run_and_wait
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs
 from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule
+
+logger = logging.getLogger(__name__)
 
 
 def local_name_varsx(resource_type: str) -> str:
@@ -74,13 +77,14 @@ def _field_value(parent_cls: type[ResourceAbs], field_name: str, field_base: str
 
 
 def _handle_dynamic(parent_cls: type[ResourceAbs], dynamic_field_name: str) -> Iterable[str]:
-    container_type = next(
-        (t for name, t in ResourceTypePythonModule.container_types(parent_cls) if name == dynamic_field_name), None
-    )
-    if not container_type:
+    try:
+        container_type = next(
+            t for name, t in ResourceTypePythonModule.container_types(parent_cls) if name == dynamic_field_name
+        )
+    except StopIteration:
         raise ValueError(f"Could not find container type for field {dynamic_field_name} in {parent_cls}")
     hcl_ref = f"{dynamic_field_name}.value."
-    yield f'dynamic "{dynamic_field_name}" {{\n'
+    yield f'dynamic "{dynamic_field_name}" {{'
     if container_type.is_list or container_type.is_set:
         if container_type.is_optional:
             yield f"  for_each = var.{dynamic_field_name} == null ? [] : var.{dynamic_field_name}"
@@ -93,7 +97,7 @@ def _handle_dynamic(parent_cls: type[ResourceAbs], dynamic_field_name: str) -> I
             yield f"  for_each = var.{dynamic_field_name} == null ? [] : [var.{dynamic_field_name}]"
         else:
             yield f"  for_each = [var.{dynamic_field_name}]"
-    yield "  content = {"
+    yield "  content {"
     yield from [f"    {line}" for line in _nested_fields(container_type.type, hcl_ref)]
     yield "  }"
     yield "}"
@@ -106,7 +110,8 @@ def _nested_fields(cls: type[ResourceAbs], hcl_ref: str) -> Iterable[str]:
             continue
         if ResourceAbs.is_block(field_name, cls):
             yield from _handle_dynamic(cls, field_name)
-        yield _field_value(cls, field_name, hcl_ref)
+        else:
+            yield _field_value(cls, field_name, hcl_ref)
 
 
 def resource_declare(
@@ -149,7 +154,11 @@ def format_tf_content(content: str) -> str:
     with TemporaryDirectory() as tmp_dir:
         tmp_file = Path(tmp_dir) / "content.tf"
         tmp_file.write_text(content)
-        run_and_wait("terraform fmt .", cwd=tmp_dir)
+        try:
+            run_and_wait("terraform fmt .", cwd=tmp_dir)
+        except Exception as e:
+            logger.error(f"Failed to format tf content:\n{content}")
+            raise e
         return tmp_file.read_text()
 
 

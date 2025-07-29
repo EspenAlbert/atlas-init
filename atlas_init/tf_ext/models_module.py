@@ -1,5 +1,6 @@
 from abc import ABC
 from collections import defaultdict
+from contextlib import suppress
 from dataclasses import Field, dataclass, fields
 from pathlib import Path
 from types import ModuleType
@@ -14,6 +15,7 @@ from zero_3rdparty.object_name import as_name
 from atlas_init.tf_ext.plan_diffs import ExamplePlanCheck
 from atlas_init.tf_ext.py_gen import (
     ContainerType,
+    PrimitiveTypeError,
     import_from_path,
     make_post_init_line_from_field,
     module_dataclasses,
@@ -316,8 +318,9 @@ class ResourceTypePythonModule:
     def container_types(data_class: type[ResourceAbs]) -> Iterable[tuple[str, ContainerType[ResourceAbs]]]:
         for field in fields(data_class):
             if ResourceAbs.is_nested(field.name, data_class):
-                container_type = unwrap_type(field)
-                yield field.name, container_type
+                with suppress(PrimitiveTypeError):
+                    container_type = unwrap_type(field)
+                    yield field.name, container_type
 
 
 class MissingDescriptionError(Exception):
