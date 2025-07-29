@@ -6,7 +6,7 @@ from typing import Optional, List, Set, ClassVar, Union
 
 
 @dataclass
-class Aw:
+class Aws:
     BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"role_id", "test_s3_bucket"}
@@ -39,13 +39,13 @@ class CloudProviderConfig:
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
-    aws: Optional[Aw] = None
+    aws: Optional[Aws] = None
     azure: Optional[Azure] = None
 
     def __post_init__(self):
-        if self.aws is not None and not isinstance(self.aws, Aw):
-            assert isinstance(self.aws, dict), f"Expected aws to be a Aw or a dict, got {type(self.aws)}"
-            self.aws = Aw(**self.aws)
+        if self.aws is not None and not isinstance(self.aws, Aws):
+            assert isinstance(self.aws, dict), f"Expected aws to be a Aws or a dict, got {type(self.aws)}"
+            self.aws = Aws(**self.aws)
         if self.azure is not None and not isinstance(self.azure, Azure):
             assert isinstance(self.azure, dict), f"Expected azure to be a Azure or a dict, got {type(self.azure)}"
             self.azure = Azure(**self.azure)

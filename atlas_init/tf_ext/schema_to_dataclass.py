@@ -422,13 +422,19 @@ def _safe_replace(text: str, old: str, new: str) -> str:
     return re.sub(rf"\W({old})\W", replacer, text)
 
 
+_plural_exception_list = {"Aws"}
+
+
 def extract_last_name_part(full_name: str) -> str:
     included_words = []
     for word in reversed(full_name.split("_")):
         included_words.insert(0, word)
         if word[0].isupper():
             break
-    return singularize(humps.pascalize("_".join(included_words)))
+    plural_word = humps.pascalize("_".join(included_words))
+    if plural_word in _plural_exception_list:
+        return plural_word
+    return singularize(plural_word)
 
 
 def rename_and_remove_duplicates(duplicates: list[str], py_code: str) -> tuple[str, str]:
