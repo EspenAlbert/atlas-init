@@ -1,14 +1,13 @@
 import logging
 from contextlib import contextmanager
-from dataclasses import fields, is_dataclass, Field
-from typing import get_type_hints, get_origin, get_args, List, Set, Dict, Union
+from dataclasses import Field, fields, is_dataclass
+from typing import Dict, List, Set, Union, get_args, get_origin, get_type_hints
 
 from model_lib import Entity
 from pydantic import Field as PydanticField
 
 from atlas_init.tf_ext.gen_resource_main import format_tf_content
 from atlas_init.tf_ext.models_module import ResourceAbs, ResourceGenConfig, ResourceTypePythonModule
-
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +139,7 @@ def generate_resource_variables(
         | getattr(resource, ResourceAbs.SKIP_VARIABLES_NAME, set())
         | extra_skipped
     )
-    if resource_config.flat_variables:
+    if resource_config.use_single_variable:
         context = DefaultValueContext(field_path=[], ignored_names=ignored_names)
         tf_type = dataclass_to_object_type(resource_config.name, resource, context)
         default_line = f"\n  default  = {context.final_str}" if resource_config.name not in required_variables else ""

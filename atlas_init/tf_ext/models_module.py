@@ -73,14 +73,14 @@ def as_import_line(name: str) -> str:
 
 class ResourceGenConfig(Entity):
     name: str
-    flat_variables: bool = False
+    use_single_variable: bool = False
     required_variables: set[str] = PydanticField(default_factory=set)
     skip_variables_extra: set[str] = PydanticField(default_factory=set)
     attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
 
     def single_variable_version(self) -> Self:
-        assert not self.flat_variables, "flat_variables must be False to create a single variable version"
-        return copy_and_validate(self, flat_variables=True)
+        assert not self.use_single_variable, "use_single_variable must be False to create a single variable version"
+        return copy_and_validate(self, use_single_variable=True)
 
 
 def as_provider_name(provider_path: str) -> str:

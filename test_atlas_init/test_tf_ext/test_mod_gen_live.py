@@ -7,7 +7,7 @@ from pydantic import TypeAdapter
 import pytest
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
-from atlas_init.tf_ext.models_module import ModuleGenConfig
+from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceGenConfig
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_examples_and_readme
 from atlas_init.tf_ext.plan_diffs import (
@@ -111,13 +111,17 @@ class _ModuleNames:
     def create_by_name(cls, name: str, settings: TfExtSettings, *, clean_and_write: bool) -> ModuleGenConfig:
         config = ModuleGenConfig(
             name=name,
-            resource_types=["mongodbatlas_advanced_cluster"],
+            resources=[
+                ResourceGenConfig(
+                    name="mongodbatlas_advanced_cluster",
+                    required_variables=cls.required_variables(name),
+                    skip_variables_extra={"labels"},
+                    attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
+                )
+            ],
             settings=settings,
             skip_python=cls.CLUSTER_SKIP_PYTHON == name,
-            required_variables=cls.required_variables(name),
-            attribute_default_hcl_strings=cls.defaults_hcl_strings(name),
             inputs_json_hcl_extras=cls.inputs_json_hcl_extras(name),
-            skip_variables_extra={"labels"},
         )
         if clean_and_write:
             clean_dir(config.module_out_path)

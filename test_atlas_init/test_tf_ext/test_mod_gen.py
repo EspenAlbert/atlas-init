@@ -158,7 +158,9 @@ def test_create_variables_custom(resource_type: str, file_regression, dataclass_
 @pytest.mark.parametrize("resource_type", ["mongodbatlas_cloud_backup_schedule"])
 def test_create_variables_flat(resource_type: str, file_regression, generated_dataclass_path):
     py_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
-    variables_code, _ = generate_module_variables(py_module, ResourceGenConfig(name=resource_type, flat_variables=True))
+    variables_code, _ = generate_module_variables(
+        py_module, ResourceGenConfig(name=resource_type, use_single_variable=True)
+    )
     file_regression.check(variables_code, extension=".tf", basename=f"{resource_type}_variablesx")
 
 
@@ -169,7 +171,7 @@ def test_create_main_flat(resource_type: str, file_regression, generated_datacla
     py_module = _import_resource_type_dataclass(resource_type, generated_dataclass_path)
     main_code = generate_resource_main(
         py_module,
-        ModuleGenConfig(resources=[ResourceGenConfig(name=resource_type, flat_variables=True)], skip_python=True),
+        ModuleGenConfig(resources=[ResourceGenConfig(name=resource_type, use_single_variable=True)], skip_python=True),
     )
     file_regression.check(main_code, extension=".tf", basename=f"{resource_type}_main_flat")
 

@@ -59,7 +59,7 @@ def resource_declare_direct(py_module: ResourceTypePythonModule, config: Resourc
     parent_cls = py_module.resource
     resource_type = py_module.resource_type
     assert parent_cls, f"{resource_type} does not have a resource"
-    field_base = f"var.{resource_type}." if config.flat_variables else "var."
+    field_base = f"var.{resource_type}." if config.use_single_variable else "var."
     field_values = "\n".join(
         _field_value(parent_cls, name, field_base) for name in py_module.base_field_names_not_computed
     )
