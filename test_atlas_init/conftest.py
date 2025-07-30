@@ -27,6 +27,7 @@ from atlas_init.settings.env_vars import (
 )
 from atlas_init.settings.env_vars_generated import AtlasSettings
 from atlas_init.settings.path import current_dir, dump_dotenv
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 REQUIRED_FIELDS = [
@@ -35,6 +36,7 @@ REQUIRED_FIELDS = [
     "MONGODB_ATLAS_PRIVATE_KEY",
     "MONGODB_ATLAS_PUBLIC_KEY",
 ]
+REPO_PATH = Path(__file__).parent.parent
 
 
 def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:
@@ -42,11 +44,14 @@ def _fixture_has_skip_marker(fixture_name: str, fixture_def) -> bool:
     return any(marker.name.startswith("skip") for marker in markers)
 
 
+def _skip_marked_tests() -> bool:
+    return os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
+
+
 def pytest_collection_modifyitems(config, items):
     """Skip tests that are marked with @pytest.mark.skip
     To avoid the terminal session in VS Code that might have extra env-vars set accidentally run marked tests"""
-    skip_marked_tests = os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
-    if not skip_marked_tests:
+    if not _skip_marked_tests():
         return
     for item in items:
         if any(marker.name.startswith("skip") for marker in item.own_markers):
@@ -82,11 +87,32 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     monkeypatch.setenv("STATIC_DIR", str(static_dir))
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("CACHE_DIR", str(cache_dir))
+    existing_tf_cli_config_file = os.getenv(TfExtSettings.ENV_NAME_TF_CLI_CONFIG_FILE)
+    if not existing_tf_cli_config_file:
+        repo_path_atlas_provider = tmp_path / "repo_path_atlas_provider"
+        monkeypatch.setenv(TfExtSettings.ENV_NAME_REPO_PATH_ATLAS_PROVIDER, str(repo_path_atlas_provider))
+        repo_path_atlas_provider.mkdir()
     static_dir.mkdir()
     cache_dir.mkdir()
     yield AtlasInitSettings.from_env()  # type: ignore
     os.environ.clear()
     os.environ.update(env_before)
+
+
+@pytest.fixture()
+def tf_ext_settings_repo_path(settings, monkeypatch) -> TfExtSettings:
+    if _skip_marked_tests():
+        pytest.skip("skipping marked tests")
+    repo_path = Path(__file__).parent.parent
+    static_dir = repo_path / "static"
+    monkeypatch.setenv("STATIC_DIR", str(static_dir))
+    cache_dir = repo_path / "cache"
+    monkeypatch.setenv("CACHE_DIR", str(cache_dir))
+    static_dir.mkdir(exist_ok=True)
+    cache_dir.mkdir(exist_ok=True)
+    settings.STATIC_DIR = static_dir
+    settings.CACHE_DIR = cache_dir
+    return TfExtSettings.from_env()
 
 
 @pytest.fixture()

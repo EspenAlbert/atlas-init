@@ -1,0 +1,17 @@
+name: option-2-alternative
+resource_types:
+- mongodbatlas_advanced_cluster
+skip_variables_extra:
+- labels
+required_variables:
+- name
+- project_id
+attribute_default_hcl_strings:
+  minimum_enabled_tls_protocol: '"TLS1_2"'
+  javascript_enabled: 'false'
+  backup_enabled: 'true'
+  retain_backups_enabled: 'true'
+  termination_protection_enabled: 'true'
+  default_write_concern: '"majority"'
+inputs_json_hcl_extras:
+- local.existing_cluster

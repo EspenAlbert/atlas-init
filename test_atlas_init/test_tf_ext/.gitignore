@@ -1,0 +1,7 @@
+main/
+variables/
+dataclasses/*
+!dataclasses/mongodbatlas_advanced_cluster_custom.py
+testdata/resources/*
+testdata/atlas_schema.json
+!testdata/resources/mongodbatlas_advanced_cluster.json

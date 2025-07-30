@@ -7,8 +7,8 @@ from typing import Iterable, NamedTuple
 
 import pydot
 from ask_shell import ShellError, new_task, run_and_wait
-from ask_shell.run_pool import run_pool
 from ask_shell._run import stop_runs_and_pool
+from ask_shell.run_pool import run_pool
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
@@ -17,10 +17,10 @@ from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.settings.rich_utils import configure_logging
-from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.args import REPO_PATH_ATLAS_ARG, SKIP_EXAMPLES_DIRS_OPTION
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.paths import find_variable_resource_type_usages, find_variables, get_example_directories
-from atlas_init.tf_ext.settings import TfDepSettings
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 v2_grand_parent_dirs = {
@@ -48,10 +48,10 @@ def is_v2_example_dir(example_dir: Path) -> bool:
 
 
 def tf_dep_graph(
-    repo_path: Path = REPO_PATH_ARG,
+    repo_path: Path = REPO_PATH_ATLAS_ARG,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
 ):
-    settings = TfDepSettings.from_env()
+    settings = TfExtSettings.from_env()
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
     example_dirs = get_example_directories(repo_path, skip_names)

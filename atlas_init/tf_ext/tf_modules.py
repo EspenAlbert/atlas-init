@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,7 +14,7 @@ from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.models import ModuleConfig, ModuleConfigs
-from atlas_init.tf_ext.settings import TfDepSettings
+from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_dep import FORCE_INTERNAL_NODES, SKIP_NODES, AtlasGraph, edge_src_dest
 
 logger = logging.getLogger(__name__)
@@ -142,7 +143,7 @@ def tf_modules(
         show_default=True,
     ),
 ):
-    settings = TfDepSettings.from_env()
+    settings = TfExtSettings.from_env()
     atlas_graph = parse_atlas_graph(settings)
     output_dir = settings.static_root
     with new_task("Write graphs"):
@@ -229,7 +230,7 @@ def generate_module_graphs(skipped_module_resource_types, settings, atlas_graph)
     return modules
 
 
-def parse_atlas_graph(settings: TfDepSettings) -> AtlasGraph:
+def parse_atlas_graph(settings: TfExtSettings) -> AtlasGraph:
     atlas_graph = parse_model(settings.atlas_graph_path, t=AtlasGraph)
     deprecated_resources = parse_list(settings.schema_resource_types_deprecated_path, format="yaml")
     atlas_graph.deprecated_resource_types.update(deprecated_resources)
@@ -240,7 +241,7 @@ def parse_atlas_graph(settings: TfDepSettings) -> AtlasGraph:
 
 
 def add_unused_nodes_to_graph(
-    settings: TfDepSettings, atlas_graph: AtlasGraph, color_coder: ColorCoder, internal_graph: pydot.Dot
+    settings: TfExtSettings, atlas_graph: AtlasGraph, color_coder: ColorCoder, internal_graph: pydot.Dot
 ):
     schema_resource_types: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
     all_nodes = atlas_graph.all_internal_nodes

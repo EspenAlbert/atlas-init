@@ -1,0 +1,206 @@
+{
+    "accept_data_risks_and_force_replica_set_reconfig": null,
+    "advanced_configuration": null,
+    "backup_enabled": true,
+    "bi_connector_config": null,
+    "cluster_type": null,
+    "config_server_management_mode": null,
+    "delete_on_create_timeout": null,
+    "disk_size_gb": null,
+    "encryption_at_rest_provider": null,
+    "global_cluster_self_managed_sharding": null,
+    "instance_size": "M10",
+    "labels": null,
+    "mongo_db_major_version": null,
+    "name": "created-from-custom-flat",
+    "old_cluster": {
+        "advanced_configuration": {
+            "change_stream_options_pre_and_post_images_expire_after_seconds": -1,
+            "custom_openssl_cipher_config_tls12": [],
+            "default_max_time_ms": null,
+            "default_read_concern": "",
+            "default_write_concern": "",
+            "fail_index_key_too_long": false,
+            "javascript_enabled": true,
+            "minimum_enabled_tls_protocol": "TLS1_2",
+            "no_table_scan": false,
+            "oplog_min_retention_hours": 0,
+            "oplog_size_mb": 0,
+            "sample_refresh_interval_bi_connector": 0,
+            "sample_size_bi_connector": 0,
+            "tls_cipher_config_mode": "DEFAULT",
+            "transaction_lifetime_limit_seconds": 0
+        },
+        "backup_enabled": true,
+        "bi_connector_config": {
+            "enabled": false,
+            "read_preference": "secondary"
+        },
+        "cluster_id": "687eaa2b4fdae35b9b0983e4",
+        "cluster_type": "REPLICASET",
+        "config_server_management_mode": "",
+        "config_server_type": "",
+        "connection_strings": {
+            "private": "",
+            "private_endpoint": null,
+            "private_srv": "",
+            "standard": "mongodb://created-from-custom-fla-shard-00-00.jciib.mongodb-dev.net:27017,created-from-custom-fla-shard-00-01.jciib.mongodb-dev.net:27017,created-from-custom-fla-shard-00-02.jciib.mongodb-dev.net:27017/?ssl=true\u0026authSource=admin\u0026replicaSet=atlas-2t28nb-shard-0",
+            "standard_srv": "mongodb+srv://created-from-custom-fla.jciib.mongodb-dev.net"
+        },
+        "create_date": "2025-07-21T20:59:23Z",
+        "disk_size_gb": 8,
+        "encryption_at_rest_provider": "AWS",
+        "global_cluster_self_managed_sharding": false,
+        "labels": {},
+        "mongo_db_major_version": "8.0",
+        "mongo_db_version": "8.0.12",
+        "name": "created-from-custom-flat",
+        "paused": false,
+        "pinned_fcv": null,
+        "pit_enabled": false,
+        "project_id": "664619d870c247237f4b86a6",
+        "redact_client_log_data": false,
+        "replica_set_scaling_strategy": "",
+        "replication_specs": [
+            {
+                "container_id": {
+                    "AWS:EU_WEST_1": "687ea9d74fdae35b9b098371",
+                    "AWS:US_EAST_1": "687ea9d64fdae35b9b098370",
+                    "AZURE:US_WEST_2": "687ea9d64fdae35b9b09836f"
+                },
+                "external_id": "",
+                "id": "687eaa2a4fdae35b9b0983d8",
+                "num_shards": 1,
+                "region_configs": [
+                    {
+                        "analytics_auto_scaling": null,
+                        "analytics_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "auto_scaling": {
+                            "compute_enabled": false,
+                            "compute_max_instance_size": "",
+                            "compute_min_instance_size": "",
+                            "compute_scale_down_enabled": false,
+                            "disk_gb_enabled": false
+                        },
+                        "backing_provider_name": null,
+                        "electable_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 1
+                        },
+                        "priority": 7,
+                        "provider_name": "AWS",
+                        "read_only_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "region_name": "EU_WEST_1"
+                    },
+                    {
+                        "analytics_auto_scaling": null,
+                        "analytics_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "auto_scaling": {
+                            "compute_enabled": false,
+                            "compute_max_instance_size": "",
+                            "compute_min_instance_size": "",
+                            "compute_scale_down_enabled": false,
+                            "disk_gb_enabled": false
+                        },
+                        "backing_provider_name": null,
+                        "electable_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 1
+                        },
+                        "priority": 6,
+                        "provider_name": "AWS",
+                        "read_only_specs": {
+                            "disk_iops": 3000,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "STANDARD",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "region_name": "US_EAST_1"
+                    },
+                    {
+                        "analytics_auto_scaling": null,
+                        "analytics_specs": {
+                            "disk_iops": 3500,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "auto_scaling": {
+                            "compute_enabled": false,
+                            "compute_max_instance_size": "",
+                            "compute_min_instance_size": "",
+                            "compute_scale_down_enabled": false,
+                            "disk_gb_enabled": false
+                        },
+                        "backing_provider_name": null,
+                        "electable_specs": {
+                            "disk_iops": 3500,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "",
+                            "instance_size": "M10",
+                            "node_count": 1
+                        },
+                        "priority": 5,
+                        "provider_name": "AZURE",
+                        "read_only_specs": {
+                            "disk_iops": 3500,
+                            "disk_size_gb": 8,
+                            "ebs_volume_type": "",
+                            "instance_size": "M10",
+                            "node_count": 0
+                        },
+                        "region_name": "US_WEST_2"
+                    }
+                ],
+                "zone_id": "687eaa2a4fdae35b9b0983d7",
+                "zone_name": "ZoneName managed by Terraform"
+            }
+        ],
+        "retain_backups_enabled": null,
+        "root_cert_type": "ISRGROOTX1",
+        "state_name": "IDLE",
+        "tags": {},
+        "termination_protection_enabled": false,
+        "use_replication_spec_per_shard": null,
+        "version_release_system": "LTS"
+    },
+    "paused": null,
+    "pinned_fcv": null,
+    "pit_enabled": null,
+    "project_id": "664619d870c247237f4b86a6",
+    "redact_client_log_data": null,
+    "replica_set_scaling_strategy": null,
+    "replication_specs": null,
+    "retain_backups_enabled": null,
+    "root_cert_type": null,
+    "tags": null,
+    "termination_protection_enabled": null,
+    "timeouts": null,
+    "version_release_system": null
+}

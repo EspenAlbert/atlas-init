@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import ClassVar, NamedTuple
+from typing import ClassVar
 
-from ask_shell import new_task, run_and_wait
+from ask_shell import new_task
 from model_lib import IgnoreFalsy, dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
 
-from atlas_init.tf_ext.args import REPO_PATH_ARG, SKIP_EXAMPLES_DIRS_OPTION
-from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
+from atlas_init.tf_ext.args import REPO_PATH_ATLAS_ARG, SKIP_EXAMPLES_DIRS_OPTION
 from atlas_init.tf_ext.paths import (
     ResourceTypes,
     find_resource_types_with_usages,
@@ -19,21 +18,24 @@ from atlas_init.tf_ext.paths import (
     get_example_directories,
     is_variable_name_external,
 )
-from atlas_init.tf_ext.settings import TfDepSettings
+from atlas_init.tf_ext.provider_schema import parse_atlas_schema
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 
 
 def tf_vars(
-    repo_path: Path = REPO_PATH_ARG,
+    repo_path: Path = REPO_PATH_ATLAS_ARG,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
 ):
-    settings = TfDepSettings.from_env()
+    settings = TfExtSettings.from_env()
     logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
     example_dirs = get_example_directories(repo_path, skip_names)
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
     with new_task("Parsing provider schema") as task:
-        resource_types, resource_types_deprecated = parse_schema_resource_types(example_dirs[0])
+        atlas_schema = parse_atlas_schema()
+        resource_types = atlas_schema.resource_types
+        resource_types_deprecated = atlas_schema.deprecated_resource_types
         ensure_parents_write_text(settings.schema_resource_types_path, dump(sorted(resource_types), format="yaml"))
         logger.info(f"Provider schema resource types written to {settings.schema_resource_types_path}")
         ensure_parents_write_text(
@@ -51,7 +53,7 @@ def tf_vars(
         logger.warning(f"Missing resource types in examples:\n{'\n'.join(sorted(missing_example_resource_types))}")
 
 
-def parse_provider_resurce_schema(schema: dict, provider_name: str) -> dict:
+def parse_provider_resource_schema(schema: dict, provider_name: str) -> dict:
     schemas = schema.get("provider_schemas", {})
     for provider_url, provider_schema in schemas.items():
         if provider_url.endswith(provider_name):
@@ -104,7 +106,7 @@ def vars_usage_dumping(variables: TfVarsUsage) -> str:
     return dump(vars_model, format="yaml")
 
 
-def update_resource_types(settings: TfDepSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
+def update_resource_types(settings: TfExtSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
     resource_types = ResourceTypes(root={})
     for example_dir in example_dirs:
         example_resources = find_resource_types_with_usages(example_dir)
@@ -130,7 +132,7 @@ def resource_types_dumping(resource_types: ResourceTypes, with_external: bool = 
     return dump(dict(sorted(resource_types_model.items())), format="yaml")
 
 
-def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: new_task):
+def update_variables(settings: TfExtSettings, example_dirs: list[Path], task: new_task):
     variables = parse_all_variables(example_dirs, task)
     logger.info(f"Found {len(variables.root)} variables in the examples.")
     vars_yaml = vars_usage_dumping(variables)
@@ -142,23 +144,6 @@ def update_variables(settings: TfDepSettings, example_dirs: list[Path], task: ne
         external_vars_yaml = vars_usage_dumping(external_vars)
         ensure_parents_write_text(settings.vars_external_file_path, external_vars_yaml)
         logger.info(f"External variables usage written to {settings.vars_external_file_path}")
-
-
-class ResourceTypesSchema(NamedTuple):
-    resource_types: list[str]
-    deprecated_resource_types: list[str]
-
-
-def parse_schema_resource_types(example_dir: Path) -> ResourceTypesSchema:
-    schema_run = run_and_wait("terraform providers schema -json", cwd=example_dir, ansi_content=False)
-    parsed = schema_run.parse_output(dict, output_format="json")
-    resource_schema = parse_provider_resurce_schema(parsed, ATLAS_PROVIDER_NAME)
-
-    def is_deprecated(resource_details: dict) -> bool:
-        return resource_details["block"].get("deprecated", False)
-
-    deprecated_resource_types = [name for name, details in resource_schema.items() if is_deprecated(details)]
-    return ResourceTypesSchema(sorted(resource_schema.keys()), sorted(deprecated_resource_types))
 
 
 def parse_all_variables(examples_dirs: list[Path], task: new_task) -> TfVarsUsage:

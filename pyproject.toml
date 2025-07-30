@@ -21,6 +21,7 @@ dependencies = [
   "boto3==1.35.92",
   "GitPython==3.1.42",
   "humanize==4.9.0",
+  "inflection==0.5.1",
   "motor==3.7.1",
   "mypy-boto3-cloudformation==1.37.22",
   "orjson==3.10.13",
@@ -34,9 +35,9 @@ dependencies = [
   "stringcase==1.2.0",
   "tenacity==9.0.0",
   "typer>=0.15.1",
-  "ask-shell>=0.0.4",
+  "ask-shell>=0.0.5",
   "model-lib",
-  "zero-3rdparty",
+  "zero-3rdparty==1.0.0b5",
 ]
 
 # [tool.uv.sources]
@@ -59,7 +60,8 @@ Source = "https://github.com/EspenAlbert/atlas-init"
 path = "atlas_init/__init__.py"
 
 [tool.pytest.ini_options]
-addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no"
+addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no --ignore=./test_atlas_init/test_tf_ext/testdata/dataclasses/examples_test.py --ignore=./test_atlas_init/test_tf_ext/livedata/modules/option-2-alternative/examples_test.py"
+# addopts = "-vv --tb=short --log-cli-level=INFO --ignore=.venv/* --capture=no --ignore=./test_atlas_init/test_tf_ext/testdata/dataclasses/examples_test.py --ignore=./test_atlas_init/test_tf_ext/livedata/modules/option-2-alternative/examples_test.py --force-regen"
 testpaths = ["test_atlas_init"]
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
@@ -115,6 +117,7 @@ extend-ignore = [
 [tool.ruff.lint.per-file-ignores]
 "atlas_init/cli_helper/run_manager.py" = ["SLF001"]
 "scripts/*.py" = ["INP001", "T201"]
+"test_atlas_init/test_tf_ext/test_py_gen/test_make_post_init_line_from_field.py" = ["F821"]
 
 [dependency-groups]
 dev = [

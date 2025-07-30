@@ -1,8 +1,9 @@
+from __future__ import annotations
 import logging
 from collections import defaultdict
 from copy import deepcopy
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Protocol
 
 import hcl2
 from lark import Token, Tree
@@ -40,14 +41,16 @@ def is_block_type(tree: Tree, block_type: str) -> bool:
         return False
 
 
-def update_description(tree: Tree, new_descriptions: dict[str, str], existing_names: dict[str, list[str]]) -> Tree:
+def update_description(
+    path: Path, tree: Tree, get_new_description: NewDescription, existing_names: dict[str, list[str]]
+) -> Tree:
     new_children = tree.children.copy()
     variable_body = new_children[2]
     assert variable_body.data == "body"
     name = token_name(new_children[1])
     old_description = read_description_attribute(variable_body)
     existing_names[name].append(old_description)
-    new_description = new_descriptions.get(name, "")
+    new_description = get_new_description(name, old_description, path)
     if not new_description:
         debug_log(f"no description found for variable {name}", 0)
         return tree
@@ -59,6 +62,8 @@ def token_name(token: Token | Tree) -> str:
     if isinstance(token, Token):
         return token.value.strip('"')
     if isinstance(token, Tree) and token.data == "identifier":
+        return token.children[0].value.strip('"')  # type: ignore
+    if isinstance(token, Tree) and isinstance(token.data, Token) and token.data.value == "heredoc_template_trim":
         return token.children[0].value.strip('"')  # type: ignore
     err_msg = f"unexpected token type {type(token)} for token name"
     raise ValueError(err_msg)
@@ -103,10 +108,11 @@ def read_description_attribute(tree: Tree) -> str:
 
 
 def create_description_attribute(description_value: str) -> Tree:
+    token_value = f"<<-EOT\n{description_value}\nEOT\n" if "\n" in description_value else f'"{description_value}"'
     children = [
         Tree(Token("RULE", "identifier"), [Token("NAME", "description")]),
         Token("EQ", " ="),
-        Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", f'"{description_value}"')]),
+        Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", token_value)]),
     ]
     return Tree(Token("RULE", "attribute"), children)
 
@@ -129,9 +135,14 @@ def process_generic(
     return Tree(node.data, new_children)
 
 
+class NewDescription(Protocol):
+    def __call__(self, name: str, old_description: str, path: Path) -> str: ...
+
+
 def process_descriptions(
+    path: Path,
     node: Tree,
-    name_updates: dict[str, str],
+    new_description: NewDescription,
     existing_names: dict[str, list[str]],
     depth=0,
     *,
@@ -141,7 +152,7 @@ def process_descriptions(
         return is_block_type(tree, block_type)
 
     def tree_call(tree: Tree) -> Tree:
-        return update_description(tree, name_updates, existing_names)
+        return update_description(path, tree, new_description, existing_names)
 
     return process_generic(
         node,
@@ -151,14 +162,17 @@ def process_descriptions(
     )
 
 
-def update_descriptions(tf_path: Path, new_names: dict[str, str], block_type: str) -> tuple[str, dict[str, list[str]]]:
+def update_descriptions(
+    tf_path: Path, new_description: NewDescription, block_type: str
+) -> tuple[str, dict[str, list[str]]]:
     tree = safe_parse(tf_path)
     if tree is None:
         return "", {}
     existing_descriptions = defaultdict(list)
     new_tree = process_descriptions(
+        tf_path,
         tree,
-        new_names,
+        new_description,
         existing_descriptions,
         block_type=block_type,
     )

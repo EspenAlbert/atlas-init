@@ -14,17 +14,6 @@ from atlas_init.tf_ext.tf_modules import color_coder, create_internal_dependenci
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(autouse=True)
-def ensure_tf_in_path(monkeypatch):
-    """
-    Ensure that the Terraform binary is in the PATH for the tests.
-    """
-    path = os.environ.get("PATH", "")
-    extra_path = os.environ.get("EXTRA_PATH", "")
-    monkeypatch.setenv("PATH", f"{path}:{extra_path}")
-    logger.info(f"Set PATH to: {os.environ['PATH']}")
-
-
 @pytest.mark.skipif(os.environ.get("EXAMPLE_PATH", "") == "", reason="needs os.environ[EXAMPLE_PATH]")
 def test_parse_graph():
     path = Path(os.environ["EXAMPLE_PATH"])

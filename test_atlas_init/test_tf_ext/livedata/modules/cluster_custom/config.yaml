@@ -1,0 +1,5 @@
+name: cluster_custom
+resource_types:
+- mongodbatlas_advanced_cluster
+skip_variables_extra:
+- labels

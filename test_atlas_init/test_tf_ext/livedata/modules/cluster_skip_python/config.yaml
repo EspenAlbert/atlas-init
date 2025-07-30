@@ -1,0 +1,82 @@
+name: cluster_skip_python
+resource_types:
+- mongodbatlas_advanced_cluster
+skip_variables_extra:
+- labels
+required_variables:
+- replication_specs
+- name
+- project_id
+- cluster_type
+skip_python: true
+example_plan_checks:
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: multi_cloud
+  example_name: 02_multi-cloud
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: multi_geo_sharded
+  example_name: 03_multi-geo-sharded
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: multi_geo_zone_sharded
+  example_name: 04_multi-geo-zone-sharded
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: multi_region_single_geo_no_sharding
+  example_name: 05_multi-region-single-geo
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: single_region_analytics
+  example_name: 06_single-region-analytics-nodes
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: single_region_sharded
+  example_name: 07_single-region-sharded
+  expected_output_dir_name: direct-resource
+- resource_checks:
+  - actual:
+      type: mongodbatlas_advanced_cluster
+      name: this
+    expected_resource:
+      type: mongodbatlas_advanced_cluster
+      name: single_region
+  example_name: 08_single-region
+  expected_output_dir_name: direct-resource
+attribute_default_hcl_strings:
+  minimum_enabled_tls_protocol: '"TLS1_2"'
+  javascript_enabled: 'false'
+  backup_enabled: 'true'
+  retain_backups_enabled: 'true'
+  termination_protection_enabled: 'true'
+  default_write_concern: '"majority"'

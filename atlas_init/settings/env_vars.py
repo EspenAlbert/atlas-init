@@ -243,7 +243,9 @@ def detect_ambiguous_env_vars(manual_env_vars: dict[str, str]) -> list[str]:
 
 def find_missing_env_vars(required_env_vars: list[str], manual_env_vars: dict[str, str]) -> list[str]:
     return sorted(
-        env_name for env_name in required_env_vars if read_from_env(env_name) == "" and env_name not in manual_env_vars
+        env_name
+        for env_name in required_env_vars
+        if read_from_env(env_name) == "" and env_name not in manual_env_vars and env_name
     )
 
 
@@ -255,7 +257,15 @@ def init_settings(
     profile_env_vars = settings.manual_env_vars
     vscode_env_vars = settings.env_vars_vs_code
     if vscode_env_vars.exists():
-        profile_env_vars |= load_dotenv(vscode_env_vars)
+        skip_generated_vars: set[str] = set()
+        if "AWS_PROFILE" in profile_env_vars:
+            skip_generated_vars |= {
+                "AWS_ACCESS_KEY_ID",
+                "AWS_SECRET_ACCESS_KEY",
+            }  # avoid generated env-vars overwriting AWS PROFILE
+        profile_env_vars |= {
+            key: value for key, value in load_dotenv(vscode_env_vars).items() if key not in skip_generated_vars
+        }
     required_env_vars = collect_required_env_vars(list(settings_classes))
     ambiguous = [] if skip_ambiguous_check else detect_ambiguous_env_vars(profile_env_vars)
     missing_env_vars = find_missing_env_vars(required_env_vars, profile_env_vars)
