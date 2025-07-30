@@ -93,6 +93,11 @@ class TfExtSettings(StaticSettings):
             cli_config_file_content = tf_cli_config_file_content(self.repo_path_atlas_provider)
             self.tf_cli_config_file = self.static_root / "dev.tfrc"
             ensure_parents_write_text(self.tf_cli_config_file, cli_config_file_content)
+        if self.tf_cli_config_file:
+            tf_cli_repo_path = parse_atlas_path_from_tf_cli_config_file(self.tf_cli_config_file)
+            assert tf_cli_repo_path == self.repo_path_atlas_provider, (
+                f"tf_cli_config_file does not match repo_path_atlas_provider {tf_cli_repo_path} != {self.repo_path_atlas_provider}"
+            )
         return self
 
     @property
