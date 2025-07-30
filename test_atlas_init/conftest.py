@@ -87,6 +87,11 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
     monkeypatch.setenv("STATIC_DIR", str(static_dir))
     cache_dir = tmp_path / "cache"
     monkeypatch.setenv("CACHE_DIR", str(cache_dir))
+    existing_tf_cli_config_file = os.getenv(TfExtSettings.ENV_NAME_TF_CLI_CONFIG_FILE)
+    if not existing_tf_cli_config_file:
+        repo_path_atlas_provider = tmp_path / "repo_path_atlas_provider"
+        monkeypatch.setenv(TfExtSettings.ENV_NAME_REPO_PATH_ATLAS_PROVIDER, str(repo_path_atlas_provider))
+        repo_path_atlas_provider.mkdir()
     static_dir.mkdir()
     cache_dir.mkdir()
     yield AtlasInitSettings.from_env()  # type: ignore
