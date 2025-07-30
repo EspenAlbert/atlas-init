@@ -176,6 +176,7 @@ def parse_atlas_schema(store_path: Path | None = None, tf_cli_config_file: Path 
             ansi_content=False,
             env={
                 TF_CLI_CONFIG_FILE_ENV_NAME: tf_cli_config_file_str,
+                "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "true",
             },
         )
     parsed_dict = schema_run.parse_output(dict, output_format="json")
