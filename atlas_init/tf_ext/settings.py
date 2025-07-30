@@ -38,6 +38,10 @@ def tf_cli_config_file_content(repo_path_atlas: Path | None) -> str:
     return _tfrc_template.replace("REPO_PATH_TF_PROVIDER", ensure_suffix(str(repo_path_atlas), "/bin"))
 
 
+def resource_type_name_no_provider(provider_name: str, resource_type: str) -> str:
+    return resource_type.removeprefix(provider_name).strip("_")
+
+
 class RepoOut(Entity):
     base: Path
 
@@ -45,8 +49,16 @@ class RepoOut(Entity):
     def resource_modules(self) -> Path:
         return self.base / "resource_modules"
 
+    def resource_modules_provider_path(self, provider_name: str) -> Path:
+        return self.resource_modules / provider_name
+
     def resource_module_path(self, provider_name: str, resource_type: str) -> Path:
-        return self.resource_modules / provider_name / resource_type.removeprefix(provider_name)
+        return self.resource_modules_provider_path(provider_name) / resource_type_name_no_provider(
+            provider_name, resource_type
+        )
+
+    def dataclass_path(self, provider_name: str, resource_type: str) -> Path:
+        return self.py_provider_module(provider_name) / f"{resource_type}.py"
 
     @property
     def py_modules(self) -> Path:
@@ -154,6 +166,9 @@ class TfExtSettings(StaticSettings):
     @property
     def plan_diff_output_path(self) -> Path:
         return self.static_root / "plan_diff_output"
+
+    def provider_cache_dir(self, provider_name: str) -> Path:
+        return self.cache_root / "provider_cache" / provider_name
 
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:

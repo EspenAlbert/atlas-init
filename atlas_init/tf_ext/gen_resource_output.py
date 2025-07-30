@@ -42,6 +42,8 @@ def as_nested_output(
                         config.output_name(resource_type, field_name, computed_field_name),
                         f"{resource_id}.{field_name}.*.{computed_field_name}",
                     )
+        elif container_type.is_set:
+            continue  # block type "limits" is represented by a set of objects, and set elements do not have addressable keys. To find elements matching specific criteria, use a "for" expression with an "if" clause.
         elif container_type.is_dict or container_type.is_set:
             raise NotImplementedError("Dict and set container types not supported yet")
         else:

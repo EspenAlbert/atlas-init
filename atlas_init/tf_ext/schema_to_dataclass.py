@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import fields
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, ClassVar, Self
+from typing import Any, Callable, ClassVar, Self
 
 from ask_shell import ShellError, run_and_wait
 from inflection import singularize
@@ -157,6 +157,15 @@ class DcField(Entity):
         return self.computed and not self.required and not self.optional
 
 
+def nested_type_annotation(elem_cls_name: str, nesting_mode: str | None) -> str:
+    nesting_mode = nesting_mode or ""
+    if nesting_mode == "list":
+        return f"List[{elem_cls_name}]"
+    if nesting_mode == "set":
+        return f"Set[{elem_cls_name}]"
+    return elem_cls_name
+
+
 def convert_to_dataclass(
     schema: ResourceSchema, existing: ResourceTypePythonModule, config: ModuleGenConfig, resource_type: str
 ) -> str:
@@ -196,9 +205,7 @@ def convert_to_dataclass(
             description: str | None = None,
         ):
             nested_class_name = f"{class_name}_{attr_name.capitalize()}"
-            type_annotation = (
-                f"List[{nested_class_name}]" if block_type.nesting_mode in ("list", "set") else nested_class_name
-            )
+            type_annotation = nested_type_annotation(nested_class_name, block_type.nesting_mode)
             dc_field = DcField(
                 name=attr_name,
                 type_annotation=type_annotation,
@@ -213,7 +220,8 @@ def convert_to_dataclass(
 
         for attr_name, attr in (block.attributes or {}).items():
             if attr.deprecated or attr.deprecated_message or attr_name in config.skip_variables_extra(resource_type):
-                logger.info(f"skipping deprecated attribute {attr_name}")
+                if attr.deprecated:
+                    logger.info(f"skipping deprecated attribute {attr_name} for {resource_type}")
                 continue
             required = bool(attr.required)
             if nested_block := attr.nested_type:
@@ -254,7 +262,7 @@ def convert_to_dataclass(
             block_attributes.add(block_type_name)
             add_block_attribute(
                 block_type_name,
-                block_type.block,
+                block_type.block_with_nesting_mode,
                 required=is_required,
                 optional=bool(block_type.optional),
                 description=block_type.description,
@@ -383,6 +391,23 @@ def run_fmt_and_fixes(file_path: Path, error_hint: str = ""):
     return file_path.read_text()
 
 
+def dataclass_id(cls: type) -> str:
+    field_names = ",".join(sorted(f.name for f in fields(cls)))
+    computed_only_names = ",".join(sorted(f.name for f in fields(cls) if ResourceAbs.is_computed_only(f.name, cls)))
+    required_only_names = ",".join(sorted(f.name for f in fields(cls) if ResourceAbs.is_required(f.name, cls)))
+    id_parts = [field_names]
+    if computed_only_names:
+        id_parts.append(f"computed={computed_only_names}")
+    if required_only_names:
+        id_parts.append(f"required={required_only_names}")
+    return "|".join(id_parts)
+
+
+class NameAlreadyTakenError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
 def simplify_classes(py_code: str) -> tuple[str, set[str]]:
     with TemporaryDirectory() as tmp_dir:
         tmp_file = Path(tmp_dir) / "dataclass.py"
@@ -391,18 +416,17 @@ def simplify_classes(py_code: str) -> tuple[str, set[str]]:
         dataclasses = module_dataclasses(module)
         fields_to_dataclass = defaultdict(list)
         for name, dc in dataclasses.items():
-            fields_to_dataclass[",".join(sorted(f.name for f in fields(dc)))].append(name)
+            fields_to_dataclass[dataclass_id(dc)].append(name)
         new_names: set[str] = set()
 
         def add_new_name(new_name: str) -> None:
             if new_name in new_names or new_name in dataclasses:
-                raise ValueError(f"Duplicate new name: {new_name}")
+                raise NameAlreadyTakenError(f"Duplicate new name: {new_name}")
             new_names.add(new_name)
 
         if duplicate_classes := {k: v for k, v in fields_to_dataclass.items() if len(v) > 1}:
             for duplicates in duplicate_classes.values():
-                py_code, new_name = rename_and_remove_duplicates(duplicates, py_code)
-                add_new_name(new_name)
+                py_code, new_name = rename_and_remove_duplicates(duplicates, py_code, add_new_name)
         for old_classes in fields_to_dataclass.values():
             if len(old_classes) != 1:
                 continue
@@ -423,6 +447,9 @@ def _safe_replace(text: str, old: str, new: str) -> str:
 
 
 _plural_exception_list = {"Aws"}
+_cls_exception_mapping = {
+    "Resource": "ResourceElem",
+}
 
 
 def extract_last_name_part(full_name: str) -> str:
@@ -432,14 +459,22 @@ def extract_last_name_part(full_name: str) -> str:
         if word[0].isupper():
             break
     plural_word = humps.pascalize("_".join(included_words))
-    if plural_word in _plural_exception_list:
-        return plural_word
-    return singularize(plural_word)
+    name = plural_word
+    if plural_word not in _plural_exception_list:
+        name = singularize(plural_word)
+    return _cls_exception_mapping.get(name, name)
 
 
-def rename_and_remove_duplicates(duplicates: list[str], py_code: str) -> tuple[str, str]:
+def rename_and_remove_duplicates(
+    duplicates: list[str], py_code: str, add_new_name: Callable[[str], None]
+) -> tuple[str, str]:
     duplicates_short = [extract_last_name_part(d) for d in duplicates]
     new_name = longest_common_substring_among_all(duplicates_short)
+    try:
+        add_new_name(new_name)
+    except NameAlreadyTakenError:
+        new_name += "2"
+        add_new_name(new_name)
     for replace in duplicates:
         py_code = _safe_replace(py_code, replace, new_name)
     py_code = remove_duplicates(py_code, new_name)

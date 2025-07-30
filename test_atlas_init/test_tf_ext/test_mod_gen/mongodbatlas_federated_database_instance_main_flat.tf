@@ -2,17 +2,17 @@
 
 resource "mongodbatlas_federated_database_instance" "this" {
   dynamic "cloud_provider_config" {
-    for_each = var.mongodbatlas_federated_database_instance.cloud_provider_config == null ? [] : [var.mongodbatlas_federated_database_instance.cloud_provider_config]
+    for_each = var.mongodbatlas_federated_database_instance.cloud_provider_config == null ? [] : var.mongodbatlas_federated_database_instance.cloud_provider_config
     content {
       dynamic "aws" {
-        for_each = cloud_provider_config.value.aws == null ? [] : [cloud_provider_config.value.aws]
+        for_each = cloud_provider_config.value.aws == null ? [] : cloud_provider_config.value.aws
         content {
           role_id        = aws.value.role_id
           test_s3_bucket = aws.value.test_s3_bucket
         }
       }
       dynamic "azure" {
-        for_each = cloud_provider_config.value.azure == null ? [] : [cloud_provider_config.value.azure]
+        for_each = cloud_provider_config.value.azure == null ? [] : cloud_provider_config.value.azure
         content {
           role_id = azure.value.role_id
         }
@@ -20,25 +20,24 @@ resource "mongodbatlas_federated_database_instance" "this" {
     }
   }
   dynamic "data_process_region" {
-    for_each = var.mongodbatlas_federated_database_instance.data_process_region == null ? [] : [var.mongodbatlas_federated_database_instance.data_process_region]
+    for_each = var.mongodbatlas_federated_database_instance.data_process_region == null ? [] : var.mongodbatlas_federated_database_instance.data_process_region
     content {
       cloud_provider = data_process_region.value.cloud_provider
       region         = data_process_region.value.region
     }
   }
-  id         = var.mongodbatlas_federated_database_instance.id
   name       = var.mongodbatlas_federated_database_instance.name
   project_id = var.mongodbatlas_federated_database_instance.project_id
   dynamic "storage_databases" {
-    for_each = var.mongodbatlas_federated_database_instance.storage_databases == null ? [] : [var.mongodbatlas_federated_database_instance.storage_databases]
+    for_each = var.mongodbatlas_federated_database_instance.storage_databases == null ? [] : var.mongodbatlas_federated_database_instance.storage_databases
     content {
       name = storage_databases.value.name
       dynamic "collections" {
-        for_each = storage_databases.value.collections == null ? [] : [storage_databases.value.collections]
+        for_each = storage_databases.value.collections == null ? [] : storage_databases.value.collections
         content {
           name = collections.value.name
           dynamic "data_sources" {
-            for_each = collections.value.data_sources == null ? [] : [collections.value.data_sources]
+            for_each = collections.value.data_sources == null ? [] : collections.value.data_sources
             content {
               allow_insecure        = data_sources.value.allow_insecure
               collection            = data_sources.value.collection
@@ -56,14 +55,14 @@ resource "mongodbatlas_federated_database_instance" "this" {
         }
       }
       dynamic "views" {
-        for_each = storage_databases.value.views == null ? [] : [storage_databases.value.views]
+        for_each = storage_databases.value.views == null ? [] : storage_databases.value.views
         content {
         }
       }
     }
   }
   dynamic "storage_stores" {
-    for_each = var.mongodbatlas_federated_database_instance.storage_stores == null ? [] : [var.mongodbatlas_federated_database_instance.storage_stores]
+    for_each = var.mongodbatlas_federated_database_instance.storage_stores == null ? [] : var.mongodbatlas_federated_database_instance.storage_stores
     content {
       additional_storage_classes = storage_stores.value.additional_storage_classes
       allow_insecure             = storage_stores.value.allow_insecure
@@ -80,15 +79,15 @@ resource "mongodbatlas_federated_database_instance" "this" {
       region                     = storage_stores.value.region
       urls                       = storage_stores.value.urls
       dynamic "read_preference" {
-        for_each = storage_stores.value.read_preference == null ? [] : [storage_stores.value.read_preference]
+        for_each = storage_stores.value.read_preference == null ? [] : storage_stores.value.read_preference
         content {
           max_staleness_seconds = read_preference.value.max_staleness_seconds
           mode                  = read_preference.value.mode
           dynamic "tag_sets" {
-            for_each = read_preference.value.tag_sets == null ? [] : [read_preference.value.tag_sets]
+            for_each = read_preference.value.tag_sets == null ? [] : read_preference.value.tag_sets
             content {
               dynamic "tags" {
-                for_each = tag_sets.value.tags == null ? [] : [tag_sets.value.tags]
+                for_each = tag_sets.value.tags == null ? [] : tag_sets.value.tags
                 content {
                   name  = tags.value.name
                   value = tags.value.value

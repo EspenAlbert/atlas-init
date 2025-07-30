@@ -4,7 +4,7 @@ from contextlib import suppress
 from dataclasses import Field, dataclass, fields
 from pathlib import Path
 from types import ModuleType
-from typing import ClassVar, Iterable, Self, TypeAlias
+from typing import Any, ClassVar, Iterable, Self, TypeAlias
 
 from model_lib import Entity, copy_and_validate, dump, parse_dict, parse_model
 from pydantic import DirectoryPath, model_validator
@@ -77,6 +77,13 @@ class ResourceGenConfig(Entity):
     required_variables: set[str] = PydanticField(default_factory=set)
     skip_variables_extra: set[str] = PydanticField(default_factory=set)
     attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)
+    include_id_field: bool = False
+
+    @model_validator(mode="after")
+    def add_id_as_skip_variable(self) -> Self:
+        if not self.include_id_field:
+            self.skip_variables_extra.add("id")  # SDKv2 Adds a computed+optional `id` field
+        return self
 
     def single_variable_version(self) -> Self:
         assert not self.use_single_variable, "use_single_variable must be False to create a single variable version"
@@ -91,6 +98,14 @@ class ProviderGenConfig(Entity):
     provider_path: str
     resources: list[ResourceGenConfig] = PydanticField(default_factory=list)
     settings: TfExtSettings = PydanticField(default_factory=TfExtSettings.from_env)
+    last_gen_sha: str = ""
+
+    def config_dump(self) -> dict[str, Any]:
+        return {
+            "provider_path": self.provider_path,
+            "resources": [r.model_dump(exclude_defaults=True, exclude_unset=True) for r in self.resources],
+            "last_gen_sha": self.last_gen_sha,
+        }
 
     @property
     def provider_name(self) -> str:
@@ -156,7 +171,7 @@ class ModuleGenConfig(Entity):
             settings=provider_config.settings,
             in_dir=None,
             out_dir=repo_out.resource_module_path(provider_config.provider_name, resource_type),
-            dataclass_out_dir=repo_out.resource_module_path(provider_config.provider_name, resource_type),
+            dataclass_out_dir=repo_out.py_provider_module(provider_config.provider_name),
         )
 
     @classmethod
@@ -198,6 +213,7 @@ class ModuleGenConfig(Entity):
         return self.in_dir / ModuleGenConfig.FILENAME_EXAMPLES_TEST
 
     def dataclass_path(self, resource_type: str) -> Path:
+        # Must align with RepoOut.dataclass_path
         if dataclass_out_dir := self.dataclass_out_dir:
             return dataclass_out_dir / f"{resource_type}.py"
         return self.module_out_path / f"{resource_type}.py"

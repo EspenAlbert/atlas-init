@@ -1,15 +1,21 @@
 from __future__ import annotations
-from functools import lru_cache
+import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from ask_shell import run_and_wait
-from model_lib import Entity
+from model_lib import Entity, dump, parse_dict
 from pydantic import BaseModel
+from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ENV_NAME
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
+from atlas_init.tf_ext.models_module import ProviderGenConfig
+from atlas_init.tf_ext.settings import TfExtSettings
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_provider_resource_schema(schema: dict, provider_name: str) -> dict:
@@ -103,6 +109,10 @@ class SchemaBlockType(BaseModel):
     default: object | None = None
     validators: list[dict] | None = None
 
+    @property
+    def block_with_nesting_mode(self) -> SchemaBlock:
+        return self.block.model_copy(update={"nesting_mode": self.nesting_mode})
+
 
 class SchemaBlock(BaseModel):
     attributes: dict[str, SchemaAttribute] | None = None
@@ -127,9 +137,34 @@ SchemaBlockType.model_rebuild()
 SchemaBlock.model_rebuild()
 
 
-@lru_cache
-def parse_atlas_schema() -> AtlasSchemaInfo:
-    assert os.environ.get(TF_CLI_CONFIG_FILE_ENV_NAME), f"{TF_CLI_CONFIG_FILE_ENV_NAME} is required"
+def parse_atlas_schema_from_settings(settings: TfExtSettings, provider_config: ProviderGenConfig) -> AtlasSchemaInfo:
+    repo_path = settings.repo_path_atlas_provider
+    assert repo_path, "repo_path_atlas_provider is required"
+    current_sha = run_and_wait("git rev-parse HEAD", cwd=repo_path).stdout_one_line
+    cache_dir = settings.provider_cache_dir(provider_config.provider_name)
+    if provider_config.last_gen_sha == current_sha:
+        return read_cached_atlas_schema(cache_dir, current_sha, settings.tf_cli_config_file)
+    schema = parse_atlas_schema()
+    provider_config.last_gen_sha = current_sha
+    provider_yaml = dump(provider_config.config_dump(), "yaml")
+    settings.repo_out.provider_settings_path(provider_config.provider_name).write_text(provider_yaml)
+    return schema
+
+
+def read_cached_atlas_schema(cache_dir: Path, sha: str, tf_cli_config_file: Path | None = None) -> AtlasSchemaInfo:
+    json_response_path = cache_dir / f"{sha}.json"
+    if not json_response_path.exists():
+        logger.info(f"Cache miss for sha = {sha}, parsing atlas schema")
+        return parse_atlas_schema(store_path=json_response_path, tf_cli_config_file=tf_cli_config_file)
+    parsed_dict = parse_dict(json_response_path)
+    return _parse_dict_schema(parsed_dict)
+
+
+def parse_atlas_schema(store_path: Path | None = None, tf_cli_config_file: Path | None = None) -> AtlasSchemaInfo:
+    tf_cli_config_file_str = (
+        str(tf_cli_config_file) if tf_cli_config_file else os.environ.get(TF_CLI_CONFIG_FILE_ENV_NAME)
+    )
+    assert tf_cli_config_file_str, f"{TF_CLI_CONFIG_FILE_ENV_NAME} is required"
     with TemporaryDirectory() as example_dir:
         tmp_path = Path(example_dir)
         providers_tf = tmp_path / "providers.tf"
@@ -139,8 +174,17 @@ def parse_atlas_schema() -> AtlasSchemaInfo:
             "terraform providers schema -json",
             cwd=example_dir,
             ansi_content=False,
+            env={
+                TF_CLI_CONFIG_FILE_ENV_NAME: tf_cli_config_file_str,
+            },
         )
-    parsed = schema_run.parse_output(dict, output_format="json")
+    parsed_dict = schema_run.parse_output(dict, output_format="json")
+    if store_path:
+        ensure_parents_write_text(store_path, schema_run.stdout_one_line)
+    return _parse_dict_schema(parsed_dict)
+
+
+def _parse_dict_schema(parsed: dict) -> AtlasSchemaInfo:
     resource_schema = parse_provider_resource_schema(parsed, ATLAS_PROVIDER_NAME)
 
     def is_deprecated(resource_details: dict) -> bool:

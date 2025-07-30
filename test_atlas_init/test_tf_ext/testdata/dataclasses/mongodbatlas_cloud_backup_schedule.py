@@ -35,11 +35,10 @@ class Policyitem:
     BLOCK_ATTRIBUTES: ClassVar[Set[str]] = set()
     NESTED_ATTRIBUTES: ClassVar[Set[str]] = set()
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"frequency_interval", "retention_unit", "retention_value"}
-    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"frequency_type", "id"}
+    COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"frequency_type"}
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     frequency_interval: Optional[float] = None
     frequency_type: Optional[str] = None
-    id: Optional[str] = None
     retention_unit: Optional[str] = None
     retention_value: Optional[float] = None
 
@@ -70,7 +69,6 @@ class Resource:
     auto_export_enabled: Optional[bool] = None
     cluster_id: Optional[str] = None
     cluster_name: Optional[str] = None
-    id: Optional[str] = None
     id_policy: Optional[str] = None
     next_snapshot: Optional[str] = None
     project_id: Optional[str] = None
@@ -79,48 +77,39 @@ class Resource:
     restore_window_days: Optional[float] = None
     update_snapshots: Optional[bool] = None
     use_org_and_group_names_in_export_prefix: Optional[bool] = None
-    copy_settings: Optional[CopySetting] = None
-    export: Optional[Export] = None
-    policy_item_daily: Optional[Policyitem] = None
-    policy_item_hourly: Optional[Policyitem] = None
-    policy_item_monthly: Optional[Policyitem] = None
-    policy_item_weekly: Optional[Policyitem] = None
-    policy_item_yearly: Optional[Policyitem] = None
+    copy_settings: Optional[List[CopySetting]] = None
+    export: Optional[List[Export]] = None
+    policy_item_daily: Optional[List[Policyitem]] = None
+    policy_item_hourly: Optional[List[Policyitem]] = None
+    policy_item_monthly: Optional[List[Policyitem]] = None
+    policy_item_weekly: Optional[List[Policyitem]] = None
+    policy_item_yearly: Optional[List[Policyitem]] = None
 
     def __post_init__(self):
-        if self.copy_settings is not None and not isinstance(self.copy_settings, CopySetting):
-            assert isinstance(self.copy_settings, dict), (
-                f"Expected copy_settings to be a CopySetting or a dict, got {type(self.copy_settings)}"
-            )
-            self.copy_settings = CopySetting(**self.copy_settings)
-        if self.export is not None and not isinstance(self.export, Export):
-            assert isinstance(self.export, dict), f"Expected export to be a Export or a dict, got {type(self.export)}"
-            self.export = Export(**self.export)
-        if self.policy_item_daily is not None and not isinstance(self.policy_item_daily, Policyitem):
-            assert isinstance(self.policy_item_daily, dict), (
-                f"Expected policy_item_daily to be a Policyitem or a dict, got {type(self.policy_item_daily)}"
-            )
-            self.policy_item_daily = Policyitem(**self.policy_item_daily)
-        if self.policy_item_hourly is not None and not isinstance(self.policy_item_hourly, Policyitem):
-            assert isinstance(self.policy_item_hourly, dict), (
-                f"Expected policy_item_hourly to be a Policyitem or a dict, got {type(self.policy_item_hourly)}"
-            )
-            self.policy_item_hourly = Policyitem(**self.policy_item_hourly)
-        if self.policy_item_monthly is not None and not isinstance(self.policy_item_monthly, Policyitem):
-            assert isinstance(self.policy_item_monthly, dict), (
-                f"Expected policy_item_monthly to be a Policyitem or a dict, got {type(self.policy_item_monthly)}"
-            )
-            self.policy_item_monthly = Policyitem(**self.policy_item_monthly)
-        if self.policy_item_weekly is not None and not isinstance(self.policy_item_weekly, Policyitem):
-            assert isinstance(self.policy_item_weekly, dict), (
-                f"Expected policy_item_weekly to be a Policyitem or a dict, got {type(self.policy_item_weekly)}"
-            )
-            self.policy_item_weekly = Policyitem(**self.policy_item_weekly)
-        if self.policy_item_yearly is not None and not isinstance(self.policy_item_yearly, Policyitem):
-            assert isinstance(self.policy_item_yearly, dict), (
-                f"Expected policy_item_yearly to be a Policyitem or a dict, got {type(self.policy_item_yearly)}"
-            )
-            self.policy_item_yearly = Policyitem(**self.policy_item_yearly)
+        if self.copy_settings is not None:
+            self.copy_settings = [x if isinstance(x, CopySetting) else CopySetting(**x) for x in self.copy_settings]
+        if self.export is not None:
+            self.export = [x if isinstance(x, Export) else Export(**x) for x in self.export]
+        if self.policy_item_daily is not None:
+            self.policy_item_daily = [
+                x if isinstance(x, Policyitem) else Policyitem(**x) for x in self.policy_item_daily
+            ]
+        if self.policy_item_hourly is not None:
+            self.policy_item_hourly = [
+                x if isinstance(x, Policyitem) else Policyitem(**x) for x in self.policy_item_hourly
+            ]
+        if self.policy_item_monthly is not None:
+            self.policy_item_monthly = [
+                x if isinstance(x, Policyitem) else Policyitem(**x) for x in self.policy_item_monthly
+            ]
+        if self.policy_item_weekly is not None:
+            self.policy_item_weekly = [
+                x if isinstance(x, Policyitem) else Policyitem(**x) for x in self.policy_item_weekly
+            ]
+        if self.policy_item_yearly is not None:
+            self.policy_item_yearly = [
+                x if isinstance(x, Policyitem) else Policyitem(**x) for x in self.policy_item_yearly
+            ]
 
 
 def format_primitive(value: Union[str, float, bool, int, None]):

@@ -105,6 +105,7 @@ def generate_resource_module(config: ModuleGenConfig, resource_type: str, atlas_
     schema_parsed = parse_model(resource_type_schema, t=ResourceSchema)
     dataclass_path = config.dataclass_path(resource_type)
     dataclass_code = convert_and_format(resource_type, schema_parsed, config, existing_path=dataclass_path)
+    logger.info(f"Generated dataclass for {resource_type} to {dataclass_path}")
     ensure_parents_write_text(dataclass_path, dataclass_code)
 
     python_module = import_resource_type_python_module(resource_type, dataclass_path)
@@ -130,22 +131,26 @@ def generate_resource_module(config: ModuleGenConfig, resource_type: str, atlas_
 def finalize_and_validate_module(config: ModuleGenConfig) -> Path:
     dump_versions_tf(config.module_out_path, skip_python=config.skip_python)
     logger.info(f"Module dumped to {config.module_out_path}, running checks")
-    validate_module(config.module_out_path)
+    validate_module(config.module_out_path, tf_cli_config_file=config.settings.tf_cli_config_file)
     return config.module_out_path
 
 
 OUT_BINARY_PATH = "tfplan.binary"
 
 
-def validate_module(tf_workdir: Path):
+def validate_module(tf_workdir: Path, *, tf_cli_config_file: Path | None = None):
     terraform_commands = [
         "terraform init",
         "terraform fmt .",
         "terraform validate .",
     ]
+    env_extra = {}
+    if tf_cli_config_file:
+        env_extra["TF_CLI_CONFIG_FILE"] = str(tf_cli_config_file)
     with new_task("Terraform Module Validate Checks", total=len(terraform_commands)) as task:
         for command in terraform_commands:
-            run_and_wait(command, cwd=tf_workdir)
+            attempts = 3 if command == "terraform init" else 1  # terraform init can fail due to network issues
+            run_and_wait(command, cwd=tf_workdir, env=env_extra, attempts=attempts)
             task.update(advance=1)
 
 

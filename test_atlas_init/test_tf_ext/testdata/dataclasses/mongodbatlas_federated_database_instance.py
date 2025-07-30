@@ -39,16 +39,14 @@ class CloudProviderConfig:
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = set()
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
-    aws: Optional[Aws] = None
-    azure: Optional[Azure] = None
+    aws: Optional[List[Aws]] = None
+    azure: Optional[List[Azure]] = None
 
     def __post_init__(self):
-        if self.aws is not None and not isinstance(self.aws, Aws):
-            assert isinstance(self.aws, dict), f"Expected aws to be a Aws or a dict, got {type(self.aws)}"
-            self.aws = Aws(**self.aws)
-        if self.azure is not None and not isinstance(self.azure, Azure):
-            assert isinstance(self.azure, dict), f"Expected azure to be a Azure or a dict, got {type(self.azure)}"
-            self.azure = Azure(**self.azure)
+        if self.aws is not None:
+            self.aws = [x if isinstance(x, Aws) else Aws(**x) for x in self.aws]
+        if self.azure is not None:
+            self.azure = [x if isinstance(x, Azure) else Azure(**x) for x in self.azure]
 
 
 @dataclass
@@ -90,7 +88,7 @@ class Collection:
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     name: Optional[str] = None
-    data_sources: Optional[DataSource] = None
+    data_sources: Optional[Set[DataSource]] = None
 
     def __post_init__(self):
         if self.data_sources is not None and not isinstance(self.data_sources, DataSource):
@@ -121,8 +119,8 @@ class StorageDatabase:
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     max_wildcard_collections: Optional[float] = None
     name: Optional[str] = None
-    collections: Optional[Collection] = None
-    views: Optional[View] = None
+    collections: Optional[Set[Collection]] = None
+    views: Optional[Set[View]] = None
 
     def __post_init__(self):
         if self.collections is not None and not isinstance(self.collections, Collection):
@@ -153,12 +151,11 @@ class TagSet:
     REQUIRED_ATTRIBUTES: ClassVar[Set[str]] = {"tags"}
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = set()
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
-    tags: Optional[Tag] = None
+    tags: Optional[List[Tag]] = None
 
     def __post_init__(self):
-        if self.tags is not None and not isinstance(self.tags, Tag):
-            assert isinstance(self.tags, dict), f"Expected tags to be a Tag or a dict, got {type(self.tags)}"
-            self.tags = Tag(**self.tags)
+        if self.tags is not None:
+            self.tags = [x if isinstance(x, Tag) else Tag(**x) for x in self.tags]
 
 
 @dataclass
@@ -170,14 +167,11 @@ class ReadPreference:
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     max_staleness_seconds: Optional[float] = None
     mode: Optional[str] = None
-    tag_sets: Optional[TagSet] = None
+    tag_sets: Optional[List[TagSet]] = None
 
     def __post_init__(self):
-        if self.tag_sets is not None and not isinstance(self.tag_sets, TagSet):
-            assert isinstance(self.tag_sets, dict), (
-                f"Expected tag_sets to be a TagSet or a dict, got {type(self.tag_sets)}"
-            )
-            self.tag_sets = TagSet(**self.tag_sets)
+        if self.tag_sets is not None:
+            self.tag_sets = [x if isinstance(x, TagSet) else TagSet(**x) for x in self.tag_sets]
 
 
 @dataclass
@@ -201,14 +195,13 @@ class StorageStore:
     public: Optional[str] = None
     region: Optional[str] = None
     urls: Optional[List[str]] = None
-    read_preference: Optional[ReadPreference] = None
+    read_preference: Optional[List[ReadPreference]] = None
 
     def __post_init__(self):
-        if self.read_preference is not None and not isinstance(self.read_preference, ReadPreference):
-            assert isinstance(self.read_preference, dict), (
-                f"Expected read_preference to be a ReadPreference or a dict, got {type(self.read_preference)}"
-            )
-            self.read_preference = ReadPreference(**self.read_preference)
+        if self.read_preference is not None:
+            self.read_preference = [
+                x if isinstance(x, ReadPreference) else ReadPreference(**x) for x in self.read_preference
+            ]
 
 
 @dataclass
@@ -230,26 +223,24 @@ class Resource:
     COMPUTED_ONLY_ATTRIBUTES: ClassVar[Set[str]] = {"hostnames", "state"}
     DEFAULTS_HCL_STRINGS: ClassVar[dict[str, str]] = {}
     hostnames: Optional[List[str]] = None
-    id: Optional[str] = None
     name: Optional[str] = None
     project_id: Optional[str] = None
     state: Optional[str] = None
-    cloud_provider_config: Optional[CloudProviderConfig] = None
-    data_process_region: Optional[DataProcessRegion] = None
-    storage_databases: Optional[StorageDatabase] = None
-    storage_stores: Optional[StorageStore] = None
+    cloud_provider_config: Optional[List[CloudProviderConfig]] = None
+    data_process_region: Optional[List[DataProcessRegion]] = None
+    storage_databases: Optional[Set[StorageDatabase]] = None
+    storage_stores: Optional[Set[StorageStore]] = None
 
     def __post_init__(self):
-        if self.cloud_provider_config is not None and not isinstance(self.cloud_provider_config, CloudProviderConfig):
-            assert isinstance(self.cloud_provider_config, dict), (
-                f"Expected cloud_provider_config to be a CloudProviderConfig or a dict, got {type(self.cloud_provider_config)}"
-            )
-            self.cloud_provider_config = CloudProviderConfig(**self.cloud_provider_config)
-        if self.data_process_region is not None and not isinstance(self.data_process_region, DataProcessRegion):
-            assert isinstance(self.data_process_region, dict), (
-                f"Expected data_process_region to be a DataProcessRegion or a dict, got {type(self.data_process_region)}"
-            )
-            self.data_process_region = DataProcessRegion(**self.data_process_region)
+        if self.cloud_provider_config is not None:
+            self.cloud_provider_config = [
+                x if isinstance(x, CloudProviderConfig) else CloudProviderConfig(**x)
+                for x in self.cloud_provider_config
+            ]
+        if self.data_process_region is not None:
+            self.data_process_region = [
+                x if isinstance(x, DataProcessRegion) else DataProcessRegion(**x) for x in self.data_process_region
+            ]
         if self.storage_databases is not None and not isinstance(self.storage_databases, StorageDatabase):
             assert isinstance(self.storage_databases, dict), (
                 f"Expected storage_databases to be a StorageDatabase or a dict, got {type(self.storage_databases)}"

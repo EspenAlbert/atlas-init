@@ -4,7 +4,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
   auto_export_enabled = var.mongodbatlas_cloud_backup_schedule.auto_export_enabled
   cluster_name        = var.mongodbatlas_cloud_backup_schedule.cluster_name
   dynamic "copy_settings" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.copy_settings == null ? [] : [var.mongodbatlas_cloud_backup_schedule.copy_settings]
+    for_each = var.mongodbatlas_cloud_backup_schedule.copy_settings == null ? [] : var.mongodbatlas_cloud_backup_schedule.copy_settings
     content {
       cloud_provider     = copy_settings.value.cloud_provider
       frequencies        = copy_settings.value.frequencies
@@ -14,15 +14,14 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     }
   }
   dynamic "export" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.export == null ? [] : [var.mongodbatlas_cloud_backup_schedule.export]
+    for_each = var.mongodbatlas_cloud_backup_schedule.export == null ? [] : var.mongodbatlas_cloud_backup_schedule.export
     content {
       export_bucket_id = export.value.export_bucket_id
       frequency_type   = export.value.frequency_type
     }
   }
-  id = var.mongodbatlas_cloud_backup_schedule.id
   dynamic "policy_item_daily" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_daily == null ? [] : [var.mongodbatlas_cloud_backup_schedule.policy_item_daily]
+    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_daily == null ? [] : var.mongodbatlas_cloud_backup_schedule.policy_item_daily
     content {
       frequency_interval = policy_item_daily.value.frequency_interval
       retention_unit     = policy_item_daily.value.retention_unit
@@ -30,7 +29,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     }
   }
   dynamic "policy_item_hourly" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_hourly == null ? [] : [var.mongodbatlas_cloud_backup_schedule.policy_item_hourly]
+    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_hourly == null ? [] : var.mongodbatlas_cloud_backup_schedule.policy_item_hourly
     content {
       frequency_interval = policy_item_hourly.value.frequency_interval
       retention_unit     = policy_item_hourly.value.retention_unit
@@ -38,7 +37,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     }
   }
   dynamic "policy_item_monthly" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_monthly == null ? [] : [var.mongodbatlas_cloud_backup_schedule.policy_item_monthly]
+    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_monthly == null ? [] : var.mongodbatlas_cloud_backup_schedule.policy_item_monthly
     content {
       frequency_interval = policy_item_monthly.value.frequency_interval
       retention_unit     = policy_item_monthly.value.retention_unit
@@ -46,7 +45,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     }
   }
   dynamic "policy_item_weekly" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_weekly == null ? [] : [var.mongodbatlas_cloud_backup_schedule.policy_item_weekly]
+    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_weekly == null ? [] : var.mongodbatlas_cloud_backup_schedule.policy_item_weekly
     content {
       frequency_interval = policy_item_weekly.value.frequency_interval
       retention_unit     = policy_item_weekly.value.retention_unit
@@ -54,7 +53,7 @@ resource "mongodbatlas_cloud_backup_schedule" "this" {
     }
   }
   dynamic "policy_item_yearly" {
-    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_yearly == null ? [] : [var.mongodbatlas_cloud_backup_schedule.policy_item_yearly]
+    for_each = var.mongodbatlas_cloud_backup_schedule.policy_item_yearly == null ? [] : var.mongodbatlas_cloud_backup_schedule.policy_item_yearly
     content {
       frequency_interval = policy_item_yearly.value.frequency_interval
       retention_unit     = policy_item_yearly.value.retention_unit

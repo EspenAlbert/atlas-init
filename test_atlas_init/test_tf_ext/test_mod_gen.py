@@ -48,7 +48,11 @@ def read_resource_schema(resource_type: str, resource_type_schema_path) -> Resou
 
 @pytest.mark.parametrize(
     "resource_type",
-    ["mongodbatlas_advanced_cluster", "mongodbatlas_cloud_backup_schedule", "mongodbatlas_federated_database_instance"],
+    [
+        "mongodbatlas_advanced_cluster",
+        "mongodbatlas_cloud_backup_schedule",
+        "mongodbatlas_federated_database_instance",
+    ],
 )
 def test_create_dataclass(resource_type: str, file_regression, resource_type_schema_path, generated_dataclass_path):
     resource_schema = read_resource_schema(resource_type, resource_type_schema_path)
