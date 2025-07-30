@@ -45,6 +45,4 @@ variable "mongodbatlas_cloud_backup_schedule" {
       retention_value    = number
     })))
   })
-  nullable = true
-  default  = null
 }

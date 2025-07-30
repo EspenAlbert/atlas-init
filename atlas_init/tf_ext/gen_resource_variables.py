@@ -142,10 +142,8 @@ def generate_resource_variables(
     if resource_config.use_single_variable:
         context = DefaultValueContext(field_path=[], ignored_names=ignored_names)
         tf_type = dataclass_to_object_type(resource_config.name, resource, context)
-        default_line = f"\n  default  = {context.final_str}" if resource_config.name not in required_variables else ""
-        nullable_line = "\n  nullable = true" if resource_config.name not in required_variables else ""
         return format_tf_content(f'''variable "{resource_config.name}" {{
-  type     = {tf_type}{nullable_line}{default_line}
+  type     = {tf_type}
 }}\n''')
     for f in fields(resource):  # type: ignore
         field_name = f.name

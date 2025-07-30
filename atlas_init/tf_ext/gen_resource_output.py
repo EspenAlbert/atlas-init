@@ -35,12 +35,12 @@ def as_nested_output(
                 if container_type.is_optional and not ResourceAbs.is_required(field_name, parent_cls):
                     yield _as_output(
                         config.output_name(resource_type, field_name, computed_field_name),
-                        f"{resource_id}.{field_name} == null ? null : {resource_id}.{field_name}.*.{computed_field_name}",
+                        f"{resource_id}.{field_name} == null ? null : {resource_id}.{field_name}[*].{computed_field_name}",
                     )
                 else:
                     yield _as_output(
                         config.output_name(resource_type, field_name, computed_field_name),
-                        f"{resource_id}.{field_name}.*.{computed_field_name}",
+                        f"{resource_id}.{field_name}[*].{computed_field_name}",
                     )
         elif container_type.is_set:
             continue  # block type "limits" is represented by a set of objects, and set elements do not have addressable keys. To find elements matching specific criteria, use a "for" expression with an "if" clause.
