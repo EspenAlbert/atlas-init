@@ -128,9 +128,11 @@ def generate_resource_variables(
     resource: type[ResourceAbs] | None, resource_config: ResourceGenConfig, extra_skipped: set[str] | None = None
 ) -> str:
     extra_skipped = extra_skipped or set()
-    required_variables = resource_config.required_variables
     if resource is None:
         return ""
+    required_variables = set(resource_config.required_variables)
+    if not resource_config.use_opt_in_required_variables:
+        required_variables |= getattr(resource, ResourceAbs.REQUIRED_ATTRIBUTES_NAME, set())
     out = []
     hints = get_type_hints(resource)
     ignored_names = (
@@ -145,7 +147,8 @@ def generate_resource_variables(
         return format_tf_content(f'''variable "{resource_config.name}" {{
   type     = {tf_type}
 }}\n''')
-    for f in fields(resource):  # type: ignore
+    fields_sorted = sorted(fields(resource), key=lambda f: (0 if f.name in required_variables else 1, f.name))
+    for f in fields_sorted:  # type: ignore
         field_name = f.name
         if field_name.isupper() or field_name in ignored_names:
             continue

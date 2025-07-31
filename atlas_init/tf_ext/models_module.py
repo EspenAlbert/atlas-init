@@ -74,6 +74,7 @@ def as_import_line(name: str) -> str:
 class ResourceGenConfig(Entity):
     name: str
     use_single_variable: bool = False
+    use_opt_in_required_variables: bool = False
     required_variables: set[str] = PydanticField(default_factory=set)
     skip_variables_extra: set[str] = PydanticField(default_factory=set)
     attribute_default_hcl_strings: dict[str, str] = PydanticField(default_factory=dict)

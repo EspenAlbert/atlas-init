@@ -1,122 +1,13 @@
-variable "accept_data_risks_and_force_replica_set_reconfig" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "advanced_configuration" {
-  type = object({
-    change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
-    custom_openssl_cipher_config_tls12                             = optional(list(string))
-    default_max_time_ms                                            = optional(number)
-    default_write_concern                                          = optional(string)
-    javascript_enabled                                             = optional(bool)
-    minimum_enabled_tls_protocol                                   = optional(string)
-    no_table_scan                                                  = optional(bool)
-    oplog_min_retention_hours                                      = optional(number)
-    oplog_size_mb                                                  = optional(number)
-    sample_refresh_interval_bi_connector                           = optional(number)
-    sample_size_bi_connector                                       = optional(number)
-    tls_cipher_config_mode                                         = optional(string)
-    transaction_lifetime_limit_seconds                             = optional(number)
-  })
-  nullable = true
-  default  = null
-}
-
-variable "backup_enabled" {
-  type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "bi_connector_config" {
-  type = object({
-    enabled         = optional(bool)
-    read_preference = optional(string)
-  })
-  nullable = true
-  default  = null
-}
-
 variable "cluster_type" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "config_server_management_mode" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "delete_on_create_timeout" {
-  type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "encryption_at_rest_provider" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "global_cluster_self_managed_sharding" {
-  type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "mongo_db_major_version" {
-  type     = string
-  nullable = true
-  default  = null
+  type = string
 }
 
 variable "name" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "paused" {
-  type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "pinned_fcv" {
-  type = object({
-    expiration_date = string
-  })
-  nullable = true
-  default  = null
-}
-
-variable "pit_enabled" {
-  type     = bool
-  nullable = true
-  default  = null
+  type = string
 }
 
 variable "project_id" {
-  type     = string
-  nullable = true
-  default  = null
-}
-
-variable "redact_client_log_data" {
-  type     = bool
-  nullable = true
-  default  = null
-}
-
-variable "replica_set_scaling_strategy" {
-  type     = string
-  nullable = true
-  default  = null
+  type = string
 }
 
 variable "replication_specs" {
@@ -164,6 +55,107 @@ variable "replication_specs" {
     }))
     zone_name = optional(string)
   }))
+}
+
+variable "accept_data_risks_and_force_replica_set_reconfig" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+variable "advanced_configuration" {
+  type = object({
+    change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
+    custom_openssl_cipher_config_tls12                             = optional(list(string))
+    default_max_time_ms                                            = optional(number)
+    default_write_concern                                          = optional(string)
+    javascript_enabled                                             = optional(bool)
+    minimum_enabled_tls_protocol                                   = optional(string)
+    no_table_scan                                                  = optional(bool)
+    oplog_min_retention_hours                                      = optional(number)
+    oplog_size_mb                                                  = optional(number)
+    sample_refresh_interval_bi_connector                           = optional(number)
+    sample_size_bi_connector                                       = optional(number)
+    tls_cipher_config_mode                                         = optional(string)
+    transaction_lifetime_limit_seconds                             = optional(number)
+  })
+  nullable = true
+  default  = null
+}
+
+variable "backup_enabled" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "bi_connector_config" {
+  type = object({
+    enabled         = optional(bool)
+    read_preference = optional(string)
+  })
+  nullable = true
+  default  = null
+}
+
+variable "config_server_management_mode" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+variable "delete_on_create_timeout" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "encryption_at_rest_provider" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+variable "global_cluster_self_managed_sharding" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "mongo_db_major_version" {
+  type     = string
+  nullable = true
+  default  = null
+}
+
+variable "paused" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "pinned_fcv" {
+  type = object({
+    expiration_date = string
+  })
+  nullable = true
+  default  = null
+}
+
+variable "pit_enabled" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "redact_client_log_data" {
+  type     = bool
+  nullable = true
+  default  = null
+}
+
+variable "replica_set_scaling_strategy" {
+  type     = string
   nullable = true
   default  = null
 }
