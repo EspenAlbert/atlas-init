@@ -30,7 +30,7 @@ def create_realm_app():
     project_id = atlas_settings.MONGODB_ATLAS_PROJECT_ID
     base_url = atlas_settings.realm_url
     cluster_name = cluster_settings.MONGODB_ATLAS_CLUSTER_NAME
-    auth_headers = login_to_realm(settings, base_url)
+    auth_headers = login_to_realm(atlas_settings, base_url)
     realm_settings = env_vars_cls_or_none(RealmSettings, dotenv_path=settings.env_vars_trigger)
     if realm_settings and function_exists(
         base_url,
