@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from functools import total_ordering
 import logging
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable, NamedTuple
+from typing import Callable, Iterable, NamedTuple
 
 import pydot
 from ask_shell import ShellError, new_task, run_and_wait
 from ask_shell._run import stop_runs_and_pool
 from ask_shell.run_pool import run_pool
 from model_lib import Entity, dump
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 from typer import Typer
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -57,7 +58,13 @@ def tf_dep_graph(
     example_dirs = get_example_directories(repo_path, skip_names)
     logger.info(f"example_dirs: \n{'\n'.join(str(d) for d in sorted(example_dirs))}")
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
-        atlas_graph = parse_graphs(example_dirs, task)
+        atlas_graph = AtlasGraph()
+
+        def on_graph(example_dir: Path, graph: pydot.Dot):
+            atlas_graph.add_edges(graph.get_edges())
+            atlas_graph.add_variable_edges(example_dir)
+
+        parse_graphs(on_graph, example_dirs, task)
     with new_task("Dump graph"):
         graph_yaml = atlas_graph.dump_yaml()
         ensure_parents_write_text(settings.atlas_graph_path, graph_yaml)
@@ -79,8 +86,14 @@ class ResourceParts(NamedTuple):
         return self.resource_type.split("_")[0]
 
 
+@total_ordering
 class ResourceRef(BaseModel):
     full_ref: str
+
+    @model_validator(mode="after")
+    def ensure_plain(self):
+        self.full_ref = plain_name(self.full_ref)
+        return self
 
     def _resource_parts(self) -> ResourceParts:
         match self.full_ref.split("."):
@@ -113,6 +126,19 @@ class ResourceRef(BaseModel):
     @property
     def resource_type(self) -> str:
         return self._resource_parts().resource_type
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, ResourceRef):
+            raise TypeError(f"cannot compare {type(self)} with {type(other)}")
+        return self.full_ref < other.full_ref
+
+    def __hash__(self) -> int:
+        return hash(self.full_ref)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ResourceRef):
+            return NotImplemented
+        return self.full_ref == other.full_ref
 
 
 class EdgeParsed(BaseModel):
@@ -149,7 +175,15 @@ class EdgeParsed(BaseModel):
 
 
 def edge_plain(edge_endpoint: pydot.EdgeEndpoint) -> str:
-    return str(edge_endpoint).strip('"').strip()
+    return plain_name(str(edge_endpoint))
+
+
+def node_plain(node: pydot.Node) -> str:
+    return plain_name(node.get_name())
+
+
+def plain_name(name: str) -> str:
+    return name.strip('"').strip()
 
 
 def edge_src_dest(edge: pydot.Edge) -> tuple[str, str]:
@@ -235,8 +269,9 @@ class AtlasGraph(Entity):
                         self.parent_child_edges[parent_type].add(child_type)
 
 
-def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16, max_dirs: int = 9999) -> AtlasGraph:
-    atlas_graph = AtlasGraph()
+def parse_graphs(
+    on_graph: Callable[[Path, pydot.Dot], None], example_dirs: list[Path], task: new_task, max_dirs: int = 1_000
+) -> None:
     with run_pool("parse example graphs", total=len(example_dirs)) as executor:
         futures = {
             executor.submit(parse_graph, example_dir): example_dir
@@ -259,10 +294,8 @@ def parse_graphs(example_dirs: list[Path], task: new_task, max_workers: int = 16
             except GraphParseError as e:
                 logger.error(e)
                 continue
-            atlas_graph.add_edges(graph.get_edges())
-            atlas_graph.add_variable_edges(example_dir)
+            on_graph(example_dir, graph)
             task.update(advance=1)
-    return atlas_graph
 
 
 class GraphParseError(Exception):

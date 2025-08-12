@@ -175,7 +175,9 @@ def tf_modules(
         logger.info(f"Missing modules: \n{'\n'.join(missing_resources)}")
 
 
-def generate_module_graphs(skipped_module_resource_types, settings, atlas_graph):
+def generate_module_graphs(
+    skipped_module_resource_types: Iterable[str], settings: TfExtSettings, atlas_graph: AtlasGraph
+):
     tree = Tree(
         "Module graphs",
     )

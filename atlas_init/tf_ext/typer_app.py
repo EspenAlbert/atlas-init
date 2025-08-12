@@ -1,7 +1,7 @@
 from ask_shell import configure_logging
 from typer import Typer
 
-from atlas_init.tf_ext import api_call, settings, tf_desc_gen, tf_mod_gen_provider
+from atlas_init.tf_ext import api_call, settings, tf_desc_gen, tf_example_readme, tf_mod_gen_provider
 
 
 def typer_main():
@@ -20,6 +20,7 @@ def typer_main():
     app.command(name="api-config")(api_call.api_config)
     app.command(name="mod-gen-provider")(tf_mod_gen_provider.tf_mod_gen_provider_resource_modules)
     app.command(name="check-env-vars")(settings.init_tf_ext_settings)
+    app.command(name="example-readme")(tf_example_readme.tf_example_readme)
     configure_logging(app)
     app()
 
