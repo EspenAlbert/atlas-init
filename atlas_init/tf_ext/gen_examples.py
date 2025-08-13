@@ -19,10 +19,12 @@ def _examples_casted(examples: dict) -> dict[str, ResourceAbs]:
     return examples
 
 
-def read_example_dirs(module_path: Path) -> list[Path]:
+def read_example_dirs(examples_dir: Path) -> list[Path]:
+    if not examples_dir.exists():
+        return []
     return sorted(
         example_dir
-        for example_dir in (module_path / "examples").glob("*")
+        for example_dir in examples_dir.glob("*")
         if example_dir.is_dir()
         and len(example_dir.name) > 2
         and example_dir.name[:2].isdigit()

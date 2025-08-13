@@ -1,6 +1,8 @@
 import logging
 from typing import Literal
 
+from rich.console import Console
+from rich.tree import Tree
 import typer
 from pydantic import BaseModel
 from rich.logging import RichHandler
@@ -62,3 +64,23 @@ def configure_logging(
         app.pretty_exceptions_show_locals = False
 
     return handler
+
+
+# https://github.com/Textualize/rich/blob/8c4d3d1d50047e3aaa4140d0ffc1e0c9f1df5af4/tests/test_live.py#L11
+def create_capture_console(*, width: int = 60, height: int = 80, force_terminal: bool = True) -> Console:
+    return Console(
+        width=width,
+        height=height,
+        force_terminal=force_terminal,
+        legacy_windows=False,
+        color_system=None,  # use no color system to reduce complexity of output,
+        _environ={},
+    )
+
+
+def tree_text(tree: Tree) -> str:
+    console = create_capture_console()
+    console.width = 10_000
+    console.begin_capture()
+    console.print(tree)
+    return "\n".join(line.rstrip() for line in console.end_capture().splitlines())
