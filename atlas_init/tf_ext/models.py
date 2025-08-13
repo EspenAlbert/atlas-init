@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass, field
 from typing import Self
 
 from model_lib import Entity
@@ -28,6 +29,19 @@ def choose_next_emoji() -> str:
     emoji = _emojii_list[_emoji_counter]
     _emoji_counter += 1
     return emoji
+
+
+@dataclass
+class EmojiCounter:
+    counter: int = 0
+    existing_emojis: dict[str, str] = field(default_factory=dict)
+
+    def get_emoji(self, name: str) -> str:
+        if existing := self.existing_emojis.get(name):
+            return existing
+        emoji = self.existing_emojis[name] = _emojii_list[self.counter]
+        self.counter += 1
+        return emoji
 
 
 class ModuleState(Entity):

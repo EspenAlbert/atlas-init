@@ -24,6 +24,9 @@ from atlas_init.tf_ext.py_gen import (
 from atlas_init.tf_ext.settings import RepoOut, TfExtSettings
 
 ResourceTypeT: TypeAlias = str
+TERRAFORM_DOCS_CONFIG_FILENAME: str = ".terraform-docs.yml"
+README_FILENAME: str = "README.md"
+EXAMPLES_DIRNAME: str = "examples"
 
 
 @dataclass
@@ -253,12 +256,13 @@ class ModuleGenConfig(Entity):
                 return resource_type
         raise ValueError(f"Could not resolve resource type for path {path}")
 
+    @property
     def readme_path(self) -> Path:
-        return self.module_out_path / "README.md"
+        return self.module_out_path / README_FILENAME
 
     @property
     def examples_path(self) -> Path:
-        return self.module_out_path / "examples"
+        return self.module_out_path / EXAMPLES_DIRNAME
 
     def example_name(self, name: str, example_nr: int) -> str:
         return f"{example_nr:02d}_{name}"
@@ -267,7 +271,7 @@ class ModuleGenConfig(Entity):
         return self.examples_path / name
 
     def terraform_docs_config_path(self) -> Path:
-        return self.module_out_path / ".terraform-docs.yml"
+        return self.module_out_path / TERRAFORM_DOCS_CONFIG_FILENAME
 
 
 @dataclass

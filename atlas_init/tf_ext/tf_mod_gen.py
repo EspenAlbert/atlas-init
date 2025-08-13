@@ -12,7 +12,7 @@ from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 from atlas_init.cli_tf.example_update import UpdateExamples, update_examples
 from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
 from atlas_init.tf_ext.gen_examples import generate_module_examples, read_example_dirs
-from atlas_init.tf_ext.gen_module_readme import generate_readme
+from atlas_init.tf_ext.gen_readme import generate_and_write_readme
 from atlas_init.tf_ext.gen_resource_main import generate_resource_main
 from atlas_init.tf_ext.gen_resource_output import generate_resource_output
 from atlas_init.tf_ext.gen_resource_variables import generate_module_variables
@@ -192,12 +192,10 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
     if out_event.changes:
         logger.info(f"Updated attribute descriptions: {len(out_event.changes)}")
         run_and_wait("terraform fmt -recursive .", cwd=path, ansi_content=False, allow_non_zero_exit=True)
-    if readme_path := config.readme_path():
-        with new_task("Generating README.md"):
-            readme_content = generate_readme(config)
-            ensure_parents_write_text(readme_path, readme_content)
+    with new_task("Generating README.md"):
+        generate_and_write_readme(config.module_out_path)
     if example_var_file:
-        examples = read_example_dirs(config.module_out_path)
+        examples = read_example_dirs(config.examples_path)
         if examples:
             failed_examples: list[Path] = []
             with run_pool("Running terraform plan on examples", total=len(examples), exit_wait_timeout=60) as pool:

@@ -1,0 +1,4 @@
+c_b_a_subgraph
+└── c
+    └── b
+        └── a

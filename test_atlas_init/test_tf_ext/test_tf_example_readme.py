@@ -1,11 +1,16 @@
 from typing import Protocol
 
 import pytest
-from rich.console import Console
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
+from atlas_init.settings.rich_utils import tree_text
 from atlas_init.tf_ext.tf_dep import ResourceRef
-from atlas_init.tf_ext.tf_example_readme import MODULES_JSON_RELATIVE_PATH, ResourceGraph, parse_modules_json
+from atlas_init.tf_ext.tf_example_readme import (
+    MODULES_JSON_RELATIVE_PATH,
+    ResourceGraph,
+    create_subgraph,
+    parse_modules_json,
+)
 
 _example_modules_json = """
 {
@@ -81,16 +86,23 @@ def test_parse_modules_json(tmp_path):
     assert len(configs.modules_included(skip_keys=["atlas_cluster"])) == 6
 
 
-# https://github.com/Textualize/rich/blob/8c4d3d1d50047e3aaa4140d0ffc1e0c9f1df5af4/tests/test_live.py#L11
-def create_capture_console(*, width: int = 60, height: int = 80, force_terminal: bool = True) -> Console:
-    return Console(
-        width=width,
-        height=height,
-        force_terminal=force_terminal,
-        legacy_windows=False,
-        color_system=None,  # use no color system to reduce complexity of output,
-        _environ={},
-    )
+class _CreateGraph(Protocol):
+    def __call__(
+        self, edges: list[tuple[ResourceRef, ResourceRef]], orphans: set[ResourceRef] | None = None
+    ) -> ResourceGraph: ...
+
+
+@pytest.fixture()
+def create_graph() -> _CreateGraph:
+    def _create_graph(
+        edges: list[tuple[ResourceRef, ResourceRef]], orphans: set[ResourceRef] | None = None
+    ) -> ResourceGraph:
+        graph = ResourceGraph()
+        for edge in edges:
+            graph.add_edge(*edge)
+        return graph
+
+    return _create_graph
 
 
 class _CreateTree(Protocol):
@@ -109,11 +121,7 @@ def create_tree() -> _CreateTree:
             for orphan in orphans:
                 graph.add_orphan_if_not_found(orphan)
         tree = graph.to_tree("example", include_orphans=True)
-        console = create_capture_console()
-        console.begin_capture()
-        console.print(tree)
-        ended = console.end_capture()
-        return ended
+        return tree_text(tree)
 
     return _create_tree
 
@@ -162,3 +170,35 @@ def test_resource_graph_orphans(file_regression, create_tree):
         (a, b),
     ]
     file_regression.check(create_tree(edges, {b, c}))
+
+
+def test_create_subgraph_bool(file_regression, create_graph):
+    a = ResourceRef(full_ref="a")
+    b = ResourceRef(full_ref="b")
+    c = ResourceRef(full_ref="c")
+    edges = [
+        (a, b),
+        (b, c),
+    ]
+    a_b_c = create_graph(edges, {b, c})
+    a_b_subgraph = create_subgraph(a_b_c, lambda parent, child: parent == a or child == b)
+    subgraph_text = tree_text(a_b_subgraph.to_tree("a_b_subgraph"))
+    file_regression.check(subgraph_text)
+
+
+def test_create_subgraph_tuple(file_regression, create_graph):
+    a = ResourceRef(full_ref="a")
+    b = ResourceRef(full_ref="b")
+    c = ResourceRef(full_ref="c")
+    edges = [
+        (a, b),
+        (b, c),
+    ]
+    a_b_c = create_graph(edges, {b, c})
+
+    def swap_parent_child(parent: ResourceRef, child: ResourceRef) -> tuple[ResourceRef, ResourceRef]:
+        return (child, parent)
+
+    c_b_a_subgraph = create_subgraph(a_b_c, swap_parent_child)
+    subgraph_text = tree_text(c_b_a_subgraph.to_tree("c_b_a_subgraph"))
+    file_regression.check(subgraph_text)

@@ -5,9 +5,10 @@ from unittest.mock import MagicMock
 from pydot import Graph
 import pytest
 from atlas_init.tf_ext.tf_dep import (
+    ResourceRef,
+    create_atlas_graph,
     find_variable_resource_type_usages,
     find_variables,
-    parse_graphs,
 )
 from atlas_init.tf_ext.tf_modules import color_coder, create_internal_dependencies
 
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.skipif(os.environ.get("EXAMPLE_PATH", "") == "", reason="needs os.environ[EXAMPLE_PATH]")
 def test_parse_graph():
     path = Path(os.environ["EXAMPLE_PATH"])
-    atlas_graph = parse_graphs([path], MagicMock())
+    atlas_graph = create_atlas_graph([path], MagicMock())
     assert atlas_graph.parent_child_edges == {
         "mongodbatlas_cloud_provider_access_authorization": {"mongodbatlas_encryption_at_rest"},
         "mongodbatlas_encryption_at_rest": {"mongodbatlas_advanced_cluster"},
@@ -31,7 +32,7 @@ def test_parse_graph():
 
 
 def test_parse_search_deployment_graph(tf_search_deployment_example_path):
-    graph = parse_graphs([tf_search_deployment_example_path], MagicMock())
+    graph = create_atlas_graph([tf_search_deployment_example_path], MagicMock())
     assert graph.parent_child_edges["mongodbatlas_advanced_cluster"] == {"mongodbatlas_search_deployment"}
 
 
@@ -46,3 +47,8 @@ def test_find_variables(tf_variables_path):
     assert usages == {
         "org_id": {"mongodbatlas_project"},
     }
+
+
+def test_module_name():
+    ref = ResourceRef(full_ref="module.vpc")
+    assert ref.module_name == "vpc"

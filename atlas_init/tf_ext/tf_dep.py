@@ -58,17 +58,23 @@ def tf_dep_graph(
     example_dirs = get_example_directories(repo_path, skip_names)
     logger.info(f"example_dirs: \n{'\n'.join(str(d) for d in sorted(example_dirs))}")
     with new_task("Find terraform graphs", total=len(example_dirs)) as task:
-        atlas_graph = AtlasGraph()
-
-        def on_graph(example_dir: Path, graph: pydot.Dot):
-            atlas_graph.add_edges(graph.get_edges())
-            atlas_graph.add_variable_edges(example_dir)
-
-        parse_graphs(on_graph, example_dirs, task)
+        atlas_graph = create_atlas_graph(example_dirs, task)
     with new_task("Dump graph"):
         graph_yaml = atlas_graph.dump_yaml()
         ensure_parents_write_text(settings.atlas_graph_path, graph_yaml)
         logger.info(f"Atlas graph dumped to {settings.atlas_graph_path}")
+
+
+def create_atlas_graph(example_dirs: list[Path], task: new_task) -> AtlasGraph:
+    atlas_graph = AtlasGraph()
+
+    def on_graph(example_dir: Path, graph: pydot.Dot):
+        atlas_graph.add_edges(graph.get_edges())
+        atlas_graph.add_variable_edges(example_dir)
+
+    parse_graphs(on_graph, example_dirs, task)
+
+    return atlas_graph
 
 
 def print_edges(graph: pydot.Dot):
@@ -118,6 +124,11 @@ class ResourceRef(BaseModel):
     @property
     def is_module(self) -> bool:
         return self.full_ref.startswith(MODULE_PREFIX)
+
+    @property
+    def module_name(self) -> str:
+        assert self.is_module, f"ResourceRef {self.full_ref} is not a module"
+        return self.full_ref.removeprefix(MODULE_PREFIX).split(".")[0]
 
     @property
     def is_data(self) -> bool:
