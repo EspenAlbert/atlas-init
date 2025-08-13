@@ -122,9 +122,9 @@ class ResourceGraph(Entity):
                 break
             used_parents.add(parent)
             parent_tree = trees.setdefault(parent, Tree(parent.full_ref))
-            for child in sorted(self.parent_children[parent]):
-                child = trees.setdefault(child, Tree(child.full_ref))
-                parent_tree.add(child)
+            for child_ref in sorted(self.parent_children[parent]):
+                child_tree = trees.setdefault(child_ref, Tree(child_ref.full_ref))
+                parent_tree.add(child_tree)
             remaining_parents.remove(parent)
             if not self.children_parents[parent]:
                 root.add(parent_tree)
@@ -149,6 +149,7 @@ class ModuleExampleConfig(Entity):
     )
 
     @model_validator(mode="before")
+    @classmethod
     def move_key(cls, v: dict):
         key = v.pop("Key", None)
         if key:
