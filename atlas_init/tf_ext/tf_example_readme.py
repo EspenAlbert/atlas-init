@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import defaultdict
 from contextlib import suppress
 from functools import total_ordering
@@ -26,8 +27,8 @@ def tf_example_readme(
     example_path: Path = typer.Option(
         ..., "-e", "--example-path", help="Path to the example directory", default_factory=Path.cwd
     ),
-    skip_module_keys: list[str] = typer.Option(
-        ..., "-s", "--skip-module-keys", help="List of module keys to skip", default_factory=list
+    skip_module_details: list[str] = typer.Option(
+        ..., "-s", "--skip-module-details", help="List of module details to skip", default_factory=list
     ),
 ):
     with new_task("parse example graph"):
@@ -35,12 +36,8 @@ def tf_example_readme(
         example_graph_dot = parse_graph_output(example_path, example_graph_output)
         example_graph = ResourceGraph.from_graph(example_graph_dot)
     with new_task("parse module graphs") as task:
-        modules_config = parse_modules_json(example_path)
-        modules = modules_config.modules_included(skip_keys=skip_module_keys)
-        assert modules, f"no modules found in {example_path} that are not in {skip_module_keys} (skip_module_keys)"
-        module_paths = [example_path / module.rel_path for module in modules]
-        if not_found_paths := [path for path in module_paths if not path.exists()]:
-            raise ValueError(f"module paths not found: {not_found_paths}")
+        modules_config = parse_modules_json(example_path, skip_module_details)
+        module_paths = modules_config.module_paths
         module_graphs: dict[Path, ResourceGraph] = {}
 
         def on_graph(example_dir: Path, graph: pydot.Dot):
@@ -49,24 +46,7 @@ def tf_example_readme(
         parse_graphs(on_graph, module_paths, task)
     with new_task("create example module graph"):
         # a graph when all resources in a module are treated as a single node.
-        emoji_counter = EmojiCounter()
-
-        def as_module_edge(parent: ResourceRef, child: ResourceRef) -> bool | ParentChild:
-            if not child.is_module:
-                return False
-            parent_module = as_module_name(parent)
-            new_parent = as_module_ref(parent)
-            if parent_module:
-                parent_emoji = emoji_counter.get_emoji(parent_module)
-                new_parent = ResourceRef(full_ref=f"{parent_emoji} {parent_module}")
-            child_module = as_module_name(child)
-            new_child = as_module_ref(child)
-            if child_module:
-                child_emoji = emoji_counter.get_emoji(child_module)
-                new_child = ResourceRef(full_ref=f"{child_emoji} {child_module}")
-            return new_parent, new_child
-
-        modules_graph = create_subgraph(example_graph, as_module_edge)
+        modules_graph, emoji_counter = create_module_graph(example_graph)
     with new_task(f"update {README_FILENAME}"):
         modules_section = []
         modules_trees_texts = []
@@ -80,15 +60,18 @@ def tf_example_readme(
             module_graph = module_graphs[module_dir]
             module_config = modules_config.get_by_path(module_dir)
             emojis = ", ".join(emoji_counter.get_emoji(key) for key in module_config.keys)
-            tree = module_graph.to_tree(f"{module_dir.name} ({emojis})", include_orphans=True)
+            if modules_config.skip_details(module_config):
+                tree = Tree(f"{module_dir.name} ({emojis})")
+                tree.add("details skipped")
+            else:
+                tree = module_graph.to_tree(f"{module_dir.name} ({emojis})", include_orphans=True)
             get_live_console().print(tree)
             modules_trees_texts.append(tree_text(tree))
 
         for ref in modules_graph.sorted_parents():
-            if not ref.is_module:
-                continue
-            module_config = modules_config.get_by_key(ref.module_name)
-            add_module_tree(module_config.absolute_path(example_path))
+            ref = strip_emoji_prefix(ref)
+            if maybe_module_config := modules_config.get_by_key_or_none(str(ref)):
+                add_module_tree(maybe_module_config.absolute_path(example_path))
         for module_dir in module_graphs:  # process the modules not used as parents
             add_module_tree(module_dir)
         modules_section.extend(
@@ -121,6 +104,30 @@ def tf_example_readme(
     #     ensure_parents_write_text(path, dot_content)
     #     logger.info(f"writing to {path} {name} graph")
     # get_live_console().print(dot_graph)
+
+
+def create_module_graph(example_graph: ResourceGraph) -> tuple[ResourceGraph, EmojiCounter]:
+    emoji_counter = EmojiCounter()
+
+    def as_module_edge(parent: ResourceRef, child: ResourceRef) -> bool | ParentChild:
+        if not child.is_module:
+            return False
+        new_parent = add_emoji_prefix(parent, emoji_counter)
+        new_child = add_emoji_prefix(child, emoji_counter)
+        return new_parent, new_child
+
+    return create_subgraph(example_graph, as_module_edge), emoji_counter
+
+
+def add_emoji_prefix(ref: ResourceRef, emoji_counter: EmojiCounter) -> ResourceRef:
+    if ref.is_module:
+        return ResourceRef(full_ref=f"{emoji_counter.get_emoji(ref.module_name)} {ref.module_name}")
+    return ref
+
+
+def strip_emoji_prefix(ref: ResourceRef) -> ResourceRef:
+    old_ref = ref.full_ref
+    return ResourceRef(full_ref=old_ref.split(" ")[1]) if " " in old_ref else ref
 
 
 def as_module_name(ref: ResourceRef) -> str:
@@ -169,6 +176,8 @@ class ResourceGraph(Entity):
             parsed = EdgeParsed.from_edge(edge)
             parent = parsed.parent
             child = parsed.child
+            if str(parent) == ".this":
+                logger.info(f"parent: {parent} child: {child}")
             self.add_edge(parent, child)
 
     def add_edge(self, parent: ResourceRef, child: ResourceRef):
@@ -227,14 +236,14 @@ class EdgeFilter(Protocol):
 def create_subgraph(graph: ResourceGraph, edge_filter: EdgeFilter) -> ResourceGraph:
     subgraph = ResourceGraph()
     for parent in graph.sorted_parents():
-        for child in graph.parent_children[parent]:
+        for child in sorted(graph.parent_children[parent]):
             filter_response = edge_filter(parent, child)
             match filter_response:
                 case True:
                     subgraph.add_edge(parent, child)
                 case False:
                     continue
-                case (parent, child):
+                case (parent, child) if parent != child:
                     subgraph.add_edge(parent, child)
     return subgraph
 
@@ -286,12 +295,34 @@ class ModuleExampleConfig(Entity):
 class ModuleExampleConfigs(Entity):
     example_path: Path
     modules: dict[str, ModuleExampleConfig] = Field(default_factory=dict)
+    skip_module_details: set[str] = Field(default_factory=set)
+
+    @model_validator(mode="after")
+    def ensure_paths_exists(self):
+        not_exists: dict[str, Path] = {}
+        for config in self.modules.values():
+            path = config.absolute_path(self.example_path)
+            if not path.exists():
+                not_exists[config.key] = path
+        if not_exists:
+            raise ValueError(f"module paths not found: {not_exists}")
+        return self
+
+    @property
+    def module_paths(self) -> list[Path]:
+        return [config.absolute_path(self.example_path) for config in self.modules.values()]
+
+    def skip_details(self, config: ModuleExampleConfig) -> bool:
+        return any(key in self.skip_module_details for key in config.keys)
 
     def get_by_path(self, module_dir: Path) -> ModuleExampleConfig:
         for config in self.modules.values():
             if config.absolute_path(self.example_path) == module_dir:
                 return config
         raise ValueError(f"module not found for {module_dir}")
+
+    def get_by_key_or_none(self, key: str) -> ModuleExampleConfig | None:
+        return self.modules.get(key)
 
     def get_by_key(self, key: str) -> ModuleExampleConfig:
         return self.modules[key]
@@ -315,8 +346,8 @@ class ModuleExampleConfigs(Entity):
             self.modules[key] = config
 
 
-def parse_modules_json(example_path: Path) -> ModuleExampleConfigs:
-    configs = ModuleExampleConfigs(example_path=example_path)
+def parse_modules_json(example_path: Path, skip_module_details: list[str] | None = None) -> ModuleExampleConfigs:
+    configs = ModuleExampleConfigs(example_path=example_path, skip_module_details=set(skip_module_details or []))
     module_json_path = example_path / MODULES_JSON_RELATIVE_PATH
     if not module_json_path.exists():
         return configs

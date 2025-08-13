@@ -80,6 +80,7 @@ def create_capture_console(*, width: int = 60, height: int = 80, force_terminal:
 
 def tree_text(tree: Tree) -> str:
     console = create_capture_console()
+    console.width = 10_000
     console.begin_capture()
     console.print(tree)
-    return console.end_capture()
+    return "\n".join(line.rstrip() for line in console.end_capture().splitlines())

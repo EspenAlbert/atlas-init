@@ -151,6 +151,9 @@ class ResourceRef(BaseModel):
             return NotImplemented
         return self.full_ref == other.full_ref
 
+    def __str__(self) -> str:
+        return self.full_ref
+
 
 class EdgeParsed(BaseModel):
     parent: ResourceRef
@@ -341,7 +344,7 @@ class EmptyGraphOutputError(Exception):
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_fixed(1),
-    retry=retry_if_exception_type(EmptyGraphOutputError),
+    retry=retry_if_exception_type((EmptyGraphOutputError, GraphParseError)),
     reraise=True,
 )
 def parse_graph(example_dir: Path) -> tuple[Path, str]:
@@ -353,6 +356,7 @@ def parse_graph(example_dir: Path) -> tuple[Path, str]:
         run_and_wait("terraform init", cwd=example_dir, env=env_vars)
     run = run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
     if graph_output := run.stdout_one_line:
+        parse_graph_output(example_dir, graph_output)
         return example_dir, graph_output
     raise EmptyGraphOutputError(example_dir)
 
