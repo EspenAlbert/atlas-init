@@ -4,6 +4,7 @@ from functools import total_ordering
 import logging
 from collections import defaultdict
 from pathlib import Path
+from threading import RLock
 from typing import Callable, Iterable, NamedTuple
 
 import pydot
@@ -292,22 +293,16 @@ def parse_graphs(
             for i, example_dir in enumerate(example_dirs)
             if i < max_dirs
         }
-        graphs = {}
-        for future in futures:
+        for future, example_dir in futures.items():
             try:
-                example_dir, graph_output = future.result()
+                _, graph = future.result()
             except ShellError as e:
-                logger.error(f"Error parsing graph for {futures[future]}: {e}")
+                logger.error(f"Error parsing graph for {example_dir}: {e}")
                 continue
             except KeyboardInterrupt:
                 logger.error("KeyboardInterrupt received, stopping graph parsing.")
                 stop_runs_and_pool("KeyboardInterrupt", immediate=True)
                 break
-            try:
-                graph = graphs[example_dir] = parse_graph_output(example_dir, graph_output)
-            except GraphParseError as e:
-                logger.error(e)
-                continue
             on_graph(example_dir, graph)
             task.update(advance=1)
 
@@ -318,9 +313,13 @@ class GraphParseError(Exception):
         super().__init__(f"Failed to parse graph for {example_dir}: {message}")
 
 
+_lock = RLock()
+
+
 def parse_graph_output(example_dir: Path, graph_output: str, verbose: bool = False) -> pydot.Dot:
     assert graph_output, f"Graph output is empty for {example_dir}"
-    dots = pydot.graph_from_dot_data(graph_output)  # not thread safe, so we use the main thread here instead
+    with _lock:
+        dots = pydot.graph_from_dot_data(graph_output)
     if not dots:
         raise GraphParseError(example_dir, f"No graphs found in the output:\n{graph_output}")
     assert len(dots) == 1, f"Expected one graph for {example_dir}, got {len(dots)}"
@@ -347,7 +346,7 @@ class EmptyGraphOutputError(Exception):
     retry=retry_if_exception_type((EmptyGraphOutputError, GraphParseError)),
     reraise=True,
 )
-def parse_graph(example_dir: Path) -> tuple[Path, str]:
+def parse_graph(example_dir: Path) -> tuple[Path, pydot.Dot]:
     env_vars = {
         "MONGODB_ATLAS_PREVIEW_PROVIDER_V2_ADVANCED_CLUSTER": "true" if is_v2_example_dir(example_dir) else "false",
     }
@@ -356,8 +355,8 @@ def parse_graph(example_dir: Path) -> tuple[Path, str]:
         run_and_wait("terraform init", cwd=example_dir, env=env_vars)
     run = run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
     if graph_output := run.stdout_one_line:
-        parse_graph_output(example_dir, graph_output)
-        return example_dir, graph_output
+        graph = parse_graph_output(example_dir, graph_output)  # just to make sure we get no errors
+        return example_dir, graph
     raise EmptyGraphOutputError(example_dir)
 
 

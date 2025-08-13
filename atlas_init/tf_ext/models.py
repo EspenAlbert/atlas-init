@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Self
+from typing import Iterable, Self
 
 from model_lib import Entity
 from pydantic import Field, RootModel, model_validator
@@ -35,6 +35,18 @@ def choose_next_emoji() -> str:
 class EmojiCounter:
     counter: int = 0
     existing_emojis: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def emoji_to_names(self) -> dict[str, str]:
+        return dict(zip(self.existing_emojis.values(), self.existing_emojis.keys()))
+
+    def emoji_name(self) -> Iterable[tuple[str, str]]:
+        src = self.emoji_to_names
+        for emoji in _emojii_list:
+            if emoji in src:
+                yield emoji, src[emoji]
+            else:
+                break
 
     def get_emoji(self, name: str) -> str:
         if existing := self.existing_emojis.get(name):

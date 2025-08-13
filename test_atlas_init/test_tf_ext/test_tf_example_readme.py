@@ -6,12 +6,14 @@ import pytest
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.settings.rich_utils import tree_text
-from atlas_init.tf_ext.tf_dep import ResourceRef, parse_graph, parse_graph_output
+from atlas_init.tf_ext.tf_dep import ResourceRef, parse_graph
 from atlas_init.tf_ext.tf_example_readme import (
     MODULES_JSON_RELATIVE_PATH,
     ResourceGraph,
+    as_mermaid,
     create_module_graph,
     create_subgraph,
+    emoji_tree,
     parse_modules_json,
 )
 
@@ -217,15 +219,16 @@ def test_create_module_graph(file_regression):
     module_tree_text = tree_text(module_tree)
     logger.info(f"module_tree: {module_tree_text}")
     file_regression.check(module_tree_text)
+    tree_emojiis = emoji_tree(emoji_counter)
+    logger.info(f"tree_emojiis: {tree_text(tree_emojiis)}")
+    file_regression.check(as_mermaid(module_graph), extension=".md")
 
 
 @pytest.mark.skipif(os.environ.get("TF_WORKSPACE_PATH", "") == "", reason="needs os.environ[TF_WORKSPACE_PATH]")
 def test_tf_example_readme():
     workspace_path = Path(os.environ["TF_WORKSPACE_PATH"])
     assert workspace_path.exists(), f"TF_WORKSPACE_PATH does not exist: {workspace_path}"
-    path, graph_output = parse_graph(workspace_path)
-    logger.info(f"graph output: {graph_output}")
-    parsed_graph = parse_graph_output(path, graph_output)
+    _, parsed_graph = parse_graph(workspace_path)
     graph = ResourceGraph.from_graph(parsed_graph)
     tree = graph.to_tree("graph", include_orphans=True)
     text = tree_text(tree)

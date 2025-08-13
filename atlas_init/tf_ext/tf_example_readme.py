@@ -4,7 +4,7 @@ from contextlib import suppress
 from functools import total_ordering
 import logging
 from pathlib import Path
-from typing import ClassVar, Iterable, Protocol, TypeAlias
+from typing import Callable, ClassVar, Iterable, Protocol, TypeAlias
 from ask_shell import new_task
 from ask_shell.rich_live import get_live_console
 from model_lib import Entity, parse_dict
@@ -17,7 +17,7 @@ from atlas_init.settings.rich_utils import tree_text
 from atlas_init.tf_ext.gen_readme import ReadmeMarkers, generate_and_write_readme
 from atlas_init.tf_ext.models import EmojiCounter
 from atlas_init.tf_ext.models_module import README_FILENAME
-from atlas_init.tf_ext.tf_dep import EdgeParsed, ResourceRef, node_plain, parse_graph, parse_graph_output, parse_graphs
+from atlas_init.tf_ext.tf_dep import EdgeParsed, ResourceRef, node_plain, parse_graph, parse_graphs
 
 logger = logging.getLogger(__name__)
 MODULES_JSON_RELATIVE_PATH = ".terraform/modules/modules.json"
@@ -32,8 +32,7 @@ def tf_example_readme(
     ),
 ):
     with new_task("parse example graph"):
-        _, example_graph_output = parse_graph(example_path)  # ensures init is called
-        example_graph_dot = parse_graph_output(example_path, example_graph_output)
+        _, example_graph_dot = parse_graph(example_path)  # ensures init is called
         example_graph = ResourceGraph.from_graph(example_graph_dot)
     with new_task("parse module graphs") as task:
         modules_config = parse_modules_json(example_path, skip_module_details)
@@ -68,42 +67,42 @@ def tf_example_readme(
             get_live_console().print(tree)
             modules_trees_texts.append(tree_text(tree))
 
-        for ref in modules_graph.sorted_parents():
-            ref = strip_emoji_prefix(ref)
-            if maybe_module_config := modules_config.get_by_key_or_none(str(ref)):
-                add_module_tree(maybe_module_config.absolute_path(example_path))
-        for module_dir in module_graphs:  # process the modules not used as parents
+        for _, module_key in emoji_counter.emoji_name():
+            module_config = modules_config.get_by_key(module_key)
+            module_dir = module_config.absolute_path(example_path)
             add_module_tree(module_dir)
+
+        def add_module_src(node: Tree, name: str) -> None:
+            config = modules_config.get_by_key(name)
+            node.add(f"{config.source}")
+
+        module_index_tree = emoji_tree(emoji_counter, tree_processor=add_module_src, name="Module Instances")
         modules_section.extend(
             [
                 "## Modules",
                 "",
-                "### Tree",
-                "",
+                "### Modules Instances",
+                "```sh",
+                tree_text(module_index_tree),
                 "```",
+                "### Module Definitions",
+                "",
+                "```sh",
                 "\n".join(modules_trees_texts),
                 "```",
+                "",
+                "### Graph with Dependencies",
+                "Any resource without a number prefix is defined at the root level.",
+                "",
+                as_mermaid(modules_graph),
             ]
         )
-        # modules_section.append(f"### Graph\n\n```{as_mermaid(modules_graph)}")
         generators = ReadmeMarkers.readme_generators()
         generators.insert(1, (ReadmeMarkers.MODULES, lambda _: "\n".join(modules_section)))
         generate_and_write_readme(
             example_path,
             generators=generators,
         )
-    # dot_graph = parse_graph_output(example_path, graph_output)
-    # full_graph_path = out_dir / "full_graph.dot"
-    # ensure_parents_write_text(full_graph_path, dot_graph.to_string())
-    # logger.info(f"writing to {full_graph_path} full graph")
-    # write_graph(dot_graph, out_dir, "full_graph.png")
-    # for sub_graph in dot_graph.get_subgraph_list():
-    #     dot_content = sub_graph.to_string()
-    #     name = sub_graph.get_attributes()["label"].replace(".", "_").strip('"')
-    #     path = out_dir / f"{name}.dot"
-    #     ensure_parents_write_text(path, dot_content)
-    #     logger.info(f"writing to {path} {name} graph")
-    # get_live_console().print(dot_graph)
 
 
 def create_module_graph(example_graph: ResourceGraph) -> tuple[ResourceGraph, EmojiCounter]:
@@ -117,6 +116,17 @@ def create_module_graph(example_graph: ResourceGraph) -> tuple[ResourceGraph, Em
         return new_parent, new_child
 
     return create_subgraph(example_graph, as_module_edge), emoji_counter
+
+
+def emoji_tree(
+    counter: EmojiCounter, *, tree_processor: Callable[[Tree, str], None] | None = None, name: str = "Emoji Tree"
+) -> Tree:
+    tree = Tree(name)
+    for emoji, name in counter.emoji_name():
+        child = tree.add(f"{emoji}  {name}")
+        if tree_processor:
+            tree_processor(child, name)
+    return tree
 
 
 def add_emoji_prefix(ref: ResourceRef, emoji_counter: EmojiCounter) -> ResourceRef:
@@ -219,14 +229,37 @@ class ResourceGraph(Entity):
             if not self.children_parents[parent]:
                 root.add(parent_tree)
         if include_orphans:
-            for orphan in self.orphans:
+            for orphan in sorted(self.orphans):
                 if orphan not in trees:
                     root.add(Tree(orphan.full_ref))
         return root
 
 
 def as_mermaid(graph: ResourceGraph) -> str:
-    raise NotImplementedError("not implemented")
+    nodes: dict[str, str] = {}
+
+    def mermaid_ref(ref: ResourceRef) -> str:
+        no_emoji = strip_emoji_prefix(ref)
+        mermaid = str(no_emoji)
+        assert '"' not in mermaid, f"mermaid ref should not contain quotes: {mermaid}"
+        nodes[mermaid] = str(ref)  # want original ref in label
+        return mermaid
+
+    def add_mermaid_edge(parent: ResourceRef, child: ResourceRef) -> str:
+        parent_ref = mermaid_ref(parent)
+        child_ref = mermaid_ref(child)
+        return f"{parent_ref} --> {child_ref}"
+
+    edges = [add_mermaid_edge(parent, child) for parent, child in graph.all_edges()]
+    return "\n".join(
+        [
+            "```mermaid",
+            "graph TD",
+            "    " + "\n    ".join(f'{mermaid}["{label}"]' for mermaid, label in sorted(nodes.items())),
+            "    " + "\n    ".join(sorted(edges)),
+            "```",
+        ]
+    )
 
 
 class EdgeFilter(Protocol):
