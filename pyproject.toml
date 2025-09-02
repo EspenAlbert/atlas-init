@@ -38,6 +38,7 @@ dependencies = [
   "ask-shell>=0.0.5",
   "model-lib",
   "zero-3rdparty==1.0.0b5",
+  "mypy-boto3-iam>=1.40.0",
 ]
 
 # [tool.uv.sources]
