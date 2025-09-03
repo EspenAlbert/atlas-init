@@ -164,7 +164,7 @@ _ignored_workspace_dirs = [
 ]
 
 
-class TFWorkspacRunConfig(Entity):
+class TFWorkspaceRunConfig(Entity):
     path: Path
     rel_path: str
     resolved_vars: dict[str, Any]
@@ -205,7 +205,10 @@ def tf_ws(
         variable_resolvers = variable_resolvers.merge(manual_resolvers)
 
     def include_path(rel_path: str) -> bool:
-        return all(f"/{dir}/" not in rel_path for dir in _ignored_workspace_dirs)
+        return all(
+            f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(f"{ignored_dir}/")
+            for ignored_dir in _ignored_workspace_dirs
+        )
 
     paths = sorted(
         (path.parent, rel_path)
@@ -219,7 +222,7 @@ def tf_ws(
             resolver_vars = variable_resolvers.resolve_vars(path, rel_path)
             resolved_vars, resolved_env_vars = as_tfvars_env(resolver_vars)
             run_configs.append(
-                TFWorkspacRunConfig(
+                TFWorkspaceRunConfig(
                     path=path, rel_path=rel_path, resolved_vars=resolved_vars, resolved_env_vars=resolved_env_vars
                 )
             )
@@ -233,7 +236,7 @@ def tf_ws(
     run_count = len(run_configs)
     assert run_count > 0, f"No run configs found from {root_path}"
 
-    def run_cmd(run_config: TFWorkspacRunConfig):
+    def run_cmd(run_config: TFWorkspaceRunConfig):
         tf_vars_str = dump(run_config.resolved_vars, "pretty_json")
         tf_vars_path = run_config.tf_vars_path_json(settings)
         ensure_parents_write_text(tf_vars_path, tf_vars_str)
