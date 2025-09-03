@@ -2,10 +2,12 @@ from collections import defaultdict
 import logging
 from contextlib import suppress
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from lark import Token, Transformer, Tree, UnexpectedToken, v_args
 from hcl2.transformer import Attribute, DictTransformer
 from hcl2.api import reverse_transform, writes, parses
+from model_lib import Entity
+from pydantic import field_validator
 import rich
 
 logger = logging.getLogger(__name__)
@@ -56,6 +58,54 @@ def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> tuple[
             return found_attribute
 
     return AttributeTransformer(with_meta=True), changes
+
+
+_unset = object()
+
+
+class TFVar(Entity):
+    name: str
+    description: str | None = ""
+    default: Any = _unset
+    type: str = ""
+    sensitive: bool = False
+
+    @field_validator("default", mode="before")
+    def unpack_token(cls, v: Any) -> Any:
+        if isinstance(v, Token):
+            return v.value.strip('"')
+        return v
+
+
+def variable_reader_typed(tree: Tree) -> dict[str, TFVar]:
+    variables: dict[str, TFVar] = {}
+
+    class TFVarReader(DictTransformer):
+        def __init__(self, with_meta: bool = False, *, name: str):
+            super().__init__(with_meta)
+            self.kwargs: dict[str, Any] = {
+                "name": name,
+            }
+
+        def attribute(self, args: list) -> Attribute:
+            if len(args) == 3:
+                name, _, value = args
+                self.kwargs[name] = value
+            return super().attribute(args)
+
+    class BlockReader(Transformer):
+        @v_args(tree=True)
+        def block(self, block_tree: Tree) -> Tree:
+            current_block_name = _identifier_name(block_tree)
+            if current_block_name == "variable":
+                variable_name = token_name(block_tree.children[1])
+                reader = TFVarReader(name=variable_name)
+                reader.transform(block_tree)
+                variables[variable_name] = TFVar(**reader.kwargs)
+            return block_tree
+
+    BlockReader().transform(tree)
+    return variables
 
 
 def variable_reader(tree: Tree) -> dict[str, str | None]:

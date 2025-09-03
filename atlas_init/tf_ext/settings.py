@@ -175,6 +175,14 @@ class TfExtSettings(StaticSettings):
     def provider_cache_dir(self, provider_name: str) -> Path:
         return self.cache_root / "provider_cache" / provider_name
 
+    @property
+    def variable_plan_resolvers_file_path(self) -> Path:
+        return self.static_root / "variable_plan_resolvers.yaml"
+
+    @property
+    def variable_plan_resolvers_dumped_file_path(self) -> Path:
+        return self.static_root / "variable_plan_resolvers_dumped.yaml"
+
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:
     settings = TfExtSettings.from_env()
