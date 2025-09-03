@@ -1,8 +1,8 @@
 import pytest
-from atlas_init.tf_ext.tf_plan_check import as_tfvars_env, update_dumped_vars
+from atlas_init.tf_ext.tf_ws import as_tfvars_env, update_dumped_vars
 
 
-def test_update_dumped_vars(settings, tmp_path, monkeypatch: pytest.MonkeyPatch):
+def test_update_dumped_vars(tmp_path, monkeypatch: pytest.MonkeyPatch):
     vars_path = tmp_path / "variables_plan.yaml"
     extra_env_vars = {
         key: f"{key}_value"

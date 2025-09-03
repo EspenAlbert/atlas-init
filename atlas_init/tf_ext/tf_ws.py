@@ -1,23 +1,41 @@
+from datetime import datetime
+from enum import StrEnum
 import fnmatch
 import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Literal, Self
 
+import typer
+import humanize
 from ask_shell import run_and_wait, run_pool
 from model_lib import Entity, dump, parse_model
-from pydantic import Field
-import typer
+from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
+import stringcase
 
 from atlas_init.cli_tf.hcl.modifier2 import TFVar
 from atlas_init.settings.env_vars import init_settings
-from atlas_init.settings.env_vars_generated import AWSSettings, AtlasSettingsWithProject
+from atlas_init.settings.env_vars_generated import AtlasSettingsWithProject, AWSSettings
 from atlas_init.tf_ext.paths import find_variables_typed
-from atlas_init.tf_ext.settings import init_tf_ext_settings
+from atlas_init.tf_ext.settings import TfExtSettings, init_tf_ext_settings
 from atlas_init.tf_ext.tf_mod_gen import validate_tf_workspace
 
 logger = logging.getLogger(__name__)
+LOCKFILE_NAME = ".terraform.tfstate.lock.info"
+PascalAlias = ConfigDict(alias_generator=stringcase.pascalcase, populate_by_name=True)
+
+
+class Lockfile(Entity):
+    model_config = PascalAlias
+    created: datetime
+    path: str
+    operation: str
+
+    def __str__(self) -> str:
+        return (
+            f"lockfile for state {self.path} created={humanize.naturaltime(self.created)}, operation={self.operation})"
+        )
 
 
 class ResolvedEnvVar(Entity):
@@ -152,8 +170,25 @@ class TFWorkspacRunConfig(Entity):
     resolved_vars: dict[str, Any]
     resolved_env_vars: dict[str, Any]
 
+    def tf_data_dir(self, settings: TfExtSettings) -> Path:
+        repo_out = settings.repo_out
+        assert self.path.is_relative_to(repo_out.base), f"path {self.path} is not relative to {repo_out.base}"
+        relative_repo_path = str(self.path.relative_to(repo_out.base))
+        return settings.static_root / "tf-ws-check" / relative_repo_path / ".terraform"
 
-def tf_plan_check(
+    def tf_vars_path_json(self, settings: TfExtSettings) -> Path:
+        return self.tf_data_dir(settings) / "vars.auto.tfvars.json"
+
+
+class TFWsCommands(StrEnum):
+    VALIDATE = "validate"
+    PLAN = "plan"
+    APPLY = "apply"
+    DESTROY = "destroy"
+
+
+def tf_ws(
+    command: TFWsCommands = typer.Argument("plan", help="The command to run in the workspace"),
     root_path: Path = typer.Option(
         ...,
         "-p",
@@ -172,11 +207,11 @@ def tf_plan_check(
     def include_path(rel_path: str) -> bool:
         return all(f"/{dir}/" not in rel_path for dir in _ignored_workspace_dirs)
 
-    paths = [
+    paths = sorted(
         (path.parent, rel_path)
         for path, rel_path in iter_paths_and_relative(root_path, "main.tf", only_files=True)
         if include_path(rel_path)
-    ]
+    )
     run_configs = []
     missing_vars_errors = []
     for path, rel_path in paths:
@@ -195,18 +230,40 @@ def tf_plan_check(
         missing_vars_formatted = "\n".join(str(e) for e in missing_vars_errors)
         logger.warning(f"Missing variables:\n{missing_vars_formatted}")
 
-    def run_plan(run_config: TFWorkspacRunConfig):
-        validate_tf_workspace(run_config.path, tf_cli_config_file=settings.tf_cli_config_file)
-        tf_vars_str = dump(run_config.resolved_vars, "pretty_json")
-        tf_vars_path = run_config.path / "tf_vars.json"
-        tf_vars_path.write_text(tf_vars_str)
-        run_and_wait(f"terraform plan -var-file={tf_vars_path}", cwd=run_config.path, env=run_config.resolved_env_vars)
+    run_count = len(run_configs)
+    assert run_count > 0, f"No run configs found from {root_path}"
 
-    with run_pool("Plan in TF Workspaces", total=len(run_configs)) as pool:
-        futures = {pool.submit(run_plan, run_config): run_config for run_config in run_configs}
-    for future, run_config in futures.items():
-        try:
-            future.result()
-        except Exception as e:
-            logger.error(f"Error running plan for {run_config.path}: {e}")
-            continue
+    def run_cmd(run_config: TFWorkspacRunConfig):
+        tf_vars_str = dump(run_config.resolved_vars, "pretty_json")
+        tf_vars_path = run_config.tf_vars_path_json(settings)
+        ensure_parents_write_text(tf_vars_path, tf_vars_str)
+        env_extra = run_config.resolved_env_vars | {"TF_DATA_DIR": str(run_config.tf_data_dir(settings))}
+
+        lockfile_path = run_config.path / LOCKFILE_NAME
+        if lockfile_path.exists():
+            lockfile = parse_model(lockfile_path, t=Lockfile, format="json")
+            logger.warning(f"Lockfile exists for {run_config.path}, skipping: {lockfile}")
+            return
+
+        validate_tf_workspace(run_config.path, tf_cli_config_file=settings.tf_cli_config_file, env_extra=env_extra)
+        if command == TFWsCommands.VALIDATE:
+            return
+        command_extra = ""
+        if command in {TFWsCommands.APPLY, TFWsCommands.DESTROY}:
+            command_extra = " -auto-approve"
+
+        run_and_wait(
+            f"terraform {command} -var-file={tf_vars_path}{command_extra}",
+            cwd=run_config.path,
+            env=env_extra,
+            user_input=run_count == 1,
+        )
+
+    with run_pool(f"{command} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
+        futures = {pool.submit(run_cmd, run_config): run_config for run_config in run_configs}
+        for future, run_config in futures.items():
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"Error running {command} for {run_config.path}: {e}")
+                continue

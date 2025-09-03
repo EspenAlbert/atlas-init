@@ -67,7 +67,7 @@ def aws_clean(
         role_names.append(role_name)
         if not role_name.startswith(iam_role_prefix_name):
             continue
-        # want to delte 'mongodb-atlas-test-acc-tf-1345851232260229574'
+        # want to delete 'mongodb-atlas-test-acc-tf-1345851232260229574'
         # want to keep  'mongodb-atlas-test-acc-tf-7973337217371171538-git-ear'?
         if role_name[-1].isdigit() and parsed.create_date < delete_if_created_before:
             logger.info(f"role: {parsed.arn} will be deleted")
