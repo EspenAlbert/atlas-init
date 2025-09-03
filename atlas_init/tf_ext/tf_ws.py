@@ -206,7 +206,7 @@ def tf_ws(
 
     def include_path(rel_path: str) -> bool:
         return all(
-            f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(ignored_dir)
+            f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(f"{ignored_dir}/")
             for ignored_dir in _ignored_workspace_dirs
         )
 
