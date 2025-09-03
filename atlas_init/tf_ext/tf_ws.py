@@ -205,7 +205,10 @@ def tf_ws(
         variable_resolvers = variable_resolvers.merge(manual_resolvers)
 
     def include_path(rel_path: str) -> bool:
-        return all(f"/{dir}/" not in rel_path for dir in _ignored_workspace_dirs)
+        return all(
+            f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(ignored_dir)
+            for ignored_dir in _ignored_workspace_dirs
+        )
 
     paths = sorted(
         (path.parent, rel_path)
