@@ -32,6 +32,7 @@ from atlas_init.tf_ext.plan_diffs import (
     read_variables_path,
 )
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, ResourceSchema, parse_atlas_schema
+from atlas_init.tf_ext.run_tf import validate_tf_workspace
 from atlas_init.tf_ext.schema_to_dataclass import convert_and_format
 from atlas_init.tf_ext.settings import TfExtSettings
 
@@ -131,27 +132,11 @@ def generate_resource_module(config: ModuleGenConfig, resource_type: str, atlas_
 def finalize_and_validate_module(config: ModuleGenConfig) -> Path:
     dump_versions_tf(config.module_out_path, skip_python=config.skip_python)
     logger.info(f"Module dumped to {config.module_out_path}, running checks")
-    validate_module(config.module_out_path, tf_cli_config_file=config.settings.tf_cli_config_file)
+    validate_tf_workspace(config.module_out_path, tf_cli_config_file=config.settings.tf_cli_config_file)
     return config.module_out_path
 
 
 OUT_BINARY_PATH = "tfplan.binary"
-
-
-def validate_module(tf_workdir: Path, *, tf_cli_config_file: Path | None = None):
-    terraform_commands = [
-        "terraform init",
-        "terraform fmt .",
-        "terraform validate .",
-    ]
-    env_extra = {}
-    if tf_cli_config_file:
-        env_extra["TF_CLI_CONFIG_FILE"] = str(tf_cli_config_file)
-    with new_task("Terraform Module Validate Checks", total=len(terraform_commands)) as task:
-        for command in terraform_commands:
-            attempts = 3 if command == "terraform init" else 1  # terraform init can fail due to network issues
-            run_and_wait(command, cwd=tf_workdir, env=env_extra, attempts=attempts)
-            task.update(advance=1)
 
 
 def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Path | None = None) -> Path:
@@ -165,7 +150,7 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
         if examples_generated:
             with run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
                 for example_path in examples_generated:
-                    pool.submit(validate_module, example_path)
+                    pool.submit(validate_tf_workspace, example_path)
 
     attribute_descriptions = parse_attribute_descriptions(config.settings)
     settings = config.settings
@@ -225,7 +210,7 @@ def example_plan_checks(config: ModuleGenConfig, timeout_all_seconds: int = 60) 
         with TemporaryDirectory() as temp_dir:
             stored_plan = Path(temp_dir) / "plan.json"
             tf_dir = config.example_path(check.example_name)
-            validate_module(tf_dir)
+            validate_tf_workspace(tf_dir)
             var_arg = f" -var-file={variables_path}" if variables_path else ""
             run_and_wait(f"terraform plan -out={OUT_BINARY_PATH}{var_arg}", cwd=tf_dir)
             run_and_wait(f"terraform show -json {OUT_BINARY_PATH} > {stored_plan}", cwd=tf_dir)

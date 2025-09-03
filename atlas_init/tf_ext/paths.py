@@ -9,7 +9,14 @@ from model_lib import Entity
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import iter_paths
 
-from atlas_init.cli_tf.hcl.modifier2 import resource_types_vars_usage, safe_parse, variable_reader, variable_usages
+from atlas_init.cli_tf.hcl.modifier2 import (
+    TFVar,
+    resource_types_vars_usage,
+    safe_parse,
+    variable_reader,
+    variable_reader_typed,
+    variable_usages,
+)
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME, DEFAULT_EXTERNAL_SUBSTRINGS, DEFAULT_INTERNAL_SUBSTRINGS
 
 logger = logging.getLogger(__name__)
@@ -30,6 +37,16 @@ def get_example_directories(repo_path: Path, skip_names: list[str]):
         example_dirs = [d for d in example_dirs if d.name not in skip_names]
         logger.info(f"Skipped {len_before - len(example_dirs)} example directories with names: {skip_names}")
     return example_dirs
+
+
+def find_variables_typed(variables_tf: Path) -> dict[str, TFVar]:
+    if not variables_tf.exists():
+        return {}
+    tree = safe_parse(variables_tf)
+    if not tree:
+        logger.warning(f"Failed to parse {variables_tf}")
+        return {}
+    return variable_reader_typed(tree)
 
 
 def find_variables(variables_tf: Path) -> dict[str, str | None]:

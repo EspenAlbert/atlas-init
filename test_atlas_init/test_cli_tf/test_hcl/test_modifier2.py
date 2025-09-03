@@ -4,9 +4,11 @@ from lark.tree import Meta
 from atlas_init.cli_tf.hcl.modifier import safe_parse
 from atlas_init.cli_tf.hcl.modifier2 import (
     AttributeChange,
+    TFVar,
     attribute_transfomer,
     print_tree,
     update_attribute_object_str_value_for_block,
+    variable_reader_typed,
     write_tree,
 )
 from hcl2.transformer import Attribute, DictTransformer
@@ -126,3 +128,57 @@ def test_updating_defaults(tmp_path, file_regression):
     tree_modified = reverse_transform(new_tree)
     new_vars = write_tree(tree_modified)
     file_regression.check(new_vars, basename="variables_with_defaults", extension=".tf")
+
+
+_variables_typed_example = """
+variable "required_string" {
+  type = string
+}
+
+variable "optional_string" {
+  type = string
+  default = "default"
+}
+
+variable "sensitive_string" {
+  type = string
+  sensitive = true
+}
+
+variable "object_with_defaults" {
+  type = object({
+    default_write_concern = string
+    custom_openssl_cipher_config_tls12 = optional(list(string))
+  })
+  default = {
+    default_write_concern = "majority"
+    custom_openssl_cipher_config_tls12 = ["TLS1_2"]
+  }
+}
+"""
+
+
+def test_reading_variables_typed(tmp_path):
+    file = tmp_path / "variables.tf"
+    file.write_text(_variables_typed_example)
+    tree = safe_parse(file)
+    assert tree is not None
+    variables = variable_reader_typed(tree)
+    assert variables == {
+        "required_string": TFVar(name="required_string", description="", type="string", sensitive=False),
+        "optional_string": TFVar(
+            name="optional_string",
+            description="",
+            type="string",
+            sensitive=False,
+            default="default",
+        ),
+        "sensitive_string": TFVar(name="sensitive_string", description="", type="string", sensitive=True),
+        "object_with_defaults": TFVar(
+            name="object_with_defaults",
+            description="",
+            type='object({"default_write_concern": "string", "custom_openssl_cipher_config_tls12": "${optional(list(string))}"})',
+            sensitive=False,
+            default={"default_write_concern": "majority", "custom_openssl_cipher_config_tls12": ["TLS1_2"]},
+        ),
+    }
