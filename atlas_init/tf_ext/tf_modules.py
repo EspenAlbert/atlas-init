@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -310,16 +311,26 @@ def remove_provider_name(resource_type: str) -> str:
     return resource_type.split("_", 1)[-1]
 
 
-def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
-    out_path.mkdir(parents=True, exist_ok=True)
-    dot_graph.write_png(out_path / filename)  # type: ignore
+def write_graph(dot_graph: pydot.Dot, out_dir: Path, filename: str):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    dot_graph.write_png(out_dir / filename)  # type: ignore
 
 
 def as_nodes(edges: Iterable[tuple[str, str]]) -> set[str]:
     return set(flat_map((parent, child) for parent, child in edges))
 
 
-def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder: ColorCoder) -> pydot.Dot:
+class ColorCoderABC(abc.ABC):
+    @abc.abstractmethod
+    def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
+        pass
+
+    @abc.abstractmethod
+    def node_name(self, resource_type: str) -> str:
+        pass
+
+
+def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder: ColorCoderABC) -> pydot.Dot:
     edges = sorted(edges)
     graph = pydot.Dot(name, graph_type="graph")
     nodes = as_nodes(edges)

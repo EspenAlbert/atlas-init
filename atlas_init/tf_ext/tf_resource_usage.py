@@ -1,11 +1,13 @@
 import logging
 import re
 from collections import defaultdict
+from dataclasses import dataclass
 from enum import StrEnum
 from functools import total_ordering
 from pathlib import Path
-from typing import Iterable
+from typing import ClassVar, Iterable
 
+import pydot
 import typer
 from model_lib import Entity, dump, dump_as_dict
 from pydantic import Field
@@ -16,7 +18,13 @@ from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen_provider import parse_atlas_schema_info
-from atlas_init.tf_ext.tf_modules import parse_atlas_graph
+from atlas_init.tf_ext.tf_modules import (
+    ColorCoderABC,
+    create_dot_graph,
+    parse_atlas_graph,
+    remove_provider_name,
+    write_graph,
+)
 from atlas_init.tf_ext.tf_ws import include_path
 
 logger = logging.getLogger(__name__)
@@ -255,6 +263,9 @@ class SimpleGraph(Entity):
     def add_edge(self, src: str, dst: str):
         self.parent_child_edges[src].add(dst)
 
+    def flat_edges(self) -> list[tuple[str, str]]:
+        return [(src, dst) for src in self.parent_child_edges for dst in self.parent_child_edges[src]]
+
 
 def build_simple_graph(usage: ResourceUsage) -> SimpleGraph:
     graph = SimpleGraph()
@@ -264,6 +275,29 @@ def build_simple_graph(usage: ResourceUsage) -> SimpleGraph:
             for src_ref, dest_ref in _iter_edges(valid_resource_types, dest_resource_type, example.snippet):
                 graph.add_edge(src_ref, dest_ref)
     return graph
+
+
+@dataclass
+class ColorCoderSimple(ColorCoderABC):
+    keep_provider_name: bool = False
+
+    PROVIDER_COLORS: ClassVar[dict[str, str]] = {
+        "aws": "yellow",
+        "azurerm": "lightblue",
+        "azapi": "lightblue",
+        "google": "purple",
+        "mongodbatlas": "green",
+    }
+    ATLAS_DEPRECATED_COLOR: ClassVar[str] = "orange"
+
+    def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
+        provider = resource_type.split("_", 1)[0]
+        return pydot.Node(
+            resource_type, shape="box", style="filled", fillcolor=self.PROVIDER_COLORS.get(provider, "gray")
+        )
+
+    def node_name(self, resource_type: str) -> str:
+        return resource_type if self.keep_provider_name else remove_provider_name(resource_type)
 
 
 def tf_resource_usage(
@@ -323,6 +357,12 @@ def tf_resource_usage(
         graph_yaml = dump(graph_dict, "yaml")
         ensure_parents_write_text(graph_output, graph_yaml)
         logger.info(f"Example graph written to {graph_output}")
+        dot_graph = create_dot_graph(
+            "Example Graph", graph.flat_edges(), color_coder=ColorCoderSimple(keep_provider_name=True)
+        )
+        dot_graph_png = settings.example_graph_path.with_suffix(".png")
+        write_graph(dot_graph, dot_graph_png.parent, dot_graph_png.name)
+        logger.info(f"Example graph written to {dot_graph_png}")
     else:
         for row in iter_rows(ExampleSrc.UserSpecified, root_path, deprecated, file_glob):
             usage.add_row(row)
