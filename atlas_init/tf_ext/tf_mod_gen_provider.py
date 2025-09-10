@@ -13,12 +13,24 @@ from atlas_init.tf_ext.models_module import (
     ProviderGenConfig,
     as_provider_name,
 )
-from atlas_init.tf_ext.provider_schema import parse_atlas_schema_from_settings
-from atlas_init.tf_ext.settings import init_tf_ext_settings
+from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, parse_atlas_schema_from_settings
+from atlas_init.tf_ext.settings import init_tf_ext_settings, TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen import finalize_and_validate_module, generate_resource_module
 
 logger = logging.getLogger(__name__)
 ATLAS_PROVIDER_PATH = "mongodb/mongodbatlas"
+
+
+def parse_atlas_schema_info(
+    settings: TfExtSettings, provider_path: str = ATLAS_PROVIDER_PATH
+) -> tuple[AtlasSchemaInfo, ProviderGenConfig]:
+    if provider_path != ATLAS_PROVIDER_PATH:
+        raise NotImplementedError(f"provider_name must be {ATLAS_PROVIDER_PATH}")
+    provider_name = as_provider_name(provider_path)
+    repo_out = settings.repo_out
+    provider_config_path = repo_out.provider_settings_path(provider_name)
+    provider_config = parse_model(provider_config_path, t=ProviderGenConfig)
+    return parse_atlas_schema_from_settings(settings, provider_config), provider_config
 
 
 def tf_mod_gen_provider_resource_modules(
@@ -30,14 +42,9 @@ def tf_mod_gen_provider_resource_modules(
     ),
 ):
     settings = init_tf_ext_settings()
-    if provider_path != ATLAS_PROVIDER_PATH:
-        raise NotImplementedError(f"provider_name must be {ATLAS_PROVIDER_PATH}")
-    provider_name = as_provider_name(provider_path)
+    atlas_schema, provider_config = parse_atlas_schema_info(settings, provider_path)
     repo_out = settings.repo_out
-    provider_config_path = repo_out.provider_settings_path(provider_name)
-    provider_config = parse_model(provider_config_path, t=ProviderGenConfig)
-
-    atlas_schema = parse_atlas_schema_from_settings(settings, provider_config)
+    provider_name = provider_config.provider_name
     include_only_set = set(include_only)
     deprecated_types = set(atlas_schema.deprecated_resource_types)
 
@@ -54,7 +61,6 @@ def tf_mod_gen_provider_resource_modules(
         resource = module_config.resources[0]
         generate_resource_module(module_config, resource.name, atlas_schema)
         module_path = finalize_and_validate_module(module_config)
-
         config_single = copy_and_validate(
             module_config,
             resources=[resource.single_variable_version()],

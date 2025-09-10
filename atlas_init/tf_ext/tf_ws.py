@@ -164,6 +164,13 @@ _ignored_workspace_dirs = [
 ]
 
 
+def include_path(rel_path: str) -> bool:
+    return all(
+        f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(f"{ignored_dir}/")
+        for ignored_dir in _ignored_workspace_dirs
+    )
+
+
 class TFWorkspaceRunConfig(Entity):
     path: Path
     rel_path: str
@@ -203,12 +210,6 @@ def tf_ws(
     if manual_path.exists():
         manual_resolvers = parse_model(manual_path, t=VariablesPlanResolver)
         variable_resolvers = variable_resolvers.merge(manual_resolvers)
-
-    def include_path(rel_path: str) -> bool:
-        return all(
-            f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(f"{ignored_dir}/")
-            for ignored_dir in _ignored_workspace_dirs
-        )
 
     paths = sorted(
         (path.parent, rel_path)

@@ -168,6 +168,13 @@ class EdgeParsed(BaseModel):
             child=ResourceRef(full_ref=edge_plain(edge.get_source())),
         )
 
+    @classmethod
+    def from_simple_edge(cls, src: str, dst: str) -> "EdgeParsed":
+        return cls(
+            parent=ResourceRef(full_ref=src),
+            child=ResourceRef(full_ref=dst),
+        )
+
     @property
     def has_module_edge(self) -> bool:
         return self.parent.is_module or self.child.is_module

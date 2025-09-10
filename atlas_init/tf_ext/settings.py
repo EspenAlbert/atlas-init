@@ -1,6 +1,6 @@
 import logging
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import ClassVar, Self
 
 from model_lib import Entity, StaticSettings
@@ -82,6 +82,7 @@ class TfExtSettings(StaticSettings):
     repo_path_atlas_provider: Path | None = None
     tf_cli_config_file: Path | None = None
     repo_out_path: Path | None = None
+    atlas_arch_center_path: Path | None = None
 
     @model_validator(mode="after")
     def infer_repo_path_atlas(self) -> Self:
@@ -182,6 +183,20 @@ class TfExtSettings(StaticSettings):
     @property
     def variable_plan_resolvers_dumped_file_path(self) -> Path:
         return self.static_root / "variable_plan_resolvers_dumped.yaml"
+
+    @property
+    def example_usage_output_path(self) -> Path:
+        return self.static_root / "example_usage.md"
+
+    def example_usage_output_path_src(self, src: str) -> Path:
+        return self.static_root / f"example_usage_{src}.md"
+
+    def example_missing_md_path(self, src_missing: str) -> Path:
+        return self.static_root / f"example_usage_missing_examples_{src_missing}.md"
+
+    @property
+    def example_graph_path(self) -> Path:
+        return self.static_root / "example_graph.yaml"
 
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:
