@@ -198,6 +198,9 @@ class TfExtSettings(StaticSettings):
     def example_graph_path(self) -> Path:
         return self.static_root / "example_graph.yaml"
 
+    def module_grouping_dir(self, config_name: str) -> Path:
+        return self.static_root / f"module_grouping_{config_name}"
+
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:
     settings = TfExtSettings.from_env()

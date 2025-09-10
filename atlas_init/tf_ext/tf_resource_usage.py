@@ -12,6 +12,7 @@ import typer
 from model_lib import Entity, dump, dump_as_dict
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
+from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.cli_tf.hcl.parser import iter_resource_blocks
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
@@ -258,13 +259,27 @@ def _iter_edges(valid_resource_types: set[str], dest: str, dest_hcl: str) -> Ite
 
 
 class SimpleGraph(Entity):
+    ROOT_NODE: ClassVar[str] = "root"
     parent_child_edges: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
 
     def add_edge(self, src: str, dst: str):
         self.parent_child_edges[src].add(dst)
 
+    def add_root_node(self, node: str):
+        children = self.parent_child_edges.setdefault(self.ROOT_NODE, set())
+        children.add(node)
+
     def flat_edges(self) -> list[tuple[str, str]]:
         return [(src, dst) for src in self.parent_child_edges for dst in self.parent_child_edges[src]]
+
+    @property
+    def all_nodes(self) -> set[str]:
+        return set(flat_map(self.flat_edges()))
+
+    def to_dot_graph(self, name: str, *, keep_provider_name: bool = True) -> pydot.Dot:
+        return create_dot_graph(
+            name, self.flat_edges(), color_coder=ColorCoderSimple(keep_provider_name=keep_provider_name)
+        )
 
 
 def build_simple_graph(usage: ResourceUsage) -> SimpleGraph:
@@ -357,9 +372,7 @@ def tf_resource_usage(
         graph_yaml = dump(graph_dict, "yaml")
         ensure_parents_write_text(graph_output, graph_yaml)
         logger.info(f"Example graph written to {graph_output}")
-        dot_graph = create_dot_graph(
-            "Example Graph", graph.flat_edges(), color_coder=ColorCoderSimple(keep_provider_name=True)
-        )
+        dot_graph = graph.to_dot_graph("Full Example Graph", keep_provider_name=True)
         graph_output_dir = settings.example_graph_path.parent
         graph_name = settings.example_graph_path.stem
         write_graph(dot_graph, graph_output_dir, graph_name)
