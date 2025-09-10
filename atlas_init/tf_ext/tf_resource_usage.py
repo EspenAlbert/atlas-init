@@ -360,9 +360,10 @@ def tf_resource_usage(
         dot_graph = create_dot_graph(
             "Example Graph", graph.flat_edges(), color_coder=ColorCoderSimple(keep_provider_name=True)
         )
-        dot_graph_png = settings.example_graph_path.with_suffix(".png")
-        write_graph(dot_graph, dot_graph_png.parent, dot_graph_png.name)
-        logger.info(f"Example graph written to {dot_graph_png}")
+        graph_output_dir = settings.example_graph_path.parent
+        graph_name = settings.example_graph_path.stem
+        write_graph(dot_graph, graph_output_dir, graph_name)
+        logger.info(f"Example graph written to {graph_output_dir}/{graph_name}.*")
     else:
         for row in iter_rows(ExampleSrc.UserSpecified, root_path, deprecated, file_glob):
             usage.add_row(row)
