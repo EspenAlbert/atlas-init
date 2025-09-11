@@ -182,3 +182,21 @@ def test_reading_variables_typed(tmp_path):
             default={"default_write_concern": "majority", "custom_openssl_cipher_config_tls12": ["TLS1_2"]},
         ),
     }
+
+
+_example_list_variable = """
+variable "list_variable" {
+  type = list(string)
+}
+"""
+
+
+def test_reading_list_variable(tmp_path):
+    file = tmp_path / "variables.tf"
+    file.write_text(_example_list_variable)
+    tree = safe_parse(file)
+    assert tree is not None
+    variables = variable_reader_typed(tree)
+    assert variables == {
+        "list_variable": TFVar(name="list_variable", description="", type="list(string)", sensitive=False),
+    }

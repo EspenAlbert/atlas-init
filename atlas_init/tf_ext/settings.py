@@ -176,6 +176,9 @@ class TfExtSettings(StaticSettings):
     def provider_cache_dir(self, provider_name: str) -> Path:
         return self.cache_root / "provider_cache" / provider_name
 
+    def provider_cache_file_path(self, provider_name: str, sha: str) -> Path:
+        return self.provider_cache_dir(provider_name) / f"{sha}.json"
+
     @property
     def variable_plan_resolvers_file_path(self) -> Path:
         return self.static_root / "variable_plan_resolvers.yaml"

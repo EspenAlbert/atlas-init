@@ -70,6 +70,10 @@ class TFVar(Entity):
     type: str = ""
     sensitive: bool = False
 
+    @property
+    def is_default_set(self) -> bool:
+        return self.default is not _unset
+
     @field_validator("default", mode="before")
     def unpack_token(cls, v: Any) -> Any:
         if isinstance(v, Token):

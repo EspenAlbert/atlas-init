@@ -142,16 +142,22 @@ def parse_atlas_schema_from_settings(settings: TfExtSettings, provider_config: P
     assert repo_path, "repo_path_atlas_provider is required"
     current_sha = run_and_wait("git rev-parse HEAD", cwd=repo_path).stdout_one_line
     cache_dir = settings.provider_cache_dir(provider_config.provider_name)
-    if provider_config.last_gen_sha == current_sha:
-        return read_cached_atlas_schema(cache_dir, current_sha, settings.tf_cli_config_file)
-    schema = parse_atlas_schema()
+    update_config = provider_config.last_gen_sha != current_sha
+    schema = _read_or_create_cached_atlas_schema(cache_dir, current_sha, settings.tf_cli_config_file)
+    ensure_parents_write_text(
+        settings.schema_resource_types_deprecated_path, dump(schema.deprecated_resource_types, format="yaml")
+    )
+    if not update_config:
+        return schema
     provider_config.last_gen_sha = current_sha
     provider_yaml = dump(provider_config.config_dump(), "yaml")
     settings.repo_out.provider_settings_path(provider_config.provider_name).write_text(provider_yaml)
     return schema
 
 
-def read_cached_atlas_schema(cache_dir: Path, sha: str, tf_cli_config_file: Path | None = None) -> AtlasSchemaInfo:
+def _read_or_create_cached_atlas_schema(
+    cache_dir: Path, sha: str, tf_cli_config_file: Path | None = None
+) -> AtlasSchemaInfo:
     json_response_path = cache_dir / f"{sha}.json"
     if not json_response_path.exists():
         logger.info(f"Cache miss for sha = {sha}, parsing atlas schema")
