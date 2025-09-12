@@ -262,6 +262,9 @@ class NodeSkippedError(Exception):
 
 
 class ColorCoderABC(abc.ABC):
+    def get_color(self, resource_type: str, *, is_unused: bool = False) -> str:
+        return "gray"
+
     @abc.abstractmethod
     def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
         pass

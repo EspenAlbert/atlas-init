@@ -263,6 +263,8 @@ class SimpleGraph(Entity):
     parent_child_edges: dict[str, set[str]] = Field(default_factory=lambda: defaultdict(set))
 
     def add_edge(self, src: str, dst: str):
+        if src == dst:
+            return
         self.parent_child_edges[src].add(dst)
 
     def add_root_node(self, node: str):
@@ -305,10 +307,15 @@ class ColorCoderSimple(ColorCoderABC):
     }
     ATLAS_DEPRECATED_COLOR: ClassVar[str] = "orange"
 
-    def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
+    def get_color(self, resource_type: str, *, is_unused: bool = False) -> str:
+        if is_unused:
+            return "red"
         provider = resource_type.split("_", 1)[0]
+        return self.PROVIDER_COLORS.get(provider, "gray")
+
+    def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
         return pydot.Node(
-            resource_type, shape="box", style="filled", fillcolor=self.PROVIDER_COLORS.get(provider, "gray")
+            resource_type, shape="box", style="filled", fillcolor=self.get_color(resource_type, is_unused=is_unused)
         )
 
     def node_name(self, resource_type: str) -> str:
