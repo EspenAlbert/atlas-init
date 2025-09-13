@@ -9,7 +9,7 @@ from rich.tree import Tree
 import typer
 from zero_3rdparty.iter_utils import flat_map
 
-from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
+from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME, provider_name
 from atlas_init.tf_ext.models import choose_next_emoji
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen_provider import parse_atlas_schema_info
@@ -116,10 +116,6 @@ class ModuleConfigs2(Entity):
                 child for child in all_root_resources if child not in module.root_resource_types
             )
         return self
-
-
-def provider_name(resource_type: str) -> str:
-    return resource_type.split("_", maxsplit=1)[0]
 
 
 def create_module_graph(

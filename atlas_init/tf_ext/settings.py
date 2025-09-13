@@ -204,6 +204,14 @@ class TfExtSettings(StaticSettings):
     def module_grouping_dir(self, config_name: str) -> Path:
         return self.static_root / f"module_grouping_{config_name}"
 
+    @property
+    def provider_base_repo_path(self) -> Path:
+        return self.cache_root / "provider_repos"
+
+    def resource_markdown_path(self, resource_type: str, *, with_full_example: bool = False) -> Path:
+        parent_folder = "resource_markdown_full_example" if with_full_example else "resource_markdown"
+        return self.static_root / f"{parent_folder}/{resource_type}.md"
+
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:
     settings = TfExtSettings.from_env()

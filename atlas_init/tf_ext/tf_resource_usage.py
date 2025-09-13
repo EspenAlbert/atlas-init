@@ -7,6 +7,7 @@ from functools import total_ordering
 from pathlib import Path
 from typing import ClassVar, Iterable
 
+from ask_shell import new_task, run_and_wait
 import pydot
 import typer
 from model_lib import Entity, dump, dump_as_dict
@@ -19,6 +20,7 @@ from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen_provider import parse_atlas_schema_info
+from atlas_init.tf_ext.constants import provider_name, resource_name
 from atlas_init.tf_ext.tf_modules import (
     ColorCoderABC,
     create_dot_graph,
@@ -80,6 +82,64 @@ def root_path_file_globs(settings: TfExtSettings, example_src: ExampleSrc) -> tu
         assert repo_path, "repo_path_atlas_provider is not set"
         return repo_path / "docs/resources", ["*.md"]
     raise ValueError(f"unknown example source: {example_src}")
+
+
+class Provider(StrEnum):
+    AWS = "aws"
+    AZURERM = "azurerm"
+    AZAPI = "azapi"
+    GOOGLE = "google"
+    MONGODBATLAS = "mongodbatlas"
+
+
+_provider_urls = {
+    Provider.AWS: "https://github.com/hashicorp/terraform-provider-aws",
+    Provider.AZURERM: "https://github.com/hashicorp/terraform-provider-azurerm",
+    Provider.AZAPI: "https://github.com/azure/terraform-provider-azapi",
+    Provider.GOOGLE: "https://github.com/hashicorp/terraform-provider-google",
+    Provider.MONGODBATLAS: "https://github.com/mongodb/terraform-provider-mongodbatlas",
+}
+
+
+def provider_git_repourl(provider: Provider) -> str:
+    return _provider_urls[provider]
+
+
+def provider_docs_url(resource: str) -> str:
+    provider = provider_name(resource)
+    return f"https://registry.terraform.io/providers/{provider}/latest/docs/resources/{resource}"
+
+
+_docs_relative_dir = {
+    Provider.AWS: "website/docs/r",
+    Provider.AZURERM: "website/docs/r",
+    Provider.AZAPI: "website/docs/r",
+    Provider.GOOGLE: "website/docs/r",
+    Provider.MONGODBATLAS: "docs/resources",
+}
+
+_docs_file_extension = {
+    Provider.AWS: "html.markdown",
+    Provider.AZURERM: "html.markdown",
+    Provider.AZAPI: "html.markdown",
+    Provider.GOOGLE: "html.markdown",
+    Provider.MONGODBATLAS: "md",
+}
+
+
+class UnsupportedProvider(Exception):
+    pass
+
+
+def provider_docs_md_path(root_path: Path, resource_type: str) -> Path:
+    provider: Provider = provider_name(resource_type)  # pyright: ignore[reportAssignmentType]
+    if provider not in Provider:
+        raise UnsupportedProvider(f"provider {provider} is not supported, only {list(Provider)} are supported")
+    name = resource_name(resource_type)
+    provider_repo_dir = root_path / provider
+    if not provider_repo_dir.exists():
+        run_and_wait(f"git clone {provider_git_repourl(provider)} {provider_repo_dir}")
+    return provider_repo_dir / _docs_relative_dir[provider] / f"{name}.{_docs_file_extension[provider]}"
 
 
 @total_ordering
@@ -322,6 +382,89 @@ class ColorCoderSimple(ColorCoderABC):
         return resource_type if self.keep_provider_name else remove_provider_name(resource_type)
 
 
+def gather_example_usage(settings: TfExtSettings, usage: ResourceUsage, task: new_task) -> None:
+    info, _ = parse_atlas_schema_info(settings)
+    deprecated = set(info.deprecated_resource_types)
+    schema_resource_types = info.resource_types
+    for src in example_sources:
+        src_path, file_globs = root_path_file_globs(settings, src)
+        src_usage = ResourceUsage(root_path=src_path)
+        for row in iter_rows(src, src_path, deprecated, file_globs):
+            src_usage.add_row(row)
+            usage.add_row(row)
+        src_output_path = settings.example_usage_output_path_src(src)
+        dump_usage_md(src_usage, src_output_path)
+        task.update(advance=1)
+    no_examples = set(schema_resource_types) - set(usage.rows.keys())
+    if no_examples:
+        no_examples_str = "\n".join(no_examples)
+        logger.warning(f"Missing examples for {no_examples_str}")
+    missing_path = settings.example_missing_md_path(ExampleSrc.Arch)
+    dump_not_used(info, missing_path, usage)
+
+
+def dump_resource_markdown(
+    settings: TfExtSettings, usage: ResourceUsage, task: new_task, *, with_full_example: bool = False
+) -> None:
+    for resource, row in usage.rows.items():
+        try:
+            docs_path = provider_docs_md_path(settings.provider_base_repo_path, resource)
+            if not docs_path.exists():
+                if resource in {
+                    "mongodbatlas_cloud_provider_access_authorization",
+                    "mongodbatlas_cloud_provider_access_setup",
+                }:
+                    # for some reason these are combined into one file in the provider docs
+                    docs_path = provider_docs_md_path(
+                        settings.provider_base_repo_path, "mongodbatlas_cloud_provider_access"
+                    )
+                    logger.warning(f"Docs path for {resource} does not exist, using {docs_path} instead")
+                else:
+                    logger.warning(f"Docs path for {resource} does not exist")
+                    continue
+        except UnsupportedProvider:
+            logger.warning(f"Unsupported provider for {resource}")
+            continue
+        markdown_path = settings.resource_markdown_path(resource, with_full_example=with_full_example)
+        examples = sorted(
+            [row for row in row.examples if row.src not in {ExampleSrc.Registry}]
+        )  # registry examples are already included from the provider docs path
+        example_lines = []
+        for example in examples:
+            if with_full_example:
+                root_path, _ = root_path_file_globs(settings, example.src)
+                example_path = root_path / example.relative_path
+                example_text = example_path.read_text()
+                example_lines.append(f"### {example.md_link()}\n\n```hcl\n{example_text}\n```\n\n")
+            else:
+                example_lines.append(f"### {example.md_link()}\n\n```hcl\n{example.snippet}\n```\n\n")
+        md_content = [
+            f"# {resource}",
+            "",
+            docs_path.read_text(),
+            "",
+            "## Examples",
+            "",
+            *example_lines,
+        ]
+        ensure_parents_write_text(markdown_path, "\n".join(md_content))
+        task.update(advance=1)
+
+
+def write_graphs(settings: TfExtSettings, usage: ResourceUsage) -> None:
+    graph = build_simple_graph(usage)
+    graph_output = settings.example_graph_path
+    graph_dict = dict(sorted(dump_as_dict(graph.parent_child_edges).items()))
+    graph_yaml = dump(graph_dict, "yaml")
+    ensure_parents_write_text(graph_output, graph_yaml)
+    logger.info(f"Example graph written to {graph_output}")
+    dot_graph = graph.to_dot_graph("Full Example Graph", keep_provider_name=True)
+    graph_output_dir = settings.example_graph_path.parent
+    graph_name = settings.example_graph_path.stem
+    write_graph(dot_graph, graph_output_dir, graph_name)
+    logger.info(f"Example graph written to {graph_output_dir}/{graph_name}.*")
+
+
 def tf_resource_usage(
     root_path: Path = typer.Option(
         ...,
@@ -344,6 +487,9 @@ def tf_resource_usage(
         help="Glob pattern to match files",
     ),
     all_examples: bool = typer.Option(False, "-a", "--all-examples", help="Include all examples"),
+    with_full_example: bool = typer.Option(
+        False, "-full", "--with-full-example", help="Include full examples in the resource markdown"
+    ),
 ):
     settings = TfExtSettings.from_env()
     if not output_path_str:
@@ -357,36 +503,18 @@ def tf_resource_usage(
     deprecated = atlas_graph.deprecated_resource_types
     usage = ResourceUsage(root_path=root_path)
     if all_examples:
-        info, _ = parse_atlas_schema_info(settings)
-        schema_resource_types = info.resource_types
-        for src in example_sources:
-            src_path, file_globs = root_path_file_globs(settings, src)
-            src_usage = ResourceUsage(root_path=src_path)
-            for row in iter_rows(src, src_path, deprecated, file_globs):
-                src_usage.add_row(row)
-                usage.add_row(row)
-            src_output_path = settings.example_usage_output_path_src(src)
-            dump_usage_md(src_usage, src_output_path)
-        no_examples = set(schema_resource_types) - set(usage.rows.keys())
-        if no_examples:
-            no_examples_str = "\n".join(no_examples)
-            logger.warning(f"Missing examples for {no_examples_str}")
-        missing_path = settings.example_missing_md_path(ExampleSrc.Arch)
-        dump_not_used(info, missing_path, usage)
-        graph = build_simple_graph(usage)
-        graph_output = settings.example_graph_path
-        graph_dict = dict(sorted(dump_as_dict(graph.parent_child_edges).items()))
-        graph_yaml = dump(graph_dict, "yaml")
-        ensure_parents_write_text(graph_output, graph_yaml)
-        logger.info(f"Example graph written to {graph_output}")
-        dot_graph = graph.to_dot_graph("Full Example Graph", keep_provider_name=True)
-        graph_output_dir = settings.example_graph_path.parent
-        graph_name = settings.example_graph_path.stem
-        write_graph(dot_graph, graph_output_dir, graph_name)
-        logger.info(f"Example graph written to {graph_output_dir}/{graph_name}.*")
+        with new_task("Gather example usage", total=len(example_sources)) as task:
+            gather_example_usage(settings, usage, task)
+        resource_count = len(usage.rows)
+        with new_task("Dump resource markdown", total=resource_count) as task:
+            dump_resource_markdown(settings, usage, task, with_full_example=with_full_example)
+        with new_task("Write graphs") as task:
+            write_graphs(settings, usage)
     else:
-        for row in iter_rows(ExampleSrc.UserSpecified, root_path, deprecated, file_glob):
-            usage.add_row(row)
+        with new_task("Gather user specified usage") as task:
+            for row in iter_rows(ExampleSrc.UserSpecified, root_path, deprecated, file_glob):
+                usage.add_row(row)
+                task.update(advance=1)
     dump_usage_md(usage, output_path)
     logger.info(f"Resource usage written to {output_path}")
     return usage
