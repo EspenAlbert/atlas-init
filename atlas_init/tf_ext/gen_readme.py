@@ -20,11 +20,21 @@ However, if you have any ideas or feedback, feel free to open a Github Issue!
 """
 
 
-class ReadmeMarkers(StrEnum):
+class ReadmeMarker(StrEnum):
     DISCLAIMER = "DISCLAIMER"
     MODULES = "MODULES"
     EXAMPLE = "TF_EXAMPLES"
     TF_DOCS = "TF_DOCS"
+
+    @classmethod
+    def find_markers(cls, readme_content: str, ignored_markers: list[str]) -> list[str]:
+        found = []
+        for marker in list(cls):
+            if marker in ignored_markers:
+                continue
+            if cls.as_start(marker) in readme_content and cls.as_end(marker) in readme_content:
+                found.append(marker)
+        return found
 
     @classmethod
     def as_start(cls, marker_name: str) -> str:
@@ -48,13 +58,13 @@ class ReadmeMarkers(StrEnum):
 
     @classmethod
     def readme_generators(cls) -> ReadmeGenerators:
-        return [
-            (cls.DISCLAIMER, lambda _: _readme_disclaimer),
-            (cls.EXAMPLE, lambda workspace: read_examples(workspace / EXAMPLES_DIRNAME)),
-        ]
+        return {
+            cls.DISCLAIMER: lambda _: _readme_disclaimer,
+            cls.EXAMPLE: lambda workspace: read_examples(workspace / EXAMPLES_DIRNAME),
+        }
 
 
-ReadmeGenerators: TypeAlias = list[tuple[ReadmeMarkers, Callable[[Path], str]]]
+ReadmeGenerators: TypeAlias = dict[ReadmeMarker, Callable[[Path], str]]
 
 
 def read_examples(examples_dir: Path) -> str:
@@ -102,32 +112,41 @@ def terraform_docs_config_content(readme_path: Path) -> str:
     config = _static_terraform_config
     for replacement_in, replacement_out in [
         ("FILENAME", readme_path.name),
-        ("START_MARKER", ReadmeMarkers.as_start(ReadmeMarkers.TF_DOCS)),
-        ("END_MARKER", ReadmeMarkers.as_end(ReadmeMarkers.TF_DOCS)),
+        ("START_MARKER", ReadmeMarker.as_start(ReadmeMarker.TF_DOCS)),
+        ("END_MARKER", ReadmeMarker.as_end(ReadmeMarker.TF_DOCS)),
     ]:
         config = config.replace(replacement_in, replacement_out)
     return config
 
 
 def generate_and_write_readme(terraform_workdir: Path, *, generators: ReadmeGenerators | None = None) -> str:
-    generators = generators or ReadmeMarkers.readme_generators()
-    readme_path = terraform_workdir / README_FILENAME
-    assert readme_path.exists(), (
-        f"{readme_path} does not exist, currently a boilerplate is expected, consider adding to {readme_path}\n{ReadmeMarkers.example_boilerplate()}"
-    )
-    for marker, generator in generators:
+    generators = generators or ReadmeMarker.readme_generators()
+    readme_path = resolve_readme_path(terraform_workdir)
+    for marker, generator in generators.items():
         content = generator(terraform_workdir)
         if not content:
             continue
         update_between_markers(
             readme_path,
             content,
-            ReadmeMarkers.as_start(marker),
-            ReadmeMarkers.as_end(marker),
+            ReadmeMarker.as_start(marker),
+            ReadmeMarker.as_end(marker),
         )
     generate_terraform_docs(readme_path)
     logger.info(f"updated {readme_path}")
     return readme_path.read_text()
+
+
+def resolve_readme_path(terraform_workdir: Path) -> Path:
+    readme_path = terraform_workdir / README_FILENAME
+    if not readme_path.exists():
+        path_lower = readme_path.with_name(readme_path.name.lower())
+        if path_lower.exists():
+            readme_path = path_lower
+    assert readme_path.exists(), (
+        f"{readme_path} does not exist, currently a boilerplate is expected, consider adding to {readme_path}\n{ReadmeMarker.example_boilerplate()}"
+    )
+    return readme_path
 
 
 def generate_terraform_docs(readme_path: Path) -> None:

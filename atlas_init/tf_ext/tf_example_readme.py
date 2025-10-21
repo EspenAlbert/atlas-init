@@ -1,20 +1,22 @@
 from __future__ import annotations
+
+import logging
 from collections import defaultdict
 from contextlib import suppress
 from functools import total_ordering
-import logging
 from pathlib import Path
 from typing import Callable, ClassVar, Iterable, Protocol, TypeAlias
+
+import pydot
+import typer
 from ask_shell import new_task
 from ask_shell.rich_live import get_live_console
 from model_lib import Entity, parse_dict
 from pydantic import Field, model_validator
-import pydot
 from rich.tree import Tree
-import typer
 
 from atlas_init.settings.rich_utils import tree_text
-from atlas_init.tf_ext.gen_readme import ReadmeMarkers, generate_and_write_readme
+from atlas_init.tf_ext.gen_readme import ReadmeMarker, generate_and_write_readme, resolve_readme_path
 from atlas_init.tf_ext.models import EmojiCounter
 from atlas_init.tf_ext.models_module import README_FILENAME
 from atlas_init.tf_ext.tf_dep import EdgeParsed, ResourceRef, node_plain, parse_graph, parse_graphs
@@ -30,7 +32,32 @@ def tf_example_readme(
     skip_module_details: list[str] = typer.Option(
         ..., "-s", "--skip-module-details", help="List of module details to skip", default_factory=list
     ),
+    skip_module_markers: list[str] = typer.Option(
+        ...,
+        "-m",
+        "--skip-module-markers",
+        help=f"List of module markers to skip, {list(ReadmeMarker)}",
+        default_factory=list,
+    ),
 ):
+    assert example_path.is_dir(), f"expecting the example path to be a directory got {example_path}"
+    readme_path = resolve_readme_path(example_path)
+    active_markers = ReadmeMarker.find_markers(readme_path.read_text(), skip_module_markers)
+    generators = {k: v for k, v in ReadmeMarker.readme_generators().items() if k in active_markers}
+    if ReadmeMarker.MODULES in active_markers:
+        modules_section = readme_modules_section(example_path, skip_module_details)
+        generators[ReadmeMarker.MODULES] = lambda _: "\n".join(modules_section)
+    if not active_markers:
+        logger.warning("found no active markers to update")
+        return
+    with new_task(f"update {README_FILENAME}"):
+        generate_and_write_readme(
+            example_path,
+            generators=generators,
+        )
+
+
+def readme_modules_section(example_path: Path, skip_module_details: list[str]) -> list[str]:
     with new_task("parse example graph"):
         _, example_graph_dot = parse_graph(example_path)  # ensures init is called
         example_graph = ResourceGraph.from_graph(example_graph_dot)
@@ -46,63 +73,68 @@ def tf_example_readme(
     with new_task("create example module graph"):
         # a graph when all resources in a module are treated as a single node.
         modules_graph, emoji_counter = create_module_graph(example_graph)
-    with new_task(f"update {README_FILENAME}"):
-        modules_section = []
-        modules_trees_texts = []
-        module_dirs_used: set[Path] = set()
+    return _modules_md(example_path, modules_config, module_graphs, modules_graph, emoji_counter)
 
-        def add_module_tree(module_dir: Path):
-            # trees are only once per module, not per module instance
-            if module_dir in module_dirs_used:
-                return
-            module_dirs_used.add(module_dir)
-            module_graph = module_graphs[module_dir]
-            module_config = modules_config.get_by_path(module_dir)
-            emojis = ", ".join(emoji_counter.get_emoji(key) for key in module_config.keys)
-            if modules_config.skip_details(module_config):
-                tree = Tree(f"{module_dir.name} ({emojis})")
-                tree.add("details skipped")
-            else:
-                tree = module_graph.to_tree(f"{module_dir.name} ({emojis})", include_orphans=True)
-            get_live_console().print(tree)
-            modules_trees_texts.append(tree_text(tree))
 
-        for _, module_key in emoji_counter.emoji_name():
-            module_config = modules_config.get_by_key(module_key)
-            module_dir = module_config.absolute_path(example_path)
-            add_module_tree(module_dir)
+def _modules_md(
+    example_path: Path,
+    modules_config: ModuleExampleConfigs,
+    module_graphs: dict[Path, ResourceGraph],
+    modules_graph: ResourceGraph,
+    emoji_counter: EmojiCounter,
+) -> list[str]:
+    modules_section = []
+    modules_trees_texts = []
+    module_dirs_used: set[Path] = set()
 
-        def add_module_src(node: Tree, name: str) -> None:
-            config = modules_config.get_by_key(name)
-            node.add(f"{config.source}")
+    def add_module_tree(module_dir: Path):
+        # trees are only once per module, not per module instance
+        if module_dir in module_dirs_used:
+            return
+        module_dirs_used.add(module_dir)
+        module_graph = module_graphs[module_dir]
+        module_config = modules_config.get_by_path(module_dir)
+        emojis = ", ".join(emoji_counter.get_emoji(key) for key in module_config.keys)
+        if modules_config.skip_details(module_config):
+            tree = Tree(f"{module_dir.name} ({emojis})")
+            tree.add("details skipped")
+        else:
+            tree = module_graph.to_tree(f"{module_dir.name} ({emojis})", include_orphans=True)
+        get_live_console().print(tree)
+        modules_trees_texts.append(tree_text(tree))
 
-        module_index_tree = emoji_tree(emoji_counter, tree_processor=add_module_src, name="Module Instances")
-        modules_section.extend(
-            [
-                "## Modules",
-                "",
-                "### Modules Instances",
-                "```sh",
-                tree_text(module_index_tree),
-                "```",
-                "### Module Definitions",
-                "",
-                "```sh",
-                "\n".join(modules_trees_texts),
-                "```",
-                "",
-                "### Graph with Dependencies",
-                "Any resource without a number prefix is defined at the root level.",
-                "",
-                as_mermaid(modules_graph),
-            ]
-        )
-        generators = ReadmeMarkers.readme_generators()
-        generators.insert(1, (ReadmeMarkers.MODULES, lambda _: "\n".join(modules_section)))
-        generate_and_write_readme(
-            example_path,
-            generators=generators,
-        )
+    for _, module_key in emoji_counter.emoji_name():
+        module_config = modules_config.get_by_key(module_key)
+        module_dir = module_config.absolute_path(example_path)
+        add_module_tree(module_dir)
+
+    def add_module_src(node: Tree, name: str) -> None:
+        config = modules_config.get_by_key(name)
+        node.add(f"{config.source}")
+
+    module_index_tree = emoji_tree(emoji_counter, tree_processor=add_module_src, name="Module Instances")
+    modules_section.extend(
+        [
+            "## Modules",
+            "",
+            "### Modules Instances",
+            "```sh",
+            tree_text(module_index_tree),
+            "```",
+            "### Module Definitions",
+            "",
+            "```sh",
+            "\n".join(modules_trees_texts),
+            "```",
+            "",
+            "### Graph with Dependencies",
+            "Any resource without a number prefix is defined at the root level.",
+            "",
+            as_mermaid(modules_graph),
+        ]
+    )
+
+    return modules_section
 
 
 def create_module_graph(example_graph: ResourceGraph) -> tuple[ResourceGraph, EmojiCounter]:
