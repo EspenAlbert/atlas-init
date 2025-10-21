@@ -274,6 +274,12 @@ class ModuleGenConfig(Entity):
         return self.module_out_path / TERRAFORM_DOCS_CONFIG_FILENAME
 
 
+def resolve_terraform_docs_config_path(workspace_dir: Path) -> Path:
+    path = workspace_dir / TERRAFORM_DOCS_CONFIG_FILENAME
+    assert path.exists(), f"no config file found in {path}"
+    return path
+
+
 @dataclass
 class ResourceTypePythonModule:
     resource_type: str

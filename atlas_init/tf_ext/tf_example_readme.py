@@ -43,13 +43,13 @@ def tf_example_readme(
     assert example_path.is_dir(), f"expecting the example path to be a directory got {example_path}"
     readme_path = resolve_readme_path(example_path)
     active_markers = ReadmeMarker.find_markers(readme_path.read_text(), skip_module_markers)
+    if not active_markers:
+        logger.warning("found no active markers to update")
+        return
     generators = {k: v for k, v in ReadmeMarker.readme_generators().items() if k in active_markers}
     if ReadmeMarker.MODULES in active_markers:
         modules_section = readme_modules_section(example_path, skip_module_details)
         generators[ReadmeMarker.MODULES] = lambda _: "\n".join(modules_section)
-    if not active_markers:
-        logger.warning("found no active markers to update")
-        return
     with new_task(f"update {README_FILENAME}"):
         generate_and_write_readme(
             example_path,
