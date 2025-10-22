@@ -16,9 +16,16 @@ from pydantic import Field, model_validator
 from rich.tree import Tree
 
 from atlas_init.settings.rich_utils import tree_text
-from atlas_init.tf_ext.gen_readme import ReadmeMarker, generate_and_write_readme, resolve_readme_path
+from atlas_init.tf_ext.gen_readme import (
+    ReadmeMarker,
+    examples_readme_md_config,
+    generate_and_write_readme,
+    generate_examples_readme_from_template,
+    resolve_readme_path,
+)
 from atlas_init.tf_ext.models import EmojiCounter
-from atlas_init.tf_ext.models_module import README_FILENAME
+from atlas_init.tf_ext.models_module import EXAMPLES_DIRNAME, README_FILENAME
+from atlas_init.tf_ext.run_tf import validate_tf_workspace
 from atlas_init.tf_ext.tf_dep import EdgeParsed, ResourceRef, node_plain, parse_graph, parse_graphs
 
 logger = logging.getLogger(__name__)
@@ -55,6 +62,14 @@ def tf_example_readme(
             example_path,
             generators=generators,
         )
+    if generation_config := examples_readme_md_config(example_path):
+        with new_task(f"update {EXAMPLES_DIRNAME}/*/{README_FILENAME}"):
+            generate_examples_readme_from_template(generation_config)
+        examples = generation_config.example_paths
+        with new_task("validate the examples", total=len(examples)) as task:
+            for path in examples:
+                validate_tf_workspace(path)
+                task.update(advance=1)
 
 
 def readme_modules_section(example_path: Path, skip_module_details: list[str]) -> list[str]:

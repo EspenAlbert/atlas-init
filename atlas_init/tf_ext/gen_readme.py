@@ -1,13 +1,14 @@
 from __future__ import annotations
+from contextlib import suppress
 import logging
 from enum import StrEnum
 from pathlib import Path
 import re
-from typing import Callable, Self, TypeAlias
+from typing import Any, Callable, Self, TypeAlias
 
 from ask_shell import run_and_wait
 from model_lib import Entity, parse_model
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationError, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text, update_between_markers
 
 from atlas_init.cli_tf.go_test_summary import markdown_table_lines
@@ -89,10 +90,23 @@ class ExampleRow(Entity):
     def match_folder(self, path: Path) -> bool:
         return path.name.startswith(self.folder_prefix)
 
+    def as_replacements(self, folder: Path) -> dict[str, Any]:
+        return self.model_dump() | {"folder": folder.name}
+
+
+class VersionsTFModification(Entity):
+    add: str
+
+
+class ExamplesReadme(Entity):
+    readme_template: str
+    # user_agent_extra = {}
+    # some template vars have a condition
+    versions_tf: VersionsTFModification | None = None
+
 
 class TableConfig(Entity):
     name: str
-    readme_template: str
     columns: list[str] = Field(default_factory=list)
     link_column: str
     example_rows: list[ExampleRow]
@@ -105,6 +119,59 @@ class TableConfig(Entity):
     def checks(self) -> Self:
         assert self.link_column in self.columns, f"link column: {self.link_column} not found in {self.columns}"
         return self
+
+
+class TablesConfig(Entity):
+    tables: list[TableConfig]
+
+
+class ExamplesReadmeGeneration(Entity):
+    tables: list[TableConfig]
+    examples_readme: ExamplesReadme
+    example_paths: list[Path]
+    workspace: Path
+
+    def find_example_row(self, row_path: Path) -> ExampleRow:
+        for table in self.tables:
+            for row in table.example_rows:
+                if row.match_folder(row_path):
+                    return row
+        raise ValueError(f"unable to find a tables[*].example_rows for directory: {row_path}")
+
+
+def examples_readme_md_config(workspace: Path) -> ExamplesReadmeGeneration | None:
+    examples = read_example_dirs(workspace / EXAMPLES_DIRNAME)
+    with suppress(AssertionError, ValidationError):
+        config_path = resolve_terraform_docs_config_path(workspace)
+        config_content = config_path.read_text()
+        return parse_model(
+            config_content,
+            t=ExamplesReadmeGeneration,
+            format="yaml",
+            extra_kwargs=dict(example_paths=examples, workspace=workspace),
+        )
+
+
+def generate_examples_readme_from_template(config: ExamplesReadmeGeneration):
+    template_path = config.workspace / config.examples_readme.readme_template
+    template = template_path.read_text()
+    versions_tf_path = config.workspace / "versions.tf"
+    assert versions_tf_path, f"no versions.tf file found {config.workspace}"
+    template_versions_tf = versions_tf_path.read_text()
+    for path in config.example_paths:
+        row = config.find_example_row(path)
+        replacements = row.as_replacements(path)
+        readme_md = template
+        for key, value in replacements.items():
+            replace_in = "{{ .%s }}" % key.upper()
+            replace_out = str(value)
+            readme_md = readme_md.replace(replace_in, replace_out)
+        readme_md_path = path / README_FILENAME
+        readme_md_path.write_text(readme_md)
+        if versions_tf_modification := config.examples_readme.versions_tf:
+            if add := versions_tf_modification.add:
+                versions_tf = f"{template_versions_tf}\n{add}"
+                (path / "versions.tf").write_text(versions_tf)
 
 
 def find_attribute_value(path: Path, attribute_name: str) -> str:
@@ -121,7 +188,7 @@ def find_attribute_value(path: Path, attribute_name: str) -> str:
 def as_markdown_table(examples: list[Path], config: TableConfig) -> list[str]:
     def as_row(row: ExampleRow) -> list[str]:
         example = next((example for example in examples if row.match_folder(example)), None)
-        assert example, f"unable to find example for table {config.name}, in {EXAMPLES_DIRNAME}/{row.folder_prefix}*"
+        assert example, f"unable to find example for table, {config.name}, in {EXAMPLES_DIRNAME}/{row.folder_prefix}*"
         md_row = []
         for col in config.columns:
             value = getattr(row, col, "") or find_attribute_value(example, col)
@@ -133,10 +200,6 @@ def as_markdown_table(examples: list[Path], config: TableConfig) -> list[str]:
         return md_row
 
     return markdown_table_lines(config.name.title(), config.example_rows, config.column_headers, as_row)
-
-
-class TablesConfig(Entity):
-    tables: list[TableConfig]
 
 
 def tables_generator(examples_dir: Path) -> str:
