@@ -31,12 +31,12 @@ def test_update_dumped_vars(tmp_path, monkeypatch: pytest.MonkeyPatch):
     star_pattern = variables.paths["*"]
     variables_tf = tmp_path / "variables.tf"
     variables_tf.write_text("""
-    variable "project_name" {
-        type = string
-    }
-    variable "atlas_private_key" {
-        type = string
-    }
+variable "project_name" {
+    type = string
+}
+variable "atlas_private_key" {
+    type = string
+}
     """)
     tfvars_files, resolved_vars = variables.resolve_vars(tmp_path, variables_tf.parent, "variables.tf")
     assert not tfvars_files
