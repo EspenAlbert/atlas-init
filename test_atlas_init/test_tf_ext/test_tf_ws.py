@@ -8,3 +8,6 @@ def test_include_ws_path_max_ws_depth():
     assert not include_ws_path("some-example-dir/main.tf", max_ws_depth=0)
     assert include_ws_path("some-nested/example/main.tf", max_ws_depth=2)
     assert not include_ws_path("some-nested/example/main.tf", max_ws_depth=1)
+    assert include_ws_path("01_example", path_prefixes=["01"])
+    assert not include_ws_path("02_example", path_prefixes=["01"])
+    assert include_ws_path("03_example", path_prefixes=["01", "03"])

@@ -292,11 +292,12 @@ _ignored_workspace_dirs = [
 ]
 
 
-def include_ws_path(rel_path: str, *, max_ws_depth: int | None = None) -> bool:
+def include_ws_path(rel_path: str, *, max_ws_depth: int | None = None, path_prefixes: list[str] | None = None) -> bool:
     return all(
         f"/{ignored_dir}/" not in rel_path
         and not rel_path.startswith(f"{ignored_dir}/")
         and (max_ws_depth is None or rel_path.strip("/").count("/") <= max_ws_depth)
+        and (path_prefixes is None or any(rel_path.lstrip("/").startswith(prefix) for prefix in path_prefixes))
         for ignored_dir in _ignored_workspace_dirs
     )
 
@@ -369,6 +370,12 @@ def tf_ws(
         "--destroy-after-apply",
         help="Run a destroy command for all succesful runs",
     ),
+    path_prefixes: list[str] | None = typer.Option(
+        None,
+        "-i",
+        "--include-rel-path-prefix",
+        help="Only include workspaces with these relative path prefixes",
+    ),
 ):
     repo_path, rel_path = repo_path_rel_path()
     if (root_repo_path_rel_path := find_repo_path_rel_path(root_path)) and (root_repo_path_rel_path[0] != repo_path):
@@ -384,7 +391,7 @@ def tf_ws(
     paths = sorted(
         (path.parent, rel_path)
         for path, rel_path in iter_paths_and_relative(root_path, "main.tf", only_files=True)
-        if include_ws_path(rel_path, max_ws_depth=max_ws_depth)
+        if include_ws_path(rel_path, max_ws_depth=max_ws_depth, path_prefixes=path_prefixes)
     )
     run_configs = []
     missing_vars_errors = []
@@ -425,12 +432,12 @@ def tf_ws(
             lockfile = parse_model(lockfile_path, t=Lockfile, format="json")
             logger.warning(f"Lockfile exists for {run_config.path}, skipping: {lockfile}")
             return None
-
+        run_config_command = run_config.command
         validate_tf_workspace(run_config.path, tf_cli_config_file=settings.tf_cli_config_file, env_extra=env_extra)
-        if command == TFWsCommands.VALIDATE:
+        if run_config_command == TFWsCommands.VALIDATE:
             return None
         command_extra = ""
-        if command in {TFWsCommands.APPLY, TFWsCommands.DESTROY}:
+        if run_config_command in {TFWsCommands.APPLY, TFWsCommands.DESTROY}:
             command_extra = " -auto-approve"
 
         base_var_files_str = ""
@@ -438,7 +445,9 @@ def tf_ws(
             base_var_files_str = " -var-file=" + " -var-file=".join(
                 str(base_var_file) for base_var_file in base_var_files
             )
-        terraform_full_command = f"terraform {command}{base_var_files_str} -var-file={tf_vars_path}{command_extra}"
+        terraform_full_command = (
+            f"terraform {run_config_command}{base_var_files_str} -var-file={tf_vars_path}{command_extra}"
+        )
         run_state = run_config.run_state = TFWorkspaceRunState(
             command=terraform_full_command,
             cwd=run_config.path,
@@ -454,14 +463,14 @@ def tf_ws(
         return run_state
 
     failed_runs, ok_runs = run_tf_configs(run_configs, run_cmd)
-    if failed_runs:
-        _log_failed_runs(failed_runs)
-        raise typer.Exit(1)
     if command == TFWsCommands.APPLY and destroy_on_apply_ok and ok_runs:
         destroy_configs = [copy_and_validate(run_config, command=TFWsCommands.DESTROY) for run_config in ok_runs]
         failed_destroy, _ = run_tf_configs(destroy_configs, run_cmd)
         if failed_destroy:
-            _log_failed_runs(failed_runs)
+            failed_runs.extend(failed_destroy)
+    if failed_runs:
+        _log_failed_runs(failed_runs)
+        raise typer.Exit(1)
 
 
 def _log_failed_runs(failed_runs: list[tuple[str, TFWorkspaceRunConfig]]):
