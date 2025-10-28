@@ -6,13 +6,13 @@ from concurrent.futures import Future
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Callable, Literal, NamedTuple, Self
 
 import humanize
 import stringcase
 import typer
 from ask_shell import run_and_wait, run_pool
-from model_lib import Entity, dump, parse_model
+from model_lib import Entity, copy_and_validate, dump, parse_model
 from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
 
@@ -316,7 +316,15 @@ class TFWorkspaceRunState(Entity):
         return f"{script_shebang}\n{export_env}\ncd {self.cwd} && {self.command}"
 
 
+class TFWsCommands(StrEnum):
+    VALIDATE = "validate"
+    PLAN = "plan"
+    APPLY = "apply"
+    DESTROY = "destroy"
+
+
 class TFWorkspaceRunConfig(Entity):
+    command: TFWsCommands
     repo_path: Path
     path: Path
     rel_path: str
@@ -334,13 +342,6 @@ class TFWorkspaceRunConfig(Entity):
 
     def tf_vars_path_json(self, settings: TfExtSettings) -> Path:
         return self.tf_data_dir(settings) / "vars.auto.tfvars.json"
-
-
-class TFWsCommands(StrEnum):
-    VALIDATE = "validate"
-    PLAN = "plan"
-    APPLY = "apply"
-    DESTROY = "destroy"
 
 
 def tf_ws(
@@ -362,6 +363,11 @@ def tf_ws(
         "-d",
         "--max-depth",
         help="Maximum depth to search for workspaces. If not set, will search all depths.",
+    ),
+    destroy_on_apply_ok: bool = typer.Option(
+        False,
+        "--destroy-after-apply",
+        help="Run a destroy command for all succesful runs",
     ),
 ):
     repo_path, rel_path = repo_path_rel_path()
@@ -389,6 +395,7 @@ def tf_ws(
             run_configs.append(
                 TFWorkspaceRunConfig(
                     repo_path=repo_path,
+                    command=command,
                     path=path,
                     rel_path=rel_path,
                     resolved_vars=resolved_vars,
@@ -446,24 +453,49 @@ def tf_ws(
         )
         return run_state
 
-    failed_runs = []
-    with run_pool(f"{command} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
+    failed_runs, ok_runs = run_tf_configs(run_configs, run_cmd)
+    if failed_runs:
+        _log_failed_runs(failed_runs)
+        raise typer.Exit(1)
+    if command == TFWsCommands.APPLY and destroy_on_apply_ok and ok_runs:
+        destroy_configs = [copy_and_validate(run_config, command=TFWsCommands.DESTROY) for run_config in ok_runs]
+        failed_destroy, _ = run_tf_configs(destroy_configs, run_cmd)
+        if failed_destroy:
+            _log_failed_runs(failed_runs)
+
+
+def _log_failed_runs(failed_runs: list[tuple[str, TFWorkspaceRunConfig]]):
+    logger.error(f"### ERROR SUMMARY: {len(failed_runs)} ###")
+    for error_str, run_config in failed_runs:
+        logger.error(error_str)
+        if run_state := run_config.run_state:
+            reproduce_sh = run_state.reproduce_path()
+            ensure_parents_write_text(reproduce_sh, run_state.reproduce_command())
+            logger.error(f"Reproduce command can be found in: {reproduce_sh}")
+
+
+class TFWorkspaceRunResults(NamedTuple):
+    failed_runs: list[tuple[str, TFWorkspaceRunConfig]]
+    ok_runs: list[TFWorkspaceRunConfig]
+
+
+def run_tf_configs(
+    run_configs: list[TFWorkspaceRunConfig], run_cmd: Callable[[TFWorkspaceRunConfig], TFWorkspaceRunState | None]
+) -> TFWorkspaceRunResults:
+    failed_runs: list[tuple[str, TFWorkspaceRunConfig]] = []
+    ok_runs: list[TFWorkspaceRunConfig] = []
+    command_str = ", ".join(sorted({config.command for config in run_configs}))
+    run_count = len(run_configs)
+    with run_pool(f"{command_str} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
         futures: dict[Future[TFWorkspaceRunState | None], TFWorkspaceRunConfig] = {
             pool.submit(run_cmd, run_config): run_config for run_config in run_configs
         }
         for future, run_config in futures.items():
             try:
                 future.result()
+                ok_runs.append(run_config)
             except Exception as e:
-                error_str = f"Error running {command} for {run_config.path}: {e}"
+                error_str = f"Error running {run_config.command} for {run_config.path}: {e}"
                 logger.error(error_str)
                 failed_runs.append((error_str, run_config))
-    if failed_runs:
-        logger.error(f"### ERROR SUMMARY: {len(failed_runs)} ###")
-        for error_str, run_config in failed_runs:
-            logger.error(error_str)
-            if run_state := run_config.run_state:
-                reproduce_sh = run_state.reproduce_path()
-                ensure_parents_write_text(reproduce_sh, run_state.reproduce_command())
-                logger.error(f"Reproduce command can be found in: {reproduce_sh}")
-        raise typer.Exit(1)
+    return TFWorkspaceRunResults(failed_runs, ok_runs)
