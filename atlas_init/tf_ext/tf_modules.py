@@ -244,7 +244,7 @@ def parse_atlas_graph(settings: TfExtSettings) -> AtlasGraph:
 
 
 def add_unused_nodes_to_graph(
-    settings: TfExtSettings, atlas_graph: AtlasGraph, color_coder: ColorCoder, internal_graph: pydot.Dot
+    settings: TfExtSettings, atlas_graph: AtlasGraph, color_coder: ColorCoderABC, internal_graph: pydot.Dot
 ):
     schema_resource_types: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
     all_nodes = atlas_graph.all_internal_nodes

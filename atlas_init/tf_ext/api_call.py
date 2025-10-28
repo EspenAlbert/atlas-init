@@ -206,7 +206,7 @@ def api_config(
     assert config_path.exists(), f"Config file {config_path} does not exist."
     model = parse_model(config_path, t=ApiCalls)
     total_calls = len(model.calls)
-    assert _public_private_key(), "Public and private keys must be set in environment variables."
+    assert _public_private_key(), "Public and private keys must be set in environment variables."  # pyright: ignore[reportAssertAlwaysTrue]
     path_variables = model.path_variables
     op_id_path_self_qstring: dict[tuple[str, str], str] = {}
     with run_pool(
