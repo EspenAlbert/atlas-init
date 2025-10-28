@@ -7,20 +7,19 @@ from functools import total_ordering
 from pathlib import Path
 from typing import ClassVar, Iterable
 
-from ask_shell import new_task, run_and_wait
 import pydot
 import typer
+from ask_shell import new_task, run_and_wait
 from model_lib import Entity, dump, dump_as_dict
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
 from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.cli_tf.hcl.parser import iter_resource_blocks
-from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
+from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME, provider_name, resource_name
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo
 from atlas_init.tf_ext.settings import TfExtSettings
 from atlas_init.tf_ext.tf_mod_gen_provider import parse_atlas_schema_info
-from atlas_init.tf_ext.constants import provider_name, resource_name
 from atlas_init.tf_ext.tf_modules import (
     ColorCoderABC,
     create_dot_graph,
@@ -28,7 +27,7 @@ from atlas_init.tf_ext.tf_modules import (
     remove_provider_name,
     write_graph,
 )
-from atlas_init.tf_ext.tf_ws import include_path
+from atlas_init.tf_ext.tf_ws import include_ws_path
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +259,7 @@ def dump_usage_md(resource_usage: ResourceUsage, output_path: Path):
 def iter_rows(src: ExampleSrc, root_path: Path, deprecated: set[str], file_globs: list[str]) -> Iterable[ResourceRow]:
     for tf_path, rel_path in iter_paths_and_relative(root_path, *file_globs, only_files=True):
         logger.debug(f"Processing {tf_path}")
-        if not include_path(rel_path):
+        if not include_ws_path(rel_path):
             logger.debug(f"Skipping {tf_path} because it is in an ignored directory")
             continue
         try:

@@ -1,26 +1,26 @@
+import fnmatch
+import logging
+import os
+from collections import defaultdict
 from concurrent.futures import Future
 from datetime import datetime
 from enum import StrEnum
-import fnmatch
-import logging
-from collections import defaultdict
-import os
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import typer
 import humanize
+import stringcase
+import typer
 from ask_shell import run_and_wait, run_pool
 from model_lib import Entity, dump, parse_model
 from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
-import stringcase
 
 from atlas_init.cli_tf.hcl.modifier2 import TFVar
 from atlas_init.repos.path import GH_OWNER_TERRAFORM_PROVIDER_MONGODBATLAS, owner_project_name
 from atlas_init.settings.env_vars import init_settings
 from atlas_init.settings.env_vars_generated import AtlasSettingsWithProject, AWSSettings
-from atlas_init.settings.path import load_dotenv, repo_path_rel_path
+from atlas_init.settings.path import find_repo_path_rel_path, load_dotenv, repo_path_rel_path
 from atlas_init.tf_ext.paths import find_variables_typed
 from atlas_init.tf_ext.settings import TfExtSettings, init_tf_ext_settings
 from atlas_init.tf_ext.tf_mod_gen import validate_tf_workspace
@@ -143,7 +143,7 @@ class VariablesPlanResolver(Entity):
         repo_owner_project_name = owner_project_name(repo_path)
         matching_example_tfvars = sorted(
             repo_path / tfvars_path
-            for tfvars_path, ws_paths in self.repo_tfvars_paths[repo_owner_project_name].items()
+            for tfvars_path, ws_paths in self.repo_tfvars_paths.get(repo_owner_project_name, {}).items()
             if any(repo_rel_path.startswith(ws_path) for ws_path in ws_paths)
         )
         if matching_example_tfvars:
@@ -292,9 +292,11 @@ _ignored_workspace_dirs = [
 ]
 
 
-def include_path(rel_path: str) -> bool:
+def include_ws_path(rel_path: str, *, max_ws_depth: int | None = None) -> bool:
     return all(
-        f"/{ignored_dir}/" not in rel_path and not rel_path.startswith(f"{ignored_dir}/")
+        f"/{ignored_dir}/" not in rel_path
+        and not rel_path.startswith(f"{ignored_dir}/")
+        and (max_ws_depth is None or rel_path.strip("/").count("/") <= max_ws_depth)
         for ignored_dir in _ignored_workspace_dirs
     )
 
@@ -355,10 +357,18 @@ def tf_ws(
         "--atlas-init-profiles-path",
         help="Path to the atlas-init profiles directory. Used to resolve variables from .env-generated file",
     ),
+    max_ws_depth: int | None = typer.Option(
+        None,
+        "-d",
+        "--max-depth",
+        help="Maximum depth to search for workspaces. If not set, will search all depths.",
+    ),
 ):
     repo_path, rel_path = repo_path_rel_path()
+    if (root_repo_path_rel_path := find_repo_path_rel_path(root_path)) and (root_repo_path_rel_path[0] != repo_path):
+        repo_path, rel_path = root_repo_path_rel_path  # cwd != git_repo(root_path)
     logger.warning(f"repo_path: {repo_path}, rel_path: {rel_path}")
-    settings = init_tf_ext_settings()
+    settings = init_tf_ext_settings(allow_empty_out_path=True)
     variable_resolvers = update_dumped_vars(settings.variable_plan_resolvers_dumped_file_path, atlas_init_profiles_path)
     manual_path = settings.variable_plan_resolvers_file_path
     if manual_path.exists():
@@ -368,7 +378,7 @@ def tf_ws(
     paths = sorted(
         (path.parent, rel_path)
         for path, rel_path in iter_paths_and_relative(root_path, "main.tf", only_files=True)
-        if include_path(rel_path)
+        if include_ws_path(rel_path, max_ws_depth=max_ws_depth)
     )
     run_configs = []
     missing_vars_errors = []
@@ -436,6 +446,7 @@ def tf_ws(
         )
         return run_state
 
+    failed_runs = []
     with run_pool(f"{command} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
         futures: dict[Future[TFWorkspaceRunState | None], TFWorkspaceRunConfig] = {
             pool.submit(run_cmd, run_config): run_config for run_config in run_configs
@@ -444,9 +455,15 @@ def tf_ws(
             try:
                 future.result()
             except Exception as e:
-                logger.error(f"Error running {command} for {run_config.path}: {e}")
-                if run_state := run_config.run_state:
-                    reproduce_sh = run_state.reproduce_path()
-                    ensure_parents_write_text(reproduce_sh, run_state.reproduce_command())
-                    logger.error(f"Reproduce command can be found in: {reproduce_sh}")
-                continue
+                error_str = f"Error running {command} for {run_config.path}: {e}"
+                logger.error(error_str)
+                failed_runs.append((error_str, run_config))
+    if failed_runs:
+        logger.error(f"### ERROR SUMMARY: {len(failed_runs)} ###")
+        for error_str, run_config in failed_runs:
+            logger.error(error_str)
+            if run_state := run_config.run_state:
+                reproduce_sh = run_state.reproduce_path()
+                ensure_parents_write_text(reproduce_sh, run_state.reproduce_command())
+                logger.error(f"Reproduce command can be found in: {reproduce_sh}")
+        raise typer.Exit(1)
