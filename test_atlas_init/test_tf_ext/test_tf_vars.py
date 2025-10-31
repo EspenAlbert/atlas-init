@@ -1,10 +1,11 @@
-from os import getenv
 import os
+from os import getenv
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
-from pathlib import Path
 
 import pytest
+
 from atlas_init.cli_tf.hcl.modifier2 import TFVar
 from atlas_init.tf_ext.paths import ResourceVarUsage, find_resource_types_with_usages, find_variables_typed
 from atlas_init.tf_ext.tf_vars import parse_all_variables
@@ -106,24 +107,32 @@ variable "advanced_configuration" {
 
 def format_type(type: str) -> list[str]:
     if "\n" in type:
-        return ["Type:", "", "```hcl", type, "```", ""]
+        return ["Type:", "", "```hcl", remove_extra_padding(type), "```", ""]
     return [f"Type: `{type}`"]
+
+
+def remove_extra_padding(text: str):
+    return "\n".join(line[2:] if line[:2] == "  " else line for line in text.splitlines())
 
 
 def format_default(name, default: Any) -> list[str]:
     if default is None:
         return ["Default: `null`"]
     if isinstance(default, str) and "\n" in default:
-        return ["Default:", "", "```hcl", f"{name} = {default}", "```", ""]
+        return ["Default:", "", "```hcl", f"{name} = {remove_extra_padding(default)}", "```", ""]
     return ["Default:", "", "```hcl", f"{name} = {default}", "```", ""]
+
+
+def extra_space_strip(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines())
 
 
 def as_md(name: str, tf_var: TFVar) -> list[str]:
     return [
         f"### {name}",
-        *([f"Description: {tf_var.description.strip('"')}", ""] if tf_var.description else []),
+        *([f"Description: {extra_space_strip(tf_var.description.strip('"'))}", ""] if tf_var.description else []),
         *([f"Sensitive: {tf_var.sensitive}", ""] if tf_var.sensitive else []),
-        *(format_type(tf_var.type) if tf_var.type else []),
+        *(format_type((tf_var.type)) if tf_var.type else []),
         *(format_default(name, tf_var.default) if tf_var.is_default_set else []),
         "",
     ]
@@ -170,7 +179,7 @@ def test_generate_inputs_md_cluster(tmp_path, file_regression):
         variables |= find_variables_typed(tf_file)
     groups = {
         "Required Variables": ["project_id", "name", "cluster_type"],
-        "Cluster Topology `regions` (Option 1)": ["regions", "provider_name"],
+        "Cluster Topology `regions` (Option 1)": ["regions", "provider_name", "shard_count"],
         "Cluster Topology `regions` Auto Scaling": [
             "auto_scaling",
             "auto_scaling_analytics",

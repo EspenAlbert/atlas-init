@@ -8,12 +8,12 @@ Description: Unique 24-hexadecimal digit string that identifies your project, fo
 Type: `string`
 
 ### name
-Description: Human-readable label that identifies this cluster, for example: `my-product-cluster
+Description: Human-readable label that identifies this cluster, for example: `my-product-cluster`.
 
 Type: `string`
 
 ### cluster_type
-Description: Type of the cluster that you want to create. Valid values are REPLICASET/SHARDED/GEOSHARDED
+Description: Type of the cluster that you want to create. Valid values are `REPLICASET` / `SHARDED` / `GEOSHARDED`.
 
 Type: `string`
 
@@ -25,12 +25,12 @@ Description: The simplest way to define your cluster topology:
 - Set `node_count`, `node_count_read_only`, `node_count_analytics` depending on your needs.
 - Set `provider_name` (AWS/AZURE/GCP) or use the "root" level `provider_name` variable if all regions share the provider_name.
 - For cluster_type.REPLICASET: omit both `shard_number` and `zone_name`.
-- For cluster_type.SHARDED: set `shard_number` on each region or optionally use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
+- For cluster_type.SHARDED: set `shard_number` on each region or use the `shard_count` variable; do not set `zone_name`. Regions with the same `shard_number` belong to the same shard.
 - For cluster_type.GEOSHARDED: set `zone_name` on each region; optionally set `shard_number`. Regions with the same `zone_name` form one zone.
 
-NOTE: 
-- The order in which region blocks are defined in this list determines their priority within each shard or zone. 
-  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, refer [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
+NOTE:
+- The order in which region blocks are defined in this list determines their priority within each shard or zone.
+  - The first region gets priority 7 (maximum), the next 6, and so on (minimum 0). For more context, see [this](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/operation/operation-creategroupcluster#operation-creategroupcluster-body-application-vnd-atlas-2024-10-23-json-replicationspecs-regionconfigs-priority).
 - Within a zone, shard_numbers are specific to that zone and independent of the shard_number in any other zones.
 - `shard_number` is a variable specific to this module used to group regions within a shard and does not represent an actual value in Atlas.
 
@@ -38,26 +38,36 @@ Type:
 
 ```hcl
 list(object({
-    name                    = string
-    disk_iops               = optional(number)
-    disk_size_gb            = optional(number)
-    ebs_volume_type         = optional(string)
-    instance_size           = optional(string)
-    instance_size_analytics = optional(string)
-    node_count              = optional(number)
-    node_count_analytics    = optional(number)
-    node_count_read_only    = optional(number)
-    provider_name           = optional(string)
-    shard_number            = optional(number)
-    zone_name               = optional(string)
-  }))
+  name                    = string
+  disk_iops               = optional(number)
+  disk_size_gb            = optional(number)
+  ebs_volume_type         = optional(string)
+  instance_size           = optional(string)
+  instance_size_analytics = optional(string)
+  node_count              = optional(number)
+  node_count_analytics    = optional(number)
+  node_count_read_only    = optional(number)
+  provider_name           = optional(string)
+  shard_number            = optional(number)
+  zone_name               = optional(string)
+}))
 ```
 
 
 ### provider_name
-Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`
+Description: AWS/AZURE/GCP, setting this on the root level, will use it inside of each `region`.
 
 Type: `string`
+Default: `null`
+
+### shard_count
+Description: Number of shards for SHARDED clusters.
+
+- When set, all shards share the same region topology (each shard gets the same regions list).
+- Do NOT set regions[*].shard_number when shard_count is set (they are mutually exclusive).
+- When unset, you must set regions[*].shard_number on every region to explicitly group regions into shards.
+
+Type: `number`
 Default: `null`
 
 ## Cluster Topology `Regions` Auto Scaling
@@ -69,24 +79,24 @@ Type:
 
 ```hcl
 object({
-    compute_enabled            = optional(bool, true)
-    compute_max_instance_size  = optional(string, "M200")
-    compute_min_instance_size  = optional(string, "M10")
-    compute_scale_down_enabled = optional(bool, true)
-    disk_gb_enabled            = optional(bool, true)
-  })
+  compute_enabled            = optional(bool, true)
+  compute_max_instance_size  = optional(string, "M200")
+  compute_min_instance_size  = optional(string, "M10")
+  compute_scale_down_enabled = optional(bool, true)
+  disk_gb_enabled            = optional(bool, true)
+})
 ```
 
 Default:
 
 ```hcl
 auto_scaling = {
-    compute_enabled            = true
-    compute_max_instance_size  = "M200"
-    compute_min_instance_size  = "M10"
-    compute_scale_down_enabled = true
-    disk_gb_enabled            = true
-  }
+  compute_enabled            = true
+  compute_max_instance_size  = "M200"
+  compute_min_instance_size  = "M10"
+  compute_scale_down_enabled = true
+  disk_gb_enabled            = true
+}
 ```
 
 
@@ -97,12 +107,12 @@ Type:
 
 ```hcl
 object({
-    compute_enabled            = optional(bool)
-    compute_max_instance_size  = optional(string)
-    compute_min_instance_size  = optional(string)
-    compute_scale_down_enabled = optional(bool)
-    disk_gb_enabled            = optional(bool)
-  })
+  compute_enabled            = optional(bool)
+  compute_max_instance_size  = optional(string)
+  compute_min_instance_size  = optional(string)
+  compute_scale_down_enabled = optional(bool)
+  disk_gb_enabled            = optional(bool)
+})
 ```
 
 Default: `null`
@@ -130,7 +140,7 @@ Description: Storage capacity of instance data volumes expressed in gigabytes. I
 
  MongoDB Cloud requires this parameter if you set **replicationSpecs**.
 
- If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value. 
+ If you specify a disk size below the minimum (10 GB), this parameter defaults to the minimum disk size value.
 
  Storage charge calculations depend on whether you choose the default value or a custom value.
 
@@ -188,49 +198,49 @@ Type:
 
 ```hcl
 list(object({
-    region_configs = list(object({
-      analytics_auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      analytics_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      auto_scaling = optional(object({
-        compute_enabled            = optional(bool)
-        compute_max_instance_size  = optional(string)
-        compute_min_instance_size  = optional(string)
-        compute_scale_down_enabled = optional(bool)
-        disk_gb_enabled            = optional(bool)
-      }))
-      backing_provider_name = optional(string)
-      electable_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      priority      = number
-      provider_name = string
-      read_only_specs = optional(object({
-        disk_iops       = optional(number)
-        disk_size_gb    = optional(number)
-        ebs_volume_type = optional(string)
-        instance_size   = optional(string)
-        node_count      = optional(number)
-      }))
-      region_name = string
+  region_configs = list(object({
+    analytics_auto_scaling = optional(object({
+      compute_enabled            = optional(bool)
+      compute_max_instance_size  = optional(string)
+      compute_min_instance_size  = optional(string)
+      compute_scale_down_enabled = optional(bool)
+      disk_gb_enabled            = optional(bool)
     }))
-    zone_name = optional(string)
+    analytics_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    auto_scaling = optional(object({
+      compute_enabled            = optional(bool)
+      compute_max_instance_size  = optional(string)
+      compute_min_instance_size  = optional(string)
+      compute_scale_down_enabled = optional(bool)
+      disk_gb_enabled            = optional(bool)
+    }))
+    backing_provider_name = optional(string)
+    electable_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    priority      = number
+    provider_name = string
+    read_only_specs = optional(object({
+      disk_iops       = optional(number)
+      disk_size_gb    = optional(number)
+      ebs_volume_type = optional(string)
+      instance_size   = optional(string)
+      node_count      = optional(number)
+    }))
+    region_name = string
   }))
+  zone_name = optional(string)
+}))
 ```
 
 Default:
@@ -249,30 +259,30 @@ Type:
 
 ```hcl
 object({
-    change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
-    custom_openssl_cipher_config_tls12                             = optional(list(string))
-    default_max_time_ms                                            = optional(number)
-    default_write_concern                                          = optional(string, "majority")
-    javascript_enabled                                             = optional(bool, false)
-    minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
-    no_table_scan                                                  = optional(bool)
-    oplog_min_retention_hours                                      = optional(number)
-    oplog_size_mb                                                  = optional(number)
-    sample_refresh_interval_bi_connector                           = optional(number)
-    sample_size_bi_connector                                       = optional(number)
-    tls_cipher_config_mode                                         = optional(string)
-    transaction_lifetime_limit_seconds                             = optional(number)
-  })
+  change_stream_options_pre_and_post_images_expire_after_seconds = optional(number)
+  custom_openssl_cipher_config_tls12                             = optional(list(string))
+  default_max_time_ms                                            = optional(number)
+  default_write_concern                                          = optional(string, "majority")
+  javascript_enabled                                             = optional(bool, false)
+  minimum_enabled_tls_protocol                                   = optional(string, "TLS1_2")
+  no_table_scan                                                  = optional(bool)
+  oplog_min_retention_hours                                      = optional(number)
+  oplog_size_mb                                                  = optional(number)
+  sample_refresh_interval_bi_connector                           = optional(number)
+  sample_size_bi_connector                                       = optional(number)
+  tls_cipher_config_mode                                         = optional(string)
+  transaction_lifetime_limit_seconds                             = optional(number)
+})
 ```
 
 Default:
 
 ```hcl
 advanced_configuration = {
-    default_write_concern        = "majority"
-    javascript_enabled           = false
-    minimum_enabled_tls_protocol = "TLS1_2"
-  }
+  default_write_concern        = "majority"
+  javascript_enabled           = false
+  minimum_enabled_tls_protocol = "TLS1_2"
+}
 ```
 
 
@@ -337,7 +347,7 @@ redact_client_log_data = True
 ### tags
 Description: Map that contains key-value pairs between 1 to 255 characters in length for tagging and categorizing the cluster.
 We recommend setting:
-Department, team name, application name, environment, version, email contact, criticality. 
+Department, team name, application name, environment, version, email contact, criticality.
 These values can be used for:
 - Billing.
 - Data classification.
@@ -360,7 +370,7 @@ Default: `null`
 ## Optional Variables
 
 ### accept_data_risks_and_force_replica_set_reconfig
-Description: If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology. Forcedreconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. MongoDB Atlas docs contain more information. To proceed with an operation which carries that risk, set **acceptDataRisksAndForceReplicaSetReconfig** to the current date.
+Description: If reconfiguration is necessary to regain a primary due to a regional outage, submit this field alongside your topology reconfiguration to request a new regional outage resistant topology. Forced reconfigurations during an outage of the majority of electable nodes carry a risk of data loss if replicated writes (even majority committed writes) have not been replicated to the new primary node. MongoDB Atlas docs contain more information. To proceed with an operation which carries that risk, set **acceptDataRisksAndForceReplicaSetReconfig** to the current date.
 
 Type: `string`
 Default: `null`
@@ -372,9 +382,9 @@ Type:
 
 ```hcl
 object({
-    enabled         = optional(bool)
-    read_preference = optional(string)
-  })
+  enabled         = optional(bool)
+  read_preference = optional(string)
+})
 ```
 
 Default: `null`
@@ -430,8 +440,8 @@ Type:
 
 ```hcl
 object({
-    expiration_date = string
-  })
+  expiration_date = string
+})
 ```
 
 Default: `null`
@@ -452,16 +462,6 @@ Description: Root Certificate Authority that MongoDB Cloud cluster uses. MongoDB
 Type: `string`
 Default: `null`
 
-### shard_count
-Description: Number of shards for SHARDED clusters.
-
-- When set, all shards share the same region topology (each shard gets the same regions list).
-- Do NOT set regions[*].shard_number when shard_count is set (they are mutually exclusive).
-- When unset, you must set regions[*].shard_number on every region to explicitly group regions into shards.
-
-Type: `number`
-Default: `null`
-
 ### timeouts
 Description: Timeouts for create/update/delete operations.
 
@@ -469,10 +469,10 @@ Type:
 
 ```hcl
 object({
-    create = optional(string)
-    delete = optional(string)
-    update = optional(string)
-  })
+  create = optional(string)
+  delete = optional(string)
+  update = optional(string)
+})
 ```
 
 Default: `null`
