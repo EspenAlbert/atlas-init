@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-import pytest_asyncio
 from model_lib import parse_model
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
@@ -68,7 +67,6 @@ def db_name_test(request) -> str:
     return f"pytest-{func_name}-{date_filename_with_seconds()}"
 
 
-@pytest_asyncio.fixture
 @pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 async def mongo_dao(settings, db_name_test) -> MongoDao:
     settings.mongo_database = db_name_test
