@@ -1,17 +1,21 @@
 from __future__ import annotations
+
 import logging
 from concurrent.futures import Future
 from contextlib import suppress
 from datetime import datetime
+from pathlib import Path
 from typing import ClassVar
-from ask_shell import ShellRun, confirm, kill, run, run_and_wait
-from ask_shell.models import ShellRunEventT, ShellRunStdOutput
+
+from ask_shell._internal.models import ShellRunEventT, ShellRunStdOutput
+from ask_shell.ask import confirm
+from ask_shell.shell import ShellRun, kill, run, run_and_wait
+from model_lib import Event
 from zero_3rdparty import str_utils
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 from zero_3rdparty.future import chain_future
+
 from atlas_init.settings.env_vars import AtlasInitSettings
-from pathlib import Path
-from model_lib import Event
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ from typing import ClassVar, Iterable
 
 import pydot
 import typer
-from ask_shell import new_task, print_to_live
+from ask_shell.console import new_task, print_to_live
 from model_lib import parse_list, parse_model
 from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map

@@ -5,7 +5,7 @@ from pydoc import locate
 from typing import Literal
 
 import typer
-from ask_shell.typer_command import configure_logging
+from ask_shell.console import configure_logging
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
@@ -46,7 +46,7 @@ from atlas_init.settings.env_vars import (
     active_suites,
     init_settings,
 )
-from atlas_init.settings.env_vars_generated import AWSSettings, AtlasSettings
+from atlas_init.settings.env_vars_generated import AtlasSettings, AWSSettings
 from atlas_init.settings.path import (
     CwdIsNoRepoPathError,
     dump_vscode_dotenv,

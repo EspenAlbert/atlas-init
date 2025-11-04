@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from functools import total_ordering
 import logging
 from collections import defaultdict
+from functools import total_ordering
 from pathlib import Path
 from threading import RLock
 from typing import Callable, Iterable, NamedTuple
 
 import pydot
-from ask_shell import ShellError, new_task, run_and_wait
-from ask_shell._run import stop_runs_and_pool
-from ask_shell.run_pool import run_pool
+from ask_shell.console import new_task
+from ask_shell.shell import ShellError, run_and_wait, run_pool, stop_runs_and_pool
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field, model_validator
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed

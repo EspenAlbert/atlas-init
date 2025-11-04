@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from ask_shell import run_and_wait
+from ask_shell.shell import run_and_wait
 from model_lib import Entity, dump, parse_dict
 from pydantic import BaseModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -13,7 +14,6 @@ from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ENV_NAME
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.models_module import ProviderGenConfig
 from atlas_init.tf_ext.settings import TfExtSettings
-
 
 logger = logging.getLogger(__name__)
 

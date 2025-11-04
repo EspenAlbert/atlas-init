@@ -1,12 +1,13 @@
 from __future__ import annotations
-from contextlib import suppress
+
 import logging
+import re
+from contextlib import suppress
 from enum import StrEnum
 from pathlib import Path
-import re
 from typing import Any, Callable, Self, TypeAlias
 
-from ask_shell import run_and_wait
+from ask_shell.shell import run_and_wait
 from model_lib import Entity, parse_model
 from pydantic import Field, ValidationError, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text, update_between_markers

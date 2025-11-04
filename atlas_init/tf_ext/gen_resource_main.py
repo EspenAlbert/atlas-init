@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterable
 
-from ask_shell import run_and_wait
+from ask_shell.shell import run_and_wait
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceGenConfig
 from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule

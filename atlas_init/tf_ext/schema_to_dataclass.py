@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, ClassVar, Self
 
-from ask_shell import ShellError, run_and_wait
+from ask_shell.shell import ShellError, run_and_wait
 from inflection import singularize
 from model_lib import Entity
 from pydantic import model_validator

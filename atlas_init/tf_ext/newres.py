@@ -1,10 +1,12 @@
 import logging
 from pathlib import Path
-from ask_shell import run_and_wait
+
 from ask_shell.settings import clean_dir
+from ask_shell.shell import run_and_wait
 from model_lib import dump
 from zero_3rdparty import humps
 from zero_3rdparty.file_utils import ensure_parents_write_text
+
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, parse_atlas_schema
 
 logger = logging.getLogger(__name__)

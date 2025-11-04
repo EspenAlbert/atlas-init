@@ -1,5 +1,7 @@
-from ask_shell import new_task, run_and_wait
 from pathlib import Path
+
+from ask_shell.console import new_task
+from ask_shell.shell import run_and_wait
 
 
 def validate_tf_workspace(

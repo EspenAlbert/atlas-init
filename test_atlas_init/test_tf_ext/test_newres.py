@@ -1,8 +1,10 @@
 import os
-from ask_shell import run_and_wait
-from ask_shell.models import _resolve_binary
+
 import pytest
+from ask_shell._internal.models import _resolve_binary
+from ask_shell.shell import run_and_wait
 from zero_3rdparty.file_utils import clean_dir
+
 from atlas_init.tf_ext.newres import prepare_newres
 
 

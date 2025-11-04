@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from ask_shell import new_task
+from ask_shell.console import new_task
 from model_lib import IgnoreFalsy, dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text

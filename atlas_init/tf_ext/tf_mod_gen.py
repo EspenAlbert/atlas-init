@@ -4,7 +4,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import typer
-from ask_shell import new_task, run_and_wait, run_pool, text
+from ask_shell.ask import text
+from ask_shell.console import new_task
+from ask_shell.shell import run_and_wait, run_pool
 from model_lib import parse_model, parse_payload
 from pydantic import DirectoryPath, TypeAdapter
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text

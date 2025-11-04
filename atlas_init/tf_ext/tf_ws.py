@@ -11,7 +11,7 @@ from typing import Any, Callable, Literal, NamedTuple, Self
 import humanize
 import stringcase
 import typer
-from ask_shell import run_and_wait, run_pool
+from ask_shell.shell import run_and_wait, run_pool
 from model_lib import Entity, copy_and_validate, dump, parse_model
 from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative

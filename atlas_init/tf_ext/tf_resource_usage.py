@@ -9,7 +9,8 @@ from typing import ClassVar, Iterable
 
 import pydot
 import typer
-from ask_shell import new_task, run_and_wait
+from ask_shell.console import new_task
+from ask_shell.shell import run_and_wait
 from model_lib import Entity, dump, dump_as_dict
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative

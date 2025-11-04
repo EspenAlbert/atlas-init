@@ -9,8 +9,7 @@ from typing import Callable, ClassVar, Iterable, Protocol, TypeAlias
 
 import pydot
 import typer
-from ask_shell import new_task
-from ask_shell.rich_live import get_live_console
+from ask_shell.console import get_live_console, new_task
 from model_lib import Entity, parse_dict
 from pydantic import Field, model_validator
 from rich.tree import Tree

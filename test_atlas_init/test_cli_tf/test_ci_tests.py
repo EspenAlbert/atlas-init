@@ -1,6 +1,6 @@
+from ask_shell.ask import question_patcher
 from zero_3rdparty.datetime_utils import utc_now
 
-from ask_shell.interactive import question_patcher
 from atlas_init.cli_tf.ci_tests import ask_user_to_classify_error
 from atlas_init.cli_tf.go_test_run import GoTestRun
 from atlas_init.cli_tf.go_test_tf_error import (

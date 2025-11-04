@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
 from functools import reduce, total_ordering
 from pathlib import Path
-import re
 from typing import Callable, ClassVar, TypeVar
 
-from ask_shell.rich_progress import new_task
+from ask_shell.console import new_task
 from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils, file_utils

@@ -1,11 +1,13 @@
 import logging
-from pathlib import Path
-from ask_shell import confirm, run_pool
 from concurrent.futures import Future
-from ask_shell.rich_live import get_live_console
+from pathlib import Path
+
+import typer
+from ask_shell.ask import confirm
+from ask_shell.console import get_live_console
+from ask_shell.shell import run_pool
 from model_lib import copy_and_validate, parse_model
 from rich.markdown import Markdown
-import typer
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.tf_ext.models_module import (
@@ -14,7 +16,7 @@ from atlas_init.tf_ext.models_module import (
     as_provider_name,
 )
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, parse_atlas_schema_from_settings
-from atlas_init.tf_ext.settings import init_tf_ext_settings, TfExtSettings
+from atlas_init.tf_ext.settings import TfExtSettings, init_tf_ext_settings
 from atlas_init.tf_ext.tf_mod_gen import finalize_and_validate_module, generate_resource_module
 
 logger = logging.getLogger(__name__)
