@@ -452,7 +452,10 @@ def tf_ws(
             logger.warning(f"Lockfile exists for {run_config.path}, skipping: {lockfile}")
             return None
         run_config_command = run_config.command
-        validate_tf_workspace(run_config.path, tf_cli_config_file=settings.tf_cli_config_file, env_extra=env_extra)
+        binary_str = f"mise x terraform@{run_config.tf_version} -- terraform" if run_config.tf_version else "terraform"
+        validate_tf_workspace(
+            run_config.path, tf_cli_config_file=settings.tf_cli_config_file, env_extra=env_extra, tf_binary=binary_str
+        )
         if run_config_command == TFWsCommands.VALIDATE:
             return None
         command_extra = ""
@@ -464,17 +467,17 @@ def tf_ws(
             base_var_files_str = " -var-file=" + " -var-file=".join(
                 str(base_var_file) for base_var_file in base_var_files
             )
-        binary_str = f"mise x terraform@{run_config.tf_version} -- terraform" if run_config.tf_version else "terraform"
         terraform_full_command = (
             f"{binary_str} {run_config_command}{base_var_files_str} -var-file={tf_vars_path}{command_extra}"
         )
+        logger.info(f"Running command: {terraform_full_command}")
         run_state = run_config.run_state = TFWorkspaceRunState(
             command=terraform_full_command,
             cwd=run_config.path,
             env=env_extra,
             tf_data_dir=tf_data_dir,
         )
-        shell.shell.run_and_wait(
+        shell.run_and_wait(
             run_state.command,
             cwd=run_state.cwd,
             env=run_state.env,
@@ -515,7 +518,7 @@ def run_tf_configs(
     ok_runs: list[TFWorkspaceRunConfig] = []
     command_str = ", ".join(sorted({config.command for config in run_configs}))
     run_count = len(run_configs)
-    with shell.shell.run_pool(f"{command_str} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
+    with shell.run_pool(f"{command_str} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
         futures: dict[Future[TFWorkspaceRunState | None], TFWorkspaceRunConfig] = {
             pool.submit(run_cmd, run_config): run_config for run_config in run_configs
         }
