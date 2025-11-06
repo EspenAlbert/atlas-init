@@ -1,11 +1,11 @@
-from ask_shell import configure_logging
 from typer import Typer
 
+from atlas_init.settings.rich_utils import configure_logging
 from atlas_init.tf_ext import api_call, settings, tf_desc_gen, tf_example_readme, tf_mod_gen_provider, tf_ws
 
 
 def typer_main():
-    from atlas_init.tf_ext import tf_dep, tf_mod_gen, tf_modules, tf_resource_usage, tf_vars, tf_module_grouping
+    from atlas_init.tf_ext import tf_dep, tf_mod_gen, tf_module_grouping, tf_modules, tf_resource_usage, tf_vars
 
     app = Typer(
         name="tf-ext",

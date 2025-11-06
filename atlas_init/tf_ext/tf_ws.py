@@ -6,12 +6,13 @@ from concurrent.futures import Future
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
+from shutil import which
 from typing import Any, Callable, Literal, NamedTuple, Self
 
 import humanize
 import stringcase
 import typer
-from ask_shell.shell import run_and_wait, run_pool
+from ask_shell import shell
 from model_lib import Entity, copy_and_validate, dump, parse_model
 from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
@@ -332,6 +333,7 @@ class TFWorkspaceRunConfig(Entity):
     resolved_vars: dict[str, Any]
     resolved_env_vars: dict[str, Any]
     base_tfvars: list[Path]
+    tf_version: str | None = None
 
     run_state: TFWorkspaceRunState | None = Field(default=None, init=False)
 
@@ -376,7 +378,19 @@ def tf_ws(
         "--include-rel-path-prefix",
         help="Only include workspaces with these relative path prefixes",
     ),
+    tf_versions: list[str] | None = typer.Option(  # pyright: ignore[reportRedeclaration]
+        None,
+        "-v",
+        "--tf-version",
+        help="Run one or more times for different TF Versions, e.g. -t 1.8.0 -t 1.9.0",
+    ),
 ):
+    if tf_versions and command not in {TFWsCommands.VALIDATE, TFWsCommands.PLAN}:
+        raise ValueError(f"TF Versions are only supported for {TFWsCommands.VALIDATE} and {TFWsCommands.PLAN}")
+    mise_binary = which("mise")
+    if not mise_binary and tf_versions:
+        raise ValueError("mise must be installed to use TF Versions")
+    tf_versions: list[str | None] = tf_versions or [None]  # pyright: ignore[reportAssignmentType]
     repo_path, rel_path = repo_path_rel_path()
     if (root_repo_path_rel_path := find_repo_path_rel_path(root_path)) and (root_repo_path_rel_path[0] != repo_path):
         repo_path, rel_path = root_repo_path_rel_path  # cwd != git_repo(root_path)
@@ -395,24 +409,29 @@ def tf_ws(
     )
     run_configs = []
     missing_vars_errors = []
-    for path, rel_path in paths:
-        try:
-            base_tfvars, resolver_vars = variable_resolvers.resolve_vars(repo_path, path, rel_path)
-            resolved_vars, resolved_env_vars = as_tfvars_env(resolver_vars)
-            run_configs.append(
-                TFWorkspaceRunConfig(
-                    repo_path=repo_path,
-                    command=command,
-                    path=path,
-                    rel_path=rel_path,
-                    resolved_vars=resolved_vars,
-                    resolved_env_vars=resolved_env_vars,
-                    base_tfvars=base_tfvars,
+
+    for tf_version in tf_versions:
+        if tf_version is not None:
+            logger.info(f"Running with TF Version: {tf_version}")
+        for path, rel_path in paths:
+            try:
+                base_tfvars, resolver_vars = variable_resolvers.resolve_vars(repo_path, path, rel_path)
+                resolved_vars, resolved_env_vars = as_tfvars_env(resolver_vars)
+                run_configs.append(
+                    TFWorkspaceRunConfig(
+                        repo_path=repo_path,
+                        command=command,
+                        path=path,
+                        rel_path=rel_path,
+                        resolved_vars=resolved_vars,
+                        resolved_env_vars=resolved_env_vars,
+                        base_tfvars=base_tfvars,
+                        tf_version=tf_version,
+                    )
                 )
-            )
-        except _MissingResolverVarsError as e:
-            missing_vars_errors.append(e)
-            continue
+            except _MissingResolverVarsError as e:
+                missing_vars_errors.append(e)
+                continue
     if missing_vars_errors:
         missing_vars_formatted = "\n".join(str(e) for e in missing_vars_errors)
         logger.warning(f"Missing variables:\n{missing_vars_formatted}")
@@ -445,8 +464,9 @@ def tf_ws(
             base_var_files_str = " -var-file=" + " -var-file=".join(
                 str(base_var_file) for base_var_file in base_var_files
             )
+        binary_str = f"mise x terraform@{run_config.tf_version} -- terraform" if run_config.tf_version else "terraform"
         terraform_full_command = (
-            f"terraform {run_config_command}{base_var_files_str} -var-file={tf_vars_path}{command_extra}"
+            f"{binary_str} {run_config_command}{base_var_files_str} -var-file={tf_vars_path}{command_extra}"
         )
         run_state = run_config.run_state = TFWorkspaceRunState(
             command=terraform_full_command,
@@ -454,7 +474,7 @@ def tf_ws(
             env=env_extra,
             tf_data_dir=tf_data_dir,
         )
-        run_and_wait(
+        shell.shell.run_and_wait(
             run_state.command,
             cwd=run_state.cwd,
             env=run_state.env,
@@ -495,7 +515,7 @@ def run_tf_configs(
     ok_runs: list[TFWorkspaceRunConfig] = []
     command_str = ", ".join(sorted({config.command for config in run_configs}))
     run_count = len(run_configs)
-    with run_pool(f"{command_str} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
+    with shell.shell.run_pool(f"{command_str} in TF Workspaces", total=run_count, max_concurrent_submits=9) as pool:
         futures: dict[Future[TFWorkspaceRunState | None], TFWorkspaceRunConfig] = {
             pool.submit(run_cmd, run_config): run_config for run_config in run_configs
         }

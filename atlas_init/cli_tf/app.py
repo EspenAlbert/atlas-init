@@ -10,11 +10,12 @@ from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
 )
-from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.changelog import convert_to_changelog
+from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.example_update import update_example_cmd
 from atlas_init.cli_tf.log_clean import log_clean
 from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
+from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema import (
     dump_generator_config,
     parse_py_terraform_schema,
@@ -25,12 +26,11 @@ from atlas_init.cli_tf.schema_v2 import (
     generate_resource_go_resource_schema,
     parse_schema,
 )
-from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
 from atlas_init.repos.go_sdk import download_admin_api
 from atlas_init.repos.path import Repo, current_repo_path
+from atlas_init.settings import interactive
 from atlas_init.settings.env_vars import init_settings
-from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
@@ -164,7 +164,7 @@ def schema2(
     add_api_spec_info(schema, admin_api_path, minimal_refs=True)
     go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
     if not go_old.exists():
-        if confirm(
+        if interactive.confirm(
             f"no file found @ {go_old}, ok to create it?",
             is_interactive=True,
             default=True,
@@ -184,7 +184,7 @@ def schema2(
 
     resource_schema = schema.resources[resource]
     if conversion_config := resource_schema.conversion:
-        if not confirm(
+        if not interactive.confirm(
             f"resource {resource} has conversion, ok to generate conversion functions?",
             is_interactive=True,
             default=True,

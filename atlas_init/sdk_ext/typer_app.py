@@ -1,5 +1,6 @@
-from ask_shell import configure_logging
 from typer import Typer
+
+from atlas_init.settings.rich_utils import configure_logging
 
 
 def typer_main():

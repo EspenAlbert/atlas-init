@@ -3,9 +3,7 @@ from concurrent.futures import Future
 from pathlib import Path
 
 import typer
-from ask_shell.ask import confirm
-from ask_shell.console import get_live_console
-from ask_shell.shell import run_pool
+from ask_shell import ask, console, shell
 from model_lib import copy_and_validate, parse_model
 from rich.markdown import Markdown
 from zero_3rdparty.file_utils import clean_dir
@@ -72,7 +70,7 @@ def tf_mod_gen_provider_resource_modules(
         module_path_single = finalize_and_validate_module(config_single)
         return module_path, module_path_single
 
-    with run_pool(
+    with shell.run_pool(
         "Generating module files for resource types", total=len(resource_types), exit_wait_timeout=60
     ) as pool:
         futures: dict[str, Future] = {}
@@ -100,7 +98,7 @@ def tf_mod_gen_provider_resource_modules(
         summary.append("## Failed Resource Modules")
         for resource_type in failures:
             summary.append(f"- {resource_type}")
-    get_live_console().print(Markdown("\n".join(summary)))
+    console.get_live_console().print(Markdown("\n".join(summary)))
     if generated_module_paths:
         logger.info(f"Generated a total of: {len(generated_module_paths)} modules")
         if not include_only:
@@ -114,7 +112,7 @@ def clean_extra_modules(resource_modules_out_dir: Path, generated_module_paths: 
     ]:
         logger.warning(f"Found extra paths in {resource_modules_out_dir}: {extra_paths}")
         extra_paths_str = "\n".join(path.name for path in extra_paths)
-        if confirm(f"Can delete extra paths in {resource_modules_out_dir}:\n{extra_paths_str}"):
+        if ask.confirm(f"Can delete extra paths in {resource_modules_out_dir}:\n{extra_paths_str}"):
             for path in extra_paths:
                 clean_dir(path, recreate=False)
 
@@ -127,6 +125,6 @@ def clean_extra_py_modules(py_modules_out_dir: Path, generated_py_files: set[Pat
     ]:
         logger.warning(f"Found extra paths in {py_modules_out_dir}: {extra_paths}")
         extra_paths_str = "\n".join(path.name for path in extra_paths)
-        if confirm(f"Can delete extra paths in {py_modules_out_dir}:\n{extra_paths_str}"):
+        if ask.confirm(f"Can delete extra paths in {py_modules_out_dir}:\n{extra_paths_str}"):
             for path in extra_paths:
                 path.unlink()

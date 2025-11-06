@@ -7,9 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from ask_shell._internal.models import ShellRunEventT, ShellRunStdOutput
-from ask_shell.ask import confirm
-from ask_shell.shell import ShellRun, kill, run, run_and_wait
+from ask_shell import ask, shell
+from ask_shell._internal.events import ShellRunEventT
+from ask_shell.shell import ShellRun
+from ask_shell.shell_events import ShellRunStdOutput
 from model_lib import Event
 from zero_3rdparty import str_utils
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
@@ -66,15 +67,15 @@ def export_ci_tests_markdown_to_html(settings: AtlasInitSettings, report_paths: 
     ensure_parents_write_text(docs_out_dir / "index.md", index_md_content)
     server_url, run_event = start_mkdocs_serve(ci_tests_dir)
     try:
-        if confirm(f"do you want to open the html docs? {server_url}", default=False):
-            run_and_wait(f'open -a "Google Chrome" {server_url}')
-        if confirm("Finished testing html docs?", default=False):
+        if ask.confirm(f"do you want to open the html docs? {server_url}", default=False):
+            shell.run_and_wait(f'open -a "Google Chrome" {server_url}')
+        if ask.confirm("Finished testing html docs?", default=False):
             pass
     except BaseException as e:
         raise e
     finally:
-        kill(run_event, reason="Done with html docs check")
-    if confirm("Are docs ok to build and push?", default=False):
+        shell.kill(run_event, reason="Done with html docs check")
+    if ask.confirm("Are docs ok to build and push?", default=False):
         build_and_push(ci_tests_dir, report_paths.summary_name)
 
 
@@ -128,20 +129,20 @@ def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
                 return True
         return False
 
-    run_event = run(
+    run_event = shell.run(
         "uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
     )
     chain_future(run_event._complete_flag, future)
     try:
         future.result(timeout=MKDOCS_SERVE_TIMEOUT)
     except BaseException as e:
-        kill(run_event, reason=f"Failed to start mkdocs serve, timeout after {MKDOCS_SERVE_TIMEOUT} seconds")
+        shell.kill(run_event, reason=f"Failed to start mkdocs serve, timeout after {MKDOCS_SERVE_TIMEOUT} seconds")
         raise e
     return MKDOCS_SERVE_URL, run_event
 
 
 def build_and_push(ci_tests_dir: Path, summary_name: str) -> None:
-    run_and_wait("uv run mkdocs build", cwd=ci_tests_dir, print_prefix="build")
-    run_and_wait("git add .", cwd=ci_tests_dir, print_prefix="add")
-    run_and_wait(f"git commit -m 'update ci tests {summary_name}'", cwd=ci_tests_dir, print_prefix="commit")
-    run_and_wait("git push", cwd=ci_tests_dir, print_prefix="push")
+    shell.run_and_wait("uv run mkdocs build", cwd=ci_tests_dir, print_prefix="build")
+    shell.run_and_wait("git add .", cwd=ci_tests_dir, print_prefix="add")
+    shell.run_and_wait(f"git commit -m 'update ci tests {summary_name}'", cwd=ci_tests_dir, print_prefix="commit")
+    shell.run_and_wait("git push", cwd=ci_tests_dir, print_prefix="push")

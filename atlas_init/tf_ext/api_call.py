@@ -8,7 +8,7 @@ from pathlib import Path
 
 import requests
 import typer
-from ask_shell import new_task, print_to_live, run_pool
+from ask_shell import console, shell
 from model_lib import dump, parse_model
 from pydantic import BaseModel, Field, model_validator
 from requests.auth import HTTPDigestAuth
@@ -199,7 +199,7 @@ def api_config(
 ):
     query_args: dict[str, str] = json.loads(query_args_str)
     if config_path_str == "":
-        with new_task("Find API Calls that use pagination"):
+        with console.new_task("Find API Calls that use pagination"):
             config_path = dump_config_path(query_args)
     else:
         config_path = Path(config_path_str)
@@ -209,7 +209,7 @@ def api_config(
     assert _public_private_key(), "Public and private keys must be set in environment variables."  # pyright: ignore[reportAssertAlwaysTrue]
     path_variables = model.path_variables
     op_id_path_self_qstring: dict[tuple[str, str], str] = {}
-    with run_pool(
+    with shell.run_pool(
         task_name="make API calls", max_concurrent_submits=10, threads_used_per_submit=1, total=total_calls
     ) as pool:
         futures: dict[Future, ApiCall] = {
@@ -258,7 +258,7 @@ def api_config(
     ]
     md_content = "\n".join(md_report)
     md = Markdown(md_content)
-    print_to_live(md)
+    console.print_to_live(md)
     output_path = TfExtSettings.from_env().pagination_output_path(query_args_str)
     ensure_parents_write_text(output_path, md_content)
     logger.info(f"Pagination report saved to {output_path}")

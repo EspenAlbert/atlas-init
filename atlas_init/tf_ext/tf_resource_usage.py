@@ -9,8 +9,8 @@ from typing import ClassVar, Iterable
 
 import pydot
 import typer
-from ask_shell.console import new_task
-from ask_shell.shell import run_and_wait
+from ask_shell import console, shell
+from ask_shell._internal.rich_progress import new_task
 from model_lib import Entity, dump, dump_as_dict
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
@@ -138,7 +138,7 @@ def provider_docs_md_path(root_path: Path, resource_type: str) -> Path:
     name = resource_name(resource_type)
     provider_repo_dir = root_path / provider
     if not provider_repo_dir.exists():
-        run_and_wait(f"git clone {provider_git_repourl(provider)} {provider_repo_dir}")
+        shell.run_and_wait(f"git clone {provider_git_repourl(provider)} {provider_repo_dir}")
     return provider_repo_dir / _docs_relative_dir[provider] / f"{name}.{_docs_file_extension[provider]}"
 
 
@@ -503,15 +503,15 @@ def tf_resource_usage(
     deprecated = atlas_graph.deprecated_resource_types
     usage = ResourceUsage(root_path=root_path)
     if all_examples:
-        with new_task("Gather example usage", total=len(example_sources)) as task:
+        with console.new_task("Gather example usage", total=len(example_sources)) as task:
             gather_example_usage(settings, usage, task)
         resource_count = len(usage.rows)
-        with new_task("Dump resource markdown", total=resource_count) as task:
+        with console.new_task("Dump resource markdown", total=resource_count) as task:
             dump_resource_markdown(settings, usage, task, with_full_example=with_full_example)
-        with new_task("Write graphs") as task:
+        with console.new_task("Write graphs") as task:
             write_graphs(settings, usage)
     else:
-        with new_task("Gather user specified usage") as task:
+        with console.new_task("Gather user specified usage") as task:
             for row in iter_rows(ExampleSrc.UserSpecified, root_path, deprecated, file_glob):
                 usage.add_row(row)
                 task.update(advance=1)

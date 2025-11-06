@@ -5,7 +5,6 @@ from pydoc import locate
 from typing import Literal
 
 import typer
-from ask_shell.console import configure_logging
 from model_lib import dump, parse_payload
 from zero_3rdparty.file_utils import iter_paths
 
@@ -52,6 +51,7 @@ from atlas_init.settings.path import (
     dump_vscode_dotenv,
     repo_path_rel_path,
 )
+from atlas_init.settings.rich_utils import configure_logging
 from atlas_init.typer_app import app, app_command, extra_root_commands
 
 logger = logging.getLogger(__name__)

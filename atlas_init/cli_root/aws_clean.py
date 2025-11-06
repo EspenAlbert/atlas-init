@@ -4,7 +4,7 @@ from pathlib import Path
 
 import humanize
 import typer
-from ask_shell import run_and_wait
+from ask_shell import shell
 from boto3.session import Session
 from model_lib import Entity
 from mypy_boto3_iam import IAMClient
@@ -44,7 +44,7 @@ def aws_clean(
         return
     client: IAMClient = Session().client("iam")  # pyright: ignore[reportAssignmentType]
     all_roles: list[RoleTypeDef] = []
-    aws_account_id = run_and_wait("aws sts get-caller-identity --query Account --output text").stdout_one_line
+    aws_account_id = shell.run_and_wait("aws sts get-caller-identity --query Account --output text").stdout_one_line
 
     roles_response = client.list_roles()
 

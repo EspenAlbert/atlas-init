@@ -8,8 +8,9 @@ from threading import RLock
 from typing import Callable, Iterable, NamedTuple
 
 import pydot
-from ask_shell.console import new_task
-from ask_shell.shell import ShellError, run_and_wait, run_pool, stop_runs_and_pool
+from ask_shell import console, shell
+from ask_shell._internal.rich_progress import new_task
+from ask_shell.shell import ShellError
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field, model_validator
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
@@ -57,9 +58,9 @@ def tf_dep_graph(
     logger.info(f"Using output directory: {output_dir}")
     example_dirs = get_example_directories(repo_path, skip_names)
     logger.info(f"example_dirs: \n{'\n'.join(str(d) for d in sorted(example_dirs))}")
-    with new_task("Find terraform graphs", total=len(example_dirs)) as task:
+    with console.new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = create_atlas_graph(example_dirs, task)
-    with new_task("Dump graph"):
+    with console.new_task("Dump graph"):
         graph_yaml = atlas_graph.dump_yaml()
         ensure_parents_write_text(settings.atlas_graph_path, graph_yaml)
         logger.info(f"Atlas graph dumped to {settings.atlas_graph_path}")
@@ -293,7 +294,7 @@ class AtlasGraph(Entity):
 def parse_graphs(
     on_graph: Callable[[Path, pydot.Dot], None], example_dirs: list[Path], task: new_task, max_dirs: int = 1_000
 ) -> None:
-    with run_pool("parse example graphs", total=len(example_dirs)) as executor:
+    with shell.run_pool("parse example graphs", total=len(example_dirs)) as executor:
         futures = {
             executor.submit(parse_graph, example_dir): example_dir
             for i, example_dir in enumerate(example_dirs)
@@ -307,7 +308,7 @@ def parse_graphs(
                 continue
             except KeyboardInterrupt:
                 logger.error("KeyboardInterrupt received, stopping graph parsing.")
-                stop_runs_and_pool("KeyboardInterrupt", immediate=True)
+                shell.stop_runs_and_pool("KeyboardInterrupt", immediate=True)
                 break
             on_graph(example_dir, graph)
             task.update(advance=1)
@@ -358,8 +359,8 @@ def parse_graph(example_dir: Path) -> tuple[Path, pydot.Dot]:
     }
     lock_file = example_dir / ".terraform.lock.hcl"
     if not lock_file.exists():
-        run_and_wait("terraform init", cwd=example_dir, env=env_vars)
-    run = run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
+        shell.run_and_wait("terraform init", cwd=example_dir, env=env_vars)
+    run = shell.run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
     if graph_output := run.stdout_one_line:
         graph = parse_graph_output(example_dir, graph_output)  # just to make sure we get no errors
         return example_dir, graph

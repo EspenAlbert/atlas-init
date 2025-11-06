@@ -11,7 +11,8 @@ from functools import reduce, total_ordering
 from pathlib import Path
 from typing import Callable, ClassVar, TypeVar
 
-from ask_shell.console import new_task
+from ask_shell import console
+from ask_shell._internal.rich_progress import new_task
 from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils, file_utils
@@ -548,8 +549,8 @@ class TestRow(Entity):
 
 
 def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
-    with new_task(f"Monthly Report for {event.name} on {event.branch}"):
-        test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
+    with console.new_task(f"Monthly Report for {event.name} on {event.branch}"):
+        test_rows, detail_files_md = asyncio.shell.run(_collect_monthly_test_rows_and_summaries(settings, event))
         assert test_rows, "No error rows found for monthly report"
     columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
     skip_rows = (
@@ -610,9 +611,9 @@ def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, eve
     error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
     one_line_summary = summary_line(output.found_tests)
 
-    with new_task("Daily Report"):
-        with new_task("Collecting error rows") as task:
-            failure_rows = asyncio.run(
+    with console.new_task("Daily Report"):
+        with console.new_task("Collecting error rows") as task:
+            failure_rows = asyncio.shell.run(
                 _collect_daily_error_rows(errors, error_classes, settings, event.history_filter, task)
             )
         if not failure_rows:
@@ -667,7 +668,7 @@ async def _collect_monthly_test_rows_and_summaries(
     test_runs_by_name: dict[str, GoTestRun] = {run.full_name: run for run in last_day_test_names}
     test_rows = []
     detail_files_md: dict[str, str] = {}
-    with new_task("Collecting monthly error rows", total=len(last_day_test_names)) as task:
+    with console.new_task("Collecting monthly error rows", total=len(last_day_test_names)) as task:
         for name_with_group, test_run in test_runs_by_name.items():
             test_row, runs = await _create_test_row(
                 history_filter,

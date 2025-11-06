@@ -9,9 +9,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import typer
-from ask_shell.ask import confirm, select_list
-from ask_shell.console import new_task, print_to_live
-from ask_shell.shell import run_and_wait
+from ask_shell import ask, console, shell
+from ask_shell._internal.rich_progress import new_task
 from model_lib import Entity, Event, copy_and_validate
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import Url
@@ -174,7 +173,7 @@ def run_daily_report(
     copy_to_clipboard: bool,
     report_paths: MonthlyReportPaths,
 ) -> DailyReportOut:
-    out = asyncio.run(ci_tests_pipeline(event))
+    out = asyncio.shell.run(ci_tests_pipeline(event))
     manual_classification(out.classified_errors, settings)
     summary_name = event.summary_name
 
@@ -194,7 +193,7 @@ def run_daily_report(
         row_modifier=add_md_link,
     )
     daily_out = create_daily_report(out, settings, daily_in)
-    print_to_live(Markdown(daily_out.summary_md))
+    console.print_to_live(Markdown(daily_out.summary_md))
     if copy_to_clipboard:
         add_to_clipboard(daily_out.summary_md, logger=logger)
     file_utils.ensure_parents_write_text(report_paths.daily_path, daily_out.summary_md)
@@ -229,10 +228,12 @@ def generate_monthly_summary(
     error_only_path = paths.error_only_path
     file_utils.ensure_parents_write_text(error_only_path, monthly_error_only_out.summary_md)
     logger.info(f"error-only summary written to {error_only_path}")
-    if ask_to_open and confirm(f"do you want to open the summary file? {summary_path}", default=False):
-        run_and_wait(f'code "{summary_path}"')
-    if ask_to_open and confirm(f"do you want to open the error-only summary file? {error_only_path}", default=False):
-        run_and_wait(f'code "{error_only_path}"')
+    if ask_to_open and ask.confirm(f"do you want to open the summary file? {summary_path}", default=False):
+        shell.run_and_wait(f'code "{summary_path}"')
+    if ask_to_open and ask.confirm(
+        f"do you want to open the error-only summary file? {error_only_path}", default=False
+    ):
+        shell.run_and_wait(f'code "{error_only_path}"')
     return None
 
 
@@ -254,7 +255,7 @@ async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
     else:
         log_paths = download_logs(download_input, settings)
         resources = read_tf_resources(settings, repo_path, branch)
-        with new_task(f"parse job logs from {len(log_paths)} files"):
+        with console.new_task(f"parse job logs from {len(log_paths)} files"):
             parse_job_output = parse_job_tf_test_logs(
                 ParseJobLogsInput(
                     settings=settings,
@@ -265,11 +266,11 @@ async def ci_tests_pipeline(event: TFCITestInput) -> TFCITestOutput:
             )
         await dao.store_tf_test_runs(parse_job_output.test_runs)
     report_date = event.report_date
-    with new_task(f"reading test runs from storage for {report_date.date().isoformat()}"):
+    with console.new_task(f"reading test runs from storage for {report_date.date().isoformat()}"):
         report_tests = await dao.read_tf_tests_for_day(event.branch, report_date)
-    with new_task("parsing test errors"):
+    with console.new_task("parsing test errors"):
         report_errors = parse_test_errors(report_tests)
-    with new_task("classifying errors"):
+    with console.new_task("classifying errors"):
         error_run_ids = [error.run_id for error in report_errors]
         existing_classifications = await dao.read_error_classifications(error_run_ids)
         classified_errors = classify_errors(existing_classifications, report_errors)
@@ -321,8 +322,8 @@ def manual_classification(
     classifications: list[GoTestErrorClassification], settings: AtlasInitSettings, confidence_threshold: float = 1.0
 ):
     needs_classification = [cls for cls in classifications if cls.needs_classification(confidence_threshold)]
-    with new_task("Manual Classification", total=len(needs_classification) + 1, log_updates=True) as task:
-        asyncio.run(classify(needs_classification, settings, task))
+    with console.new_task("Manual Classification", total=len(needs_classification) + 1, log_updates=True) as task:
+        asyncio.shell.run(classify(needs_classification, settings, task))
 
 
 async def classify(
@@ -355,7 +356,7 @@ async def classify(
         test = await dao.read_tf_test_run(cls.run_id)
         if new_class := ask_user_to_classify_error(cls, test):
             await add_classification(cls, new_class, ErrorClassAuthor.HUMAN, 1.0)
-        elif confirm("do you want to stop classifying errors?", default=True):
+        elif ask.confirm("do you want to stop classifying errors?", default=True):
             logger.info("stopping classification")
             return
 
@@ -397,13 +398,13 @@ class DownloadJobLogsInput(Entity):
 
 
 def download_logs(event: DownloadJobLogsInput, settings: AtlasInitSettings) -> list[Path]:
-    token = run_and_wait("gh auth token", cwd=event.repo_path).stdout
+    token = shell.run_and_wait("gh auth token", cwd=event.repo_path).stdout
     assert token, "expected token, but got empty string"
     os.environ[GH_TOKEN_ENV_NAME] = token
     end_test_date = event.end_date
     start_test_date = event.start_date
     log_paths = []
-    with new_task(
+    with console.new_task(
         f"downloading logs for {event.branch} from {start_test_date.date()} to {end_test_date.date()}",
         total=(end_test_date - start_test_date).days,
     ) as task:
@@ -576,9 +577,9 @@ def parse_test_error(event: ParseTestErrorInput) -> GoTestError:
 def ask_user_to_classify_error(cls: GoTestErrorClassification, test: GoTestRun) -> GoTestErrorClass | None:
     details = cls.details
     try:
-        print_to_live(test.output_lines_str)
-        print_to_live(f"error details: {details}")
-        return select_list(
+        console.print_to_live(test.output_lines_str)
+        console.print_to_live(f"error details: {details}")
+        return ask.select_list(
             f"choose classification for test='{test.name_with_package}' in {test.env}",
             choices=list(GoTestErrorClass),
             default=cls.error_class,

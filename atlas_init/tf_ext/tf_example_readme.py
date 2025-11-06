@@ -9,7 +9,7 @@ from typing import Callable, ClassVar, Iterable, Protocol, TypeAlias
 
 import pydot
 import typer
-from ask_shell.console import get_live_console, new_task
+from ask_shell import console
 from model_lib import Entity, parse_dict
 from pydantic import Field, model_validator
 from rich.tree import Tree
@@ -56,26 +56,26 @@ def tf_example_readme(
     if ReadmeMarker.MODULES in active_markers:
         modules_section = readme_modules_section(example_path, skip_module_details)
         generators[ReadmeMarker.MODULES] = lambda _: "\n".join(modules_section)
-    with new_task(f"update {README_FILENAME}"):
+    with console.new_task(f"update {README_FILENAME}"):
         generate_and_write_readme(
             example_path,
             generators=generators,
         )
     if generation_config := examples_readme_md_config(example_path):
-        with new_task(f"update {EXAMPLES_DIRNAME}/*/{README_FILENAME}"):
+        with console.new_task(f"update {EXAMPLES_DIRNAME}/*/{README_FILENAME}"):
             generate_examples_readme_from_template(generation_config)
         examples = generation_config.example_paths
-        with new_task("validate the examples", total=len(examples)) as task:
+        with console.new_task("validate the examples", total=len(examples)) as task:
             for path in examples:
                 validate_tf_workspace(path)
                 task.update(advance=1)
 
 
 def readme_modules_section(example_path: Path, skip_module_details: list[str]) -> list[str]:
-    with new_task("parse example graph"):
+    with console.new_task("parse example graph"):
         _, example_graph_dot = parse_graph(example_path)  # ensures init is called
         example_graph = ResourceGraph.from_graph(example_graph_dot)
-    with new_task("parse module graphs") as task:
+    with console.new_task("parse module graphs") as task:
         modules_config = parse_modules_json(example_path, skip_module_details)
         module_paths = modules_config.module_paths
         module_graphs: dict[Path, ResourceGraph] = {}
@@ -84,7 +84,7 @@ def readme_modules_section(example_path: Path, skip_module_details: list[str]) -
             module_graphs[example_dir] = ResourceGraph.from_graph(graph)
 
         parse_graphs(on_graph, module_paths, task)
-    with new_task("create example module graph"):
+    with console.new_task("create example module graph"):
         # a graph when all resources in a module are treated as a single node.
         modules_graph, emoji_counter = create_module_graph(example_graph)
     return _modules_md(example_path, modules_config, module_graphs, modules_graph, emoji_counter)
@@ -114,7 +114,7 @@ def _modules_md(
             tree.add("details skipped")
         else:
             tree = module_graph.to_tree(f"{module_dir.name} ({emojis})", include_orphans=True)
-        get_live_console().print(tree)
+        console.get_live_console().print(tree)
         modules_trees_texts.append(tree_text(tree))
 
     for _, module_key in emoji_counter.emoji_name():

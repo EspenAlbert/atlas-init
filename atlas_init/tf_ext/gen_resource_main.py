@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Iterable
 
-from ask_shell.shell import run_and_wait
+from ask_shell import shell
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceAbs, ResourceGenConfig
 from atlas_init.tf_ext.schema_to_dataclass import ResourceTypePythonModule
@@ -162,7 +162,7 @@ def format_tf_content(content: str) -> str:
         tmp_file = Path(tmp_dir) / "content.tf"
         tmp_file.write_text(content)
         try:
-            run_and_wait("terraform fmt .", cwd=tmp_dir)
+            shell.run_and_wait("terraform fmt .", cwd=tmp_dir)
         except Exception as e:
             logger.error(f"Failed to format tf content:\n{content}")
             raise e

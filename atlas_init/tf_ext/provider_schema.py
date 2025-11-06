@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from ask_shell.shell import run_and_wait
+from ask_shell import shell
 from model_lib import Entity, dump, parse_dict
 from pydantic import BaseModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -140,7 +140,7 @@ SchemaBlock.model_rebuild()
 def parse_atlas_schema_from_settings(settings: TfExtSettings, provider_config: ProviderGenConfig) -> AtlasSchemaInfo:
     repo_path = settings.repo_path_atlas_provider
     assert repo_path, "repo_path_atlas_provider is required"
-    current_sha = run_and_wait("git rev-parse HEAD", cwd=repo_path).stdout_one_line
+    current_sha = shell.run_and_wait("git rev-parse HEAD", cwd=repo_path).stdout_one_line
     cache_dir = settings.provider_cache_dir(provider_config.provider_name)
     update_config = provider_config.last_gen_sha != current_sha
     schema = _read_or_create_cached_atlas_schema(cache_dir, current_sha, settings.tf_cli_config_file)
@@ -175,8 +175,8 @@ def parse_atlas_schema(store_path: Path | None = None, tf_cli_config_file: Path 
         tmp_path = Path(example_dir)
         providers_tf = tmp_path / "providers.tf"
         providers_tf.write_text(_providers_tf)
-        run_and_wait("terraform init", cwd=example_dir)
-        schema_run = run_and_wait(
+        shell.run_and_wait("terraform init", cwd=example_dir)
+        schema_run = shell.run_and_wait(
             "terraform providers schema -json",
             cwd=example_dir,
             ansi_content=False,

@@ -8,7 +8,7 @@ from typing import ClassVar, Iterable
 
 import pydot
 import typer
-from ask_shell.console import new_task, print_to_live
+from ask_shell import console
 from model_lib import parse_list, parse_model
 from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map
@@ -147,15 +147,15 @@ def tf_modules(
     settings = TfExtSettings.from_env()
     atlas_graph = parse_atlas_graph(settings)
     output_dir = settings.static_root
-    with new_task("Write graphs"):
+    with console.new_task("Write graphs"):
         color_coder_internal = color_coder(atlas_graph, keep_provider_name=False)
         internal_graph = create_internal_dependencies(atlas_graph, color_coder=color_coder_internal)
         add_unused_nodes_to_graph(settings, atlas_graph, color_coder_internal, internal_graph)
         write_graph(internal_graph, output_dir, "atlas_internal.png")
         write_graph(create_external_dependencies(atlas_graph), output_dir, "atlas_external.png")
-    with new_task("Write module graphs"):
+    with console.new_task("Write module graphs"):
         modules = generate_module_graphs(skipped_module_resource_types, settings, atlas_graph)
-    with new_task("Internal Graph with Module Numbers"):
+    with console.new_task("Internal Graph with Module Numbers"):
         module_color_coder = ModuleColorCoder(
             atlas_graph,
             keep_provider_name=False,
@@ -164,7 +164,7 @@ def tf_modules(
         internal_graph_with_numbers = create_internal_dependencies(atlas_graph, module_color_coder)
         add_unused_nodes_to_graph(settings, atlas_graph, module_color_coder, internal_graph_with_numbers)
         write_graph(internal_graph_with_numbers, settings.static_root, "atlas_internal_with_numbers.png")
-    with new_task("Missing modules"):
+    with console.new_task("Missing modules"):
         all_resources: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
         missing_resources = [
             resource_type
@@ -229,7 +229,7 @@ def generate_module_graphs(
             module_trees[dest] = tree_src.add(dest)
         write_graph(internal_graph, settings.static_root, f"{name}_internal.png")
         write_graph(external_graph, settings.static_root, f"{name}_external.png")
-    print_to_live(tree)
+    console.print_to_live(tree)
     return modules
 
 

@@ -9,7 +9,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, ClassVar, Self
 
-from ask_shell.shell import ShellError, run_and_wait
+from ask_shell import shell
+from ask_shell.shell import ShellError
 from inflection import singularize
 from model_lib import Entity
 from pydantic import model_validator
@@ -379,12 +380,12 @@ def py_file_validate_and_auto_fixes(code: str, error_hint: str = "") -> str:
 def run_fmt_and_fixes(file_path: Path, error_hint: str = ""):
     tmp_dir = file_path.parent
     try:
-        run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
+        shell.run_and_wait("ruff format . --line-length 120", cwd=tmp_dir)
     except ShellError as e:
         logger.exception(f"Failed to format dataclass:\n{file_path.read_text()}\n{error_hint}")
         raise e
     try:
-        run_and_wait("ruff check --fix .", cwd=tmp_dir)
+        shell.run_and_wait("ruff check --fix .", cwd=tmp_dir)
     except ShellError as e:
         logger.exception(f"Failed to check dataclass:\n{file_path.read_text()}\n{error_hint}")
         raise e

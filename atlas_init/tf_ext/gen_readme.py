@@ -7,7 +7,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable, Self, TypeAlias
 
-from ask_shell.shell import run_and_wait
+from ask_shell import shell
 from model_lib import Entity, parse_model
 from pydantic import Field, ValidationError, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text, update_between_markers
@@ -216,7 +216,9 @@ def read_examples(examples_dir: Path) -> str:
     if not example_dirs:
         return ""
     # ensure the examples are formatted first
-    run_and_wait("terraform fmt -recursive .", cwd=examples_dir.parent, allow_non_zero_exit=True, ansi_content=False)
+    shell.run_and_wait(
+        "terraform fmt -recursive .", cwd=examples_dir.parent, allow_non_zero_exit=True, ansi_content=False
+    )
     content = ["# Examples"]
     for example_dir in example_dirs:
         example_name = example_dir.name
@@ -301,7 +303,7 @@ def generate_terraform_docs(readme_path: Path) -> None:
         config_content = terraform_docs_config_content(readme_path)
         ensure_parents_write_text(docs_config_path, config_content)
         logger.info(f"generated {docs_config_path}")
-    run_and_wait(f"terraform-docs -c {docs_config_path} .", cwd=readme_path.parent)
+    shell.run_and_wait(f"terraform-docs -c {docs_config_path} .", cwd=readme_path.parent)
     readme_content = _default_link_updater(readme_path.read_text())
     ensure_parents_write_text(readme_path, readme_content)
 

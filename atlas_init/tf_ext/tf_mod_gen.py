@@ -4,9 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import typer
-from ask_shell.ask import text
-from ask_shell.console import new_task
-from ask_shell.shell import run_and_wait, run_pool
+from ask_shell import ask, console, shell
 from model_lib import parse_model, parse_payload
 from pydantic import DirectoryPath, TypeAdapter
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
@@ -90,11 +88,11 @@ def prepare_out_dir(config: ModuleGenConfig, *, skip_clean_dir: bool = False):
 
 
 def generate_module(config: ModuleGenConfig) -> Path:
-    with new_task("Reading Atlas Schema"):
+    with console.new_task("Reading Atlas Schema"):
         schema = parse_atlas_schema()
         assert schema
     resource_types = config.resource_types
-    with new_task("Generating module files for resource types", total=len(resource_types)) as task:
+    with console.new_task("Generating module files for resource types", total=len(resource_types)) as task:
         for resource_type in resource_types:
             generate_resource_module(config, resource_type, schema)
             task.update(advance=1)
@@ -144,13 +142,13 @@ OUT_BINARY_PATH = "tfplan.binary"
 def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Path | None = None) -> Path:
     path = config.module_out_path
     if (examples_test := config.examples_test_path) and examples_test.exists():
-        with new_task(f"Generating examples from {config.FILENAME_EXAMPLES_TEST}"):
+        with console.new_task(f"Generating examples from {config.FILENAME_EXAMPLES_TEST}"):
             assert len(config.resource_types) == 1
             resource_type = config.resource_types[0]
             py_module = import_resource_type_python_module(resource_type, config.dataclass_path(resource_type))
             examples_generated = generate_module_examples(config, py_module, resource_type=resource_type)
         if examples_generated:
-            with run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
+            with shell.run_pool("Validating examples", total=len(examples_generated), exit_wait_timeout=60) as pool:
                 for example_path in examples_generated:
                     pool.submit(validate_tf_workspace, example_path)
 
@@ -162,7 +160,7 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
         try:
             return attribute_descriptions.resolve_description(name, resource_type)
         except MissingDescriptionError:
-            if new_text := text(
+            if new_text := ask.text(
                 f"Enter description for variable/output {name} in {resource_type} for {path} (empty to skip)",
                 default="",
             ):
@@ -178,18 +176,20 @@ def module_examples_and_readme(config: ModuleGenConfig, *, example_var_file: Pat
     )
     if out_event.changes:
         logger.info(f"Updated attribute descriptions: {len(out_event.changes)}")
-        run_and_wait("terraform fmt -recursive .", cwd=path, ansi_content=False, allow_non_zero_exit=True)
-    with new_task("Generating README.md"):
+        shell.run_and_wait("terraform fmt -recursive .", cwd=path, ansi_content=False, allow_non_zero_exit=True)
+    with console.new_task("Generating README.md"):
         generate_and_write_readme(config.module_out_path)
     if example_var_file:
         examples = read_example_dirs(config.examples_path)
         if examples:
             failed_examples: list[Path] = []
-            with run_pool("Running terraform plan on examples", total=len(examples), exit_wait_timeout=60) as pool:
+            with shell.run_pool(
+                "Running terraform plan on examples", total=len(examples), exit_wait_timeout=60
+            ) as pool:
 
                 def run_example(example: Path):
                     try:
-                        run_and_wait(f"terraform plan -var-file={example_var_file}", cwd=example)
+                        shell.run_and_wait(f"terraform plan -var-file={example_var_file}", cwd=example)
                     except Exception as e:
                         logger.error(f"Failed to run terraform plan on {example.name}: {e}")
                         failed_examples.append(example)
@@ -214,12 +214,12 @@ def example_plan_checks(config: ModuleGenConfig, timeout_all_seconds: int = 60) 
             tf_dir = config.example_path(check.example_name)
             validate_tf_workspace(tf_dir)
             var_arg = f" -var-file={variables_path}" if variables_path else ""
-            run_and_wait(f"terraform plan -out={OUT_BINARY_PATH}{var_arg}", cwd=tf_dir)
-            run_and_wait(f"terraform show -json {OUT_BINARY_PATH} > {stored_plan}", cwd=tf_dir)
+            shell.run_and_wait(f"terraform plan -out={OUT_BINARY_PATH}{var_arg}", cwd=tf_dir)
+            shell.run_and_wait(f"terraform show -json {OUT_BINARY_PATH} > {stored_plan}", cwd=tf_dir)
             plan_output = parse_plan_output(stored_plan)
         return generate_expected_actual(settings.output_plan_dumps, check, plan_output)
 
-    with run_pool("Run Examples", total=len(example_checks), exit_wait_timeout=timeout_all_seconds) as pool:
+    with shell.run_pool("Run Examples", total=len(example_checks), exit_wait_timeout=timeout_all_seconds) as pool:
         futures = {pool.submit(run_check, check): check for check in example_checks}
     diff_paths: list[Path] = []
     for future in futures:

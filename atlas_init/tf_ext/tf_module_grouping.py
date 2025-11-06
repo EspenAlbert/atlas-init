@@ -2,11 +2,11 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Iterable, Self
 
-from ask_shell import print_to_live
+import typer
+from ask_shell import console
 from model_lib import Entity, parse_dict, parse_model
 from pydantic import Field, model_validator
 from rich.tree import Tree
-import typer
 from zero_3rdparty.iter_utils import flat_map
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME, provider_name
@@ -195,4 +195,4 @@ def tf_module_grouping(
             module_graph.to_dot_graph(module.name, keep_provider_name=True), out_dir, f"{i:02d}_{module.name}.png"
         )
         tree = module_tree(module_graph, module, color_coder=ColorCoderSimple(keep_provider_name=True))
-        print_to_live(tree)
+        console.print_to_live(tree)

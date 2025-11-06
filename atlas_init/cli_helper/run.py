@@ -104,6 +104,6 @@ def run_command_is_ok_output(command: str, cwd: Path, logger: Logger, env: dict 
 
 def add_to_clipboard(clipboard_content: str, logger: Logger):
     if pb_binary := find_binary_on_path("pbcopy", logger, allow_missing=True):
-        subprocess.run(pb_binary, text=True, input=clipboard_content, check=True)  # nosec
+        subprocess.shell.run(pb_binary, text=True, input=clipboard_content, check=True)  # nosec
     else:
         logger.warning("pbcopy not found on $PATH")

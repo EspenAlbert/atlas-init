@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from ask_shell.console import new_task
-from ask_shell.shell import run_and_wait
+from ask_shell import console, shell
 
 
 def validate_tf_workspace(
@@ -15,8 +14,8 @@ def validate_tf_workspace(
     env_extra = env_extra or {}
     if tf_cli_config_file:
         env_extra["TF_CLI_CONFIG_FILE"] = str(tf_cli_config_file)
-    with new_task("Terraform Module Validate Checks", total=len(terraform_commands)) as task:
+    with console.console.new_task("Terraform Module Validate Checks", total=len(terraform_commands)) as task:
         for command in terraform_commands:
             attempts = 3 if command == "terraform init" else 1  # terraform init can fail due to network issues
-            run_and_wait(command, cwd=tf_workdir, env=env_extra, attempts=attempts)
+            shell.shell.run_and_wait(command, cwd=tf_workdir, env=env_extra, attempts=attempts)
             task.update(advance=1)

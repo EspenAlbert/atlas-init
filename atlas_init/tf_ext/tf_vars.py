@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from ask_shell.console import new_task
+from ask_shell import console
+from ask_shell._internal.rich_progress import new_task
 from model_lib import IgnoreFalsy, dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -32,7 +33,7 @@ def tf_vars(
     logger.info(f"Analyzing Terraform variables in repository: {repo_path}")
     example_dirs = get_example_directories(repo_path, skip_names)
     assert example_dirs, "No example directories found. Please check the repository path and skip names."
-    with new_task("Parsing provider schema") as task:
+    with console.new_task("Parsing provider schema") as task:
         atlas_schema = parse_atlas_schema()
         resource_types = atlas_schema.resource_types
         resource_types_deprecated = atlas_schema.deprecated_resource_types
@@ -45,9 +46,9 @@ def tf_vars(
             f"Provider schema deprecated resource types written to {settings.schema_resource_types_deprecated_path}"
         )
     logger.info(f"Found {len(resource_types)} resource types in the provider schema.: {', '.join(resource_types)}")
-    with new_task("Parsing variables from examples") as task:
+    with console.new_task("Parsing variables from examples") as task:
         update_variables(settings, example_dirs, task)
-    with new_task("Parsing resource types from examples", total=len(example_dirs)) as task:
+    with console.new_task("Parsing resource types from examples", total=len(example_dirs)) as task:
         example_resource_types = update_resource_types(settings, example_dirs, task)
     if missing_example_resource_types := set(resource_types) - set(example_resource_types.root):
         logger.warning(f"Missing resource types in examples:\n{'\n'.join(sorted(missing_example_resource_types))}")
