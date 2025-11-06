@@ -14,10 +14,10 @@ logger = logging.getLogger(__name__)
 def prepare_newres(path: Path):
     if not path.exists():
         path.parent.mkdir(exist_ok=True, parents=True)
-        shell.shell.run_and_wait(f"git clone https://github.com/lonegunmanb/newres.git {path.name}", cwd=path.parent)
+        shell.run_and_wait(f"git clone https://github.com/lonegunmanb/newres.git {path.name}", cwd=path.parent)
     schema = parse_atlas_schema()
     modify_newres(path, schema)
-    shell.shell.run_and_wait("go fmt ./...", cwd=path)
+    shell.run_and_wait("go fmt ./...", cwd=path)
 
 
 def _template_resource_go(resource_type: str, resource_type_schema_json: str) -> str:
