@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -22,8 +22,8 @@ wheels = [
 
 [[package]]
 name = "ask-shell"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
+version = "0.2.1"
+source = { editable = "../py-libs/ask-shell" }
 dependencies = [
     { name = "model-lib", extra = ["toml"] },
     { name = "questionary" },
@@ -31,9 +31,14 @@ dependencies = [
     { name = "typer" },
     { name = "zero-3rdparty" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/00/1ff4d10fcb74378def78e4a56060099d7660c08be9d1749bfc09994e594b/ask_shell-0.0.5.tar.gz", hash = "sha256:3d9a93e2809e3cee23aa1e3fb1071357082bf3aaba4be3f0592ae464cad51919", size = 23716, upload-time = "2025-07-13T06:48:30.696Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/aa/2eade27d4f77b3ccce471cc54ab6570e734542e433011d556ea15a7fa032/ask_shell-0.0.5-py3-none-any.whl", hash = "sha256:401cc6c9814c22823ddbbb925893b0bc97f9e39da6176ce34257ac95fb1264ef", size = 30343, upload-time = "2025-07-13T06:48:29.226Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "model-lib", extras = ["toml"], editable = "../py-libs/model-lib" },
+    { name = "questionary", specifier = ">=2.1.0" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "typer", specifier = ">=0.16.0" },
+    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
 ]
 
 [[package]]
@@ -72,6 +77,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
+    { name = "pytest-model-lib" },
     { name = "pytest-regressions" },
     { name = "pytest-subtests" },
     { name = "ruff" },
@@ -80,16 +86,16 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "appdirs", specifier = "==1.4.4" },
-    { name = "ask-shell", specifier = ">=0.0.5" },
+    { name = "ask-shell", editable = "../py-libs/ask-shell" },
     { name = "boto3", specifier = "==1.35.92" },
-    { name = "gitpython", specifier = "==3.1.42" },
+    { name = "gitpython", specifier = ">=3.1.42" },
     { name = "humanize", specifier = "==4.9.0" },
     { name = "inflection", specifier = "==0.5.1" },
-    { name = "model-lib" },
+    { name = "model-lib", editable = "../py-libs/model-lib" },
     { name = "motor", specifier = "==3.7.1" },
     { name = "mypy-boto3-cloudformation", specifier = "==1.37.22" },
     { name = "mypy-boto3-iam", specifier = ">=1.40.0" },
-    { name = "orjson", specifier = "==3.10.13" },
+    { name = "orjson", specifier = ">=3.10.13" },
     { name = "pydantic-settings", specifier = "==2.7.1" },
     { name = "pydot", specifier = "==4.0.1" },
     { name = "pygithub", specifier = "==2.6.1" },
@@ -100,7 +106,7 @@ requires-dist = [
     { name = "stringcase", specifier = "==1.2.0" },
     { name = "tenacity", specifier = "==9.0.0" },
     { name = "typer", specifier = ">=0.15.1" },
-    { name = "zero-3rdparty", specifier = "==1.0.0b5" },
+    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
 ]
 
 [package.metadata.requires-dev]
@@ -111,6 +117,7 @@ dev = [
     { name = "pytest", specifier = "==8.3.4" },
     { name = "pytest-asyncio", specifier = "==1.0.0" },
     { name = "pytest-cov", specifier = "==6.0.0" },
+    { name = "pytest-model-lib", editable = "../py-libs/pytest-model-lib" },
     { name = "pytest-regressions", specifier = "==2.5.0" },
     { name = "pytest-subtests", specifier = "==0.14.1" },
     { name = "ruff", specifier = ">=0.11.5" },
@@ -444,16 +451,12 @@ wheels = [
 [[package]]
 name = "model-lib"
 version = "1.0.0b5"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "../py-libs/model-lib" }
 dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "zero-3rdparty" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/11/2c/1d5b8de960e9c82ad19cb868d107f25b6a2ebe8ea63eb49012d4692ed24b/model_lib-1.0.0b5.tar.gz", hash = "sha256:219a323699a3dfd68f55f76a9dbef26e4fba5aae78f4924d4c5e775f96b83d3d", size = 16894, upload-time = "2025-06-18T07:55:59.208Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/d5/756b13e54cb2bfe00d38bd5c041be545a3d12b1ddf2809be742364d0ff61/model_lib-1.0.0b5-py3-none-any.whl", hash = "sha256:6d2687b28c26da7138550f5ebe11e83bc80ff5254771edbcc64376833a28b764", size = 24474, upload-time = "2025-06-18T07:55:58.225Z" },
 ]
 
 [package.optional-dependencies]
@@ -462,6 +465,18 @@ toml = [
     { name = "pydantic-settings" },
     { name = "tomli-w" },
 ]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = "~=2.10.4" },
+    { name = "pydantic", marker = "extra == 'toml'", specifier = "~=2.10.4" },
+    { name = "pydantic-settings", specifier = "~=2.7.1" },
+    { name = "pydantic-settings", marker = "extra == 'toml'", specifier = "~=2.7.1" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "tomli-w", marker = "extra == 'toml'", specifier = "~=1.1.0" },
+    { name = "zero-3rdparty", editable = "../py-libs/zero-3rdparty" },
+]
+provides-extras = ["toml"]
 
 [[package]]
 name = "motor"
@@ -807,6 +822,11 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-model-lib"
+version = "0.0.1"
+source = { editable = "../py-libs/pytest-model-lib" }
+
+[[package]]
 name = "pytest-regressions"
 version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1116,9 +1136,5 @@ wheels = [
 
 [[package]]
 name = "zero-3rdparty"
-version = "1.0.0b5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2a/0c/2519f17bc6515b8f53ce33d324e9d327cdf7b702184dd649f842c9e8299b/zero_3rdparty-1.0.0b5.tar.gz", hash = "sha256:90c83d2a61b7c693e49108f10e0d3f1862dd437f2dea07916198e6f693e7b7b2", size = 29737, upload-time = "2025-07-19T08:14:36.513Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/67/69c92778b3cc68588037b992c342a5d11d9d66859a83aeb26c5981d6c790/zero_3rdparty-1.0.0b5-py3-none-any.whl", hash = "sha256:51472822c88072f964ad6161e1114a2c138bc0af8e70d6ea9b737a347e651671", size = 38199, upload-time = "2025-07-19T08:14:34.923Z" },
-]
+version = "1.0.0b6"
+source = { editable = "../py-libs/zero-3rdparty" }
