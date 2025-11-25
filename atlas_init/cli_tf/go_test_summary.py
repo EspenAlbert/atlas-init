@@ -9,7 +9,7 @@ from datetime import date, datetime, timedelta
 from enum import StrEnum
 from functools import reduce, total_ordering
 from pathlib import Path
-from typing import Callable, ClassVar, TypeVar
+from typing import Callable, ClassVar
 
 from ask_shell import console
 from ask_shell._internal.rich_progress import new_task
@@ -17,6 +17,7 @@ from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils, file_utils
 from zero_3rdparty.iter_utils import group_by_once
+from zero_3rdparty.str_utils import markdown_table_lines
 
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
@@ -586,24 +587,6 @@ class DailyReportIn(Entity):
 class DailyReportOut(Entity):
     summary_md: str
     details_md: str
-
-
-T = TypeVar("T")
-
-
-def markdown_table_lines(
-    header: str, rows: list[T], columns: list[str], row_to_line: Callable[[T], list[str]], *, header_level: int = 2
-) -> list[str]:
-    if not rows:
-        return []
-    return [
-        f"{'#' * header_level} {header}",
-        "",
-        " | ".join(columns),
-        " | ".join("---" for _ in columns),
-        *(" | ".join(row_to_line(row)) for row in rows),
-        "",
-    ]
 
 
 def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:

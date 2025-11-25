@@ -11,8 +11,8 @@ from ask_shell import shell
 from model_lib import Entity, parse_model
 from pydantic import Field, ValidationError, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text, update_between_markers
+from zero_3rdparty.str_utils import markdown_table_lines
 
-from atlas_init.cli_tf.go_test_summary import markdown_table_lines
 from atlas_init.tf_ext.gen_examples import read_example_dirs
 from atlas_init.tf_ext.models_module import (
     EXAMPLES_DIRNAME,
