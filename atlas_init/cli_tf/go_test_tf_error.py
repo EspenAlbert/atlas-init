@@ -54,7 +54,10 @@ class GoTestErrorClass(StrEnum):
             "mongodbatlas: failed to retrieve authentication checksums for provider",
             "Error: Failed to install provider github.com: bad response",
         ],
-        TIMEOUT: ("timeout while waiting for",),
+        TIMEOUT: [
+            "timeout while waiting for",
+            "context deadline exceeded",
+        ],
     }
 
     @classmethod

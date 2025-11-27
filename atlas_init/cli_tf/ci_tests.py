@@ -173,7 +173,7 @@ def run_daily_report(
     copy_to_clipboard: bool,
     report_paths: MonthlyReportPaths,
 ) -> DailyReportOut:
-    out = asyncio.shell.run(ci_tests_pipeline(event))
+    out = asyncio.run(ci_tests_pipeline(event))
     manual_classification(out.classified_errors, settings)
     summary_name = event.summary_name
 
@@ -323,7 +323,7 @@ def manual_classification(
 ):
     needs_classification = [cls for cls in classifications if cls.needs_classification(confidence_threshold)]
     with console.new_task("Manual Classification", total=len(needs_classification) + 1, log_updates=True) as task:
-        asyncio.shell.run(classify(needs_classification, settings, task))
+        asyncio.run(classify(needs_classification, settings, task))
 
 
 async def classify(

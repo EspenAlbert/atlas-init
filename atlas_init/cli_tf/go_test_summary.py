@@ -33,7 +33,7 @@ from atlas_init.html_out.md_export import MonthlyReportPaths
 from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
-_COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
+_COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL, GoTestStatus.TIMEOUT}
 
 
 @total_ordering
@@ -489,9 +489,11 @@ class TestRow(Entity):
         for env, runs in self.last_env_runs.items():
             if not runs:
                 continue
-            total = len(runs)
+            total_relevant = len(
+                [run for runs in self.last_env_runs.values() for run in runs if run.status in _COMPLETE_STATUSES]
+            )
             passed = sum(run.status == GoTestStatus.PASS for run in runs)
-            rates[env] = passed / total if total > 0 else 0.0
+            rates[env] = passed / total_relevant if total_relevant > 0 else 0.0
         return rates
 
     @property
@@ -551,7 +553,7 @@ class TestRow(Entity):
 
 def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
     with console.new_task(f"Monthly Report for {event.name} on {event.branch}"):
-        test_rows, detail_files_md = asyncio.shell.run(_collect_monthly_test_rows_and_summaries(settings, event))
+        test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
         assert test_rows, "No error rows found for monthly report"
     columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
     skip_rows = (
@@ -596,7 +598,7 @@ def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, eve
 
     with console.new_task("Daily Report"):
         with console.new_task("Collecting error rows") as task:
-            failure_rows = asyncio.shell.run(
+            failure_rows = asyncio.run(
                 _collect_daily_error_rows(errors, error_classes, settings, event.history_filter, task)
             )
         if not failure_rows:
