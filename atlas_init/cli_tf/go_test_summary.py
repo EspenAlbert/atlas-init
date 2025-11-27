@@ -102,17 +102,24 @@ def summary_str(summary: GoTestSummary, start_date: datetime, end_date: datetime
 
 
 def test_detail_md(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> str:
-    return "\n".join(
-        [
-            f"# {summary.name} Test Details",
-            summary_line(summary.results),
-            f"Success rate: {summary.success_rate_human}",
-            "",
-            *error_table(summary),
-            "## Timeline",
-            *timeline_lines(summary, start_date, end_date),
-        ]
-    )
+    lines = [
+        f"# {summary.name} Test Details",
+        summary_line(summary.results),
+        f"Success rate: {summary.success_rate_human}",
+        "",
+    ]
+    env_results = group_by_once(summary.results, key=lambda run: run.env or "unknown-env")
+    for env, env_runs in sorted(env_results.items()):
+        env_classifications = {
+            run_id: cls for run_id, cls in summary.classifications.items() if run_id in {r.id for r in env_runs}
+        }
+        env_summary = GoTestSummary(name=summary.name, results=env_runs, classifications=env_classifications)
+        lines.append(f"## {env.upper()} Environment")
+        lines.extend(error_table(env_summary))
+        lines.append("### Timeline")
+        lines.extend(timeline_lines(env_summary, start_date, end_date))
+        lines.append("")
+    return "\n".join(lines)
 
 
 def timeline_lines(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> list[str]:
