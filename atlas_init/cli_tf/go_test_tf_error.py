@@ -76,6 +76,10 @@ class GoTestErrorClass(StrEnum):
             None,
         )  # type: ignore
 
+    @classmethod
+    def is_known_failure(cls, output: str) -> bool:
+        return cls.auto_classification(output) is not None
+
 
 API_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 

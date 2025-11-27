@@ -458,9 +458,11 @@ class ErrorRowColumns(StrEnum):
     ERROR_CLASS = "Error Class"
     DETAILS_SUMMARY = "Details Summary"
     PASS_RATE = "Pass Rate"  # nosec B105 # This is not a security issue, just a column name
+    # Known failure will be registered as passing aka: all passes + known failures are counted as passes.
+    PASS_RATE_KNOWN_FAILURE = "Pass Rate Known Failure"  # nosec B105 # This is not a security issue, just a column name
     TIME_SINCE_PASS = "Time Since PASS"  # nosec B105 # This is not a security issue, just a column name
 
-    __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, TIME_SINCE_PASS]
+    __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, PASS_RATE_KNOWN_FAILURE, TIME_SINCE_PASS]
 
     @classmethod
     def column_names(cls, rows: list[TestRow], skip_columns: set[ErrorRowColumns]) -> list[str]:
@@ -504,6 +506,23 @@ class TestRow(Entity):
         return rates
 
     @property
+    def pass_rates_known_failure(self) -> dict[str, float]:
+        rates = {}
+        for env, runs in self.last_env_runs.items():
+            if not runs:
+                continue
+            total_relevant = len(
+                [run for runs in self.last_env_runs.values() for run in runs if run.status in _COMPLETE_STATUSES]
+            )
+            passed = sum(
+                run.status == GoTestStatus.PASS or GoTestErrorClass.is_known_failure(run.output_lines_str)
+                for run in runs
+                if run.status in _COMPLETE_STATUSES
+            )
+            rates[env] = passed / total_relevant if total_relevant > 0 else 0.0
+        return rates
+
+    @property
     def time_since_pass(self) -> dict[str, str]:
         time_since = {}
         for env, runs in self.last_env_runs.items():
@@ -523,11 +542,12 @@ class TestRow(Entity):
                 f"{cls}(x {count})" if count > 1 else cls
                 for cls, count in sorted(counter.items(), key=lambda item: item[1], reverse=True)
             )
-        return "No error classes"
+        return "No custom error classes"
 
     def as_row(self, columns: list[str]) -> list[str]:
         values = []
         pass_rates = self.pass_rates
+        pass_rates_known_failure = self.pass_rates_known_failure
         time_since_pass = self.time_since_pass
         for col in columns:
             match col:
@@ -542,9 +562,21 @@ class TestRow(Entity):
                     values.append(self.details_summary)
                 case s if s.startswith(ErrorRowColumns.PASS_RATE):
                     env = s.split(" (")[-1].rstrip(")")
-                    env_pass_rate = pass_rates.get(env, 0.0)
-                    env_run_count = len(self.last_env_runs.get(env, []))
-                    pass_rate_pct = f"{env_pass_rate:.2%} ({env_run_count} runs)" if env in pass_rates else "N/A"
+                    is_known = s.startswith(ErrorRowColumns.PASS_RATE_KNOWN_FAILURE)
+                    env_pass_rate = pass_rates_known_failure.get(env, 0.0) if is_known else pass_rates.get(env, 0.0)
+                    env_run_count_relevant = len(
+                        [
+                            run
+                            for runs in self.last_env_runs.values()
+                            for run in runs
+                            if run.status in _COMPLETE_STATUSES
+                        ]
+                    )
+                    pass_rate_pct = (
+                        f"{env_pass_rate:.2%} ({env_run_count_relevant} runs)"
+                        if env in pass_rates_known_failure or env in pass_rates
+                        else "N/A"
+                    )
                     if pass_rate_pct.startswith("100.00%"):
                         values.append("always")  # use always to avoid sorting errors, 100% showing before 2%
                     else:
