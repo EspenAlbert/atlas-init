@@ -14,12 +14,10 @@ from ask_shell.shell import ShellError
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field, model_validator
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
-from typer import Typer
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.iter_utils import flat_map
 
-from atlas_init.settings.rich_utils import configure_logging
-from atlas_init.tf_ext.args import REPO_PATH_ATLAS_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.args import SKIP_EXAMPLES_DIRS_OPTION, TF_CLI_CONFIG_FILE_ARG, TF_REPO_PATH_ATLAS
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.paths import find_variable_resource_type_usages, find_variables, get_example_directories
 from atlas_init.tf_ext.settings import TfExtSettings
@@ -50,10 +48,14 @@ def is_v2_example_dir(example_dir: Path) -> bool:
 
 
 def tf_dep_graph(
-    repo_path: Path = REPO_PATH_ATLAS_ARG,
+    repo_path_arg: str = TF_REPO_PATH_ATLAS,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
+    tf_cli_config_file: str = TF_CLI_CONFIG_FILE_ARG,
 ):
-    settings = TfExtSettings.from_env()
+    settings = TfExtSettings.from_env(repo_path_atlas_provider=repo_path_arg, tf_cli_config_file=tf_cli_config_file)
+    repo_path = settings.repo_path_atlas_provider  # pyright: ignore[reportAssignmentType]
+    assert repo_path, "repo_path is required"
+    logger.info(f"repo path: {repo_path}")
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
     example_dirs = get_example_directories(repo_path, skip_names)
@@ -365,14 +367,3 @@ def parse_graph(example_dir: Path) -> tuple[Path, pydot.Dot]:
         graph = parse_graph_output(example_dir, graph_output)  # just to make sure we get no errors
         return example_dir, graph
     raise EmptyGraphOutputError(example_dir)
-
-
-def typer_main():
-    app = Typer()
-    app.command()(tf_dep_graph)
-    configure_logging(app)
-    app()
-
-
-if __name__ == "__main__":
-    typer_main()

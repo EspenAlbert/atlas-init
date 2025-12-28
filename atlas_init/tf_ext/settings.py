@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import ClassVar, Self
 
 from model_lib import Entity, StaticSettings
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import ensure_suffix
 
@@ -84,6 +84,13 @@ class TfExtSettings(StaticSettings):
     repo_out_path: Path | None = None
     atlas_arch_center_path: Path | None = None
 
+    @field_validator("repo_path_atlas_provider", "tf_cli_config_file", mode="before")
+    def avoid_empty_values(cls, v) -> Path | None:
+        if v == "":
+            return None
+        return v
+    
+    
     @model_validator(mode="after")
     def infer_repo_path_atlas(self) -> Self:
         if self.repo_path_atlas_provider is None and self.tf_cli_config_file is None:
