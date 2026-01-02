@@ -498,9 +498,7 @@ class TestRow(Entity):
         for env, runs in self.last_env_runs.items():
             if not runs:
                 continue
-            total_relevant = len(
-                [run for runs in self.last_env_runs.values() for run in runs if run.status in _COMPLETE_STATUSES]
-            )
+            total_relevant = len([run for run in runs if run.status in _COMPLETE_STATUSES])
             passed = sum(run.status == GoTestStatus.PASS for run in runs)
             rates[env] = passed / total_relevant if total_relevant > 0 else 0.0
         return rates
@@ -511,9 +509,7 @@ class TestRow(Entity):
         for env, runs in self.last_env_runs.items():
             if not runs:
                 continue
-            total_relevant = len(
-                [run for runs in self.last_env_runs.values() for run in runs if run.status in _COMPLETE_STATUSES]
-            )
+            total_relevant = len([run for run in runs if run.status in _COMPLETE_STATUSES])
             passed = sum(
                 run.status == GoTestStatus.PASS or GoTestErrorClass.is_known_failure(run.output_lines_str)
                 for run in runs
@@ -564,14 +560,8 @@ class TestRow(Entity):
                     env = s.split(" (")[-1].rstrip(")")
                     is_known = s.startswith(ErrorRowColumns.PASS_RATE_KNOWN_FAILURE)
                     env_pass_rate = pass_rates_known_failure.get(env, 0.0) if is_known else pass_rates.get(env, 0.0)
-                    env_run_count_relevant = len(
-                        [
-                            run
-                            for runs in self.last_env_runs.values()
-                            for run in runs
-                            if run.status in _COMPLETE_STATUSES
-                        ]
-                    )
+                    env_runs = self.last_env_runs.get(env, [])
+                    env_run_count_relevant = len([run for run in env_runs if run.status in _COMPLETE_STATUSES])
                     pass_rate_pct = (
                         f"{env_pass_rate:.2%} ({env_run_count_relevant} runs)"
                         if env in pass_rates_known_failure or env in pass_rates
