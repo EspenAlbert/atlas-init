@@ -41,6 +41,7 @@ def parse_api_spec_paths(api_spec_path: Path) -> dict[str, list[ApiSpecPath]]:
 
 # reusing url from terraform-provider-mongodbatlas/scripts/schema-scaffold.sh
 ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/atlas-sdk-go/main/openapi/atlas-api-transformed.yaml"
+# ADMIN_API_URL = "https://raw.githubusercontent.com/mongodb/openapi/main/openapi/v2/openapi-2025-03-12.yaml"
 
 
 def admin_api_url(branch: str) -> str:
