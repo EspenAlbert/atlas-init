@@ -15,6 +15,9 @@ def test_download_admin_api_live(tmp_path: Path):
     download_admin_api(dest, branch="master")
     paths = parse_api_spec_paths(dest)
     method = os.environ.get("API_METHOD", "POST")
-    path = os.environ.get("API_PATH", "/api/atlas/v2/groups/695da931d59b8466ea725024/streams/test-acc-tf-s-2241396692592931656/processor/processor-created-to-started:start")
+    path = os.environ.get(
+        "API_PATH",
+        "/api/atlas/v2/groups/695da931d59b8466ea725024/streams/test-acc-tf-s-2241396692592931656/processor/processor-created-to-started:start",
+    )
     path_spec = find_normalized_path(path, paths[method])
     assert path_spec

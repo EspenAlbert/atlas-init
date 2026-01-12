@@ -89,8 +89,7 @@ class TfExtSettings(StaticSettings):
         if v == "":
             return None
         return v
-    
-    
+
     @model_validator(mode="after")
     def infer_repo_path_atlas(self) -> Self:
         if self.repo_path_atlas_provider is None and self.tf_cli_config_file is None:

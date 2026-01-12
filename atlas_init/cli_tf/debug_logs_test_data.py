@@ -187,7 +187,7 @@ class ApiSpecPath(Entity):
             if expected.startswith("{") and expected.endswith("}"):
                 continue
             if ":" in expected and ":" in actual:
-                new_expected, expected_ending =  expected.split(":")
+                new_expected, expected_ending = expected.split(":")
                 new_actual, new_ending = actual.split(":")
                 if expected_ending != new_ending:
                     return False
