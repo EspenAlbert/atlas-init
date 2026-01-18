@@ -9,7 +9,7 @@ from typing import ClassVar, Iterable
 import pydot
 import typer
 from ask_shell import console
-from model_lib import parse_list, parse_model
+from model_lib.serialize import parse_list, parse_model
 from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map
 

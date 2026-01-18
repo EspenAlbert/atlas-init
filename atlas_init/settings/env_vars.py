@@ -7,7 +7,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, NamedTuple, TypeVar
 
-from model_lib import StaticSettings, parse_payload
+from model_lib import StaticSettings
+from model_lib.serialize import parse_payload
 from pydantic import BaseModel, ValidationError, field_validator
 from zero_3rdparty import iter_utils, str_utils
 

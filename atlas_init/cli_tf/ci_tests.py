@@ -11,7 +11,8 @@ from pathlib import Path
 import typer
 from ask_shell import ask, console, shell
 from ask_shell._internal.rich_progress import new_task
-from model_lib import Entity, Event, copy_and_validate
+from model_lib import Entity, Event
+from model_lib.pydantic_utils import copy_and_validate
 from pydantic import Field, ValidationError, field_validator, model_validator
 from pydantic_core import Url
 from rich.markdown import Markdown

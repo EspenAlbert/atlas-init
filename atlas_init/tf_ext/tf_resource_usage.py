@@ -454,7 +454,7 @@ def dump_resource_markdown(
 def write_graphs(settings: TfExtSettings, usage: ResourceUsage) -> None:
     graph = build_simple_graph(usage)
     graph_output = settings.example_graph_path
-    graph_dict = dict(sorted(dump.dump_as_str_as_dict(graph.parent_child_edges).items()))
+    graph_dict = dict(sorted(dump.dump_as_dict(graph.parent_child_edges).items()))
     graph_yaml = dump.dump_as_str(graph_dict, "yaml")
     ensure_parents_write_text(graph_output, graph_yaml)
     logger.info(f"Example graph written to {graph_output}")

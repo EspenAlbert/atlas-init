@@ -4,7 +4,8 @@ from pathlib import Path
 
 import typer
 from ask_shell import ask, console, shell
-from model_lib import copy_and_validate, parse_model
+from model_lib.pydantic_utils import copy_and_validate
+from model_lib.serialize import parse_model
 from rich.markdown import Markdown
 from zero_3rdparty.file_utils import clean_dir
 

@@ -115,7 +115,7 @@ class CfnTemplate(Entity):
 
     @classmethod
     def read_template_types(cls, template_path: Path, prefix: str = CfnType.MONGODB_ATLAS_CFN_TYPE_PREFIX) -> set[str]:
-        cfn_template = parse.parse.parse_model(template_path, t=CfnTemplate)
+        cfn_template = parse.parse_model(template_path, t=CfnTemplate)
         return {r.type for r in cfn_template.resources.values() if r.type.startswith(prefix)}
 
     def find_resource(self, type_name: str) -> CfnResource:

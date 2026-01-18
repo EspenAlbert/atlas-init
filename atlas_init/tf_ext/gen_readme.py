@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any, Callable, Self, TypeAlias
 
 from ask_shell import shell
-from model_lib import Entity, parse_model
+from model_lib import Entity
+from model_lib.serialize import parse_model
 from pydantic import Field, ValidationError, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text, update_between_markers
 from zero_3rdparty.str_utils import markdown_table_lines

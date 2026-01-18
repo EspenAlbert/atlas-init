@@ -4,7 +4,8 @@ from typing import Iterable, Self
 
 import typer
 from ask_shell import console
-from model_lib import Entity, parse_dict, parse_model
+from model_lib import Entity
+from model_lib.serialize import parse_dict, parse_model
 from pydantic import Field, model_validator
 from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map

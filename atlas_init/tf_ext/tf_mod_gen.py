@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 
 import typer
 from ask_shell import ask, console, shell
-from model_lib import parse_model, parse_payload
+from model_lib.serialize import parse_model, parse_payload
 from pydantic import DirectoryPath, TypeAdapter
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
