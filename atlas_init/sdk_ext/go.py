@@ -4,7 +4,7 @@ from pathlib import Path
 
 import typer
 from ask_shell import ask, shell
-from model_lib import dump, parse_model
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.cli_args import ParsedPaths, option_mms_repo_path, option_sdk_repo_path
@@ -34,7 +34,7 @@ def go(
 
 
 def transform_openapi(old: Path, dest_path: Path) -> Path:
-    api_spec = parse_model(old, t=OpenapiSchema)
+    api_spec = parse.parse_model(old, t=OpenapiSchema)
     new_api_spec = api_spec.model_dump()
     for path in api_spec.paths.keys():
         for method_name, method in api_spec.methods_with_name(path):
@@ -49,7 +49,7 @@ def transform_openapi(old: Path, dest_path: Path) -> Path:
                     new_api_spec["paths"][path][method_name]["requestBody"]["content"] = use_a_single_version(
                         request_body, api_spec, path
                     )
-    dest_yaml = dump(new_api_spec, "yaml")
+    dest_yaml = dump.dump_as_str(new_api_spec, "yaml")
     ensure_parents_write_text(dest_path, dest_yaml)
     return dest_path
 

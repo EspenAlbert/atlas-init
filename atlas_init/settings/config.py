@@ -9,7 +9,7 @@ from os import getenv
 from pathlib import Path
 from typing import Any
 
-from model_lib import Entity, IgnoreFalsy
+from model_lib import Entity, dump
 from pydantic import Field, model_validator
 
 from atlas_init.repos.path import as_repo_alias, find_test_names, go_package_prefix, owner_project_name, package_glob
@@ -17,7 +17,7 @@ from atlas_init.repos.path import as_repo_alias, find_test_names, go_package_pre
 logger = logging.getLogger(__name__)
 
 
-class TerraformVars(IgnoreFalsy):
+class TerraformVars(dump.IgnoreFalsy):
     cluster_info: bool = False
     cluster_info_m10: bool = False
     stream_instance: bool = False
@@ -74,7 +74,7 @@ class PyHook(Entity):
 
 
 @total_ordering
-class TestSuite(IgnoreFalsy):
+class TestSuite(dump.IgnoreFalsy):
     __test__ = False
 
     name: str

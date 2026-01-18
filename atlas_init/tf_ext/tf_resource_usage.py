@@ -11,7 +11,7 @@ import pydot
 import typer
 from ask_shell import console, shell
 from ask_shell._internal.rich_progress import new_task
-from model_lib import Entity, dump, dump_as_dict
+from model_lib import Entity, dump
 from pydantic import Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
 from zero_3rdparty.iter_utils import flat_map
@@ -454,8 +454,8 @@ def dump_resource_markdown(
 def write_graphs(settings: TfExtSettings, usage: ResourceUsage) -> None:
     graph = build_simple_graph(usage)
     graph_output = settings.example_graph_path
-    graph_dict = dict(sorted(dump_as_dict(graph.parent_child_edges).items()))
-    graph_yaml = dump(graph_dict, "yaml")
+    graph_dict = dict(sorted(dump.dump_as_str_as_dict(graph.parent_child_edges).items()))
+    graph_yaml = dump.dump_as_str(graph_dict, "yaml")
     ensure_parents_write_text(graph_output, graph_yaml)
     logger.info(f"Example graph written to {graph_output}")
     dot_graph = graph.to_dot_graph("Full Example Graph", keep_provider_name=True)

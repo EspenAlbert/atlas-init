@@ -1,12 +1,13 @@
 from abc import ABC
 from collections import defaultdict
 from contextlib import suppress
-from dataclasses import Field, dataclass, fields
+from dataclasses import Field, dataclass
+from dataclasses import fields as dc_fields
 from pathlib import Path
 from types import ModuleType
 from typing import Any, ClassVar, Iterable, Self, TypeAlias
 
-from model_lib import Entity, copy_and_validate, dump, parse_dict, parse_model
+from model_lib import Entity, dump, fields, parse
 from pydantic import DirectoryPath, model_validator
 from pydantic import Field as PydanticField
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -91,7 +92,7 @@ class ResourceGenConfig(Entity):
 
     def single_variable_version(self) -> Self:
         assert not self.use_single_variable, "use_single_variable must be False to create a single variable version"
-        return copy_and_validate(self, use_single_variable=True)
+        return fields.copy_and_validate(self, use_single_variable=True)
 
 
 def as_provider_name(provider_path: str) -> str:
@@ -184,7 +185,7 @@ class ModuleGenConfig(Entity):
         assert config_path.exists(), f"{config_path} does not exist"
         out_dir = out_dir or settings.modules_out_path
         assert out_dir.exists(), f"{out_dir} does not exist"
-        config = parse_model(config_path, t=cls)
+        config = parse.parse_model(config_path, t=cls)
         config.out_dir = out_dir / name
         config.in_dir = in_dir / name
         config.settings = settings
@@ -315,7 +316,7 @@ class ResourceTypePythonModule:
     def base_fields(self) -> list[Field]:
         if self.resource is None:
             return []
-        return list(fields(self.resource))
+        return list(dc_fields(self.resource))
 
     @property
     def base_field_names(self) -> list[str]:
@@ -349,7 +350,7 @@ class ResourceTypePythonModule:
         return sorted(
             (
                 f
-                for f in fields(self.resource_ext)
+                for f in dc_fields(self.resource_ext)
                 if f.name not in base_fields and not ResourceAbs.skip_variable(f.name, self.resource_ext)
             ),
             key=lambda f: f.name,
@@ -388,7 +389,7 @@ class ResourceTypePythonModule:
 
     @staticmethod
     def container_types(data_class: type[ResourceAbs]) -> Iterable[tuple[str, ContainerType[ResourceAbs]]]:
-        for field in fields(data_class):
+        for field in dc_fields(data_class):
             if ResourceAbs.is_nested(field.name, data_class):
                 with suppress(PrimitiveTypeError):
                     container_type = unwrap_type(field)
@@ -423,16 +424,16 @@ class AttributeDescriptions(Entity):
 
 def parse_attribute_descriptions(settings: TfExtSettings) -> AttributeDescriptions:
     return AttributeDescriptions(
-        manual_nested=parse_dict(settings.attribute_resource_descriptions_manual_file_path)
+        manual_nested=parse.parse_dict(settings.attribute_resource_descriptions_manual_file_path)
         if settings.attribute_resource_descriptions_manual_file_path.exists()
         else {},
-        generated_nested=parse_dict(settings.attribute_resource_descriptions_file_path)
+        generated_nested=parse.parse_dict(settings.attribute_resource_descriptions_file_path)
         if settings.attribute_resource_descriptions_file_path.exists()
         else {},
-        manual_flat=parse_dict(settings.attribute_description_manual_file_path)
+        manual_flat=parse.parse_dict(settings.attribute_description_manual_file_path)
         if settings.attribute_description_manual_file_path.exists()
         else {},
-        generated_flat=parse_dict(settings.attribute_description_file_path)
+        generated_flat=parse.parse_dict(settings.attribute_description_file_path)
         if settings.attribute_description_file_path.exists()
         else {},
     )
@@ -448,11 +449,11 @@ def store_updated_attribute_description(
     if resource_type:
         out_path = settings.attribute_resource_descriptions_manual_file_path
         existing.manual_nested.setdefault(resource_type, {})[attribute_name] = description
-        out_yaml = dump(existing.manual_nested, "yaml")
+        out_yaml = dump.dump_as_str(existing.manual_nested, "yaml")
     else:
         out_path = settings.attribute_description_manual_file_path
         existing.manual_flat[attribute_name] = description
-        out_yaml = dump(existing.manual_flat, "yaml")
+        out_yaml = dump.dump_as_str(existing.manual_flat, "yaml")
     ensure_parents_write_text(out_path, out_yaml)
 
 

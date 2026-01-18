@@ -2,7 +2,7 @@ import logging
 import os
 from pathlib import Path
 import pytest
-from model_lib import parse_list
+from model_lib import parse
 
 logger = logging.getLogger(__name__)
 
@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 def test_parsing_guild_names():
     path = os.environ["GUILD_FILE_PATH"]
     path2 = os.environ["GUILD_FILE_PATH2"]
-    payload = parse_list(Path(path))
-    payload2 = parse_list(Path(path2))
+    payload = parse.parse_list(Path(path))
+    payload2 = parse.parse_list(Path(path2))
     names = {name for guild_dict in payload if (name := guild_dict.get("guild_name"))}
     names2 = {name for guild_dict in payload2 if (name := guild_dict.get("guild_name"))}
     extra_in2 = names2 - names

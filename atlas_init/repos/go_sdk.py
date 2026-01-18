@@ -2,7 +2,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import requests
-from model_lib import Entity, parse_model
+from model_lib import Entity, parse
 
 from atlas_init.cli_tf.debug_logs_test_data import ApiSpecPath, find_normalized_path
 from atlas_init.cli_tf.schema import logger
@@ -31,7 +31,7 @@ class ApiSpecPaths(Entity):
 
 
 def parse_api_spec_paths(api_spec_path: Path) -> dict[str, list[ApiSpecPath]]:
-    model = parse_model(api_spec_path, t=OpenapiSchema)
+    model = parse.parse_model(api_spec_path, t=OpenapiSchema)
     paths: dict[str, list[ApiSpecPath]] = defaultdict(list)
     for path, path_dict in model.paths.items():
         for method in path_dict:

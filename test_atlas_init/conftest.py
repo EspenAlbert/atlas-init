@@ -7,7 +7,7 @@ from typing import Literal, Protocol, TypeAlias
 from unittest.mock import MagicMock
 
 import pytest
-from model_lib import dump, field_names
+from model_lib import dump, fields
 from pydantic import BaseModel, Field
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 
@@ -234,7 +234,7 @@ def cli_assertions(file_regression, caplog, tmp_path):
                     if not files:
                         output.files_missing.append(f"no files found in {base}: {glob or rglob}")
                     output.files |= {str(file.relative_to(cwd)): file.read_text() for file in files}
-        yaml_text = dump(output, "yaml")
+        yaml_text = dump.dump_as_str(output, "yaml")
         file_regression.check(yaml_text, extension=".yaml")
         assert output.commands_missing == [], output.commands_missing
         assert output.files_missing == [], output.files_missing
@@ -243,7 +243,7 @@ def cli_assertions(file_regression, caplog, tmp_path):
 
 
 def mongodb_atlas_required_vars() -> dict[str, str]:
-    return {key: f"value_{key}" for key in field_names(AtlasSettings)}
+    return {key: f"value_{key}" for key in fields.field_names(AtlasSettings)}
 
 
 def write_required_vars(

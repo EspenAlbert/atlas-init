@@ -3,7 +3,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import ClassVar
 
-from model_lib import Entity, parse_payload
+from model_lib import Entity, parse
 from pydantic import model_validator
 from zero_3rdparty.dict_nested import read_nested_or_none
 from zero_3rdparty.str_utils import ensure_prefix
@@ -22,7 +22,7 @@ def cfn_examples_dir(repo_path: Path) -> Path:
 def infer_cfn_type_name() -> str:
     cwd = current_dir()
     for json_path in cwd.glob("*.json"):
-        parsed = parse_payload(json_path)
+        parsed = parse.parse_payload(json_path)
         if type_name := read_nested_or_none(parsed, "typeName"):
             assert isinstance(type_name, str)
             return type_name

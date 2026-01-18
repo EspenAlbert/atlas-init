@@ -6,7 +6,7 @@ from typing import ClassVar
 
 from ask_shell import console
 from ask_shell._internal.rich_progress import new_task
-from model_lib import IgnoreFalsy, dump
+from model_lib import dump
 from pydantic import Field, RootModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import instance_repr
@@ -37,10 +37,13 @@ def tf_vars(
         atlas_schema = parse_atlas_schema()
         resource_types = atlas_schema.resource_types
         resource_types_deprecated = atlas_schema.deprecated_resource_types
-        ensure_parents_write_text(settings.schema_resource_types_path, dump(sorted(resource_types), format="yaml"))
+        ensure_parents_write_text(
+            settings.schema_resource_types_path, dump.dump_as_str(sorted(resource_types), format="yaml")
+        )
         logger.info(f"Provider schema resource types written to {settings.schema_resource_types_path}")
         ensure_parents_write_text(
-            settings.schema_resource_types_deprecated_path, dump(sorted(resource_types_deprecated), format="yaml")
+            settings.schema_resource_types_deprecated_path,
+            dump.dump_as_str(sorted(resource_types_deprecated), format="yaml"),
         )
         logger.info(
             f"Provider schema deprecated resource types written to {settings.schema_resource_types_deprecated_path}"
@@ -62,7 +65,7 @@ def parse_provider_resource_schema(schema: dict, provider_name: str) -> dict:
     raise ValueError(f"Provider '{provider_name}' not found in schema.")
 
 
-class TfVarUsage(IgnoreFalsy):
+class TfVarUsage(dump.IgnoreFalsy):
     name: str = Field(..., description="Name of the Terraform variable.")
     descriptions: set[str] = Field(default_factory=set, description="Set of descriptions for the variable.")
     example_paths: list[Path] = Field(
@@ -104,7 +107,7 @@ class TfVarsUsage(RootModel[dict[str, TfVarUsage]]):
 def vars_usage_dumping(variables: TfVarsUsage) -> str:
     vars_model = variables.model_dump()
     vars_model = dict(sorted(vars_model.items()))
-    return dump(vars_model, format="yaml")
+    return dump.dump_as_str(vars_model, format="yaml")
 
 
 def update_resource_types(settings: TfExtSettings, example_dirs: list[Path], task: new_task) -> ResourceTypes:
@@ -130,7 +133,7 @@ def update_resource_types(settings: TfExtSettings, example_dirs: list[Path], tas
 
 def resource_types_dumping(resource_types: ResourceTypes, with_external: bool = False) -> str:
     resource_types_model = resource_types.dump_with_external_vars() if with_external else resource_types.model_dump()
-    return dump(dict(sorted(resource_types_model.items())), format="yaml")
+    return dump.dump_as_str(dict(sorted(resource_types_model.items())), format="yaml")
 
 
 def update_variables(settings: TfExtSettings, example_dirs: list[Path], task: new_task):

@@ -2,14 +2,14 @@ import logging
 from pathlib import Path
 
 import pytest
-from model_lib import dump, parse_payload
+from model_lib import dump, parse
 from zero_3rdparty.dict_nested import iter_nested_key_values, pop_nested
 
 logger = logging.getLogger(__name__)
 
 
 def remove_nulls_and_nested(yaml_path: Path):
-    parsed = parse_payload(yaml_path)
+    parsed = parse.parse_payload(yaml_path)
     assert isinstance(parsed, dict)
     keys_to_remove = [
         key_path
@@ -20,7 +20,7 @@ def remove_nulls_and_nested(yaml_path: Path):
     new_yaml = None
     for key_path in keys_to_remove:
         pop_nested(parsed, key_path)
-        new_yaml = dump(parsed, format="yaml")
+        new_yaml = dump.dump_as_str(parsed, format="yaml")
     if new_yaml:
         logger.info(f"dumping to {yaml_path}")
         yaml_path.write_text(new_yaml)

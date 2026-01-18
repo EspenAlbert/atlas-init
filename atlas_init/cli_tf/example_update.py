@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable
 
 import typer
-from model_lib import Entity, Event, dump, parse_payload
+from model_lib import Entity, Event, dump, parse
 from pydantic import BaseModel, ConfigDict, Field
 
 from atlas_init.cli_helper.run import run_binary_command_is_ok
@@ -135,8 +135,8 @@ def update_example_cmd(
     skip_log_existing: bool = typer.Option(False, help="Log existing descriptions"),
     skip_log_changes: bool = typer.Option(False, help="Log variable updates"),
 ):
-    var_descriptions_dict = parse_payload(var_descriptions) if var_descriptions else {}
-    output_descriptions_dict = parse_payload(output_descriptions) if output_descriptions else {}
+    var_descriptions_dict = parse.parse_payload(var_descriptions) if var_descriptions else {}
+    output_descriptions_dict = parse.parse_payload(output_descriptions) if output_descriptions else {}
     event = UpdateExamples(
         examples_base_dir=examples_base_dir,
         var_descriptions=var_descriptions_dict,  # type: ignore
@@ -148,7 +148,7 @@ def update_example_cmd(
             if change.changed:
                 logger.info(f"{change.path}({change.block_type}) {change.name}: {change.before} -> {change.after}")
     if not skip_log_existing:
-        existing_var_yaml = dump(output.before_var_descriptions, "yaml")
+        existing_var_yaml = dump.dump_as_str(output.before_var_descriptions, "yaml")
         logger.info(f"Existing Variables:\n{existing_var_yaml}")
-        existing_output_yaml = dump(output.before_output_descriptions, "yaml")
+        existing_output_yaml = dump.dump_as_str(output.before_output_descriptions, "yaml")
         logger.info(f"Existing Outputs:\n{existing_output_yaml}")

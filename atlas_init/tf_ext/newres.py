@@ -64,7 +64,7 @@ def modify_newres(new_res_path: Path, schema: AtlasSchemaInfo):
     custom_resource_dir = new_res_path / "pkg/custom"
     clean_dir(custom_resource_dir)
     for resource_type, resource_type_schema in schema.raw_resource_schema.items():
-        schema_json = dump(resource_type_schema, format="pretty_json")
+        schema_json = dump.dump_as_str(resource_type_schema, format="pretty_json")
         resource_type_go = _template_resource_go(resource_type, schema_json)
         resource_type_file = custom_resource_dir / f"{resource_type}.go"
         ensure_parents_write_text(resource_type_file, resource_type_go)

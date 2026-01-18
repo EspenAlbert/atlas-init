@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
-from model_lib import parse_payload
+from model_lib import parse
 
 from atlas_init.cli_tf.mock_tf_log import MockTFLog, mock_tf_log
 from atlas_init.repos.go_sdk import parse_api_spec_paths
@@ -57,6 +57,6 @@ def test_mock_tf_log(
         package_name=pkg_name,
     )
     output_path = mock_tf_log(req)
-    parsed_again = parse_payload(output_path)
+    parsed_again = parse.parse_payload(output_path)
     assert parsed_again
     file_regression.check(output_path.read_text(), extension=".yaml")

@@ -26,7 +26,7 @@ dependencies = [
   "pygithub==2.6.1",
   "pydot==4.0.1",
   "requests==2.32.2",
-  "pydantic-settings==2.7.1",
+  "pydantic-settings>=2.8",
   "questionary==2.1.0",
   "rich==14.0.0",
   "stringcase==1.2.0",

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 import pytest
-from model_lib import dump, parse_model
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
@@ -27,7 +27,7 @@ def test_dump_resource_schemas(atlas_schemas_dict, resource_type_schema_path):
     assert resource_schema
     for resource_type, details in resource_schema.items():
         resource_file = resource_type_schema_path(resource_type)
-        ensure_parents_write_text(resource_file, dump(details, "json"))
+        ensure_parents_write_text(resource_file, dump.dump_as_str(details, "json"))
 
 
 def test_check_if_all_schemas_are_parseable(atlas_schemas_dict, resource_type_schema_path):
@@ -35,13 +35,13 @@ def test_check_if_all_schemas_are_parseable(atlas_schemas_dict, resource_type_sc
     assert resource_schema
     for resource_type in resource_schema.keys():
         resource_file = resource_type_schema_path(resource_type)
-        parse_model(resource_file, ResourceSchema)
+        parse.parse_model(resource_file, ResourceSchema)
         logger.info(f"Parsed resource schema for {resource_type}")
 
 
 def read_resource_schema(resource_type: str, resource_type_schema_path) -> ResourceSchema:
     resource_file = resource_type_schema_path(resource_type)
-    resource_schema = parse_model(resource_file, ResourceSchema)
+    resource_schema = parse.parse.parse_model(resource_file, ResourceSchema)
     assert resource_schema
     return resource_schema
 

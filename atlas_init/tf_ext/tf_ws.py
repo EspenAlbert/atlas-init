@@ -13,7 +13,7 @@ import humanize
 import stringcase
 import typer
 from ask_shell import shell
-from model_lib import Entity, copy_and_validate, dump, parse_model
+from model_lib import Entity, dump, fields, parse
 from pydantic import ConfigDict, Field
 from zero_3rdparty.file_utils import ensure_parents_write_text, iter_paths_and_relative
 
@@ -283,7 +283,7 @@ def update_dumped_vars(path: Path, atlas_init_profiles_path: str) -> VariablesPl
                 ]
             },
         )
-        yaml = dump(dumped_vars, "yaml")
+        yaml = dump.dump_as_str(dumped_vars, "yaml")
         ensure_parents_write_text(path, yaml)
         return dumped_vars
 
@@ -399,7 +399,7 @@ def tf_ws(
     variable_resolvers = update_dumped_vars(settings.variable_plan_resolvers_dumped_file_path, atlas_init_profiles_path)
     manual_path = settings.variable_plan_resolvers_file_path
     if manual_path.exists():
-        manual_resolvers = parse_model(manual_path, t=VariablesPlanResolver)
+        manual_resolvers = parse.parse_model(manual_path, t=VariablesPlanResolver)
         variable_resolvers = variable_resolvers.merge(manual_resolvers)
 
     paths = sorted(
@@ -440,7 +440,7 @@ def tf_ws(
     assert run_count > 0, f"No run configs found from {root_path}"
 
     def run_cmd(run_config: TFWorkspaceRunConfig) -> TFWorkspaceRunState | None:
-        tf_vars_str = dump(run_config.resolved_vars, "pretty_json")
+        tf_vars_str = dump.dump_as_str(run_config.resolved_vars, "pretty_json")
         tf_vars_path = run_config.tf_vars_path_json(settings)
         ensure_parents_write_text(tf_vars_path, tf_vars_str)
         tf_data_dir = run_config.tf_data_dir(settings)
@@ -448,7 +448,7 @@ def tf_ws(
 
         lockfile_path = run_config.path / LOCKFILE_NAME
         if lockfile_path.exists():
-            lockfile = parse_model(lockfile_path, t=Lockfile, format="json")
+            lockfile = parse.parse_model(lockfile_path, t=Lockfile, format="json")
             logger.warning(f"Lockfile exists for {run_config.path}, skipping: {lockfile}")
             return None
         run_config_command = run_config.command
@@ -487,7 +487,7 @@ def tf_ws(
 
     failed_runs, ok_runs = run_tf_configs(run_configs, run_cmd)
     if command == TFWsCommands.APPLY and destroy_on_apply_ok and ok_runs:
-        destroy_configs = [copy_and_validate(run_config, command=TFWsCommands.DESTROY) for run_config in ok_runs]
+        destroy_configs = [fields.copy_and_validate(run_config, command=TFWsCommands.DESTROY) for run_config in ok_runs]
         failed_destroy, _ = run_tf_configs(destroy_configs, run_cmd)
         if failed_destroy:
             failed_runs.extend(failed_destroy)

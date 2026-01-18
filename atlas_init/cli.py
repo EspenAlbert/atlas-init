@@ -5,7 +5,7 @@ from pydoc import locate
 from typing import Literal
 
 import typer
-from model_lib import dump, parse_payload
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import iter_paths
 
 from atlas_init.cli_helper import sdk_auto_changes
@@ -235,14 +235,14 @@ def repo_dump():
             continue
         path_urls[str(repo_path)] = url
     out_path = code_root / "repos.json"
-    repos_json = dump(path_urls, "pretty_json")
+    repos_json = dump.dump_as_str(path_urls, "pretty_json")
     out_path.write_text(repos_json)
 
 
 @app_command()
 def repo_clone():
     repos_file = Path.home() / "code" / "repos.json"
-    repo_path_json: dict[str, str] = parse_payload(repos_file)  # type: ignore
+    repo_path_json: dict[str, str] = parse.parse_payload(repos_file)  # type: ignore
     for repo_path_str, url in repo_path_json.items():
         logger.info(f"cloning {url} @ {repo_path_str}")
         repo_path = Path(repo_path_str)

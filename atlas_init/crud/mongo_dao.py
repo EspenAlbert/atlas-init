@@ -8,7 +8,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import ClassVar, Self
 
-from model_lib import Entity, dump, field_names, parse_model
+from model_lib import Entity, dump, fields, parse
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic import model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
@@ -73,7 +73,7 @@ class TFErrors(Entity):
 
 def read_tf_errors(settings: AtlasInitSettings) -> TFErrors:
     path = crud_dir(settings) / "tf_errors.yaml"
-    return parse_model(path, TFErrors) if path.exists() else TFErrors()
+    return parse.parse_model(path, TFErrors) if path.exists() else TFErrors()
 
 
 def read_tf_errors_for_day(settings: AtlasInitSettings, branch: str, date: datetime) -> list[GoTestError]:
@@ -85,7 +85,7 @@ def store_or_update_tf_errors(settings: AtlasInitSettings, errors: list[GoTestEr
     new_error_ids = {error.run.id for error in errors}
     existing_without_new = [error for error in existing.errors if error.run.id not in new_error_ids]
     all_errors = existing_without_new + errors
-    yaml_dump = dump(TFErrors(errors=all_errors), "yaml")
+    yaml_dump = dump.dump_as_str(TFErrors(errors=all_errors), "yaml")
     ensure_parents_write_text(crud_dir(settings) / "tf_errors.yaml", yaml_dump)
 
 
@@ -105,7 +105,7 @@ class TFTestRuns(Entity):
 
 def read_tf_test_runs(settings: AtlasInitSettings) -> list[GoTestRun]:
     path = crud_dir(settings) / "tf_test_runs.yaml"
-    return parse_model(path, TFTestRuns).test_runs if path.exists() else []
+    return parse.parse_model(path, TFTestRuns).test_runs if path.exists() else []
 
 
 def read_tf_tests_for_day(settings: AtlasInitSettings, branch: str, date: datetime) -> list[GoTestRun]:
@@ -146,7 +146,7 @@ class MongoDao:
 
     @cached_property
     def _field_names_runs(self) -> set[str]:
-        return set(field_names(GoTestRun)) | set(self.property_keys_run)
+        return set(fields.field_names(GoTestRun)) | set(self.property_keys_run)
 
     async def connect(self) -> Self:
         await init_mongo(
@@ -195,7 +195,7 @@ class MongoDao:
         classifications: dict[str, GoTestErrorClassification] = {}
         async for raw_error in self.classifications.find(query):
             run_id = raw_error.pop("_id", None)
-            classification = parse_model(raw_error, t=GoTestErrorClassification)
+            classification = parse.parse_model(raw_error, t=GoTestErrorClassification)
             classifications[run_id] = classification
         return classifications
 
@@ -257,7 +257,7 @@ class MongoDao:
         raw.pop("_id")
         for key in self.property_keys_run:
             raw.pop(key, None)  # Remove properties that are not part of the model
-        return parse_model(raw, t=GoTestRun)
+        return parse.parse_model(raw, t=GoTestRun)
 
     async def read_run_history(
         self,

@@ -8,7 +8,7 @@ from pathlib import Path
 from queue import Queue
 from typing import ClassVar, NamedTuple
 
-from model_lib import Entity, dump
+from model_lib import Entity, dump, parse
 from pydantic import Field
 
 from atlas_init.cli_tf.schema_v2 import (
@@ -17,7 +17,6 @@ from atlas_init.cli_tf.schema_v2 import (
     SchemaResource,
     SchemaV2,
     SkipAttribute,
-    parse_model,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,15 +36,15 @@ def api_spec_text_changes(schema: SchemaV2, api_spec_parsed: OpenapiSchema) -> O
                     f"removed {prefix} from {name} in schema but {name_no_prefix} already exists"
                 )
                 schema_to_update[name_no_prefix] = value
-    openapi_yaml = dump(api_spec_parsed, "yaml")
+    openapi_yaml = dump.dump_as_str(api_spec_parsed, "yaml")
     for prefix in openapi_changes.schema_prefix_removal:
         pattern = re.compile(rf"{OpenapiSchema.SCHEMAS_PREFIX}(?P<prefix>{prefix})(?P<name>\w+)")
         openapi_yaml = pattern.sub(rf"{OpenapiSchema.SCHEMAS_PREFIX}\g<name>", openapi_yaml)
-    return parse_model(openapi_yaml, t=OpenapiSchema, format="yaml")
+    return parse.parse_model(openapi_yaml, t=OpenapiSchema, format="yaml")
 
 
 def parse_openapi_schema_after_modifications(schema: SchemaV2, api_spec_path: Path) -> OpenapiSchema:
-    original = parse_model(api_spec_path, t=OpenapiSchema)
+    original = parse.parse_model(api_spec_path, t=OpenapiSchema)
     return api_spec_text_changes(schema, original)
 
 

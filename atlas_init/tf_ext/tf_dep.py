@@ -239,7 +239,7 @@ class AtlasGraph(Entity):
     def dump_yaml(self) -> str:
         parent_child_edges = {name: sorted(children) for name, children in sorted(self.parent_child_edges.items())}
         external_parents = {name: sorted(parents) for name, parents in sorted(self.external_parents.items())}
-        return dump(
+        return dump.dump_as_str(
             {
                 "parent_child_edges": parent_child_edges,
                 "external_parents": external_parents,

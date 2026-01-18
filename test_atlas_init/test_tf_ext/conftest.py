@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from model_lib import parse_dict
+from model_lib import parse
 import pytest
 from zero_3rdparty.str_utils import ensure_suffix
 
@@ -32,7 +32,7 @@ def atlas_schemas_dict() -> dict:
     schema_path = Path(__file__).parent / "testdata/atlas_schema.json"
     if not schema_path.exists():
         pytest.skip("schema_path does not exist")
-    return parse_dict(schema_path)
+    return parse.parse_dict(schema_path)
 
 
 @pytest.fixture()

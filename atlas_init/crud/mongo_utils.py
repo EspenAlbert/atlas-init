@@ -5,7 +5,7 @@ from datetime import datetime
 from functools import wraps
 from typing import Any, AsyncIterable, Iterable, List, Optional, Type, TypeVar
 
-from model_lib import dump_as_dict
+from model_lib import dump
 from motor.core import AgnosticCollection
 from pydantic import BaseModel
 from pymongo import ASCENDING, DESCENDING, IndexModel, ReturnDocument
@@ -157,7 +157,11 @@ def dump_with_id(
         If you want to index on datetime, you have to set them afterwards
         As they will be dumped as strings
     """
-    raw = dump_as_dict(model) if exclude is None else dump_as_dict(model.model_dump(exclude=exclude))
+    raw = (
+        dump.dump_as_str_as_dict(model)
+        if exclude is None
+        else dump.dump_as_str_as_dict(model.model_dump(exclude=exclude))
+    )
     if id:
         raw["_id"] = id
     if dt_keys:

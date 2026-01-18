@@ -3,10 +3,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
-from model_lib import Entity, dump, parse_model
+from model_lib import Entity, dump, parse
 from pydantic import Field, field_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
-
 
 PLAN_VARIABLES_FILENAME = "variables.tfvars.json"
 
@@ -61,7 +60,7 @@ class PlanOutput(Entity):
 
 
 def parse_plan_output(plan_json_path: Path) -> PlanOutput:
-    return parse_model(plan_json_path, t=PlanOutput)
+    return parse.parse_model(plan_json_path, t=PlanOutput)
 
 
 def resource_type_name_filename(resource_type: str, resource_name: str) -> str:
@@ -76,14 +75,14 @@ def dump_plan_output_resources(output_dir: Path, plan_output: PlanOutput) -> lis
             output_file = output_dir / resource_type_name
             assert resource_type_name not in output_files, f"Duplicate name {resource_type_name} in plan output"
             output_files[resource_type_name] = output_file
-            ensure_parents_write_text(output_file, dump(resource.values, "yaml"))
+            ensure_parents_write_text(output_file, dump.dump_as_str(resource.values, "yaml"))
     return list(output_files.values())
 
 
 def dump_plan_output_variables(output_dir: Path, plan_output: PlanOutput) -> Path:
     variable_values = {name: value.value for name, value in plan_output.variables.items()}
     output_file = output_dir / PLAN_VARIABLES_FILENAME
-    ensure_parents_write_text(output_file, dump(variable_values, "pretty_json"))
+    ensure_parents_write_text(output_file, dump.dump_as_str(variable_values, "pretty_json"))
     return output_file
 
 

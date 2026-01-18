@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from ask_shell import shell
-from model_lib import Entity, dump, parse_dict
+from model_lib import Entity, dump, parse
 from pydantic import BaseModel
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
@@ -145,12 +145,13 @@ def parse_atlas_schema_from_settings(settings: TfExtSettings, provider_config: P
     update_config = provider_config.last_gen_sha != current_sha
     schema = _read_or_create_cached_atlas_schema(cache_dir, current_sha, settings.tf_cli_config_file)
     ensure_parents_write_text(
-        settings.schema_resource_types_deprecated_path, dump(schema.deprecated_resource_types, format="yaml")
+        settings.schema_resource_types_deprecated_path,
+        dump.dump_as_str(schema.deprecated_resource_types, format="yaml"),
     )
     if not update_config:
         return schema
     provider_config.last_gen_sha = current_sha
-    provider_yaml = dump(provider_config.config_dump(), "yaml")
+    provider_yaml = dump.dump_as_str(provider_config.config_dump(), "yaml")
     settings.repo_out.provider_settings_path(provider_config.provider_name).write_text(provider_yaml)
     return schema
 
@@ -162,7 +163,7 @@ def _read_or_create_cached_atlas_schema(
     if not json_response_path.exists():
         logger.info(f"Cache miss for sha = {sha}, parsing atlas schema")
         return parse_atlas_schema(store_path=json_response_path, tf_cli_config_file=tf_cli_config_file)
-    parsed_dict = parse_dict(json_response_path)
+    parsed_dict = parse.parse_dict(json_response_path)
     return _parse_dict_schema(parsed_dict)
 
 

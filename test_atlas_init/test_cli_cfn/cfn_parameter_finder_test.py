@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from model_lib import parse_payload
+from model_lib import parse
 
 from atlas_init.cli_cfn.cfn_parameter_finder import (
     CfnTemplateUnknownParametersError,
@@ -36,7 +36,7 @@ def test_updates():
     dest = Path(os.environ["DEST_TEMPLATE"])
     assert src.exists()
     assert dest.exists()
-    assert parse_payload(src) == parse_payload(dest)
+    assert parse.parse_payload(src) == parse.parse_payload(dest)
 
 
 def test_dump_resource_to_file(tmp_path):

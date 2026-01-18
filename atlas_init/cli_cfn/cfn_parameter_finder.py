@@ -3,12 +3,12 @@ import os
 from pathlib import Path
 from typing import Any
 
-from model_lib import Entity, dump, parse_model
+from model_lib import Entity, dump, parse
 from mypy_boto3_cloudformation.type_defs import ParameterTypeDef
 from pydantic import ConfigDict, Field
 from rich import prompt
-from zero_3rdparty.file_utils import clean_dir
 from zero_3rdparty.dict_nested import iter_nested_key_values, update
+from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_cfn.files import create_sample_file, default_log_group_name
 from atlas_init.cloud.aws import PascalAlias
@@ -115,7 +115,7 @@ class CfnTemplate(Entity):
 
     @classmethod
     def read_template_types(cls, template_path: Path, prefix: str = CfnType.MONGODB_ATLAS_CFN_TYPE_PREFIX) -> set[str]:
-        cfn_template = parse_model(template_path, t=CfnTemplate)
+        cfn_template = parse.parse.parse_model(template_path, t=CfnTemplate)
         return {r.type for r in cfn_template.resources.values() if r.type.startswith(prefix)}
 
     def find_resource(self, type_name: str) -> CfnResource:
@@ -162,7 +162,7 @@ class CfnTemplateUnknownParametersError(Exception):
 def infer_template_parameters(
     path: Path, type_name: str, stack_name: str, explicit_params: dict[str, Any]
 ) -> list[ParameterTypeDef]:
-    cfn_template = parse_model(path, t=CfnTemplate)
+    cfn_template = parse.parse_model(path, t=CfnTemplate)
     parameters_dict: dict[str, Any] = {key: UNKNOWN_PLACEHOLDER for key in cfn_template.parameters.keys()}
     type_defaults = type_names_defaults.get(cfn_template.normalized_type_name(type_name), {})
     if stack_name_param := type_defaults.pop(STACK_NAME_PARAM, None):
@@ -201,11 +201,11 @@ def dump_resource_to_file(
     type_name: str,
     parameters: list[ParameterTypeDef],
 ) -> Path:
-    cfn_template = parse_model(template_path, t=CfnTemplate)
+    cfn_template = parse.parse_model(template_path, t=CfnTemplate)
     properties = cfn_template.get_resource_properties(type_name, parameters)
     clean_dir(inputs_dir, recreate=True)
     dest_path = inputs_dir / "inputs_1_create.json"
-    dest_json = dump(properties, "pretty_json")
+    dest_json = dump.dump_as_str(properties, "pretty_json")
     dest_path.write_text(dest_json)
     return dest_path
 
@@ -216,7 +216,7 @@ def dump_sample_file(
     type_name: str,
     parameters: list[ParameterTypeDef],
 ):
-    cfn_template = parse_model(template_path, t=CfnTemplate)
+    cfn_template = parse.parse_model(template_path, t=CfnTemplate)
     samples_path = samples_dir / template_path.stem / "create.json"
     create_sample_file(
         samples_path,
