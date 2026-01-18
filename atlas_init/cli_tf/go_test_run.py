@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import NamedTuple, TypeAlias
 
 import humanize
-from model_lib import Entity, utc_datetime, utc_datetime_ms
+from model_lib import Entity, UtcDatetime, UtcDatetimeMs
 from pydantic import Field, model_validator
 from zero_3rdparty.datetime_utils import utc_now
 
@@ -53,7 +53,7 @@ class GoTestContext(Entity):
     """Abstraction on WorkflowJob to also support local runs"""
 
     name: str
-    created_at: utc_datetime = Field(default_factory=utc_now)
+    created_at: UtcDatetime = Field(default_factory=utc_now)
     steps: list[GoTestContextStep] = Field(default_factory=list)
     html_url: str = "http://localhost"
 
@@ -112,7 +112,7 @@ class GoTestRuntimeStats(NamedTuple):
 
 
 class GoTestLastPassStat(NamedTuple):
-    pass_ts: utc_datetime
+    pass_ts: UtcDatetime
     name_with_package: str
     pass_when: str
     last_pass: GoTestRun
@@ -122,9 +122,9 @@ class GoTestLastPassStat(NamedTuple):
 class GoTestRun(Entity):
     name: str
     status: GoTestStatus = GoTestStatus.RUN
-    ts: utc_datetime_ms
+    ts: UtcDatetimeMs
     output_lines: list[str] = Field(default_factory=list)
-    finish_ts: utc_datetime_ms | None = None
+    finish_ts: UtcDatetimeMs | None = None
     run_seconds: float | None = Field(default=None, init=False)
 
     package_url: str | None = Field(default=None, init=False)

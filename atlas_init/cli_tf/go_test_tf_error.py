@@ -7,7 +7,7 @@ from functools import total_ordering
 from typing import ClassVar, Literal, NamedTuple, Self, TypeAlias
 
 import humanize
-from model_lib import Entity, utc_datetime_ms
+from model_lib import Entity, UtcDatetimeMs
 from pydantic import Field, model_validator
 from zero_3rdparty import iter_utils
 from zero_3rdparty.datetime_utils import utc_now
@@ -215,7 +215,7 @@ class ErrorClassAuthor(StrEnum):
 
 class GoTestErrorClassification(Entity):
     error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
-    ts: utc_datetime_ms = Field(default_factory=utc_now)
+    ts: UtcDatetimeMs = Field(default_factory=utc_now)
     author: ErrorClassAuthor
     confidence: float = 0.0
     test_output: str = ""
