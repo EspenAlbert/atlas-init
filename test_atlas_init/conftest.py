@@ -38,10 +38,6 @@ REQUIRED_FIELDS = [
 REPO_PATH = Path(__file__).parent.parent
 
 
-def _skip_marked_tests() -> bool:
-    return os.getenv("SKIP_MARKED_TESTS", "false").lower() in ("true", "1", "yes")
-
-
 @pytest.fixture(
     autouse=True, scope="function"
 )  # autouse to avoid any test modifying the os.environ and leaving side effects for next test
@@ -68,8 +64,6 @@ def settings(monkeypatch, tmp_path: Path) -> AtlasInitSettings:  # type: ignore
 
 @pytest.fixture()
 def tf_ext_settings_repo_path(settings, monkeypatch) -> TfExtSettings:
-    if _skip_marked_tests():
-        pytest.skip("skipping marked tests")
     repo_path = Path(__file__).parent.parent
     static_dir = repo_path / "static"
     monkeypatch.setenv("STATIC_DIR", str(static_dir))

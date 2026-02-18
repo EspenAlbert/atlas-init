@@ -19,6 +19,8 @@ from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, m
 
 logger = logging.getLogger(__name__)
 
+pytestmark = pytest.mark.manual
+
 
 _normal_replication_spec_vars = """
 replication_specs = [{
