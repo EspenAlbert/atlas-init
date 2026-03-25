@@ -213,7 +213,8 @@ def sdk_usage(
     spec_path: Path = typer.Option("", "--spec-path", help="path to OpenAPI spec (default: provider flattened spec)"),
     output: Path = typer.Option("provider-sdk-usage.json", "--output", "-o", help="output JSON path"),
 ):
-    spec_path = spec_path or provider_repo / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml"
+    if spec_path == Path():
+        spec_path = provider_repo / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml"
     if not provider_repo.exists():
         logger.critical(f"provider repo not found: {provider_repo}")
         raise typer.Abort

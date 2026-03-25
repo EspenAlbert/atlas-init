@@ -6,6 +6,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from model_lib import Entity, dump, parse
+from model_lib.serialize.yaml_serialize import allow_duplicate_anchors
 from pydantic import Field
 
 from atlas_init.cli_tf.openapi import OpenapiSchema
@@ -61,7 +62,8 @@ class ProviderSdkUsageReport(Entity):
 
 
 def parse_codegen_config(config_path: Path) -> list[ResourceSdkUsage]:
-    raw: dict = parse.parse_payload(config_path)
+    with allow_duplicate_anchors():
+        raw: dict = parse.parse_dict(config_path)
     resources_dict: dict = raw.get("resources", {})
     results: list[ResourceSdkUsage] = []
     for key, resource_cfg in resources_dict.items():
