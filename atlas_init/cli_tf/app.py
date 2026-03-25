@@ -27,6 +27,7 @@ from atlas_init.cli_tf.schema_v2 import (
     parse_schema,
 )
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
+from atlas_init.cli_tf.sdk_usage import generate_sdk_usage_report
 from atlas_init.repos.go_sdk import download_admin_api
 from atlas_init.repos.path import Repo, current_repo_path
 from atlas_init.settings import interactive
@@ -204,3 +205,20 @@ def schema2(
             go_conversion_src = generate_model_go(schema, resource_schema, sdk_model)
             go_conversion_path = go_old.with_name("model.go")
             go_conversion_path.write_text(go_conversion_src)
+
+
+@app.command(name="sdk-usage")
+def sdk_usage(
+    provider_repo: Path = typer.Option(..., "--provider-repo", help="path to terraform-provider-mongodbatlas checkout"),
+    spec_path: Path = typer.Option("", "--spec-path", help="path to OpenAPI spec (default: provider flattened spec)"),
+    output: Path = typer.Option("provider-sdk-usage.json", "--output", "-o", help="output JSON path"),
+):
+    spec_path = spec_path or provider_repo / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml"
+    if not provider_repo.exists():
+        logger.critical(f"provider repo not found: {provider_repo}")
+        raise typer.Abort
+    if not spec_path.exists():
+        logger.critical(f"spec path not found: {spec_path}")
+        raise typer.Abort
+    report = generate_sdk_usage_report(provider_repo, spec_path, output)
+    logger.info(f"report: {len(report.resources)} resources")
