@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-
 import pytest
 
-from atlas_init.cli_tf.openapi import OpenapiSchema
-from atlas_init.cli_tf.sdk_usage import (
-    ApiEndpoint,
-    ResourceEndpoints,
-    SourceKind,
+from atlas_init.cli_tf.api_attributes import (
     collect_resource_api_attributes,
     extract_endpoint_attributes,
     extract_version_headers,
     flatten_schema_paths,
 )
+from atlas_init.cli_tf.openapi import OpenapiSchema
+from atlas_init.cli_tf.sdk_usage import ApiEndpoint, ResourceEndpoints, SourceKind
 
 ENV_TF_PROVIDER_PATH = "TF_PROVIDER_PATH"
 
