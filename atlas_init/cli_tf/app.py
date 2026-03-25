@@ -210,16 +210,18 @@ def schema2(
 @app.command(name="sdk-usage")
 def sdk_usage(
     provider_repo: Path = typer.Option(..., "--provider-repo", help="path to terraform-provider-mongodbatlas checkout"),
-    spec_path: Path = typer.Option("", "--spec-path", help="path to OpenAPI spec (default: provider flattened spec)"),
+    sdk_repo_path_str: str = option_sdk_repo_path,
     output: Path = typer.Option("provider-sdk-usage.json", "--output", "-o", help="output JSON path"),
 ):
-    if spec_path == Path():
-        spec_path = provider_repo / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml"
+    if not sdk_repo_path_str:
+        logger.critical("--sdk-repo-path is required for SDK usage report")
+        raise typer.Abort
+    sdk_repo_path = Path(sdk_repo_path_str)
     if not provider_repo.exists():
         logger.critical(f"provider repo not found: {provider_repo}")
         raise typer.Abort
-    if not spec_path.exists():
-        logger.critical(f"spec path not found: {spec_path}")
+    if not sdk_repo_path.exists():
+        logger.critical(f"SDK repo not found: {sdk_repo_path}")
         raise typer.Abort
-    report = generate_sdk_usage_report(provider_repo, spec_path, output)
+    report = generate_sdk_usage_report(provider_repo, sdk_repo_path, output)
     logger.info(f"report: {len(report.resources)} resources")

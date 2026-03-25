@@ -5,7 +5,6 @@ import pytest
 
 from atlas_init.cli_tf.sdk_usage import (
     ApiEndpoint,
-    CodegenEndpoint,
     ResourceSdkUsage,
     SdkCall,
     SourceKind,
@@ -81,40 +80,29 @@ def test_resolve_endpoints():
         "createCluster": ApiEndpoint(
             path="/api/atlas/v2/groups/{groupId}/clusters", method="POST", operation_id="createCluster"
         ),
+        "listGroups": ApiEndpoint(path="/api/atlas/v2/groups", method="GET", operation_id="listGroups"),
     }
-    codegen_usage = ResourceSdkUsage(
-        resource_type="mongodbatlas_test_codegen",
-        package_path="internal/serviceapi/test",
-        source=SourceKind.codegen,
-        codegen_endpoints=[
-            CodegenEndpoint(path="/api/atlas/v2/groups/{groupId}/clusters/{name}", method="GET", operation="read"),
-        ],
-    )
     handwritten_usage = ResourceSdkUsage(
         resource_type="mongodbatlas_test_handwritten",
         package_path="internal/service/test",
         source=SourceKind.handwritten,
         sdk_calls=[
             SdkCall(api_group="ClustersApi", method_name="CreateCluster"),
+            SdkCall(api_group="ClustersApi", method_name="GetClusterWithParams"),
+            SdkCall(api_group="ProjectsApi", method_name="ListProjects"),
+            SdkCall(api_group="ServerlessInstancesApi", method_name="CreateServerlessInstance"),
             SdkCall(api_group="OldApi", method_name="OldMethod", legacy=True),
         ],
     )
-    results = resolve_endpoints([codegen_usage, handwritten_usage], operation_index)
-    assert len(results) == 2
-    codegen_result = results[0]
-    assert len(codegen_result.endpoints) == 1
-    assert codegen_result.endpoints[0].operation_id == "getCluster"
-    handwritten_result = results[1]
-    assert len(handwritten_result.endpoints) == 1
-    assert handwritten_result.endpoints[0].operation_id == "createCluster"
+    results = resolve_endpoints([handwritten_usage], operation_index)
+    assert len(results) == 1
+    resolved_ops = {ep.operation_id for ep in results[0].endpoints}
+    assert resolved_ops == {"createCluster", "getCluster", "listGroups"}
 
 
-def test_full_report(provider_repo_path, live_api_spec, tmp_path):
-    spec_path = provider_repo_path / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml"
-    if not spec_path.exists():
-        pytest.skip("flattened spec not found in provider repo")
+def test_full_report(provider_repo_path, sdk_repo_path, tmp_path):
     output = tmp_path / "report.json"
-    report = generate_sdk_usage_report(provider_repo_path, spec_path, output)
+    report = generate_sdk_usage_report(provider_repo_path, sdk_repo_path, output)
     assert output.exists()
     assert len(report.resources) > 50
     types = {r.resource_type for r in report.resources}

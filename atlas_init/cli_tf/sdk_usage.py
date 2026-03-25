@@ -10,13 +10,42 @@ from model_lib.serialize.yaml_serialize import allow_duplicate_anchors
 from pydantic import Field
 
 from atlas_init.cli_tf.openapi import OpenapiSchema
+from atlas_init.repos.go_sdk import api_spec_path_transformed
 from atlas_init.repos.path import find_resource_dirs
 
 logger = logging.getLogger(__name__)
 
 SDK_CALL_PATTERN = re.compile(r"(?:connV2|\.AtlasV2|\.Client\.AtlasV2)\.(?P<api_group>\w+)\.(?P<method>\w+)\(")
 LEGACY_SDK_CALL_PATTERN = re.compile(r"conn\.(?P<api_group>\w+)\.(?P<method>\w+)\(")
+RESOURCE_NAME_PATTERN = re.compile(r'resourceName\s*=\s*"(?P<name>[a-z_]+)"')
 CODEGEN_CRUD_OPERATIONS = ("read", "create", "update", "delete")
+
+_THIS_FILE = "sdk_usage.py"
+
+# SDK method names that don't match the spec operationId (naming divergence).
+# Format: sdk_method_name -> spec_operationId
+# To update: check the SDK spec operationIds in openapi/atlas-api-transformed.yaml
+SDK_METHOD_ALIASES: dict[str, str] = {
+    "listProjectUsers": "listGroupUsers",
+    "listOrganizationUsers": "listOrgUsers",
+    "getUserByUsername": "getUserByName",
+    "createTeam": "createOrgTeam",
+    "getTeamById": "getOrgTeam",
+    "renameTeam": "renameOrgTeam",
+    "deleteTeam": "deleteOrgTeam",
+    "removeProjectTeam": "removeGroupTeam",
+    "listProjects": "listGroups",
+    "listProjectTeams": "listGroupTeams",
+}
+
+# SDK methods whose operations were removed from the spec (deprecated APIs).
+# These are silently skipped instead of logging warnings.
+# To update: check if the operationId exists in openapi/atlas-api-transformed.yaml
+KNOWN_MISSING_OPERATIONS: set[str] = {
+    "createServerlessInstance",
+    "updateServerlessInstance",
+    "deleteServerlessInstance",
+}
 
 
 class SourceKind(StrEnum):
@@ -105,12 +134,19 @@ def _scan_go_file_sdk_calls(path: Path) -> list[SdkCall]:
     return calls
 
 
+def _find_resource_name_const(go_files: list[Path]) -> str:
+    for go_file in go_files:
+        text = go_file.read_text()
+        if match := RESOURCE_NAME_PATTERN.search(text):
+            return match.group("name")
+    return ""
+
+
 def scan_handwritten_sdk_calls(service_path: Path) -> list[ResourceSdkUsage]:
     resource_dirs, non_resource_dirs = find_resource_dirs(service_path)
     resource_name_by_dir: dict[str, str] = {}
     for name, pkg_dir in resource_dirs.items():
-        dir_key = str(pkg_dir)
-        resource_name_by_dir[dir_key] = name
+        resource_name_by_dir[str(pkg_dir)] = name
 
     all_dirs = {str(d): d for d in service_path.iterdir() if d.is_dir() and d.name != "testdata"}
     results: list[ResourceSdkUsage] = []
@@ -124,11 +160,13 @@ def scan_handwritten_sdk_calls(service_path: Path) -> list[ResourceSdkUsage]:
         if not all_calls:
             continue
         resource_type = resource_name_by_dir.get(dir_key, "")
+        if not resource_type:
+            resource_type = _find_resource_name_const(go_files)
         if resource_type:
             resource_type = f"mongodbatlas_{resource_type}"
         else:
             resource_type = f"mongodbatlas_{pkg_dir.name}"
-            logger.warning(f"no test-based resource name for {pkg_dir.name}, using dir name")
+            logger.warning(f"no resource name found for {pkg_dir.name}, using dir name (update {_THIS_FILE})")
         seen: set[tuple[str, str, bool]] = set()
         deduped: list[SdkCall] = []
         for call in all_calls:
@@ -165,7 +203,9 @@ def build_operation_index(spec: OpenapiSchema) -> dict[str, ApiEndpoint]:
 
 
 def _method_name_to_operation_id(method_name: str) -> str:
-    return method_name[0].lower() + method_name[1:]
+    name = method_name.removesuffix("WithParams")
+    op_id = name[0].lower() + name[1:]
+    return SDK_METHOD_ALIASES.get(op_id, op_id)
 
 
 def resolve_endpoints(
@@ -184,7 +224,10 @@ def resolve_endpoints(
         for ce in usage.codegen_endpoints:
             op_id = path_method_index.get((ce.path, ce.method), "")
             if not op_id:
-                logger.warning(f"no operationId for codegen endpoint {ce.method} {ce.path} on {usage.resource_type}")
+                logger.warning(
+                    f"no operationId for codegen endpoint {ce.method} {ce.path}"
+                    f" on {usage.resource_type} (update SDK_METHOD_ALIASES in {_THIS_FILE})"
+                )
                 op_id = f"unknown_{ce.operation}"
             if op_id not in seen_ops:
                 seen_ops.add(op_id)
@@ -196,11 +239,16 @@ def resolve_endpoints(
             op_id = _method_name_to_operation_id(call.method_name)
             if op_id in seen_ops:
                 continue
+            if op_id in KNOWN_MISSING_OPERATIONS:
+                continue
             if ep := operation_index.get(op_id):
                 seen_ops.add(op_id)
                 endpoints.append(ep)
             else:
-                logger.warning(f"unresolved SDK call {call.api_group}.{call.method_name} on {usage.resource_type}")
+                logger.warning(
+                    f"unresolved SDK call {call.api_group}.{call.method_name} on {usage.resource_type}"
+                    f" (update SDK_METHOD_ALIASES or KNOWN_MISSING_OPERATIONS in {_THIS_FILE})"
+                )
 
         results.append(
             ResourceEndpoints(
@@ -214,7 +262,7 @@ def resolve_endpoints(
 
 def generate_sdk_usage_report(
     provider_repo_path: Path,
-    spec_path: Path,
+    sdk_repo_path: Path,
     output_path: Path,
 ) -> ProviderSdkUsageReport:
     codegen_config = provider_repo_path / "tools/codegen/config.yml"
@@ -223,6 +271,7 @@ def generate_sdk_usage_report(
     service_path = provider_repo_path / "internal/service"
     handwritten_usages = scan_handwritten_sdk_calls(service_path) if service_path.exists() else []
 
+    spec_path = api_spec_path_transformed(sdk_repo_path)
     spec = parse.parse_model(spec_path, t=OpenapiSchema)
     operation_index = build_operation_index(spec)
 
