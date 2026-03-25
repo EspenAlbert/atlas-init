@@ -35,10 +35,7 @@ class ResourceApiAttributes(Entity):
     endpoints: list[EndpointAttributes] = Field(default_factory=list)
 
     def simplified_dict(self) -> dict:
-        return {
-            "resource_type": self.resource_type,
-            "all_paths": sorted(self.all_paths)
-        }
+        return {"resource_type": self.resource_type, "all_paths": sorted(self.all_paths)}
 
     @computed_field  # pyright: ignore[reportGeneralTypeIssues]
     @property
@@ -195,6 +192,17 @@ def _select_versioned_ref(content: dict, version_header: str | None) -> str:
     return best_ref
 
 
+def _extract_path_params(spec: OpenapiSchema, path_dict: dict, operation: dict) -> set[str]:
+    seen: set[str] = set()
+    for params_source in (path_dict.get("parameters", []), operation.get("parameters", [])):
+        for param in params_source:
+            if ref := param.get("$ref"):
+                param = spec.resolve_ref(ref)
+            if param.get("in") == "path":
+                seen.add(param["name"])
+    return seen
+
+
 def extract_endpoint_attributes(
     spec: OpenapiSchema,
     path: str,
@@ -205,11 +213,11 @@ def extract_endpoint_attributes(
     operation = path_dict.get(method.lower(), {})
     operation_id = operation.get("operationId", "")
 
-    request_paths: set[str] = set()
+    request_paths: set[str] = _extract_path_params(spec, path_dict, operation)
     if request_body := operation.get("requestBody"):
         content = request_body.get("content", {})
         if ref := _select_versioned_ref(content, version_header):
-            request_paths = set(flatten_schema_paths(spec, ref))
+            request_paths |= set(flatten_schema_paths(spec, ref))
 
     response_paths: set[str] = set()
     for code in ("200", "201"):

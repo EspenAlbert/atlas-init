@@ -115,8 +115,14 @@ def test_flatten_allof():
 
 VERSIONED_PATHS: dict = {
     "/api/atlas/v2/groups/{groupId}/things": {
+        "parameters": [
+            {"name": "groupId", "in": "path", "schema": {"type": "string"}},
+        ],
         "get": {
             "operationId": "getThing",
+            "parameters": [
+                {"name": "thingName", "in": "path", "schema": {"type": "string"}},
+            ],
             "responses": {
                 "200": {
                     "content": {
@@ -154,7 +160,7 @@ VERSIONED_PATHS: dict = {
 def test_extract_endpoint_get_latest_version():
     spec = _make_spec(INLINE_SCHEMAS, VERSIONED_PATHS)
     attrs = extract_endpoint_attributes(spec, "/api/atlas/v2/groups/{groupId}/things", "get")
-    assert not attrs.request_paths
+    assert attrs.request_paths == {"groupId", "thingName"}
     assert "replicationSpecs[].regionConfigs[].electableSpecs.instanceSize" in attrs.response_paths
 
 
@@ -173,6 +179,7 @@ def test_extract_endpoint_explicit_version():
 def test_extract_endpoint_post_has_request_and_response():
     spec = _make_spec(INLINE_SCHEMAS, VERSIONED_PATHS)
     attrs = extract_endpoint_attributes(spec, "/api/atlas/v2/groups/{groupId}/things", "post")
+    assert "groupId" in attrs.request_paths
     assert "diskSizeGB" in attrs.request_paths
     assert "replicationSpecs[].regionConfigs[].electableSpecs.instanceSize" in attrs.response_paths
 
