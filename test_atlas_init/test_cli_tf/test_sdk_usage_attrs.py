@@ -190,8 +190,18 @@ def test_collect_resource_api_attributes():
         resource_type="mongodbatlas_thing",
         source=SourceKind.codegen,
         endpoints=[
-            ApiEndpoint(path="/api/atlas/v2/groups/{groupId}/things", method="GET", operation_id="getThing"),
-            ApiEndpoint(path="/api/atlas/v2/groups/{groupId}/things", method="POST", operation_id="createThing"),
+            ApiEndpoint(
+                path="/api/atlas/v2/groups/{groupId}/things",
+                method="GET",
+                operation_id="getThing",
+                version="2024-08-05",
+            ),
+            ApiEndpoint(
+                path="/api/atlas/v2/groups/{groupId}/things",
+                method="POST",
+                operation_id="createThing",
+                version="2024-08-05",
+            ),
         ],
     )
     result = collect_resource_api_attributes(spec, re_)

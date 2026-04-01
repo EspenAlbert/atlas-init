@@ -9,7 +9,7 @@ from model_lib import Entity, dump, parse
 from model_lib.serialize.yaml_serialize import allow_duplicate_anchors
 from pydantic import Field
 
-from atlas_init.cli_tf.openapi import OpenapiSchema
+from atlas_init.cli_tf.openapi import OpenapiSchema, extract_api_version_content_header
 from atlas_init.repos.go_sdk import api_spec_path_transformed
 from atlas_init.repos.path import find_resource_dirs
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 SDK_CALL_PATTERN = re.compile(r"(?:connV2|\.AtlasV2|\.Client\.AtlasV2)\.(?P<api_group>\w+)\.(?P<method>\w+)\(")
 LEGACY_SDK_CALL_PATTERN = re.compile(r"conn\.(?P<api_group>\w+)\.(?P<method>\w+)\(")
 RESOURCE_NAME_PATTERN = re.compile(r'resourceName\s*=\s*"(?P<name>[a-z_]+)"')
+SDK_IMPORT_PATTERN = re.compile(r'(?:\w+\s+)?"go\.mongodb\.org/atlas-sdk/v(?P<version>\d{11})/admin"')
 CODEGEN_CRUD_OPERATIONS = ("read", "create", "update", "delete")
 
 _THIS_FILE = "sdk_usage.py"
@@ -69,18 +70,23 @@ class SdkCall(Entity):
     api_group: str
     method_name: str
     legacy: bool = False
+    version: str = ""
+    file_path: str = ""
+    line_number: int = 0
 
 
 class CodegenEndpoint(Entity):
     path: str
     method: str
     operation: str
+    version: str = ""
 
 
 class ApiEndpoint(Entity):
     path: str
     method: str
     operation_id: str
+    version: str = ""
 
 
 class ResourceSdkUsage(Entity):
@@ -110,12 +116,17 @@ def parse_codegen_config(config_path: Path) -> list[ResourceSdkUsage]:
     for key, resource_cfg in resources_dict.items():
         if not isinstance(resource_cfg, dict):
             continue
+        version = ""
+        if version_header := resource_cfg.get("version_header"):
+            version = extract_api_version_content_header(str(version_header)) or ""
         endpoints: list[CodegenEndpoint] = []
         for op in CODEGEN_CRUD_OPERATIONS:
             if op_cfg := resource_cfg.get(op):
                 if isinstance(op_cfg, dict) and "path" in op_cfg and "method" in op_cfg:
                     endpoints.append(
-                        CodegenEndpoint(path=op_cfg["path"], method=op_cfg["method"].upper(), operation=op)
+                        CodegenEndpoint(
+                            path=op_cfg["path"], method=op_cfg["method"].upper(), operation=op, version=version
+                        )
                     )
         if endpoints:
             results.append(
@@ -129,20 +140,53 @@ def parse_codegen_config(config_path: Path) -> list[ResourceSdkUsage]:
     return results
 
 
-def _scan_go_file_sdk_calls(path: Path) -> list[SdkCall]:
+def sdk_version_to_date(sdk_version: str) -> str:
+    """Converts e.g. 'v20241023001' or '20241023001' to '2024-10-23'."""
+    digits = sdk_version.lstrip("v")
+    if len(digits) != 11:
+        return ""
+    return f"{digits[:4]}-{digits[4:6]}-{digits[6:8]}"
+
+
+def _extract_sdk_import_version(text: str) -> str:
+    if match := SDK_IMPORT_PATTERN.search(text):
+        return sdk_version_to_date(match.group("version"))
+    return ""
+
+
+def _scan_go_file_sdk_calls(path: Path, base_path: Path | None = None) -> list[SdkCall]:
     text = path.read_text()
+    version = _extract_sdk_import_version(text)
+    rel_path = str(path.relative_to(base_path)) if base_path else path.name
     calls: list[SdkCall] = []
     seen: set[tuple[str, str, bool]] = set()
-    for match in SDK_CALL_PATTERN.finditer(text):
-        key = (match.group("api_group"), match.group("method"), False)
-        if key not in seen:
-            seen.add(key)
-            calls.append(SdkCall(api_group=key[0], method_name=key[1]))
-    for match in LEGACY_SDK_CALL_PATTERN.finditer(text):
-        key = (match.group("api_group"), match.group("method"), True)
-        if key not in seen:
-            seen.add(key)
-            calls.append(SdkCall(api_group=key[0], method_name=key[1], legacy=True))
+    for line_nr, line in enumerate(text.splitlines(), 1):
+        for match in SDK_CALL_PATTERN.finditer(line):
+            key = (match.group("api_group"), match.group("method"), False)
+            if key not in seen:
+                seen.add(key)
+                calls.append(
+                    SdkCall(
+                        api_group=key[0],
+                        method_name=key[1],
+                        version=version,
+                        file_path=rel_path,
+                        line_number=line_nr,
+                    )
+                )
+        for match in LEGACY_SDK_CALL_PATTERN.finditer(line):
+            key = (match.group("api_group"), match.group("method"), True)
+            if key not in seen:
+                seen.add(key)
+                calls.append(
+                    SdkCall(
+                        api_group=key[0],
+                        method_name=key[1],
+                        legacy=True,
+                        file_path=rel_path,
+                        line_number=line_nr,
+                    )
+                )
     return calls
 
 
@@ -168,7 +212,7 @@ def scan_handwritten_sdk_calls(service_path: Path) -> list[ResourceSdkUsage]:
             continue
         all_calls: list[SdkCall] = []
         for go_file in go_files:
-            all_calls.extend(_scan_go_file_sdk_calls(go_file))
+            all_calls.extend(_scan_go_file_sdk_calls(go_file, base_path=service_path))
         if not all_calls:
             continue
         resource_type = resource_name_by_dir.get(dir_key, "")
@@ -202,6 +246,15 @@ def scan_handwritten_sdk_calls(service_path: Path) -> list[ResourceSdkUsage]:
     return results
 
 
+def _extract_latest_version(spec: OpenapiSchema, method_dict: dict) -> str:
+    responses = method_dict.get("responses", {})
+    for code in ("200", "201"):
+        if response := responses.get(code):
+            if versions := spec._unpack_schema_versions(response):
+                return str(max(versions))
+    return ""
+
+
 def build_operation_index(spec: OpenapiSchema) -> dict[str, ApiEndpoint]:
     index: dict[str, ApiEndpoint] = {}
     for path_template, path_dict in spec.paths.items():
@@ -215,6 +268,7 @@ def build_operation_index(spec: OpenapiSchema) -> dict[str, ApiEndpoint]:
                     path=path_template,
                     method=http_method.upper(),
                     operation_id=operation_id,
+                    version=_extract_latest_version(spec, method_dict),
                 )
     return index
 
@@ -248,7 +302,9 @@ def resolve_endpoints(
                 op_id = f"unknown_{ce.operation}"
             if op_id not in seen_ops:
                 seen_ops.add(op_id)
-                endpoints.append(ApiEndpoint(path=ce.path, method=ce.method, operation_id=op_id))
+                resolved_ep = operation_index.get(op_id)
+                version = resolved_ep.version if resolved_ep else ce.version
+                endpoints.append(ApiEndpoint(path=ce.path, method=ce.method, operation_id=op_id, version=version))
 
         for call in usage.sdk_calls:
             if call.legacy:
@@ -260,7 +316,10 @@ def resolve_endpoints(
                 continue
             if ep := operation_index.get(op_id):
                 seen_ops.add(op_id)
-                endpoints.append(ep)
+                version = ep.version or call.version
+                endpoints.append(
+                    ApiEndpoint(path=ep.path, method=ep.method, operation_id=ep.operation_id, version=version)
+                )
             else:
                 logger.warning(
                     f"unresolved SDK call {call.api_group}.{call.method_name} on {usage.resource_type}"
