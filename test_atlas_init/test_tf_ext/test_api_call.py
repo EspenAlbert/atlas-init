@@ -17,11 +17,11 @@ def _public_private_key() -> tuple[str, str]:
     return public_key, private_key
 
 
-def call_api(api_call: ApiCall, path_variables: dict[str, str], data: dict) -> dict:
+def call_api(api_call: ApiCall, path_variables: dict[str, str], data: dict, method: str = "GET") -> dict:
     resolved_path = api_call.path_with_variables(path_variables)
     digest_auth = HTTPDigestAuth(*_public_private_key())
     logger.info(f"Calling {resolved_path} with {data}")
-    response = requests.patch(
+    response = requests.request(method,
         f"https://cloud-dev.mongodb.com/{resolved_path.lstrip('/')}",
         # params=api_call.query_args,
         headers={"Accept": api_call.accept_header, "Content-Type": "application/json"},
@@ -51,5 +51,20 @@ def test_api_call():
         call,
         {"groupId": "664619d870c247237f4b86a6", "clusterName": "HELP-90015-oplog-repro"},
         {"oplogMinRetentionHours": None},
+    )
+    logger.info(f"Response: {response}")
+
+
+def test_api_encryption_privatelink_delete():
+    call = ApiCall(
+        operation_id="requestPrivateEndpointDeletion",
+        path="/api/atlas/v2/groups/{groupId}/encryptionAtRest/{cloudProvider}/privateEndpoints/{endpointId}",
+        accept_header="application/vnd.atlas.2024-08-05+json",
+    )
+    response = call_api(
+        call,
+        {"groupId": "664619d870c247237f4b86a6", "cloudProvider": "AWS", "endpointId": "69d385a0d6fb09b90f0c9077"},
+        {},
+        method="DELETE",
     )
     logger.info(f"Response: {response}")
