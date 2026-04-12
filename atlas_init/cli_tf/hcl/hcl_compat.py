@@ -1,8 +1,8 @@
-"""Compat shim for python-hcl2 v7/v8.
+"""Compat shim for python-hcl2 v8.
 
 Vendors the v7 DictTransformer + Attribute (MIT, depends only on lark)
-with additional handlers for v8 grammar rules. Wraps API functions
-that changed between v7 and v8.
+with handlers adapted for v8 grammar rules. Wraps the v8 API functions
+and provides a reverse transformer that reconstructs blocks correctly.
 """
 
 import json
@@ -11,16 +11,10 @@ import sys
 from collections import namedtuple
 from typing import Any
 
+from hcl2 import parses_to_tree, reconstruct
 from lark import Token, Tree
 from lark.tree import Meta
 from lark.visitors import Discard, Transformer, _DiscardType, v_args
-
-try:
-    from hcl2 import parses_to_tree, reconstruct
-
-    _V8 = True
-except ImportError:
-    _V8 = False
 
 HEREDOC_PATTERN = re.compile(r"<<([a-zA-Z][a-zA-Z0-9._-]+)\n([\s\S]*)\1", re.S)
 HEREDOC_TRIM_PATTERN = re.compile(r"<<-([a-zA-Z][a-zA-Z0-9._-]+)\n([\s\S]*)\1", re.S)
@@ -55,57 +49,41 @@ def _reverse_quotes_within_interpolation(interp_s: str) -> str:
 
 
 def parses_compat(text: str):
-    if _V8:
-        return parses_to_tree(text)
-    from hcl2.api import parses
-
-    return parses(text)
+    return parses_to_tree(text)
 
 
 def writes_compat(tree) -> str:
-    if _V8:
-        return reconstruct(tree)
-    from hcl2.api import writes
-
-    return writes(tree)
+    return reconstruct(tree)
 
 
 def reverse_transform_compat(data: dict):
-    if _V8:
-        return _HCLReverseTransformer().transform(data)
-    from hcl2.api import reverse_transform
-
-    return reverse_transform(data)
+    return _HCLReverseTransformer().transform(data)
 
 
 def _make_identifier(name: str) -> Tree:
     return Tree(Token("RULE", "identifier"), [Token("NAME", name)])
 
 
-def _make_string_token(value: str) -> Tree:
-    if _V8:
-        return Tree(
-            Token("RULE", "string"),
-            [
-                Token("DBLQUOTE", '"'),
-                Tree(Token("RULE", "string_part"), [Token("STRING_CHARS", value)]),
-                Token("DBLQUOTE", '"'),
-            ],
-        )
-    return Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", f'"{value}"')])
+def _make_string_tree(value: str) -> Tree:
+    return Tree(
+        Token("RULE", "string"),
+        [
+            Token("DBLQUOTE", '"'),
+            Tree(Token("RULE", "string_part"), [Token("STRING_CHARS", value)]),
+            Token("DBLQUOTE", '"'),
+        ],
+    )
 
 
-def _make_string_label(value: str):
-    if _V8:
-        return Tree(
-            Token("RULE", "string"),
-            [
-                Token("DBLQUOTE", '"'),
-                Tree(Token("RULE", "string_part"), [Token("STRING_CHARS", value)]),
-                Token("DBLQUOTE", '"'),
-            ],
-        )
-    return Token("STRING_LIT", f'"{value}"')
+def _make_string_label(value: str) -> Tree:
+    return Tree(
+        Token("RULE", "string"),
+        [
+            Token("DBLQUOTE", '"'),
+            Tree(Token("RULE", "string_part"), [Token("STRING_CHARS", value)]),
+            Token("DBLQUOTE", '"'),
+        ],
+    )
 
 
 _INTERP_RE = re.compile(r"\$\{(.*)}")
@@ -113,7 +91,7 @@ _IS_WRAPPED_TF_RE = re.compile(r"\$?\{|}")
 
 
 class _HCLReverseTransformer:
-    """Vendored from python-hcl2 v7 (MIT). Converts a dict back to a lark Tree."""
+    """Vendored from python-hcl2 v7 (MIT), adapted for v8 tree structure."""
 
     def transform(self, hcl_dict: dict) -> Tree:
         body = self._dict_to_body(hcl_dict, level=0)
@@ -179,13 +157,10 @@ class _HCLReverseTransformer:
                     labels, body_dict = self._block_labels(block_v)
                     label_tokens = [_make_string_label(lbl) for lbl in labels]
                     body = self._dict_to_body(body_dict, level + 1)
-                    if _V8:
-                        block = Tree(
-                            Token("RULE", "block"),
-                            [ident, *label_tokens, Token("LBRACE", "{"), body, Token("RBRACE", "}")],
-                        )
-                    else:
-                        block = Tree(Token("RULE", "block"), [ident, *label_tokens, body])
+                    block = Tree(
+                        Token("RULE", "block"),
+                        [ident, *label_tokens, Token("LBRACE", "{"), body, Token("RBRACE", "}")],
+                    )
                     children.append(block)
                     nl = self._newline(level - 1)
                     nl.children.append(self._newline(level).children[0])
@@ -208,58 +183,45 @@ class _HCLReverseTransformer:
 
     def _value_to_expr(self, value: Any, level: int) -> Tree:
         if isinstance(value, list):
-            if _V8:
-                elems: list[Tree | Token] = [Token("LSQB", "[")]
-                for v in value:
-                    elems.append(self._value_to_expr(v, level))
-                    elems.append(Token("COMMA", ","))
-                elems.append(Token("RSQB", "]"))
-                return Tree(Token("RULE", "expr_term"), [Tree(Token("RULE", "tuple"), elems)])
-            return Tree(
-                Token("RULE", "expr_term"),
-                [Tree(Token("RULE", "tuple"), [self._value_to_expr(v, level) for v in value])],
-            )
+            elems: list[Tree | Token] = [Token("LSQB", "[")]
+            for v in value:
+                elems.append(self._value_to_expr(v, level))
+                elems.append(Token("COMMA", ","))
+            elems.append(Token("RSQB", "]"))
+            return Tree(Token("RULE", "expr_term"), [Tree(Token("RULE", "tuple"), elems)])
 
         if value is None:
-            if _V8:
-                return Tree(Token("RULE", "expr_term"), [Tree(Token("RULE", "literal_value"), [Token("NULL", "null")])])
-            return Tree(Token("RULE", "expr_term"), [_make_identifier("null")])
+            return Tree(Token("RULE", "expr_term"), [Tree(Token("RULE", "literal_value"), [Token("NULL", "null")])])
 
         if isinstance(value, dict):
             elems = []
-            if _V8 and value:
-                elems.append(Token("LBRACE", "{"))
             if value:
+                elems.append(Token("LBRACE", "{"))
                 elems.append(self._newline(level + 1))
             for i, (k, v) in enumerate(value.items()):
                 if k in (START_LINE, END_LINE):
                     continue
                 k = self._unwrap_interpolation(k)
                 val_expr = self._value_to_expr(v, level + 1)
-                if _V8:
-                    elem_key = Tree(
-                        Token("RULE", "object_elem_key"), [Tree(Token("RULE", "expr_term"), [_make_identifier(k)])]
-                    )
-                else:
-                    elem_key = Tree(Token("RULE", "object_elem_key"), [_make_identifier(k)])
+                elem_key = Tree(
+                    Token("RULE", "object_elem_key"), [Tree(Token("RULE", "expr_term"), [_make_identifier(k)])]
+                )
                 elems.append(Tree(Token("RULE", "object_elem"), [elem_key, Token("EQ", " ="), val_expr]))
                 remaining = len([kk for kk in list(value.keys())[i + 1 :] if kk not in (START_LINE, END_LINE)])
                 if remaining:
                     elems.append(self._newline(level + 1))
                 else:
                     elems.append(self._newline(level))
-            if _V8 and value:
+            if value:
                 elems.append(Token("RBRACE", "}"))
             return Tree(Token("RULE", "expr_term"), [Tree(Token("RULE", "object"), elems)])
 
         if isinstance(value, bool):
-            if _V8:
-                tok_type = "TRUE" if value else "FALSE"
-                return Tree(
-                    Token("RULE", "expr_term"),
-                    [Tree(Token("RULE", "literal_value"), [Token(tok_type, "true" if value else "false")])],
-                )
-            return Tree(Token("RULE", "expr_term"), [_make_identifier("true" if value else "false")])
+            tok_type = "TRUE" if value else "FALSE"
+            return Tree(
+                Token("RULE", "expr_term"),
+                [Tree(Token("RULE", "literal_value"), [Token(tok_type, "true" if value else "false")])],
+            )
 
         if isinstance(value, int):
             return Tree(
@@ -273,14 +235,10 @@ class _HCLReverseTransformer:
                 body = ast.children[0]
                 attr = body.children[0]
                 return attr.children[2]
-            if _V8:
-                escaped = json.dumps(value)
-                escaped = _reverse_quotes_within_interpolation(escaped)
-                inner = escaped[1:-1]
-                return Tree(Token("RULE", "expr_term"), [_make_string_token(inner)])
             escaped = json.dumps(value)
             escaped = _reverse_quotes_within_interpolation(escaped)
-            return Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", escaped)])
+            inner = escaped[1:-1]
+            return Tree(Token("RULE", "expr_term"), [_make_string_tree(inner)])
 
         raise RuntimeError(f"Unknown type to transform {type(value)}")
 
@@ -290,6 +248,8 @@ def _is_structural_token(arg: Any) -> bool:
 
 
 class DictTransformer(Transformer):
+    """Vendored from python-hcl2 v7 (MIT), with v8 grammar handlers added."""
+
     with_meta: bool
 
     @staticmethod
@@ -303,7 +263,7 @@ class DictTransformer(Transformer):
     def _strip_all(self, args: list) -> list:
         return [a for a in args if a is not Discard and a != "\n" and not _is_structural_token(a)]
 
-    # --- v8-only grammar rules (never called on v7 trees) ---
+    # --- v8 grammar rules ---
 
     def literal_value(self, args: list) -> str:
         return str(args[0])
@@ -325,26 +285,7 @@ class DictTransformer(Transformer):
     def template_string(self, args: list) -> str:
         return "".join(str(a) for a in args)
 
-    # --- v7-only grammar rules (never called on v8 trees) ---
-
-    def string_with_interpolation(self, args: list) -> str:
-        return '"' + ("".join(args)) + '"'
-
-    def interpolation_maybe_nested(self, args: list) -> str:
-        return "${" + ("".join(args)) + "}"
-
-    def object_elem_key_dot_accessor(self, args: list) -> str:
-        return "".join(args)
-
-    def provider_function_call(self, args: list) -> str:
-        args = self.strip_new_line_tokens(args)
-        args_str = ""
-        if len(args) > 5:
-            args_str = ", ".join([self.to_tf_inline(arg) for arg in args[5] if arg is not Discard])
-        provider_func = "::".join([args[0], args[2], args[4]])
-        return f"{provider_func}({args_str})"
-
-    # --- Shared handlers (work on both v7 and v8 trees) ---
+    # --- Tree-to-dict handlers ---
 
     def float_lit(self, args: list) -> float:
         return float("".join([self.to_tf_inline(arg) for arg in args]))
@@ -402,12 +343,8 @@ class DictTransformer(Transformer):
             key = f"({key})"
             key = self.to_string_dollar(key)
             value = args[4]
-        elif isinstance(args[0], Tree):
-            # v7: args[0] is a Tree with children
-            key = self.strip_quotes(str(args[0].children[0]))
-            value = args[2]
         else:
-            # v8: [key_str, Token(EQ), value]
+            # v8: [key_str_from_object_elem_key, Token(EQ), value]
             key = self.strip_quotes(str(args[0]))
             value = args[2]
         value = self.to_string_dollar(value)

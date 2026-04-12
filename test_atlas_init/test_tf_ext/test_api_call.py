@@ -21,7 +21,8 @@ def call_api(api_call: ApiCall, path_variables: dict[str, str], data: dict, meth
     resolved_path = api_call.path_with_variables(path_variables)
     digest_auth = HTTPDigestAuth(*_public_private_key())
     logger.info(f"Calling {resolved_path} with {data}")
-    response = requests.request(method,
+    response = requests.request(
+        method,
         f"https://cloud-dev.mongodb.com/{resolved_path.lstrip('/')}",
         # params=api_call.query_args,
         headers={"Accept": api_call.accept_header, "Content-Type": "application/json"},

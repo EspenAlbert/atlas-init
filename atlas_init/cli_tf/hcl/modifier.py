@@ -7,7 +7,7 @@ from typing import Callable, Protocol
 
 from lark import Token, Tree
 
-from atlas_init.cli_tf.hcl.hcl_compat import _V8, writes_compat
+from atlas_init.cli_tf.hcl.hcl_compat import writes_compat
 
 from atlas_init.cli_tf.hcl.modifier2 import safe_parse
 
@@ -43,7 +43,7 @@ def is_block_type(tree: Tree, block_type: str) -> bool:
 
 
 def _block_label_and_body(children: list) -> tuple[Token | Tree, int, Tree, int]:
-    """Find the first label and the body tree in block children, regardless of v7/v8 layout."""
+    """Find the first label and the body tree in block children."""
     label = None
     label_idx = -1
     body = None
@@ -155,22 +155,18 @@ def _make_string_tree(value: str) -> Tree:
 
 
 def create_description_attribute(description_value: str) -> Tree:
-    if _V8:
-        if "\n" in description_value:
-            value_tree = Tree(
-                Token("RULE", "expr_term"),
-                [
-                    Tree(
-                        Token("RULE", "heredoc_template_trim"),
-                        [Token("HEREDOC_TEMPLATE_TRIM", f"<<-EOT\n{description_value}\nEOT\n")],
-                    )
-                ],
-            )
-        else:
-            value_tree = Tree(Token("RULE", "expr_term"), [_make_string_tree(description_value)])
+    if "\n" in description_value:
+        value_tree = Tree(
+            Token("RULE", "expr_term"),
+            [
+                Tree(
+                    Token("RULE", "heredoc_template_trim"),
+                    [Token("HEREDOC_TEMPLATE_TRIM", f"<<-EOT\n{description_value}\nEOT\n")],
+                )
+            ],
+        )
     else:
-        token_value = f"<<-EOT\n{description_value}\nEOT\n" if "\n" in description_value else f'"{description_value}"'
-        value_tree = Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", token_value)])
+        value_tree = Tree(Token("RULE", "expr_term"), [_make_string_tree(description_value)])
     children = [
         Tree(Token("RULE", "identifier"), [Token("NAME", "description")]),
         Token("EQ", " ="),
