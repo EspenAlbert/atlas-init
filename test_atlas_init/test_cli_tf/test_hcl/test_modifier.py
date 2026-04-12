@@ -1,10 +1,15 @@
 from contextlib import suppress
 from pathlib import Path
-from typing import Dict, List
-from hcl2.transformer import Attribute, DictTransformer
-import hcl2
-from lark import Token, Transformer, Tree, v_args
+
 import pytest
+from lark import Token, Transformer, Tree, v_args
+
+from atlas_init.cli_tf.hcl.hcl_compat import (
+    Attribute,
+    DictTransformer,
+    reverse_transform_compat,
+    writes_compat,
+)
 
 from atlas_init.cli_tf.hcl.modifier import (
     BLOCK_TYPE_OUTPUT,
@@ -224,7 +229,7 @@ def find_attribute_object_str_value2(tree: Tree, attr_name: str, obj_key: str) -
 
 def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> DictTransformer:
     class AttributeTransformer(DictTransformer):
-        def attribute(self, args: List) -> Attribute:
+        def attribute(self, args: list) -> Attribute:
             found_attribute = super().attribute(args)
             if found_attribute.key == attr_name:
                 return Attribute(attr_name, found_attribute.value | {obj_key: new_value})
@@ -235,13 +240,13 @@ def attribute_transfomer(attr_name: str, obj_key: str, new_value: str) -> DictTr
 
 def update_attribute_object_str_value(tree: Tree, attr_name: str, obj_key: str, new_value: str) -> Tree:
     class AttributeUpdater(DictTransformer):
-        def attribute(self, args: List) -> Attribute:
+        def attribute(self, args: list) -> Attribute:
             found_attribute = super().attribute(args)
             if found_attribute.key == attr_name:
                 return Attribute(attr_name, found_attribute.value | {obj_key: new_value})
             return found_attribute
 
-        def body(self, args: List) -> Dict[str, List]:
+        def body(self, args: list) -> dict[str, list]:
             return super().body(args)
             # match args:
             #     case ["mongodbatlas", Token("EQ", " ="), {"source": source, "version": version}]:
@@ -252,7 +257,7 @@ def update_attribute_object_str_value(tree: Tree, attr_name: str, obj_key: str, 
             #         return super().attribute(args)
 
     as_dict = AttributeUpdater(with_meta=True).transform(tree)
-    return hcl2.api.reverse_transform(as_dict)
+    return reverse_transform_compat(as_dict)
 
 
 def update_attribute_object_str_value_for_block(
@@ -264,7 +269,7 @@ def update_attribute_object_str_value_for_block(
             current_block_name = identifier_name(block_tree)
             if current_block_name == block_name:
                 tree_dict = block_transformer.transform(tree)
-                tree_modified = hcl2.api.reverse_transform(tree_dict)
+                tree_modified = reverse_transform_compat(tree_dict)
                 assert isinstance(tree_modified, Tree)
                 body_tree = tree_modified.children[0]
                 assert isinstance(body_tree, Tree)
@@ -293,5 +298,5 @@ def test_using_transformer_to_update_data(tmp_path, file_regression):
     new_tree = update_attribute_object_str_value_for_block(
         tree, "terraform", attribute_transfomer("mongodbatlas", "version", "1.34.0")
     )
-    new_tf = hcl2.writes(new_tree)  # type: ignore
+    new_tf = writes_compat(new_tree)  # type: ignore
     file_regression.check(new_tf, extension=".tf")
