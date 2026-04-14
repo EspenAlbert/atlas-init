@@ -331,7 +331,7 @@ def summary_line(runs: list[GoTestRun]):
     envs_str = ", ".join(sorted(envs))
     branches = {run.branch for run in runs if run.branch}
     branches_str = (
-        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop()} branch"
+        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop() if branches else 'unknown'} branch"
     )
     return f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {run_statuses(runs)}"
 
