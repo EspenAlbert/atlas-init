@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from concurrent.futures import Future
 from contextlib import suppress
 from datetime import datetime
@@ -77,6 +78,12 @@ def export_ci_tests_markdown_to_html(settings: AtlasInitSettings, report_paths: 
         shell.kill(run_event, reason="Done with html docs check")
     if ask.confirm("Are docs ok to build and push?", default=False):
         build_and_push(ci_tests_dir, report_paths.summary_name)
+    else:
+        if ask.confirm(
+            "Remove the exported report copies from the local ci-tests/docs folder?",
+            default=False,
+        ):
+            remove_exported_report_from_docs(docs_out_dir, report_paths)
 
 
 def create_index_md(docs_out_dir: Path) -> str:
@@ -116,6 +123,16 @@ def create_index_md(docs_out_dir: Path) -> str:
         "",
     ]
     return "\n".join(md_content)
+
+
+def remove_exported_report_from_docs(docs_out_dir: Path, report_paths: MonthlyReportPaths) -> None:
+    for path in (report_paths.summary_path, report_paths.error_only_path, report_paths.daily_path):
+        (docs_out_dir / path.name).unlink(missing_ok=True)
+    details_dest = docs_out_dir / report_paths.details_dir.name
+    if details_dest.is_dir():
+        shutil.rmtree(details_dest)
+    index_md_content = create_index_md(docs_out_dir)
+    ensure_parents_write_text(docs_out_dir / "index.md", index_md_content)
 
 
 def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
