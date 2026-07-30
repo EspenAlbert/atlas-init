@@ -5,6 +5,7 @@ from collections import defaultdict
 from concurrent.futures import Future, as_completed
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import requests
 import typer
@@ -79,7 +80,7 @@ class ApiCall(BaseModel):
     operation_id: str
     path: str
     accept_header: str = "application/vnd.atlas.2023-01-01+json"
-    query_args: dict[str, str] = Field(default_factory=dict)
+    query_args: dict[str, Any] = Field(default_factory=dict)
 
     def __str__(self):
         return instance_repr(self, ["operation_id", "path"])

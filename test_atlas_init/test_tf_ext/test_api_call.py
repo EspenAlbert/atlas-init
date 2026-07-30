@@ -9,22 +9,26 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache
-def _public_private_key() -> tuple[str, str]:
+def _public_private_key() -> tuple[str, str, str]:
     public_key = os.environ.get("MONGODB_ATLAS_PUBLIC_KEY")
     private_key = os.environ.get("MONGODB_ATLAS_PRIVATE_KEY")
+    base_url = os.environ.get("MONGODB_ATLAS_BASE_URL", "https://cloud-dev.mongodb.com")
     if not public_key or not private_key:
         raise ValueError("MONGODB_ATLAS_PUBLIC_KEY and MONGODB_ATLAS_PRIVATE_KEY must be set in environment variables.")
-    return public_key, private_key
+    return base_url, public_key, private_key
 
 
-def call_api(api_call: ApiCall, path_variables: dict[str, str], data: dict, method: str = "GET") -> dict:
+def call_api(api_call: ApiCall, path_variables: dict[str, str], data: dict | list, method: str = "GET") -> dict:
     resolved_path = api_call.path_with_variables(path_variables)
-    digest_auth = HTTPDigestAuth(*_public_private_key())
-    logger.info(f"Calling {resolved_path} with {data}")
+    base_url, public_key, private_key = _public_private_key()
+    digest_auth = HTTPDigestAuth(public_key, private_key)
+    url = f"{base_url.rstrip('/')}/{resolved_path.lstrip('/')}"
+    logger.info(f"Calling {url} with {data}, public_key: {public_key}")
     response = requests.request(
         method,
-        f"https://cloud-dev.mongodb.com/{resolved_path.lstrip('/')}",
-        # params=api_call.query_args,
+        url,
+        params=api_call.query_args,
+        # "Accept": "application/json" might be a better header for private endpoints.
         headers={"Accept": api_call.accept_header, "Content-Type": "application/json"},
         auth=digest_auth,
         timeout=30,
