@@ -40,8 +40,10 @@ class MongoInfo(NamedTuple):
 
 
 @pytest.fixture(scope="session", autouse=True)
-@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 def cleanup_databases(request):
+    if os.environ.get("MONGO_URL", "") == "":
+        yield
+        return
     yield
     client = AsyncIOMotorClient(os.environ.get("MONGO_URL", ""))
 

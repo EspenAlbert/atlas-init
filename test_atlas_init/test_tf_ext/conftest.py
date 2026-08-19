@@ -6,24 +6,23 @@ from zero_3rdparty.str_utils import ensure_suffix
 
 
 @pytest.fixture()
-@pytest.mark.skipif(os.environ.get("TF_VARIABLES_PATH", "") == "", reason="needs os.environ[TF_VARIABLES_PATH]")
 def tf_variables_path():
+    if os.environ.get("TF_VARIABLES_PATH", "") == "":
+        pytest.skip("needs os.environ[TF_VARIABLES_PATH]")
     return Path(os.environ["TF_VARIABLES_PATH"])
 
 
 @pytest.fixture()
-@pytest.mark.skipif(
-    os.environ.get("TF_PUSH_BASED_LOG_EXAMPLE", "") == "", reason="needs os.environ[TF_PUSH_BASED_LOG_EXAMPLE]"
-)
 def tf_push_based_log_example():
+    if os.environ.get("TF_PUSH_BASED_LOG_EXAMPLE", "") == "":
+        pytest.skip("needs os.environ[TF_PUSH_BASED_LOG_EXAMPLE]")
     return Path(os.environ["TF_PUSH_BASED_LOG_EXAMPLE"])
 
 
 @pytest.fixture()
-@pytest.mark.skipif(
-    os.environ.get("TF_SEARCH_DEPLOYMENT_EXAMPLE", "") == "", reason="needs os.environ[TF_SEARCH_DEPLOYMENT_EXAMPLE]"
-)
 def tf_search_deployment_example_path():
+    if os.environ.get("TF_SEARCH_DEPLOYMENT_EXAMPLE", "") == "":
+        pytest.skip("needs os.environ[TF_SEARCH_DEPLOYMENT_EXAMPLE]")
     return Path(os.environ["TF_SEARCH_DEPLOYMENT_EXAMPLE"])
 
 

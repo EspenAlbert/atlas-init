@@ -262,8 +262,9 @@ def cfn_resource_path(repo_path: Path, resource_name: str) -> Path:
 
 
 @pytest.fixture()
-@pytest.mark.skipif(os.environ.get("TF_REPO_PATH", "") == "", reason="needs os.environ[TF_REPO_PATH]")
 def tf_repo_path() -> Path:
+    if os.environ.get("TF_REPO_PATH", "") == "":
+        pytest.skip("needs os.environ[TF_REPO_PATH]")
     tf_repo_path = Path(os.environ["TF_REPO_PATH"])
     assert tf_repo_path.exists(), f"TF_REPO_PATH does not exist: {tf_repo_path}"
     return tf_repo_path
