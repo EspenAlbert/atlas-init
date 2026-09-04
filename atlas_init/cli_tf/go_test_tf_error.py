@@ -7,7 +7,7 @@ from functools import total_ordering
 from typing import ClassVar, Literal, NamedTuple, Self, TypeAlias
 
 import humanize
-from model_lib import Entity, utc_datetime_ms
+from model_lib import Entity, fields
 from pydantic import Field, model_validator
 from zero_3rdparty import iter_utils
 from zero_3rdparty.datetime_utils import utc_now
@@ -54,7 +54,10 @@ class GoTestErrorClass(StrEnum):
             "mongodbatlas: failed to retrieve authentication checksums for provider",
             "Error: Failed to install provider github.com: bad response",
         ],
-        TIMEOUT: ("timeout while waiting for",),
+        TIMEOUT: [
+            "timeout while waiting for",
+            "context deadline exceeded",
+        ],
     }
 
     @classmethod
@@ -72,6 +75,10 @@ class GoTestErrorClass(StrEnum):
             ),
             None,
         )  # type: ignore
+
+    @classmethod
+    def is_known_failure(cls, output: str) -> bool:
+        return cls.auto_classification(output) is not None
 
 
 API_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
@@ -208,7 +215,7 @@ class ErrorClassAuthor(StrEnum):
 
 class GoTestErrorClassification(Entity):
     error_class: GoTestErrorClass = GoTestErrorClass.UNCLASSIFIED
-    ts: utc_datetime_ms = Field(default_factory=utc_now)
+    ts: fields.UtcDatetimeMs = Field(default_factory=utc_now)
     author: ErrorClassAuthor
     confidence: float = 0.0
     test_output: str = ""

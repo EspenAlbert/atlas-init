@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 import pytest
-from model_lib import parse_payload
+from model_lib import parse
 from zero_3rdparty.file_utils import ensure_parents_write_text
 
 from atlas_init.cli_cfn.files import CfnSchema, has_md_link, iterate_schemas
@@ -16,7 +16,7 @@ _schema = """\
 
 
 def test_parse_schema():
-    schema_dict = parse_payload(_schema, format="json")
+    schema_dict = parse.parse_payload(_schema, format="json")
     schema = CfnSchema(**schema_dict)
     assert schema.type_name == "MongoDB::Atlas::Cluster"
 
@@ -44,6 +44,6 @@ def test_has_md_code_snippet():
 @pytest.mark.skipif(os.environ.get("JSON_FMT_PATH", "") == "", reason="needs os.environ[JSON_FMT_PATH]")
 def test_format_json():
     path = Path(os.environ["JSON_FMT_PATH"])
-    json_dict = parse_payload(path)
+    json_dict = parse.parse_payload(path)
     new_json = json.dumps(json_dict, indent=4, sort_keys=False)
     path.write_text(new_json)

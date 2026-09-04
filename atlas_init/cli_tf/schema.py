@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Literal, NamedTuple
 
 import pydantic
-from model_lib import Entity, dump, field_names, parse_model
+from model_lib import Entity, dump, fields, parse
 from zero_3rdparty import dict_nested
 from zero_3rdparty.enum_utils import StrEnum
 
@@ -80,7 +80,7 @@ class TFResource(Entity):
     )
 
     def dump_generator_config(self) -> dict:
-        names = field_names(self)
+        names = fields.field_names(self)
         return self.model_dump(exclude=set(names))
 
 
@@ -93,7 +93,7 @@ class PyTerraformSchema(Entity):
 
 
 def parse_py_terraform_schema(path: Path) -> PyTerraformSchema:
-    return parse_model(path, PyTerraformSchema)
+    return parse.parse_model(path, PyTerraformSchema)
 
 
 def dump_generator_config(schema: PyTerraformSchema) -> str:
@@ -106,7 +106,7 @@ def dump_generator_config(schema: PyTerraformSchema) -> str:
         "resources": resources,
         "data_sources": data_sources,
     }
-    return dump(generator_config, "yaml")
+    return dump.dump_as_str(generator_config, "yaml")
 
 
 class AttributeTuple(NamedTuple):
@@ -219,7 +219,7 @@ class ProviderCodeSpec(Entity):
 def update_provider_code_spec(
     schema: PyTerraformSchema, provider_code_spec_path: Path
 ) -> str:
-    spec = parse_model(provider_code_spec_path, t=ProviderCodeSpec)
+    spec = parse.parse_model(provider_code_spec_path, t=ProviderCodeSpec)
     for resource in schema.resources:
         resource_name = resource.name
         if extra_spec_attributes := resource.provider_spec_attributes:
@@ -234,7 +234,7 @@ def update_provider_code_spec(
             )
         for extension in data_source.extensions:
             apply_extension(extension, spec, data_source_name, is_datasource=True)
-    return dump(spec, "json")
+    return dump.dump_as_str(spec, "json")
 
 
 def add_explicit_attributes(

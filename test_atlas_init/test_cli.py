@@ -2,7 +2,7 @@ import logging
 from typing import Type, TypeVar
 
 from click.testing import Result
-from model_lib import copy_and_validate
+from model_lib import fields
 from typer.testing import CliRunner
 
 from atlas_init.cli import app
@@ -62,7 +62,7 @@ def test_cli_project_name(settings):
 def test_override_profile_with_env_var(settings, monkeypatch):
     different_profile = "other-profile"
     monkeypatch.setenv(ENV_PROFILE, different_profile)
-    new_paths = copy_and_validate(settings, atlas_init_profile=different_profile)
+    new_paths = fields.copy_and_validate(settings, atlas_init_profile=different_profile)
     project_name = "some-project"
     write_required_vars(new_paths, project_name=project_name)
     run("cfn")
@@ -74,7 +74,7 @@ def test_override_profile_with_env_var(settings, monkeypatch):
 
 def test_override_profile_with_cli(settings):
     different_profile = "cli-profile"
-    new_paths = copy_and_validate(settings, atlas_init_profile=different_profile)
+    new_paths = fields.copy_and_validate(settings, atlas_init_profile=different_profile)
     project_name = test_override_profile_with_cli.__name__
     write_required_vars(new_paths, project_name=project_name)
 

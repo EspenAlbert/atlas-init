@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -7,8 +8,8 @@ from typing import ClassVar, Iterable
 
 import pydot
 import typer
-from ask_shell import new_task, print_to_live
-from model_lib import parse_list, parse_model
+from ask_shell import console
+from model_lib.serialize import parse_list, parse_model
 from rich.tree import Tree
 from zero_3rdparty.iter_utils import flat_map
 
@@ -146,15 +147,15 @@ def tf_modules(
     settings = TfExtSettings.from_env()
     atlas_graph = parse_atlas_graph(settings)
     output_dir = settings.static_root
-    with new_task("Write graphs"):
+    with console.new_task("Write graphs"):
         color_coder_internal = color_coder(atlas_graph, keep_provider_name=False)
         internal_graph = create_internal_dependencies(atlas_graph, color_coder=color_coder_internal)
         add_unused_nodes_to_graph(settings, atlas_graph, color_coder_internal, internal_graph)
         write_graph(internal_graph, output_dir, "atlas_internal.png")
         write_graph(create_external_dependencies(atlas_graph), output_dir, "atlas_external.png")
-    with new_task("Write module graphs"):
+    with console.new_task("Write module graphs"):
         modules = generate_module_graphs(skipped_module_resource_types, settings, atlas_graph)
-    with new_task("Internal Graph with Module Numbers"):
+    with console.new_task("Internal Graph with Module Numbers"):
         module_color_coder = ModuleColorCoder(
             atlas_graph,
             keep_provider_name=False,
@@ -163,7 +164,7 @@ def tf_modules(
         internal_graph_with_numbers = create_internal_dependencies(atlas_graph, module_color_coder)
         add_unused_nodes_to_graph(settings, atlas_graph, module_color_coder, internal_graph_with_numbers)
         write_graph(internal_graph_with_numbers, settings.static_root, "atlas_internal_with_numbers.png")
-    with new_task("Missing modules"):
+    with console.new_task("Missing modules"):
         all_resources: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
         missing_resources = [
             resource_type
@@ -228,7 +229,7 @@ def generate_module_graphs(
             module_trees[dest] = tree_src.add(dest)
         write_graph(internal_graph, settings.static_root, f"{name}_internal.png")
         write_graph(external_graph, settings.static_root, f"{name}_external.png")
-    print_to_live(tree)
+    console.print_to_live(tree)
     return modules
 
 
@@ -243,7 +244,7 @@ def parse_atlas_graph(settings: TfExtSettings) -> AtlasGraph:
 
 
 def add_unused_nodes_to_graph(
-    settings: TfExtSettings, atlas_graph: AtlasGraph, color_coder: ColorCoder, internal_graph: pydot.Dot
+    settings: TfExtSettings, atlas_graph: AtlasGraph, color_coder: ColorCoderABC, internal_graph: pydot.Dot
 ):
     schema_resource_types: list[str] = parse_list(settings.schema_resource_types_path, format="yaml")
     all_nodes = atlas_graph.all_internal_nodes
@@ -260,8 +261,21 @@ class NodeSkippedError(Exception):
         super().__init__(f"Node skipped: {resource_type}. This is expected for some resource types.")
 
 
+class ColorCoderABC(abc.ABC):
+    def get_color(self, resource_type: str, *, is_unused: bool = False) -> str:
+        return "gray"
+
+    @abc.abstractmethod
+    def create_node(self, resource_type: str, *, is_unused: bool = False) -> pydot.Node:
+        pass
+
+    @abc.abstractmethod
+    def node_name(self, resource_type: str) -> str:
+        pass
+
+
 @dataclass
-class ColorCoder:
+class ColorCoder(ColorCoderABC):
     graph: AtlasGraph
     keep_provider_name: bool
 
@@ -292,7 +306,7 @@ class ColorCoder:
         return resource_type if self.keep_provider_name else remove_provider_name(resource_type)
 
 
-def color_coder(atlas_graph: AtlasGraph, keep_provider_name: bool = False) -> ColorCoder:
+def color_coder(atlas_graph: AtlasGraph, keep_provider_name: bool = False) -> ColorCoderABC:
     return ColorCoder(atlas_graph, keep_provider_name=keep_provider_name)
 
 
@@ -310,16 +324,24 @@ def remove_provider_name(resource_type: str) -> str:
     return resource_type.split("_", 1)[-1]
 
 
-def write_graph(dot_graph: pydot.Dot, out_path: Path, filename: str):
-    out_path.mkdir(parents=True, exist_ok=True)
-    dot_graph.write_png(out_path / filename)  # type: ignore
+def write_graph(dot_graph: pydot.Dot, out_dir: Path, filename: str, formats: list[str] | None = None):
+    """Write graph in multiple formats. Defaults to PNG only."""
+    if formats is None:
+        formats = ["png"]
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    base_name = Path(filename).stem
+
+    for fmt in formats:
+        output_file = out_dir / f"{base_name}.{fmt}"
+        getattr(dot_graph, f"write_{fmt}")(str(output_file))  # type: ignore
 
 
 def as_nodes(edges: Iterable[tuple[str, str]]) -> set[str]:
     return set(flat_map((parent, child) for parent, child in edges))
 
 
-def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder: ColorCoder) -> pydot.Dot:
+def create_dot_graph(name: str, edges: Iterable[tuple[str, str]], *, color_coder: ColorCoderABC) -> pydot.Dot:
     edges = sorted(edges)
     graph = pydot.Dot(name, graph_type="graph")
     nodes = as_nodes(edges)
@@ -340,8 +362,8 @@ def create_module_graphs(
     atlas_graph: AtlasGraph,
     module_config: ModuleConfig,
     *,
-    color_coder_internal: ColorCoder,
-    color_coder_external: ColorCoder,
+    color_coder_internal: ColorCoderABC,
+    color_coder_external: ColorCoderABC,
     used_resource_types: set[str],
 ) -> tuple[pydot.Dot, pydot.Dot]:
     used_resource_types = used_resource_types or set()
@@ -385,7 +407,7 @@ def create_module_graphs(
     return internal_graph, external_graph
 
 
-def create_internal_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCoder) -> pydot.Dot:
+def create_internal_dependencies(atlas_graph: AtlasGraph, color_coder: ColorCoderABC) -> pydot.Dot:
     graph_name = "Atlas Internal Dependencies"
     return create_dot_graph(graph_name, atlas_graph.iterate_internal_edges(), color_coder=color_coder)
 

@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-import pytest_asyncio
-from model_lib import parse_model
+from model_lib import parse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from zero_3rdparty.datetime_utils import date_filename_with_seconds, utc_now
@@ -41,8 +40,10 @@ class MongoInfo(NamedTuple):
 
 
 @pytest.fixture(scope="session", autouse=True)
-@pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 def cleanup_databases(request):
+    if os.environ.get("MONGO_URL", "") == "":
+        yield
+        return
     yield
     client = AsyncIOMotorClient(os.environ.get("MONGO_URL", ""))
 
@@ -68,7 +69,6 @@ def db_name_test(request) -> str:
     return f"pytest-{func_name}-{date_filename_with_seconds()}"
 
 
-@pytest_asyncio.fixture
 @pytest.mark.skipif(os.environ.get("MONGO_URL", "") == "", reason="needs os.environ[MONGO_URL]")
 async def mongo_dao(settings, db_name_test) -> MongoDao:
     settings.mongo_database = db_name_test
@@ -142,7 +142,7 @@ async def test_init_mongo2(db_name_test):
     assert not is_new2
     raw = await col.find_one({"_id": "test_id"})
     assert raw is not None
-    assert parse_model(raw, t=MyModel) == model
+    assert parse.parse_model(raw, t=MyModel) == model
     assert await col.count_documents({}) == 1
     logger.info("Test completed successfully")
 

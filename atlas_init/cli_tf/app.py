@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import typer
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.cli_args import option_sdk_repo_path
@@ -10,11 +11,12 @@ from atlas_init.cli_helper.run import (
     run_binary_command_is_ok,
     run_command_exit_on_failure,
 )
-from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.changelog import convert_to_changelog
+from atlas_init.cli_tf.ci_tests import ci_tests
 from atlas_init.cli_tf.example_update import update_example_cmd
 from atlas_init.cli_tf.log_clean import log_clean
 from atlas_init.cli_tf.mock_tf_log import mock_tf_log_cmd
+from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema import (
     dump_generator_config,
     parse_py_terraform_schema,
@@ -25,12 +27,13 @@ from atlas_init.cli_tf.schema_v2 import (
     generate_resource_go_resource_schema,
     parse_schema,
 )
-from atlas_init.cli_tf.openapi import add_api_spec_info
 from atlas_init.cli_tf.schema_v2_sdk import generate_model_go, parse_sdk_model
+from atlas_init.cli_tf import api_attributes as api_attrs_mod
+from atlas_init.cli_tf.sdk_usage import ProviderSdkUsageReport, generate_sdk_usage_report
 from atlas_init.repos.go_sdk import download_admin_api
 from atlas_init.repos.path import Repo, current_repo_path
+from atlas_init.settings import interactive
 from atlas_init.settings.env_vars import init_settings
-from atlas_init.settings.interactive import confirm
 
 app = typer.Typer(no_args_is_help=True)
 app.command(name="mock-tf-log")(mock_tf_log_cmd)
@@ -164,7 +167,7 @@ def schema2(
     add_api_spec_info(schema, admin_api_path, minimal_refs=True)
     go_old = repo_path / f"internal/service/{resource.replace('_', '')}/resource_schema.go"
     if not go_old.exists():
-        if confirm(
+        if interactive.confirm(
             f"no file found @ {go_old}, ok to create it?",
             is_interactive=True,
             default=True,
@@ -184,7 +187,7 @@ def schema2(
 
     resource_schema = schema.resources[resource]
     if conversion_config := resource_schema.conversion:
-        if not confirm(
+        if not interactive.confirm(
             f"resource {resource} has conversion, ok to generate conversion functions?",
             is_interactive=True,
             default=True,
@@ -204,3 +207,54 @@ def schema2(
             go_conversion_src = generate_model_go(schema, resource_schema, sdk_model)
             go_conversion_path = go_old.with_name("model.go")
             go_conversion_path.write_text(go_conversion_src)
+
+
+@app.command(name="sdk-usage")
+def sdk_usage(
+    provider_repo: Path = typer.Option(..., "--provider-repo", help="path to terraform-provider-mongodbatlas checkout"),
+    sdk_repo_path_str: str = option_sdk_repo_path,
+    output: Path = typer.Option("provider-sdk-usage.json", "--output", "-o", help="output JSON path"),
+):
+    if not sdk_repo_path_str:
+        logger.critical("--sdk-repo-path is required for SDK usage report")
+        raise typer.Abort
+    sdk_repo_path = Path(sdk_repo_path_str)
+    if not provider_repo.exists():
+        logger.critical(f"provider repo not found: {provider_repo}")
+        raise typer.Abort
+    if not sdk_repo_path.exists():
+        logger.critical(f"SDK repo not found: {sdk_repo_path}")
+        raise typer.Abort
+    report = generate_sdk_usage_report(provider_repo, sdk_repo_path, output)
+    logger.info(f"report: {len(report.resources)} resources")
+
+
+@app.command(name="api-attributes")
+def api_attributes(
+    provider_repo: Path = typer.Option(..., "--provider-repo", help="path to terraform-provider-mongodbatlas checkout"),
+    sdk_repo_path_str: str = option_sdk_repo_path,
+    sdk_usage_json: Path = typer.Option(None, "--sdk-usage-json", help="pre-generated SDK usage report JSON"),
+    spec_path: Path = typer.Option(None, "--spec-path", help="path to flattened OpenAPI spec"),
+    output: Path = typer.Option("api-attributes.json", "--output", "-o", help="output JSON path"),
+):
+    if not sdk_repo_path_str:
+        logger.critical("--sdk-repo-path is required")
+        raise typer.Abort
+    sdk_repo_path = Path(sdk_repo_path_str)
+    spec_path = spec_path or (provider_repo / "tools/codegen/atlasapispec/multi-version-api-spec.flattened.yml")
+    if not spec_path.exists():
+        logger.critical(f"spec not found: {spec_path}")
+        raise typer.Abort
+
+    if sdk_usage_json and sdk_usage_json.exists():
+        usage_report = parse.parse_model(sdk_usage_json, t=ProviderSdkUsageReport)
+    else:
+        usage_report = generate_sdk_usage_report(provider_repo, sdk_repo_path, output.with_name("sdk-usage.json"))
+
+    codegen_config = provider_repo / "tools/codegen/config.yml"
+    version_headers = api_attrs_mod.extract_version_headers(codegen_config) if codegen_config.exists() else {}
+
+    report = api_attrs_mod.generate_api_attribute_report(spec_path, usage_report.resources, version_headers)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(dump.dump_as_str(report.simplified_dict(), "pretty_json"))
+    logger.info(f"wrote API attribute report to {output} ({len(report.resources)} resources)")

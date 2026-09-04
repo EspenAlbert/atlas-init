@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
-from model_lib import dump, parse_model
+from model_lib import dump, parse
 from pytest_regressions.common import check_text_files
 
 from atlas_init.cli_helper.run import run_command_is_ok
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture()
 def tf_api_resources_config(tf_repo_path) -> ApiResourcesConfig:
     path = tf_repo_path / "tools/codegen/config.yml"
-    return parse_model(path, t=ApiResourcesConfig, format="yaml")
+    return parse.parse_model(path, t=ApiResourcesConfig, format="yaml")
 
 
 def test_parsing_config(tf_api_resources_config: ApiResourcesConfig):
@@ -65,7 +65,7 @@ def test_create_minimal_api_resources_config(
     resource_skip(resource_name)
     # print(f"Resources: {tf_api_resources_config.list_resources()}")
     minimal_spec = minimal_api_spec_simplified(tf_api_resources_config.get_resource(resource_name), live_api_spec)
-    spec_yaml = dump(minimal_spec, format="yaml")
+    spec_yaml = dump.dump_as_str(minimal_spec, format="yaml")
     file_regression.check(
         spec_yaml,
         extension=".yaml",

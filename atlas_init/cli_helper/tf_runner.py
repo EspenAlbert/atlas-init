@@ -13,7 +13,7 @@ from atlas_init.cli_helper.run import (
 )
 from atlas_init.settings.config import TerraformVars, TestSuite
 from atlas_init.settings.env_vars import AtlasInitSettings
-from atlas_init.settings.env_vars_generated import AWSSettings, AtlasSettings
+from atlas_init.settings.env_vars_generated import AtlasSettings, AWSSettings
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def _run_terraform(settings: AtlasInitSettings, command: str, extra_args: list[s
 def dump_tf_vars(settings: AtlasInitSettings, tf_vars: dict[str, Any]):
     tf_vars_path = settings.tf_vars_path
     tf_vars_path.parent.mkdir(exist_ok=True, parents=True)
-    tf_vars_str = dump(tf_vars, "pretty_json")
+    tf_vars_str = dump.dump_as_str(tf_vars, "pretty_json")
     logger.info(f"writing tf vars to {tf_vars_path}")
     logger.debug(f"tf vars:\n{tf_vars_str}")
     tf_vars_path.write_text(tf_vars_str)

@@ -1,12 +1,14 @@
 import os
-from ask_shell import run_and_wait
-from ask_shell.models import _resolve_binary
+
 import pytest
+from ask_shell._internal.models import _resolve_binary
+from ask_shell.shell import run_and_wait
 from zero_3rdparty.file_utils import clean_dir
+
 from atlas_init.tf_ext.newres import prepare_newres
 
 
-@pytest.mark.skipif(os.environ.get("MANUAL", "") == "", reason="needs os.environ[MANUAL]")
+@pytest.mark.manual
 def test_prepare_newres(tf_ext_settings_repo_path):
     new_res = tf_ext_settings_repo_path.new_res_path
     prepare_newres(new_res)

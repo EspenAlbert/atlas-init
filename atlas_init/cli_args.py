@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, DirectoryPath
 import typer
-from model_lib import parse_payload
+from model_lib import parse
 from zero_3rdparty.iter_utils import key_equal_value_to_dict
 
 ENV_VAR_SDK_REPO_PATH = "SDK_REPO_PATH"
@@ -31,4 +31,4 @@ def parse_key_values(params: list[str]) -> dict[str, str]:
 
 def parse_key_values_any(params: list[str]) -> dict[str, Any]:
     str_dict = parse_key_values(params)
-    return {k: parse_payload(v) if v.startswith(("{", "[")) else v for k, v in str_dict.items()}
+    return {k: parse.parse_payload(v) if v.startswith(("{", "[")) else v for k, v in str_dict.items()}

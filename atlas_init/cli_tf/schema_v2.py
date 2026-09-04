@@ -10,7 +10,7 @@ from queue import Queue
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeAlias
 
-from model_lib import Entity, copy_and_validate, parse_model
+from model_lib import Entity, fields, parse
 from pydantic import ConfigDict, Field, model_validator
 from zero_3rdparty.enum_utils import StrEnum
 from zero_3rdparty.iter_utils import flat_map
@@ -273,7 +273,7 @@ class SchemaV2(Entity):
         if ref not in self.ref_resources:
             raise ValueError(f"Resource {ref} not found in ref_resources")
         resource = self.ref_resources[ref]
-        return copy_and_validate(resource, name=use_name) if use_name else resource
+        return fields.copy_and_validate(resource, name=use_name) if use_name else resource
 
     @model_validator(mode="after")
     def set_resource_names(self):
@@ -294,7 +294,7 @@ class SchemaV2(Entity):
 
 
 def parse_schema(path: Path) -> SchemaV2:
-    return parse_model(path, t=SchemaV2)
+    return parse.parse_model(path, t=SchemaV2)
 
 
 def generate_resource_go_resource_schema(schema: SchemaV2, resource_name: str) -> str:

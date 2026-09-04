@@ -1,11 +1,12 @@
 import logging
-from pathlib import Path
-from ask_shell import confirm, run_pool
 from concurrent.futures import Future
-from ask_shell.rich_live import get_live_console
-from model_lib import copy_and_validate, parse_model
-from rich.markdown import Markdown
+from pathlib import Path
+
 import typer
+from ask_shell import ask, console, shell
+from model_lib.pydantic_utils import copy_and_validate
+from model_lib.serialize import parse_model
+from rich.markdown import Markdown
 from zero_3rdparty.file_utils import clean_dir
 
 from atlas_init.tf_ext.models_module import (
@@ -13,12 +14,24 @@ from atlas_init.tf_ext.models_module import (
     ProviderGenConfig,
     as_provider_name,
 )
-from atlas_init.tf_ext.provider_schema import parse_atlas_schema_from_settings
-from atlas_init.tf_ext.settings import init_tf_ext_settings
+from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, parse_atlas_schema_from_settings
+from atlas_init.tf_ext.settings import TfExtSettings, init_tf_ext_settings
 from atlas_init.tf_ext.tf_mod_gen import finalize_and_validate_module, generate_resource_module
 
 logger = logging.getLogger(__name__)
 ATLAS_PROVIDER_PATH = "mongodb/mongodbatlas"
+
+
+def parse_atlas_schema_info(
+    settings: TfExtSettings, provider_path: str = ATLAS_PROVIDER_PATH
+) -> tuple[AtlasSchemaInfo, ProviderGenConfig]:
+    if provider_path != ATLAS_PROVIDER_PATH:
+        raise NotImplementedError(f"provider_name must be {ATLAS_PROVIDER_PATH}")
+    provider_name = as_provider_name(provider_path)
+    repo_out = settings.repo_out
+    provider_config_path = repo_out.provider_settings_path(provider_name)
+    provider_config = parse_model(provider_config_path, t=ProviderGenConfig)
+    return parse_atlas_schema_from_settings(settings, provider_config), provider_config
 
 
 def tf_mod_gen_provider_resource_modules(
@@ -30,14 +43,9 @@ def tf_mod_gen_provider_resource_modules(
     ),
 ):
     settings = init_tf_ext_settings()
-    if provider_path != ATLAS_PROVIDER_PATH:
-        raise NotImplementedError(f"provider_name must be {ATLAS_PROVIDER_PATH}")
-    provider_name = as_provider_name(provider_path)
+    atlas_schema, provider_config = parse_atlas_schema_info(settings, provider_path)
     repo_out = settings.repo_out
-    provider_config_path = repo_out.provider_settings_path(provider_name)
-    provider_config = parse_model(provider_config_path, t=ProviderGenConfig)
-
-    atlas_schema = parse_atlas_schema_from_settings(settings, provider_config)
+    provider_name = provider_config.provider_name
     include_only_set = set(include_only)
     deprecated_types = set(atlas_schema.deprecated_resource_types)
 
@@ -54,7 +62,6 @@ def tf_mod_gen_provider_resource_modules(
         resource = module_config.resources[0]
         generate_resource_module(module_config, resource.name, atlas_schema)
         module_path = finalize_and_validate_module(module_config)
-
         config_single = copy_and_validate(
             module_config,
             resources=[resource.single_variable_version()],
@@ -64,7 +71,7 @@ def tf_mod_gen_provider_resource_modules(
         module_path_single = finalize_and_validate_module(config_single)
         return module_path, module_path_single
 
-    with run_pool(
+    with shell.run_pool(
         "Generating module files for resource types", total=len(resource_types), exit_wait_timeout=60
     ) as pool:
         futures: dict[str, Future] = {}
@@ -92,7 +99,7 @@ def tf_mod_gen_provider_resource_modules(
         summary.append("## Failed Resource Modules")
         for resource_type in failures:
             summary.append(f"- {resource_type}")
-    get_live_console().print(Markdown("\n".join(summary)))
+    console.get_live_console().print(Markdown("\n".join(summary)))
     if generated_module_paths:
         logger.info(f"Generated a total of: {len(generated_module_paths)} modules")
         if not include_only:
@@ -106,7 +113,7 @@ def clean_extra_modules(resource_modules_out_dir: Path, generated_module_paths: 
     ]:
         logger.warning(f"Found extra paths in {resource_modules_out_dir}: {extra_paths}")
         extra_paths_str = "\n".join(path.name for path in extra_paths)
-        if confirm(f"Can delete extra paths in {resource_modules_out_dir}:\n{extra_paths_str}"):
+        if ask.confirm(f"Can delete extra paths in {resource_modules_out_dir}:\n{extra_paths_str}"):
             for path in extra_paths:
                 clean_dir(path, recreate=False)
 
@@ -119,6 +126,6 @@ def clean_extra_py_modules(py_modules_out_dir: Path, generated_py_files: set[Pat
     ]:
         logger.warning(f"Found extra paths in {py_modules_out_dir}: {extra_paths}")
         extra_paths_str = "\n".join(path.name for path in extra_paths)
-        if confirm(f"Can delete extra paths in {py_modules_out_dir}:\n{extra_paths_str}"):
+        if ask.confirm(f"Can delete extra paths in {py_modules_out_dir}:\n{extra_paths_str}"):
             for path in extra_paths:
                 path.unlink()

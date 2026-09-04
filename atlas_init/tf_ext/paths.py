@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from pathlib import Path
+import re
 from typing import Self
 
 from model_lib import Entity
@@ -39,6 +40,23 @@ def get_example_directories(repo_path: Path, skip_names: list[str]):
     return example_dirs
 
 
+def _extract_variable_part(text_raw: str, var_name: str, attribute_name: str) -> str:
+    variable_start = text_raw.find(f'variable "{var_name}" {{')
+    assert variable_start > -1, f"variable not found: {var_name}"
+    variable_end = text_raw.find("\n}", variable_start)
+    assert variable_end > -1, f"variable end not found: {var_name}"
+    attribute_start_str = f"  {attribute_name} = "
+    type_start = text_raw.find(attribute_start_str, variable_start, variable_end)
+    if type_start == -1:
+        return ""
+    attribute_value_start = type_start + len(attribute_start_str)
+    if ending_brackets := re.search(r"^\s{2}[\)\}]+$", text_raw[attribute_value_start:variable_end], re.M):
+        attribute_end_relative = ending_brackets.end()
+        end = attribute_value_start + attribute_end_relative
+        return text_raw[attribute_value_start:end]
+    return ""
+
+
 def find_variables_typed(variables_tf: Path) -> dict[str, TFVar]:
     if not variables_tf.exists():
         return {}
@@ -46,7 +64,16 @@ def find_variables_typed(variables_tf: Path) -> dict[str, TFVar]:
     if not tree:
         logger.warning(f"Failed to parse {variables_tf}")
         return {}
-    return variable_reader_typed(tree)
+    vars_typed = variable_reader_typed(tree)
+    text_raw = variables_tf.read_text()
+    for name, tf_var in vars_typed.items():
+        if tf_var.type and '"' in tf_var.type:
+            if new_type := _extract_variable_part(text_raw, name, "type"):
+                tf_var.type = new_type
+        if tf_var.default is not None:
+            if new_default := _extract_variable_part(text_raw, name, "default"):
+                tf_var.default = new_default
+    return vars_typed
 
 
 def find_variables(variables_tf: Path) -> dict[str, str | None]:

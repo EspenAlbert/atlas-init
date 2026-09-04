@@ -1,25 +1,23 @@
 from __future__ import annotations
 
-from functools import total_ordering
 import logging
 from collections import defaultdict
+from functools import total_ordering
 from pathlib import Path
 from threading import RLock
 from typing import Callable, Iterable, NamedTuple
 
 import pydot
-from ask_shell import ShellError, new_task, run_and_wait
-from ask_shell._run import stop_runs_and_pool
-from ask_shell.run_pool import run_pool
+from ask_shell import console, shell
+from ask_shell._internal.rich_progress import new_task
+from ask_shell.shell import ShellError
 from model_lib import Entity, dump
 from pydantic import BaseModel, Field, model_validator
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
-from typer import Typer
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.iter_utils import flat_map
 
-from atlas_init.settings.rich_utils import configure_logging
-from atlas_init.tf_ext.args import REPO_PATH_ATLAS_ARG, SKIP_EXAMPLES_DIRS_OPTION
+from atlas_init.tf_ext.args import SKIP_EXAMPLES_DIRS_OPTION, TF_CLI_CONFIG_FILE_ARG, TF_REPO_PATH_ATLAS
 from atlas_init.tf_ext.constants import ATLAS_PROVIDER_NAME
 from atlas_init.tf_ext.paths import find_variable_resource_type_usages, find_variables, get_example_directories
 from atlas_init.tf_ext.settings import TfExtSettings
@@ -50,17 +48,21 @@ def is_v2_example_dir(example_dir: Path) -> bool:
 
 
 def tf_dep_graph(
-    repo_path: Path = REPO_PATH_ATLAS_ARG,
+    repo_path_arg: str = TF_REPO_PATH_ATLAS,
     skip_names: list[str] = SKIP_EXAMPLES_DIRS_OPTION,
+    tf_cli_config_file: str = TF_CLI_CONFIG_FILE_ARG,
 ):
-    settings = TfExtSettings.from_env()
+    settings = TfExtSettings.from_env(repo_path_atlas_provider=repo_path_arg, tf_cli_config_file=tf_cli_config_file)
+    repo_path = settings.repo_path_atlas_provider  # pyright: ignore[reportAssignmentType]
+    assert repo_path, "repo_path is required"
+    logger.info(f"repo path: {repo_path}")
     output_dir = settings.static_root
     logger.info(f"Using output directory: {output_dir}")
     example_dirs = get_example_directories(repo_path, skip_names)
     logger.info(f"example_dirs: \n{'\n'.join(str(d) for d in sorted(example_dirs))}")
-    with new_task("Find terraform graphs", total=len(example_dirs)) as task:
+    with console.new_task("Find terraform graphs", total=len(example_dirs)) as task:
         atlas_graph = create_atlas_graph(example_dirs, task)
-    with new_task("Dump graph"):
+    with console.new_task("Dump graph"):
         graph_yaml = atlas_graph.dump_yaml()
         ensure_parents_write_text(settings.atlas_graph_path, graph_yaml)
         logger.info(f"Atlas graph dumped to {settings.atlas_graph_path}")
@@ -168,6 +170,13 @@ class EdgeParsed(BaseModel):
             child=ResourceRef(full_ref=edge_plain(edge.get_source())),
         )
 
+    @classmethod
+    def from_simple_edge(cls, src: str, dst: str) -> "EdgeParsed":
+        return cls(
+            parent=ResourceRef(full_ref=src),
+            child=ResourceRef(full_ref=dst),
+        )
+
     @property
     def has_module_edge(self) -> bool:
         return self.parent.is_module or self.child.is_module
@@ -230,7 +239,7 @@ class AtlasGraph(Entity):
     def dump_yaml(self) -> str:
         parent_child_edges = {name: sorted(children) for name, children in sorted(self.parent_child_edges.items())}
         external_parents = {name: sorted(parents) for name, parents in sorted(self.external_parents.items())}
-        return dump(
+        return dump.dump_as_str(
             {
                 "parent_child_edges": parent_child_edges,
                 "external_parents": external_parents,
@@ -287,7 +296,7 @@ class AtlasGraph(Entity):
 def parse_graphs(
     on_graph: Callable[[Path, pydot.Dot], None], example_dirs: list[Path], task: new_task, max_dirs: int = 1_000
 ) -> None:
-    with run_pool("parse example graphs", total=len(example_dirs)) as executor:
+    with shell.run_pool("parse example graphs", total=len(example_dirs)) as executor:
         futures = {
             executor.submit(parse_graph, example_dir): example_dir
             for i, example_dir in enumerate(example_dirs)
@@ -301,7 +310,7 @@ def parse_graphs(
                 continue
             except KeyboardInterrupt:
                 logger.error("KeyboardInterrupt received, stopping graph parsing.")
-                stop_runs_and_pool("KeyboardInterrupt", immediate=True)
+                shell.stop_runs_and_pool("KeyboardInterrupt", immediate=True)
                 break
             on_graph(example_dir, graph)
             task.update(advance=1)
@@ -352,20 +361,9 @@ def parse_graph(example_dir: Path) -> tuple[Path, pydot.Dot]:
     }
     lock_file = example_dir / ".terraform.lock.hcl"
     if not lock_file.exists():
-        run_and_wait("terraform init", cwd=example_dir, env=env_vars)
-    run = run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
+        shell.run_and_wait("terraform init", cwd=example_dir, env=env_vars)
+    run = shell.run_and_wait("terraform graph", cwd=example_dir, env=env_vars)
     if graph_output := run.stdout_one_line:
         graph = parse_graph_output(example_dir, graph_output)  # just to make sure we get no errors
         return example_dir, graph
     raise EmptyGraphOutputError(example_dir)
-
-
-def typer_main():
-    app = Typer()
-    app.command()(tf_dep_graph)
-    configure_logging(app)
-    app()
-
-
-if __name__ == "__main__":
-    typer_main()

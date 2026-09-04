@@ -1,10 +1,11 @@
 import logging
 from pathlib import Path
-from ask_shell import run_and_wait
-from ask_shell.settings import clean_dir
+
+from ask_shell import shell
 from model_lib import dump
 from zero_3rdparty import humps
-from zero_3rdparty.file_utils import ensure_parents_write_text
+from zero_3rdparty.file_utils import clean_dir, ensure_parents_write_text
+
 from atlas_init.tf_ext.provider_schema import AtlasSchemaInfo, parse_atlas_schema
 
 logger = logging.getLogger(__name__)
@@ -13,10 +14,10 @@ logger = logging.getLogger(__name__)
 def prepare_newres(path: Path):
     if not path.exists():
         path.parent.mkdir(exist_ok=True, parents=True)
-        run_and_wait(f"git clone https://github.com/lonegunmanb/newres.git {path.name}", cwd=path.parent)
+        shell.run_and_wait(f"git clone https://github.com/lonegunmanb/newres.git {path.name}", cwd=path.parent)
     schema = parse_atlas_schema()
     modify_newres(path, schema)
-    run_and_wait("go fmt ./...", cwd=path)
+    shell.run_and_wait("go fmt ./...", cwd=path)
 
 
 def _template_resource_go(resource_type: str, resource_type_schema_json: str) -> str:
@@ -63,7 +64,7 @@ def modify_newres(new_res_path: Path, schema: AtlasSchemaInfo):
     custom_resource_dir = new_res_path / "pkg/custom"
     clean_dir(custom_resource_dir)
     for resource_type, resource_type_schema in schema.raw_resource_schema.items():
-        schema_json = dump(resource_type_schema, format="pretty_json")
+        schema_json = dump.dump_as_str(resource_type_schema, format="pretty_json")
         resource_type_go = _template_resource_go(resource_type, schema_json)
         resource_type_file = custom_resource_dir / f"{resource_type}.go"
         ensure_parents_write_text(resource_type_file, resource_type_go)

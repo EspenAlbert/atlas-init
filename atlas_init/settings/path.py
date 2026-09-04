@@ -55,13 +55,19 @@ def default_factory_cwd(rel_path: str) -> Callable[[], Path]:
 
 def repo_path_rel_path() -> tuple[Path, str]:
     cwd = current_dir()
+    if repo_path_rel_path := find_repo_path_rel_path(cwd):
+        return repo_path_rel_path
+    msg = "no repo path found from cwd"
+    raise CwdIsNoRepoPathError(msg)
+
+
+def find_repo_path_rel_path(cwd: Path) -> tuple[Path, str] | None:
     rel_path = []
     for path in [cwd, *cwd.parents]:
         if (path / ".git").exists():
             return path, "/".join(reversed(rel_path))
         rel_path.append(path.name)
-    msg = "no repo path found from cwd"
-    raise CwdIsNoRepoPathError(msg)
+    return None
 
 
 class CwdIsNoRepoPathError(ValueError):

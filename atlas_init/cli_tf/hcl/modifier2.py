@@ -1,14 +1,21 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, NamedTuple
+
+import rich
 from lark import Token, Transformer, Tree, UnexpectedToken, v_args
-from hcl2.transformer import Attribute, DictTransformer
-from hcl2.api import reverse_transform, writes, parses
 from model_lib import Entity
 from pydantic import field_validator
-import rich
+
+from atlas_init.cli_tf.hcl.hcl_compat import (
+    Attribute,
+    DictTransformer,
+    parses_compat,
+    reverse_transform_compat,
+    writes_compat,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +29,7 @@ def update_attribute_object_str_value_for_block(
             current_block_name = _identifier_name(block_tree)
             if current_block_name == block_name:
                 tree_dict = block_transformer.transform(tree)
-                tree_modified = reverse_transform(tree_dict)
+                tree_modified = reverse_transform_compat(tree_dict)
                 assert isinstance(tree_modified, Tree)
                 body_tree = tree_modified.children[0]
                 assert isinstance(body_tree, Tree)
@@ -70,10 +77,16 @@ class TFVar(Entity):
     type: str = ""
     sensitive: bool = False
 
+    @property
+    def is_default_set(self) -> bool:
+        return self.default is not _unset
+
     @field_validator("default", mode="before")
     def unpack_token(cls, v: Any) -> Any:
         if isinstance(v, Token):
             return v.value.strip('"')
+        if isinstance(v, str) and v.startswith('"') and v.endswith('"'):
+            return v[1:-1]
         return v
 
 
@@ -230,15 +243,24 @@ def _block_resource_name(tree: Tree) -> str | None:
     return token_name(token)
 
 
-def token_name(token):
-    assert isinstance(token, Token)
-    token_value = token.value
-    assert isinstance(token_value, str)
-    return token_value.strip('"')
+def token_name(token) -> str:
+    if isinstance(token, Token):
+        return token.value.strip('"')
+    if isinstance(token, Tree) and token.data == "string":
+        parts = []
+        for child in token.children:
+            if isinstance(child, Tree) and child.data == "string_part":
+                parts.append(str(child.children[0]))
+            elif isinstance(child, Token) and child.type != "DBLQUOTE":
+                parts.append(str(child))
+        return "".join(parts)
+    if isinstance(token, Tree) and token.data == "identifier":
+        return token.children[0].value.strip('"')
+    raise ValueError(f"unexpected token type {type(token)} for token name")
 
 
 def write_tree(tree: Tree) -> str:
-    return writes(tree)
+    return writes_compat(tree)
 
 
 def print_tree(path: Path) -> None:
@@ -252,6 +274,6 @@ def print_tree(path: Path) -> None:
 
 def safe_parse(path: Path) -> Tree | None:
     try:
-        return parses(path.read_text())  # type: ignore
+        return parses_compat(path.read_text())  # type: ignore
     except UnexpectedToken as e:
         logger.warning(f"failed to parse {path}: {e}")

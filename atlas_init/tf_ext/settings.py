@@ -1,10 +1,10 @@
 import logging
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import ClassVar, Self
 
 from model_lib import Entity, StaticSettings
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from zero_3rdparty.file_utils import ensure_parents_write_text
 from zero_3rdparty.str_utils import ensure_suffix
 
@@ -82,6 +82,13 @@ class TfExtSettings(StaticSettings):
     repo_path_atlas_provider: Path | None = None
     tf_cli_config_file: Path | None = None
     repo_out_path: Path | None = None
+    atlas_arch_center_path: Path | None = None
+
+    @field_validator("repo_path_atlas_provider", "tf_cli_config_file", mode="before")
+    def avoid_empty_values(cls, v) -> Path | None:
+        if v == "":
+            return None
+        return v
 
     @model_validator(mode="after")
     def infer_repo_path_atlas(self) -> Self:
@@ -175,6 +182,9 @@ class TfExtSettings(StaticSettings):
     def provider_cache_dir(self, provider_name: str) -> Path:
         return self.cache_root / "provider_cache" / provider_name
 
+    def provider_cache_file_path(self, provider_name: str, sha: str) -> Path:
+        return self.provider_cache_dir(provider_name) / f"{sha}.json"
+
     @property
     def variable_plan_resolvers_file_path(self) -> Path:
         return self.static_root / "variable_plan_resolvers.yaml"
@@ -182,6 +192,31 @@ class TfExtSettings(StaticSettings):
     @property
     def variable_plan_resolvers_dumped_file_path(self) -> Path:
         return self.static_root / "variable_plan_resolvers_dumped.yaml"
+
+    @property
+    def example_usage_output_path(self) -> Path:
+        return self.static_root / "example_usage.md"
+
+    def example_usage_output_path_src(self, src: str) -> Path:
+        return self.static_root / f"example_usage_{src}.md"
+
+    def example_missing_md_path(self, src_missing: str) -> Path:
+        return self.static_root / f"example_usage_missing_examples_{src_missing}.md"
+
+    @property
+    def example_graph_path(self) -> Path:
+        return self.static_root / "example_graph.yaml"
+
+    def module_grouping_dir(self, config_name: str) -> Path:
+        return self.static_root / f"module_grouping_{config_name}"
+
+    @property
+    def provider_base_repo_path(self) -> Path:
+        return self.cache_root / "provider_repos"
+
+    def resource_markdown_path(self, resource_type: str, *, with_full_example: bool = False) -> Path:
+        parent_folder = "resource_markdown_full_example" if with_full_example else "resource_markdown"
+        return self.static_root / f"{parent_folder}/{resource_type}.md"
 
 
 def init_tf_ext_settings(*, allow_empty_out_path: bool = False) -> TfExtSettings:

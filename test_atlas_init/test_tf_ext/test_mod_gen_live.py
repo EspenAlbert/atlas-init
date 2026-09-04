@@ -2,23 +2,24 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from model_lib import dump, dump_as_dict, parse_payload
-from pydantic import TypeAdapter
 import pytest
+from model_lib import dump, parse
+from pydantic import TypeAdapter
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
 
 from atlas_init.tf_ext.models_module import ModuleGenConfig, ResourceGenConfig
-from atlas_init.tf_ext.settings import TfExtSettings
-from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_examples_and_readme
 from atlas_init.tf_ext.plan_diffs import (
     ExamplePlanCheck,
     dump_plan_output_resources,
     dump_plan_output_variables,
     parse_plan_output,
 )
-
+from atlas_init.tf_ext.settings import TfExtSettings
+from atlas_init.tf_ext.tf_mod_gen import example_plan_checks, generate_module, module_examples_and_readme
 
 logger = logging.getLogger(__name__)
+
+pytestmark = pytest.mark.manual
 
 
 _normal_replication_spec_vars = """
@@ -128,7 +129,7 @@ class _ModuleNames:
         cls.write_extra_files(config.module_out_path, name)
         example_checks = config.module_out_path / cls.FILENAME_EXAMPLE_CHECKS
         if example_checks.exists():
-            example_plan_checks_raw = parse_payload(example_checks)
+            example_plan_checks_raw = parse.parse_payload(example_checks)
             config.example_plan_checks = TypeAdapter(list[ExamplePlanCheck]).validate_python(example_plan_checks_raw)
         return config
 
@@ -181,8 +182,10 @@ def test_dump_example_configs(module_config_name: str, tf_ext_settings_repo_path
     module_config = _ModuleNames.create_by_name(module_config_name, tf_ext_settings_repo_path, clean_and_write=False)
     module_out = livedata_module_path(module_config_name)
     config_path = module_out / "config.yaml"
-    as_dict = dump_as_dict(module_config.model_dump(exclude_defaults=True, exclude_unset=True, exclude_none=True))
-    ensure_parents_write_text(config_path, dump(as_dict, "yaml"))
+    as_dict = dump.dump_as_str_as_dict(
+        module_config.model_dump(exclude_defaults=True, exclude_unset=True, exclude_none=True)
+    )
+    ensure_parents_write_text(config_path, dump.dump_as_str(as_dict, "yaml"))
 
 
 @pytest.mark.parametrize("module_config_name", _ModuleNames.ALL)
@@ -215,7 +218,7 @@ def test_export_planned_resources(tf_ext_settings_repo_path: TfExtSettings, plan
     assert plan_output_path.exists(), f"Plan output file {plan_output_path} does not exist"
     plan_output = parse_plan_output(plan_output_path)
     output_dir = tf_ext_settings_repo_path.output_plan_dumps / plan_output_path.parent.name
-    plan_output_yaml = dump(plan_output, "yaml")
+    plan_output_yaml = dump.dump_as_str(plan_output, "yaml")
     output_file = output_dir / f"{plan_output_path.stem}.yaml"
     ensure_parents_write_text(output_file, plan_output_yaml)
     logger.info(f"wrote parsed plan to {output_file}")

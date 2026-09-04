@@ -1,11 +1,11 @@
-from ask_shell import configure_logging
 from typer import Typer
 
+from atlas_init.settings.rich_utils import configure_logging
 from atlas_init.tf_ext import api_call, settings, tf_desc_gen, tf_example_readme, tf_mod_gen_provider, tf_ws
 
 
 def typer_main():
-    from atlas_init.tf_ext import tf_dep, tf_mod_gen, tf_modules, tf_vars
+    from atlas_init.tf_ext import tf_dep, tf_mod_gen, tf_module_grouping, tf_modules, tf_resource_usage, tf_vars
 
     app = Typer(
         name="tf-ext",
@@ -22,6 +22,8 @@ def typer_main():
     app.command(name="check-env-vars")(settings.init_tf_ext_settings)
     app.command(name="example-readme")(tf_example_readme.tf_example_readme)
     app.command(name="ws")(tf_ws.tf_ws)
+    app.command(name="resource-usage")(tf_resource_usage.tf_resource_usage)
+    app.command(name="module-grouping")(tf_module_grouping.tf_module_grouping)
     configure_logging(app)
     app()
 

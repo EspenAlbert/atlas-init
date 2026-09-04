@@ -2,20 +2,22 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
 from functools import reduce, total_ordering
 from pathlib import Path
-import re
-from typing import Callable, ClassVar, TypeVar
+from typing import Callable, ClassVar
 
-from ask_shell.rich_progress import new_task
+from ask_shell import console
+from ask_shell._internal.rich_progress import new_task
 from model_lib import Entity
 from pydantic import Field, model_validator
 from zero_3rdparty import datetime_utils, file_utils
 from zero_3rdparty.iter_utils import group_by_once
+from zero_3rdparty.str_utils import markdown_table_lines
 
 from atlas_init.cli_tf.github_logs import summary_dir
 from atlas_init.cli_tf.go_test_run import GoTestRun, GoTestStatus
@@ -31,7 +33,7 @@ from atlas_init.html_out.md_export import MonthlyReportPaths
 from atlas_init.settings.env_vars import AtlasInitSettings
 
 logger = logging.getLogger(__name__)
-_COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL}
+_COMPLETE_STATUSES = {GoTestStatus.PASS, GoTestStatus.FAIL, GoTestStatus.TIMEOUT}
 
 
 @total_ordering
@@ -100,17 +102,24 @@ def summary_str(summary: GoTestSummary, start_date: datetime, end_date: datetime
 
 
 def test_detail_md(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> str:
-    return "\n".join(
-        [
-            f"# {summary.name} Test Details",
-            summary_line(summary.results),
-            f"Success rate: {summary.success_rate_human}",
-            "",
-            *error_table(summary),
-            "## Timeline",
-            *timeline_lines(summary, start_date, end_date),
-        ]
-    )
+    lines = [
+        f"# {summary.name} Test Details",
+        summary_line(summary.results),
+        f"Success rate: {summary.success_rate_human}",
+        "",
+    ]
+    env_results = group_by_once(summary.results, key=lambda run: run.env or "unknown-env")
+    for env, env_runs in sorted(env_results.items()):
+        env_classifications = {
+            run_id: cls for run_id, cls in summary.classifications.items() if run_id in {r.id for r in env_runs}
+        }
+        env_summary = GoTestSummary(name=summary.name, results=env_runs, classifications=env_classifications)
+        lines.append(f"## {env.upper()} Environment")
+        lines.extend(error_table(env_summary))
+        lines.append("### Timeline")
+        lines.extend(timeline_lines(env_summary, start_date, end_date))
+        lines.append("")
+    return "\n".join(lines)
 
 
 def timeline_lines(summary: GoTestSummary, start_date: datetime, end_date: datetime) -> list[str]:
@@ -322,7 +331,9 @@ def summary_line(runs: list[GoTestRun]):
     envs_str = ", ".join(sorted(envs))
     branches = {run.branch for run in runs if run.branch}
     branches_str = (
-        "from " + ", ".join(sorted(branches)) + " branches" if len(branches) > 1 else f"from {branches.pop()} branch"
+        "from " + ", ".join(sorted(branches)) + " branches"
+        if len(branches) > 1
+        else f"from {branches.pop() if branches else 'unknown'} branch"
     )
     return f"# Found {len(runs)} TestRuns in {envs_str} {run_delta} {branches_str}: {len(pkg_test_names)} unique tests, {run_statuses(runs)}"
 
@@ -449,9 +460,11 @@ class ErrorRowColumns(StrEnum):
     ERROR_CLASS = "Error Class"
     DETAILS_SUMMARY = "Details Summary"
     PASS_RATE = "Pass Rate"  # nosec B105 # This is not a security issue, just a column name
+    # Known failure will be registered as passing aka: all passes + known failures are counted as passes.
+    PASS_RATE_KNOWN_FAILURE = "Pass Rate Known Failure"  # nosec B105 # This is not a security issue, just a column name
     TIME_SINCE_PASS = "Time Since PASS"  # nosec B105 # This is not a security issue, just a column name
 
-    __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, TIME_SINCE_PASS]
+    __ENV_BASED__: ClassVar[list[str]] = [PASS_RATE, PASS_RATE_KNOWN_FAILURE, TIME_SINCE_PASS]
 
     @classmethod
     def column_names(cls, rows: list[TestRow], skip_columns: set[ErrorRowColumns]) -> list[str]:
@@ -487,9 +500,24 @@ class TestRow(Entity):
         for env, runs in self.last_env_runs.items():
             if not runs:
                 continue
-            total = len(runs)
+            total_relevant = len([run for run in runs if run.status in _COMPLETE_STATUSES])
             passed = sum(run.status == GoTestStatus.PASS for run in runs)
-            rates[env] = passed / total if total > 0 else 0.0
+            rates[env] = passed / total_relevant if total_relevant > 0 else 0.0
+        return rates
+
+    @property
+    def pass_rates_known_failure(self) -> dict[str, float]:
+        rates = {}
+        for env, runs in self.last_env_runs.items():
+            if not runs:
+                continue
+            total_relevant = len([run for run in runs if run.status in _COMPLETE_STATUSES])
+            passed = sum(
+                run.status == GoTestStatus.PASS or GoTestErrorClass.is_known_failure(run.output_lines_str)
+                for run in runs
+                if run.status in _COMPLETE_STATUSES
+            )
+            rates[env] = passed / total_relevant if total_relevant > 0 else 0.0
         return rates
 
     @property
@@ -512,11 +540,12 @@ class TestRow(Entity):
                 f"{cls}(x {count})" if count > 1 else cls
                 for cls, count in sorted(counter.items(), key=lambda item: item[1], reverse=True)
             )
-        return "No error classes"
+        return "No custom error classes"
 
     def as_row(self, columns: list[str]) -> list[str]:
         values = []
         pass_rates = self.pass_rates
+        pass_rates_known_failure = self.pass_rates_known_failure
         time_since_pass = self.time_since_pass
         for col in columns:
             match col:
@@ -531,9 +560,15 @@ class TestRow(Entity):
                     values.append(self.details_summary)
                 case s if s.startswith(ErrorRowColumns.PASS_RATE):
                     env = s.split(" (")[-1].rstrip(")")
-                    env_pass_rate = pass_rates.get(env, 0.0)
-                    env_run_count = len(self.last_env_runs.get(env, []))
-                    pass_rate_pct = f"{env_pass_rate:.2%} ({env_run_count} runs)" if env in pass_rates else "N/A"
+                    is_known = s.startswith(ErrorRowColumns.PASS_RATE_KNOWN_FAILURE)
+                    env_pass_rate = pass_rates_known_failure.get(env, 0.0) if is_known else pass_rates.get(env, 0.0)
+                    env_runs = self.last_env_runs.get(env, [])
+                    env_run_count_relevant = len([run for run in env_runs if run.status in _COMPLETE_STATUSES])
+                    pass_rate_pct = (
+                        f"{env_pass_rate:.2%} ({env_run_count_relevant} runs)"
+                        if env in pass_rates_known_failure or env in pass_rates
+                        else "N/A"
+                    )
                     if pass_rate_pct.startswith("100.00%"):
                         values.append("always")  # use always to avoid sorting errors, 100% showing before 2%
                     else:
@@ -548,7 +583,7 @@ class TestRow(Entity):
 
 
 def create_monthly_report(settings: AtlasInitSettings, event: MonthlyReportIn) -> MonthlyReportOut:
-    with new_task(f"Monthly Report for {event.name} on {event.branch}"):
+    with console.new_task(f"Monthly Report for {event.name} on {event.branch}"):
         test_rows, detail_files_md = asyncio.run(_collect_monthly_test_rows_and_summaries(settings, event))
         assert test_rows, "No error rows found for monthly report"
     columns = ErrorRowColumns.column_names(test_rows, event.skip_columns)
@@ -587,31 +622,13 @@ class DailyReportOut(Entity):
     details_md: str
 
 
-T = TypeVar("T")
-
-
-def markdown_table_lines(
-    header: str, rows: list[T], columns: list[str], row_to_line: Callable[[T], list[str]], *, header_level: int = 2
-) -> list[str]:
-    if not rows:
-        return []
-    return [
-        f"{'#' * header_level} {header}",
-        "",
-        " | ".join(columns),
-        " | ".join("---" for _ in columns),
-        *(" | ".join(row_to_line(row)) for row in rows),
-        "",
-    ]
-
-
 def create_daily_report(output: TFCITestOutput, settings: AtlasInitSettings, event: DailyReportIn) -> DailyReportOut:
     errors = output.found_errors
     error_classes = {cls.run_id: cls.error_class for cls in output.classified_errors}
     one_line_summary = summary_line(output.found_tests)
 
-    with new_task("Daily Report"):
-        with new_task("Collecting error rows") as task:
+    with console.new_task("Daily Report"):
+        with console.new_task("Collecting error rows") as task:
             failure_rows = asyncio.run(
                 _collect_daily_error_rows(errors, error_classes, settings, event.history_filter, task)
             )
@@ -667,7 +684,7 @@ async def _collect_monthly_test_rows_and_summaries(
     test_runs_by_name: dict[str, GoTestRun] = {run.full_name: run for run in last_day_test_names}
     test_rows = []
     detail_files_md: dict[str, str] = {}
-    with new_task("Collecting monthly error rows", total=len(last_day_test_names)) as task:
+    with console.new_task("Collecting monthly error rows", total=len(last_day_test_names)) as task:
         for name_with_group, test_run in test_runs_by_name.items():
             test_row, runs = await _create_test_row(
                 history_filter,

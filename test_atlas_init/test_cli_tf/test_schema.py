@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from model_lib import parse_model
+from model_lib import parse
 
 from atlas_init.cli_tf.schema import (
     ChangeAttributeType,
@@ -105,7 +105,7 @@ EXAMPLE_PROVIDER_CODE_SPEC_PATH = Path(__file__).parent / "test_data/provider-co
 
 
 def test_update_provider_code_spec(tmp_path: Path):
-    spec_before = parse_model(EXAMPLE_PROVIDER_CODE_SPEC_PATH, t=ProviderCodeSpec)
+    spec_before = parse.parse_model(EXAMPLE_PROVIDER_CODE_SPEC_PATH, t=ProviderCodeSpec)
 
     original_names = [
         "cluster_count",
@@ -121,7 +121,7 @@ def test_update_provider_code_spec(tmp_path: Path):
     assert spec_before.attribute_names(resource_name) == original_names
     schema = _default_schema(tmp_path)
     spec_after_str = update_provider_code_spec(schema, EXAMPLE_PROVIDER_CODE_SPEC_PATH)
-    spec_after = parse_model(spec_after_str, t=ProviderCodeSpec, format="json")
+    spec_after = parse.parse_model(spec_after_str, t=ProviderCodeSpec, format="json")
 
     assert spec_after.attribute_names(resource_name) == original_names + ["tags"]
 
@@ -153,7 +153,7 @@ def test_update_provider_code_spec_stream_processor():
         ]
     )
     spec_after_str = update_provider_code_spec(schema, spec)
-    spec_after = parse_model(spec_after_str, t=ProviderCodeSpec, format="json")
+    spec_after = parse.parse_model(spec_after_str, t=ProviderCodeSpec, format="json")
     assert spec_after
     assert '"name":"links",' not in spec_after_str
     assert '"name":"_id",' not in spec_after_str

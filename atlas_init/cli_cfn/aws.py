@@ -21,7 +21,7 @@ from zero_3rdparty.iter_utils import group_by_once
 
 from atlas_init.cli_helper.run import run_command_is_ok
 from atlas_init.cloud.aws import REGIONS, PascalAlias, region_continent
-from atlas_init.settings.interactive import confirm
+from atlas_init.settings import interactive
 
 logger = logging.getLogger(__name__)
 EARLY_DATETIME = datetime(year=1990, month=1, day=1, tzinfo=UTC)
@@ -405,7 +405,7 @@ def ensure_resource_type_activated(
     if cfn_type_details is not None and (cfn_type_details.seconds_since_update() > 3600 * 24 or force_deregister):
         outdated_warning = f"more than {humanize.naturaldelta(cfn_type_details.seconds_since_update())} since last update to {type_name} {cfn_type_details.version}"
         logger.warning(outdated_warning)
-        if force_deregister or confirm(
+        if force_deregister or interactive.confirm(
             f"{outdated_warning}, should deregister?",
             is_interactive=is_interactive,
             default=True,
@@ -430,7 +430,7 @@ def ensure_resource_type_activated(
     if (
         not force_version
         and cfn_type_details is None
-        and confirm(
+        and interactive.confirm(
             f"No existing {type_name} found, ok to run:\n{submit_cmd}\nsubmit?",
             is_interactive=is_interactive,
             default=True,
@@ -442,7 +442,7 @@ def ensure_resource_type_activated(
         third_party = get_last_cfn_type(type_name, region, is_third_party=True, force_version=force_version)
         assert third_party, f"unable to find 3rd party type for {type_name}"
         last_updated = third_party.last_updated
-        if confirm(
+        if interactive.confirm(
             f"No existing {type_name} found, ok to activate 3rd party: :\n'{third_party.version} ({humanize.naturalday(last_updated), {last_updated.isoformat()}})'\n?",
             is_interactive=is_interactive,
             default=True,

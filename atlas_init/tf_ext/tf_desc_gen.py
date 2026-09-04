@@ -1,10 +1,12 @@
 import logging
 from collections import defaultdict
-from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
-from atlas_init.tf_ext.settings import TfExtSettings
-from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
-from model_lib import dump, parse_model
+
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import ensure_parents_write_text
+
+from atlas_init.tf_ext.args import TF_CLI_CONFIG_FILE_ARG
+from atlas_init.tf_ext.provider_schema import ResourceSchema, parse_atlas_schema
+from atlas_init.tf_ext.settings import TfExtSettings
 
 logger = logging.getLogger(__name__)
 
@@ -37,16 +39,16 @@ def tf_desc_gen(
         attr_desc_resource[attr_name] = resource_type
 
     for resource_type, resource_schema in schema.raw_resource_schema.items():
-        parsed_schema = parse_model(resource_schema, t=ResourceSchema)
+        parsed_schema = parse.parse_model(resource_schema, t=ResourceSchema)
         schema_block = parsed_schema.block
         for name, attribute in (schema_block.attributes or {}).items():
             add_description(resource_type, name, attribute.description)
         for name, block_type in (schema_block.block_types or {}).items():
             add_description(resource_type, name, block_type.description)
-    descriptions_yaml = dump(dict(sorted(descriptions.items())), format="yaml")
+    descriptions_yaml = dump.dump_as_str(dict(sorted(descriptions.items())), format="yaml")
     ensure_parents_write_text(out_path, descriptions_yaml)
     logger.info(f"Generated attribute descriptions to {out_path}")
-    resource_descriptions_yaml = dump(
+    resource_descriptions_yaml = dump.dump_as_str(
         {k: dict(sorted(v.items())) for k, v in sorted(descriptions_by_resource.items())}, format="yaml"
     )
     ensure_parents_write_text(resource_out_path, resource_descriptions_yaml)

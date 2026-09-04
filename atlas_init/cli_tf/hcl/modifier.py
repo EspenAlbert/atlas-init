@@ -5,8 +5,9 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Callable, Protocol
 
-import hcl2
 from lark import Token, Tree
+
+from atlas_init.cli_tf.hcl.hcl_compat import writes_compat
 
 from atlas_init.cli_tf.hcl.modifier2 import safe_parse
 
@@ -41,20 +42,42 @@ def is_block_type(tree: Tree, block_type: str) -> bool:
         return False
 
 
+def _block_label_and_body(children: list) -> tuple[Token | Tree, int, Tree, int]:
+    """Find the first label and the body tree in block children."""
+    label = None
+    label_idx = -1
+    body = None
+    body_idx = -1
+    for i, child in enumerate(children):
+        if isinstance(child, Tree) and child.data == "body":
+            body = child
+            body_idx = i
+        elif label is None and isinstance(child, Tree) and child.data in ("string", "identifier"):
+            if child.data == "identifier" and i == 0:
+                continue
+            label = child
+            label_idx = i
+        elif label is None and isinstance(child, Token) and child.type not in ("LBRACE", "RBRACE", "EQ"):
+            label = child
+            label_idx = i
+    assert body is not None, "block must have a body"
+    assert label is not None, "block must have a label"
+    return label, label_idx, body, body_idx
+
+
 def update_description(
     path: Path, tree: Tree, get_new_description: NewDescription, existing_names: dict[str, list[str]]
 ) -> Tree:
     new_children = tree.children.copy()
-    variable_body = new_children[2]
-    assert variable_body.data == "body"
-    name = token_name(new_children[1])
+    label, _label_idx, variable_body, body_idx = _block_label_and_body(new_children)
+    name = token_name(label)
     old_description = read_description_attribute(variable_body)
     existing_names[name].append(old_description)
     new_description = get_new_description(name, old_description, path)
     if not new_description:
         debug_log(f"no description found for variable {name}", 0)
         return tree
-    new_children[2] = update_body_with_description(variable_body, new_description)
+    new_children[body_idx] = update_body_with_description(variable_body, new_description)
     return Tree(tree.data, new_children)
 
 
@@ -63,10 +86,26 @@ def token_name(token: Token | Tree) -> str:
         return token.value.strip('"')
     if isinstance(token, Tree) and token.data == "identifier":
         return token.children[0].value.strip('"')  # type: ignore
+    if isinstance(token, Tree) and token.data == "string":
+        return _extract_string_value(token)
+    if isinstance(token, Tree) and token.data == "expr_term":
+        return token_name(token.children[0])
     if isinstance(token, Tree) and isinstance(token.data, Token) and token.data.value == "heredoc_template_trim":
         return token.children[0].value.strip('"')  # type: ignore
     err_msg = f"unexpected token type {type(token)} for token name"
     raise ValueError(err_msg)
+
+
+def _extract_string_value(string_tree: Tree) -> str:
+    parts = []
+    for child in string_tree.children:
+        if isinstance(child, Token) and child.type == "DBLQUOTE":
+            continue
+        if isinstance(child, Tree) and child.data == "string_part":
+            parts.append(str(child.children[0]))
+        elif isinstance(child, Token):
+            parts.append(str(child))
+    return "".join(parts)
 
 
 def has_attribute_description(maybe_attribute: Token | Tree) -> bool:
@@ -97,22 +136,41 @@ def new_line() -> Tree:
 
 
 def read_description_attribute(tree: Tree) -> str:
-    return next(
-        (
-            token_name(maybe_attribute.children[-1].children[0])
-            for maybe_attribute in tree.children
-            if has_attribute_description(maybe_attribute)
-        ),
-        "",
+    for maybe_attribute in tree.children:
+        if has_attribute_description(maybe_attribute):
+            expr_term = maybe_attribute.children[-1]
+            return token_name(expr_term.children[0])
+    return ""
+
+
+def _make_string_tree(value: str) -> Tree:
+    return Tree(
+        Token("RULE", "string"),
+        [
+            Token("DBLQUOTE", '"'),
+            Tree(Token("RULE", "string_part"), [Token("STRING_CHARS", value)]),
+            Token("DBLQUOTE", '"'),
+        ],
     )
 
 
 def create_description_attribute(description_value: str) -> Tree:
-    token_value = f"<<-EOT\n{description_value}\nEOT\n" if "\n" in description_value else f'"{description_value}"'
+    if "\n" in description_value:
+        value_tree = Tree(
+            Token("RULE", "expr_term"),
+            [
+                Tree(
+                    Token("RULE", "heredoc_template_trim"),
+                    [Token("HEREDOC_TEMPLATE_TRIM", f"<<-EOT\n{description_value}\nEOT\n")],
+                )
+            ],
+        )
+    else:
+        value_tree = Tree(Token("RULE", "expr_term"), [_make_string_tree(description_value)])
     children = [
         Tree(Token("RULE", "identifier"), [Token("NAME", "description")]),
         Token("EQ", " ="),
-        Tree(Token("RULE", "expr_term"), [Token("STRING_LIT", token_value)]),
+        value_tree,
     ]
     return Tree(Token("RULE", "attribute"), children)
 
@@ -176,15 +234,15 @@ def update_descriptions(
         existing_descriptions,
         block_type=block_type,
     )
-    new_tf = hcl2.writes(new_tree)  # type: ignore
+    new_tf = writes_compat(new_tree)  # type: ignore
     return new_tf, existing_descriptions
 
 
 def _block_name_body(tree: Tree) -> tuple[str, Tree]:
     try:
-        _, name_token, body = tree.children
-        name = token_name(name_token)
-    except (IndexError, AttributeError) as e:
+        label, _, body, _ = _block_label_and_body(tree.children)
+        name = token_name(label)
+    except (IndexError, AttributeError, AssertionError) as e:
         raise ValueError("unexpected block structure") from e
     return name, body
 

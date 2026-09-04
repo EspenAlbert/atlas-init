@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 from github.WorkflowJob import WorkflowJob
 from github.WorkflowStep import WorkflowStep
-from model_lib import parse_model
+from model_lib import parse
 
 from atlas_init.cli_args import ENV_VAR_SDK_REPO_PATH
 from atlas_init.cli_tf.openapi import OpenapiSchema, add_api_spec_info
@@ -60,7 +60,7 @@ def api_spec_path(tf_test_data_dir) -> Path:
 
 @pytest.fixture
 def openapi_schema(api_spec_path) -> OpenapiSchema:
-    return parse_model(api_spec_path, t=OpenapiSchema)
+    return parse.parse_model(api_spec_path, t=OpenapiSchema)
 
 
 @pytest.fixture
@@ -70,10 +70,9 @@ def schema_with_api_info(schema_v2, api_spec_path) -> SchemaV2:
 
 
 @pytest.fixture(scope="session")
-@pytest.mark.skipif(
-    os.environ.get(ENV_VAR_SDK_REPO_PATH, "") == "", reason=f"needs os.environ[{ENV_VAR_SDK_REPO_PATH}]"
-)
 def sdk_repo_path() -> Path:
+    if os.environ.get(ENV_VAR_SDK_REPO_PATH, "") == "":
+        pytest.skip(f"needs os.environ[{ENV_VAR_SDK_REPO_PATH}]")
     return Path(os.environ[ENV_VAR_SDK_REPO_PATH])
 
 
@@ -82,7 +81,7 @@ def parse_resource_v3(spec_resources_v3_paths):
     def parse_resource(resource_name: str) -> ResourceSchemaV3:
         assert resource_name in spec_resources_v3_paths
         spec_path = spec_resources_v3_paths[resource_name]
-        return parse_model(spec_path, t=ResourceSchemaV3)
+        return parse.parse_model(spec_path, t=ResourceSchemaV3)
 
     return parse_resource
 
@@ -112,10 +111,11 @@ def go_schema_paths() -> Callable[[], dict[str, Path]]:
 
 
 @pytest.fixture(scope="session")
-@pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 def live_api_spec() -> OpenapiSchema:
+    if os.environ.get("API_SPEC_PATH", "") == "":
+        pytest.skip("needs os.environ[API_SPEC_PATH]")
     api_path = Path(os.environ["API_SPEC_PATH"])
     logger.info(f"parsing admin api spec: {api_path}")
-    model = parse_model(api_path, t=OpenapiSchema)
+    model = parse.parse_model(api_path, t=OpenapiSchema)
     assert model, "unable to parse admin api spec"
     return model

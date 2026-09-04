@@ -1,6 +1,15 @@
 from typing import Any
-from hcl2.api import parses, reverse_transform
+
+from lark import Tree
 from lark.tree import Meta
+from lark.visitors import v_args
+
+from atlas_init.cli_tf.hcl.hcl_compat import (
+    Attribute,
+    DictTransformer,
+    parses_compat,
+    reverse_transform_compat,
+)
 from atlas_init.cli_tf.hcl.modifier import safe_parse
 from atlas_init.cli_tf.hcl.modifier2 import (
     AttributeChange,
@@ -11,9 +20,6 @@ from atlas_init.cli_tf.hcl.modifier2 import (
     variable_reader_typed,
     write_tree,
 )
-from hcl2.transformer import Attribute, DictTransformer
-from lark import Tree
-from lark.visitors import v_args
 
 _provider_example = """\
 terraform {
@@ -74,7 +80,9 @@ class VariablesBlockReader(DictTransformer):
                     if isinstance(new_value, dict):
                         variable_type = variable_value.get("type", {})
                         if isinstance(variable_type, str) and variable_type.startswith("${object({"):
-                            new_tree = parses("dummy = " + variable_type.removeprefix("${object(").removesuffix(")}"))
+                            new_tree = parses_compat(
+                                "dummy = " + variable_type.removeprefix("${object(").removesuffix(")}")
+                            )
                             assert isinstance(
                                 new_tree, Tree
                             )  # could actually do the reverse parsing here and dump back to a
@@ -125,7 +133,7 @@ def test_updating_defaults(tmp_path, file_regression):
     assert tree is not None
     reader = VariablesBlockReader(defaults=_expected_defaults)
     new_tree = reader.transform(tree)
-    tree_modified = reverse_transform(new_tree)
+    tree_modified = reverse_transform_compat(new_tree)
     new_vars = write_tree(tree_modified)
     file_regression.check(new_vars, basename="variables_with_defaults", extension=".tf")
 
@@ -181,4 +189,22 @@ def test_reading_variables_typed(tmp_path):
             sensitive=False,
             default={"default_write_concern": "majority", "custom_openssl_cipher_config_tls12": ["TLS1_2"]},
         ),
+    }
+
+
+_example_list_variable = """
+variable "list_variable" {
+  type = list(string)
+}
+"""
+
+
+def test_reading_list_variable(tmp_path):
+    file = tmp_path / "variables.tf"
+    file.write_text(_example_list_variable)
+    tree = safe_parse(file)
+    assert tree is not None
+    variables = variable_reader_typed(tree)
+    assert variables == {
+        "list_variable": TFVar(name="list_variable", description="", type="list(string)", sensitive=False),
     }

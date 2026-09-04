@@ -1,11 +1,13 @@
-from contextlib import suppress
 import logging
+from contextlib import suppress
 from pathlib import Path
-from ask_shell import confirm, run_and_wait
-from model_lib import dump, parse_model
+
 import typer
+from ask_shell import ask, shell
+from model_lib import dump, parse
 from zero_3rdparty.file_utils import clean_dir, copy, ensure_parents_write_text
-from atlas_init.cli_args import ParsedPaths, option_sdk_repo_path, option_mms_repo_path
+
+from atlas_init.cli_args import ParsedPaths, option_mms_repo_path, option_sdk_repo_path
 from atlas_init.cli_tf.openapi import OpenapiSchema
 
 _go_mod_line = "replace go.mongodb.org/atlas-sdk/v20250312005 v20250312005.0.0 => ../atlas-sdk-go"
@@ -28,11 +30,11 @@ def go(
     openapi_path = safe_openapi_path(mms_path) if skip_mms_openapi else generate_openapi_spec(mms_path, mms_branch)
     openapi_path = transform_openapi(openapi_path, sdk_path / "openapi/openapi-mms.yaml")
     generate_go_sdk(sdk_path, openapi_path)
-    confirm(f"Have you remembered to add to your go.mod file: {_go_mod_line}")
+    ask.confirm(f"Have you remembered to add to your go.mod file: {_go_mod_line}")
 
 
 def transform_openapi(old: Path, dest_path: Path) -> Path:
-    api_spec = parse_model(old, t=OpenapiSchema)
+    api_spec = parse.parse_model(old, t=OpenapiSchema)
     new_api_spec = api_spec.model_dump()
     for path in api_spec.paths.keys():
         for method_name, method in api_spec.methods_with_name(path):
@@ -47,7 +49,7 @@ def transform_openapi(old: Path, dest_path: Path) -> Path:
                     new_api_spec["paths"][path][method_name]["requestBody"]["content"] = use_a_single_version(
                         request_body, api_spec, path
                     )
-    dest_yaml = dump(new_api_spec, "yaml")
+    dest_yaml = dump.dump_as_str(new_api_spec, "yaml")
     ensure_parents_write_text(dest_path, dest_yaml)
     return dest_path
 
@@ -68,11 +70,13 @@ def use_a_single_version(multi_content: dict, api_spec: OpenapiSchema, path: str
 
 
 def generate_openapi_spec(mms_path: Path, mms_branch: str) -> Path:
-    run_and_wait(f"git stash && git checkout {mms_branch}", cwd=mms_path)
-    bazelisk_bin_run = run_and_wait("mise which bazelisk", cwd=mms_path)
+    shell.run_and_wait(f"git stash && git checkout {mms_branch}", cwd=mms_path)
+    bazelisk_bin_run = shell.run_and_wait("mise which bazelisk", cwd=mms_path)
     bazelisk_bin = bazelisk_bin_run.stdout_one_line
     assert Path(bazelisk_bin).exists(), f"not found {bazelisk_bin}"
-    openapi_run = run_and_wait(f"{bazelisk_bin} run //server:mms-openapi", cwd=mms_path, print_prefix="mms-openapi")
+    openapi_run = shell.run_and_wait(
+        f"{bazelisk_bin} run //server:mms-openapi", cwd=mms_path, print_prefix="mms-openapi"
+    )
     assert openapi_run.clean_complete, f"failed to run {openapi_run}"
     return safe_openapi_path(mms_path)
 
@@ -97,6 +101,6 @@ def generate_go_sdk(repo_path: Path, openapi_path: Path) -> None:
         "OPENAPI_FILE_NAME": openapi_path.name,
         "SDK_FOLDER": str(SDK_FOLDER),
     }
-    run_and_wait(f"{generate_script}", cwd=repo_path / "tools", env=generate_env, print_prefix="go sdk create")
+    shell.run_and_wait(f"{generate_script}", cwd=repo_path / "tools", env=generate_env, print_prefix="go sdk create")
     mockery_script = repo_path / "tools/scripts/generate_mocks.sh"
-    run_and_wait(f"{mockery_script}", cwd=repo_path / "tools", print_prefix="go sdk mockery")
+    shell.run_and_wait(f"{mockery_script}", cwd=repo_path / "tools", print_prefix="go sdk mockery")

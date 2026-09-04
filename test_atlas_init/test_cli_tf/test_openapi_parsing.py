@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 import pytest
-from model_lib import dump, parse_model, parse_payload
+from model_lib import dump, parse
 from zero_3rdparty import file_utils
 
 from atlas_init.cli_tf.openapi import (
@@ -114,21 +114,21 @@ def test_openapi_schema_read_parameters_array(schema_v2, openapi_schema: Openapi
 @pytest.mark.skipif(os.environ.get("API_SPEC_PATH", "") == "", reason="needs os.environ[API_SPEC_PATH]")
 def test_ensure_test_data_admin_api_is_up_to_date(schema_v2, file_regression, api_spec_path):
     api_path = Path(os.environ["API_SPEC_PATH"])
-    openapi_schema = parse_model(api_path, t=OpenapiSchema)
+    openapi_schema = parse.parse_model(api_path, t=OpenapiSchema)
     assert openapi_schema, "unable to parse admin api spec"
     if api_spec_path.suffix not in [".yaml", ".yml"]:
-        parsed_raw = parse_payload(api_path)
-        spec_yaml = dump(parsed_raw, "yaml")
+        parsed_raw = parse.parse_payload(api_path)
+        spec_yaml = dump.dump_as_str(parsed_raw, "yaml")
         api_path.with_name(f"{api_path.stem}.yaml").write_text(spec_yaml)
     minimal_spec = minimal_api_spec(schema_v2, api_path)
-    minimal_spec_yaml = dump(minimal_spec, "yaml")
+    minimal_spec_yaml = dump.dump_as_str(minimal_spec, "yaml")
     file_regression.check(minimal_spec_yaml, fullpath=api_spec_path)
 
 
 @pytest.mark.skip("manual test")
 def test_api_spec_text_changes(schema_v2, openapi_schema, file_regression):
     updated = api_spec_text_changes(schema_v2, openapi_schema)
-    updated_yaml = dump(updated, "yaml")
+    updated_yaml = dump.dump_as_str(updated, "yaml")
     file_regression.check(updated_yaml, basename="openapi_text_changes", extension=".yaml")
 
 

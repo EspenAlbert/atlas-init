@@ -5,11 +5,12 @@ from collections import defaultdict
 from concurrent.futures import Future, as_completed
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import requests
 import typer
-from ask_shell import new_task, print_to_live, run_pool
-from model_lib import dump, parse_model
+from ask_shell import console, shell
+from model_lib import dump, parse
 from pydantic import BaseModel, Field, model_validator
 from requests.auth import HTTPDigestAuth
 from rich.markdown import Markdown
@@ -79,7 +80,7 @@ class ApiCall(BaseModel):
     operation_id: str
     path: str
     accept_header: str = "application/vnd.atlas.2023-01-01+json"
-    query_args: dict[str, str] = Field(default_factory=dict)
+    query_args: dict[str, Any] = Field(default_factory=dict)
 
     def __str__(self):
         return instance_repr(self, ["operation_id", "path"])
@@ -199,17 +200,17 @@ def api_config(
 ):
     query_args: dict[str, str] = json.loads(query_args_str)
     if config_path_str == "":
-        with new_task("Find API Calls that use pagination"):
+        with console.new_task("Find API Calls that use pagination"):
             config_path = dump_config_path(query_args)
     else:
         config_path = Path(config_path_str)
     assert config_path.exists(), f"Config file {config_path} does not exist."
-    model = parse_model(config_path, t=ApiCalls)
+    model = parse.parse_model(config_path, t=ApiCalls)
     total_calls = len(model.calls)
-    assert _public_private_key(), "Public and private keys must be set in environment variables."
+    assert _public_private_key(), "Public and private keys must be set in environment variables."  # pyright: ignore[reportAssertAlwaysTrue]
     path_variables = model.path_variables
     op_id_path_self_qstring: dict[tuple[str, str], str] = {}
-    with run_pool(
+    with shell.run_pool(
         task_name="make API calls", max_concurrent_submits=10, threads_used_per_submit=1, total=total_calls
     ) as pool:
         futures: dict[Future, ApiCall] = {
@@ -236,7 +237,7 @@ def api_config(
             continue
         logger.info(f"API call {api_call} completed successfully with self ref:\n{href}")
         if verbose:
-            logger.info(f"Response for {api_call.query_args} was:\n{dump(result, 'pretty_json')}")
+            logger.info(f"Response for {api_call.query_args} was:\n{dump.dump_as_str(result, 'pretty_json')}")
     query_args_str = "&".join(f"{key}={value}" for key, value in query_args.items())
     md_report: list[str] = [
         f"# Pagination Report for query_args='{query_args_str}'",
@@ -258,7 +259,7 @@ def api_config(
     ]
     md_content = "\n".join(md_report)
     md = Markdown(md_content)
-    print_to_live(md)
+    console.print_to_live(md)
     output_path = TfExtSettings.from_env().pagination_output_path(query_args_str)
     ensure_parents_write_text(output_path, md_content)
     logger.info(f"Pagination report saved to {output_path}")
@@ -290,7 +291,7 @@ def api(
 def dump_config_path(query_args: dict[str, str]) -> Path:
     settings = TfExtSettings.from_env()
     latest_api_spec = resolve_admin_api_path()
-    model = parse_model(latest_api_spec, t=OpenapiSchema)
+    model = parse.parse_model(latest_api_spec, t=OpenapiSchema)
     paginated_paths: list[ApiCall] = []
     path_versions = list(model.path_method_api_versions())
 
@@ -319,7 +320,7 @@ def dump_config_path(query_args: dict[str, str]) -> Path:
         calls=paginated_paths,
         skip_validation=True,
     )
-    calls_yaml = dump(calls.dump_to_dict(), "yaml")
+    calls_yaml = dump.dump_as_str(calls.dump_to_dict(), "yaml")
     logger.info(f"Dumped {len(paginated_paths)} API calls to {config_path}")
     ensure_parents_write_text(config_path, calls_yaml)
     return config_path

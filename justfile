@@ -37,7 +37,7 @@ sec-test:
 test-cov reportFormat="xml":
   uv run pytest --cov --cov-report={{reportFormat}}
 test:
-  export SKIP_MARKED_TESTS=true && uv run pytest
+  uv run pytest
 test-file filename:
   uv run pytest {{filename}}
 type-check:
