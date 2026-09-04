@@ -2,8 +2,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from atlas_init.html_out.md_export import MonthlyReportPaths, create_index_md, remove_exported_report_from_docs
 from zero_3rdparty.file_utils import ensure_parents_write_text
+
+from atlas_init.html_out.md_export import (
+    MKDOCS_SERVE_CMD,
+    MKDOCS_SERVE_URL,
+    MonthlyReportPaths,
+    create_index_md,
+    remove_exported_report_from_docs,
+)
+
+
+def test_mkdocs_serve_uses_port_8019() -> None:
+    assert MKDOCS_SERVE_URL == "http://127.0.0.1:8019"
+    assert MKDOCS_SERVE_CMD == "uv run mkdocs serve -a 127.0.0.1:8019"
 
 
 def test_remove_exported_report_from_docs(tmp_path: Path) -> None:

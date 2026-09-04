@@ -54,7 +54,8 @@ class MonthlyReportPaths(Event):
 
 CI_TESTS_DIR_NAME = "ci-tests"
 MKDOCS_SERVE_TIMEOUT = 120
-MKDOCS_SERVE_URL = "http://127.0.0.1:8000"
+MKDOCS_SERVE_URL = "http://127.0.0.1:8019"
+MKDOCS_SERVE_CMD = "uv run mkdocs serve -a 127.0.0.1:8019"
 
 
 def export_ci_tests_markdown_to_html(settings: AtlasInitSettings, report_paths: MonthlyReportPaths) -> None:
@@ -147,7 +148,7 @@ def start_mkdocs_serve(ci_tests_dir: Path) -> tuple[str, ShellRun]:
         return False
 
     run_event = shell.run(
-        "uv run mkdocs serve", cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
+        MKDOCS_SERVE_CMD, cwd=ci_tests_dir, message_callbacks=[on_message], print_prefix="mkdocs serve"
     )
     chain_future(run_event._complete_flag, future)
     try:
